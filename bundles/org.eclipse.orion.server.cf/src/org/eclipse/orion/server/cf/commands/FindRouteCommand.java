@@ -91,7 +91,7 @@ public class FindRouteCommand extends AbstractCFCommand {
 
 			/* extract host information if present */
 			ManifestParseTree hostNode = app.getOpt(CFProtocolConstants.V2_KEY_HOST);
-			appHost = (hostNode != null) ? hostNode.getUnquotedValue() : null;
+			appHost = (hostNode != null) ? hostNode.getValue() : null;
 
 			if (appHost != null)
 				return Status.OK_STATUS;

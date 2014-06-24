@@ -113,18 +113,14 @@ public class ManifestParserTest {
 		ManifestParseTree application = manifest.get("applications").get(0); //$NON-NLS-1$
 		ManifestParseTree path = application.get("path"); //$NON-NLS-1$
 
-		assertEquals("\".\"", path.getValue()); //$NON-NLS-1$
-		assertEquals(".", path.getUnquotedValue()); //$NON-NLS-1$
+		assertEquals(".", path.getValue()); //$NON-NLS-1$
 
 		ManifestParseTree host = application.get("host"); //$NON-NLS-1$
-
-		assertEquals("\'quoted-path-application\'", host.getValue()); //$NON-NLS-1$
-		assertEquals("quoted-path-application", host.getUnquotedValue()); //$NON-NLS-1$
+		assertEquals("quoted-path-application", host.getValue()); //$NON-NLS-1$
 
 		ManifestParseTree domain = application.get("domain"); //$NON-NLS-1$
 
 		assertEquals("cloud-foundry-domain.org", domain.getValue()); //$NON-NLS-1$
-		assertEquals("cloud-foundry-domain.org", domain.getUnquotedValue()); //$NON-NLS-1$
 	}
 
 	@Test
@@ -190,7 +186,7 @@ public class ManifestParserTest {
 		assertEquals("overriddenC", applications.get(3).get("C").getValue()); //$NON-NLS-1$//$NON-NLS-2$
 		assertEquals("valueD", applications.get(3).get("D").get("nativeD").getValue()); //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$
 	}
-	
+
 	private ManifestParseTree parse(InputStream inputStream) throws IOException, TokenizerException, ParserException {
 		Preprocessor preprocessor = new ManifestPreprocessor();
 		List<InputLine> contents = preprocessor.process(inputStream);

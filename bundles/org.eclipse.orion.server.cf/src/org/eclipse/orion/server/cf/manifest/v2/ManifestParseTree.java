@@ -127,6 +127,7 @@ public class ManifestParseTree {
 
 	/**
 	 * Access helper method. Should be used for (key:value) mappings only.
+	 * Removes any starting or ending quotation marks, i.e. " and '.
 	 * @return Label of the first child.
 	 * @throws InvalidAccessException If the nodes has no children.
 	 */
@@ -134,17 +135,7 @@ public class ManifestParseTree {
 		if (children.isEmpty())
 			throw new InvalidAccessException(this);
 
-		return children.get(0).getLabel();
-	}
-
-	/**
-	 * Access helper method. Should be used for (key:value) mappings only.
-	 * Removes any starting or ending quotation marks, i.e. " and '.
-	 * @return Label of the first child.
-	 * @throws InvalidAccessException If the nodes has no children.
-	 */
-	public String getUnquotedValue() throws InvalidAccessException {
-		return getValue().replaceAll("^\"|^\'|\"$|\'$", ""); //$NON-NLS-1$ //$NON-NLS-2$
+		return children.get(0).getLabel().replaceAll("^\"|^\'|\"$|\'$", ""); //$NON-NLS-1$ //$NON-NLS-2$;
 	}
 
 	/**
