@@ -13,9 +13,11 @@ package org.eclipse.orion.internal.server.servlets.site;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.hosting.*;
@@ -248,7 +250,7 @@ public class SiteConfigurationResourceHandler extends ServletResourceHandler<Sit
 				// Status has a bogus value
 				throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Status not understood: {0}", status), null));
 			}
-		} catch (NoMoreHostsException e) {
+		} catch (SiteHostingException e) {
 			// Give a JSON response object instead of stack trace
 			throw new CoreException(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
 		} catch (URISyntaxException e) {

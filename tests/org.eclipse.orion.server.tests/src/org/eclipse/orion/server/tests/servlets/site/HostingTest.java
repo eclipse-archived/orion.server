@@ -12,36 +12,21 @@ package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLEncoder;
+import java.io.*;
+import java.net.*;
 
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.useradmin.User;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
+import org.junit.*;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
+import com.meterware.httpunit.*;
 
 /**
  * Basic tests:
@@ -81,6 +66,18 @@ public class HostingTest extends CoreSiteTest {
 		setUpAuthorization();
 		createTestProject("HostingTest");
 		workspaceId = new Path(testProjectBaseLocation).segment(0);
+	}
+
+	@Test
+	/**
+	 * Attempt to start a site with bad host hint, expect error
+	 */
+	public void testStartSiteBadHostHint() throws SAXException, IOException {
+		final String siteName = "My bad hostname";
+		final String hostHint = "hello_there";
+		WebRequest request = getCreateSiteRequest(siteName, null, null, hostHint);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
 	}
 
 	@Test

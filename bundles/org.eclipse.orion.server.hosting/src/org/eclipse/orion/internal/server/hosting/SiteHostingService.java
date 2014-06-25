@@ -169,8 +169,9 @@ public class SiteHostingService implements ISiteHostingService {
 	 * @return The host, which will have the form <code>hostname:port</code>.
 	 * @throws NoMoreHostsException If no more hosts are available (meaning all IPs and domains 
 	 * from the hosting configuration have been allocated).
+	 * @throws BadHostnameException If a host pattern or hint led to an invalid URL being generated.
 	 */
-	private URI acquireURL(String hint, URI requestURI) throws NoMoreHostsException {
+	private URI acquireURL(String hint, URI requestURI) throws SiteHostingException {
 		hint = hint == null || hint.equals("") ? "site" : hint; //$NON-NLS-1$ //$NON-NLS-2$
 		synchronized (sites) {
 			URI result = null;
@@ -196,8 +197,11 @@ public class SiteHostingService implements ISiteHostingService {
 						}
 					}
 				} catch (URISyntaxException e) {
+					// URI wasn't valid, either because a bad hint was provided or the server was configured with a bad HostPattern.
 					LogHelper.log(e);
-					continue;
+					if (isHintValid(hint))
+						throw new BadHostnameException("Invalid virtual host suffix was provided. Contact your administrator.", e);
+					throw new BadHostnameException("Invalid host hint. Only URI hostname characters are permitted.", e);
 				}
 			}
 
@@ -205,6 +209,15 @@ public class SiteHostingService implements ISiteHostingService {
 				throw new NoMoreHostsException("No more hosts available");
 			}
 			return result;
+		}
+	}
+
+	private boolean isHintValid(String hint) {
+		try {
+			new URI("http", null, hint, -1, null, null, null);
+			return true;
+		} catch (URISyntaxException e) {
+			return false;
 		}
 	}
 
