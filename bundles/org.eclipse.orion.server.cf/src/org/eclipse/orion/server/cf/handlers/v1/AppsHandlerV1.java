@@ -10,14 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
-import org.eclipse.orion.server.core.IOUtilities;
-
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
@@ -27,6 +27,7 @@ import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
+import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
@@ -49,7 +50,18 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 
 	@Override
 	protected CFJob handleGet(App app, HttpServletRequest request, HttpServletResponse response, final String path) {
-		//		final String contentLocation = IOUtilities.getQueryParameter(request, ProtocolConstants.KEY_CONTENT_LOCATION);
+
+		final String encodedContentLocation = IOUtilities.getQueryParameter(request, ProtocolConstants.KEY_CONTENT_LOCATION);
+		String contentLocation = null;
+		if (encodedContentLocation != null) {
+			try {
+				contentLocation = ServletResourceHandler.toOrionLocation(request, URLDecoder.decode(encodedContentLocation, "UTF8"));
+			} catch (UnsupportedEncodingException e) {
+				// do nothing
+			}
+		}
+		final String finalContentLocation = contentLocation;
+
 		final String encodedName = IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_NAME);
 		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
 
@@ -57,18 +69,37 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 			@Override
 			protected IStatus performJob() {
 				try {
-					String name = null;
-					if (encodedName != null)
-						name = URLDecoder.decode(encodedName, "UTF8");
-
 					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
 					IStatus result = computeTarget.doIt();
 					if (!result.isOK())
 						return result;
 					Target target = computeTarget.getTarget();
 
-					if (name != null) {
+					if (encodedName != null) {
+						String name = URLDecoder.decode(encodedName, "UTF8");
 						return new GetAppCommand(target, name).doIt();
+					} else if (encodedContentLocation != null) {
+						if (finalContentLocation == null)
+							return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Can not determine the application name", null);
+
+						/* parse the application manifest */
+						String manifestAppName = null;
+						ParseManifestCommand parseManifestCommand = new ParseManifestCommand(target, this.userId, finalContentLocation);
+						IStatus status = parseManifestCommand.doIt();
+						if (!status.isOK())
+							return status;
+
+						/* get the manifest name */
+						ManifestParseTree manifest = parseManifestCommand.getManifest();
+						if (manifest != null) {
+							ManifestParseTree applications = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS);
+							if (applications.getChildren().size() > 0) {
+								manifestAppName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
+								return new GetAppCommand(target, manifestAppName).doIt();
+							}
+						}
+
+						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Can not determine the application name", null);
 					}
 
 					return getApps(target);
