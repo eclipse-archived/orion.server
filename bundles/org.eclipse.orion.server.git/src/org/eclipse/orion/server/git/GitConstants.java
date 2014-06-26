@@ -27,6 +27,8 @@ public class GitConstants {
 
 	public static final String KEY_INDEX = "IndexLocation"; //$NON-NLS-1$
 
+	public static final String KEY_IGNORE = "IgnoreLocation"; //$NON-NLS-1$
+
 	public static final String KEY_COMMIT = "CommitLocation"; //$NON-NLS-1$
 
 	public static final String KEY_REMOTE = "RemoteLocation"; //$NON-NLS-1$

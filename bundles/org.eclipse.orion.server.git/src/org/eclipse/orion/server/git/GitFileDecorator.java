@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git;
 
-import org.eclipse.orion.server.core.IWebResourceDecorator;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -147,6 +145,11 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		path = new Path(GitServlet.GIT_URI + '/' + Index.RESOURCE).append(targetPath);
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_INDEX, link);
+
+		// add Git Ignore URI
+		path = new Path(GitServlet.GIT_URI + '/' + Ignore.RESOURCE).append(targetPath);
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
+		gitSection.put(GitConstants.KEY_IGNORE, link);
 
 		// add Git HEAD URI
 		path = new Path(GitServlet.GIT_URI + '/' + Commit.RESOURCE).append(Constants.HEAD).append(targetPath);
