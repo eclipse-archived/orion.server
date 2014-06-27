@@ -18,15 +18,24 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.core.filesystem.*;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.Slug;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Handles HTTP requests against directories for eclipse web protocol version
@@ -160,10 +169,17 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			boolean allowOverwrite = (options & CREATE_NO_OVERWRITE) == 0;
 			int efsOptions = allowOverwrite ? EFS.OVERWRITE : EFS.NONE;
 			try {
-				if (isCopy)
+				if (isCopy) {
 					source.copy(toCreate, efsOptions, null);
-				else
+				} else {
 					source.move(toCreate, efsOptions, null);
+					// Path format is /file/workspaceId/projectId/[location to folder]
+					Path path = new Path(locationString);
+					if (path.segmentCount() == 3 && path.segment(0).equals("file")) {
+						// The folder is a project, remove the metadata
+						OrionConfiguration.getMetaStore().deleteProject(path.segment(1), source.getName());
+					}
+				}
 			} catch (CoreException e) {
 				if (!source.fetchInfo(EFS.NONE, null).exists()) {
 					statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("Source does not exist: ", locationString), e));
