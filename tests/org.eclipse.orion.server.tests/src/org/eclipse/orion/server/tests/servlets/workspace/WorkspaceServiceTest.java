@@ -281,6 +281,61 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	}
 
 	@Test
+	public void testMoveProjectToFolder() throws IOException, SAXException, JSONException {
+		//create workspace
+		String workspaceName = WorkspaceServiceTest.class.getName();
+		URI workspaceLocation = createWorkspace(workspaceName);
+
+		//create a source project
+		String projectName = "Source Project";
+		WebRequest request = getCreateProjectRequest(workspaceLocation, projectName, null);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String sourceLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+
+		// create a destination project
+		String destinationName = "Destination Project";
+		request = getCreateProjectRequest(workspaceLocation, destinationName, null);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		String destinationLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+
+		// Current location path: /workspace/{workspace-name}/project/{project-name}/
+		// Need to change it to: /file/{workspace-name}/{project-name}/
+		Path sourcePath = new Path(sourceLocation);
+		sourcePath = (Path) new Path("/file/").append(sourcePath.segment(1)).append(sourcePath.segment(3));
+		Path destinationPath = new Path(destinationLocation);
+		destinationPath = (Path) new Path("/file/").append(destinationPath.segment(1)).append(destinationPath.segment(3));
+
+		// Final path should be: {destination}/{source-name}
+		Path expectedPath = (Path) destinationPath.append(sourcePath.segment(2));
+
+		// move source project inside destination project
+		JSONObject requestObject = new JSONObject();
+		requestObject.put("Location", sourcePath.toString());
+		requestObject.put("Name", projectName);
+		request = getPostFilesRequest(destinationPath.toString(), requestObject.toString(), projectName);
+		request.setHeaderField(ProtocolConstants.HEADER_CREATE_OPTIONS, "move");
+		response = webConversation.getResponse(request);
+
+		//assert the move took effect
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		destinationLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		assertEquals(destinationLocation, expectedPath.toString());
+
+		// Assert the project has been removed from the workspace
+		request = new GetMethodWebRequest(addSchemeHostPort(workspaceLocation).toString());
+		setAuthentication(request);
+		response = webConversation.getResponse(request);
+		JSONObject workspace = new JSONObject(response.getText());
+		assertNotNull(workspace);
+		JSONArray projects = workspace.getJSONArray(ProtocolConstants.KEY_PROJECTS);
+		assertEquals(1, projects.length());
+		JSONObject project = projects.getJSONObject(0);
+		assertEquals(destinationName, project.get("Id"));
+	}
+
+	@Test
 	public void testCopyProjectNonDefaultLocation() throws IOException, SAXException, JSONException {
 		//create workspace
 		String workspaceName = WorkspaceServiceTest.class.getName() + "#testCopyProjectNonDefaultLocation";
