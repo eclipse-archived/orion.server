@@ -52,9 +52,14 @@ public class LoginCommand implements ICFCommand {
 			GetMethod getMethod = new GetMethod(infoURI.toString());
 			getMethod.addRequestHeader(new Header("Accept", "application/json"));
 			getMethod.addRequestHeader(new Header("Content-Type", "application/json"));
-			CFActivator.getDefault().getHttpClient().executeMethod(getMethod);
 
-			String response = getMethod.getResponseBodyAsString();
+			String response;
+			try {
+				CFActivator.getDefault().getHttpClient().executeMethod(getMethod);
+				response = getMethod.getResponseBodyAsString();
+			} finally {
+				getMethod.releaseConnection();
+			}
 			JSONObject result = new JSONObject(response);
 
 			// login
@@ -73,16 +78,20 @@ public class LoginCommand implements ICFCommand {
 			postMethod.addParameter("username", this.username);
 			postMethod.addParameter("scope", "");
 
-			int code = CFActivator.getDefault().getHttpClient().executeMethod(postMethod);
-			response = postMethod.getResponseBodyAsString();
-			if (code != HttpServletResponse.SC_OK) {
-				try {
-					result = new JSONObject(response);
-					return new ServerStatus(Status.ERROR, code, "", result, null);
-				} catch (Exception e) {
-					result = null;
-					return new ServerStatus(Status.ERROR, code, "Unexpected error", null);
+			try {
+				int code = CFActivator.getDefault().getHttpClient().executeMethod(postMethod);
+				response = postMethod.getResponseBodyAsString();
+				if (code != HttpServletResponse.SC_OK) {
+					try {
+						result = new JSONObject(response);
+						return new ServerStatus(Status.ERROR, code, "", result, null);
+					} catch (Exception e) {
+						result = null;
+						return new ServerStatus(Status.ERROR, code, "Unexpected error", null);
+					}
 				}
+			} finally {
+				postMethod.releaseConnection();
 			}
 
 			target.getCloud().setAccessToken(new JSONObject(response));

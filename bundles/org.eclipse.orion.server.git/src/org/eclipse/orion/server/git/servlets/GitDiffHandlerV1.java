@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import org.eclipse.orion.server.core.IOUtilities;
-
 import java.io.*;
 import java.net.URI;
 import java.util.*;
@@ -35,6 +33,7 @@ import org.eclipse.jgit.treewalk.*;
 import org.eclipse.jgit.treewalk.filter.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.GitConstants;
@@ -282,9 +281,13 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 
 	private String fetchPatchContentFromUrl(final String url) throws IOException {
 		GetMethod m = new GetMethod(url);
-		getHttpClient().executeMethod(m);
-		if (m.getStatusCode() == HttpStatus.SC_OK) {
-			return IOUtilities.toString(m.getResponseBodyAsStream());
+		try {
+			getHttpClient().executeMethod(m);
+			if (m.getStatusCode() == HttpStatus.SC_OK) {
+				return IOUtilities.toString(m.getResponseBodyAsStream());
+			}
+		} finally {
+			m.releaseConnection();
 		}
 		return null;
 	}
