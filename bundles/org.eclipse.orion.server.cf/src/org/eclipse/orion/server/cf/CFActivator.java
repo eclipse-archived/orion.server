@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf;
 
+import org.apache.commons.httpclient.params.HttpClientParams;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.eclipse.orion.server.cf.utils.TargetRegistry;
@@ -76,6 +78,8 @@ public class CFActivator implements BundleActivator {
 	public synchronized HttpClient getHttpClient() {
 		//see http://hc.apache.org/httpclient-3.x/threading.html
 		MultiThreadedHttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
-		return new HttpClient(connectionManager);
+		HttpClientParams clientParams = new HttpClientParams();
+		clientParams.setConnectionManagerTimeout(300000); // 5 minutes
+		return new HttpClient(clientParams, connectionManager);
 	}
 }
