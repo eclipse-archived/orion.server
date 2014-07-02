@@ -16,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -49,7 +50,11 @@ public class TransferTest extends FileSystemTest {
 	}
 
 	private void doImport(File source, long length, String location, String contentType) throws FileNotFoundException, IOException, SAXException {
-		if (source.length() == 0) {
+		doImport(new BufferedInputStream(new FileInputStream(source)), source.length(), location, contentType);
+	}
+
+	private void doImport(InputStream input, long length, String location, String contentType) throws FileNotFoundException, IOException, SAXException {
+		if (length == 0) {
 			PutMethodWebRequest put = new PutMethodWebRequest(location, new ByteArrayInputStream(new byte[0], 0, 0), contentType);
 			put.setHeaderField("Content-Range", "bytes 0-0/0");
 			put.setHeaderField("Content-Length", "0");
@@ -61,7 +66,7 @@ public class TransferTest extends FileSystemTest {
 		}
 		//repeat putting chunks until done
 		byte[] chunk = new byte[64 * 1024];
-		InputStream in = new BufferedInputStream(new FileInputStream(source));
+		InputStream in = new BufferedInputStream(input);
 		int chunkSize = 0;
 		int totalTransferred = 0;
 		while ((chunkSize = in.read(chunk, 0, chunk.length)) > 0) {
@@ -288,6 +293,26 @@ public class TransferTest extends FileSystemTest {
 		assertTrue(checkContentEquals(source, directoryPath + "/client.zip"));
 	}
 
+	/**
+	 * Creates a temporary file, optionally writing the given contents to it.
+	 * 
+	 * By creating test artifacts that contain DBCS characters in the filename at runtime, instead of storing
+	 * them in the repo, we avoid issues with EGit on Mac OS X. Workaround for https://bugs.eclipse.org/bugs/show_bug.cgi?id=434337
+	 * 
+	 * Caller is responsible for deleting the returned file when it is no longer needed.
+	 * @param filename
+	 * @param contents File contents (UTF-8)
+	 * @return The temp file
+	 */
+	private File createTempFile(String filename, String contents) throws IOException {
+		java.nio.file.Path tempfilePath = Files.createTempFile(filename, null);
+		File tempFile = tempfilePath.toFile();
+		if (contents != null) {
+			IOUtilities.pipe(IOUtilities.toInputStream(contents), new FileOutputStream(tempFile), true, true);
+		}
+		return tempFile;
+	}
+
 	@Test
 	public void testImportEmojiFilename() throws CoreException, IOException, SAXException, URISyntaxException {
 		//create a directory to upload to
@@ -300,29 +325,36 @@ public class TransferTest extends FileSystemTest {
 		// U+1F431: CAT FACE ("\ud83d\udc31")
 		// U+1F435: MONKEY FACE ("\ud83d\udc35")
 		String filename = "\ud83d\ude0a\ud83d\udc31\ud83d\udc35.txt";
-		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/" + filename);
-		File source = new File(FileLocator.toFileURL(entry).getPath());
-		long length = source.length();
-		String importPath = getImportRequestPath(directoryPath);
-		PostMethodWebRequest request = new PostMethodWebRequest(importPath);
-		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
-		request.setHeaderField("X-Xfer-Options", "raw");
+		String contents = "Emoji characters: \ud83d\ude0a\ud83d\udc31\ud83d\udc35";
+		File source = null;
+		try {
+			source = createTempFile(filename, contents);
+			long length = source.length();
 
-		request.setHeaderField("Slug", Slug.encode(filename));
-		setAuthentication(request);
-		WebResponse postResponse = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, postResponse.getResponseCode());
-		String location = postResponse.getHeaderField("Location");
-		assertNotNull(location);
-		URI importURI = URIUtil.fromString(importPath);
-		location = importURI.resolve(location).toString();
+			String importPath = getImportRequestPath(directoryPath);
+			PostMethodWebRequest request = new PostMethodWebRequest(importPath);
+			request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
+			request.setHeaderField("X-Xfer-Options", "raw");
 
-		doImport(source, length, location, "text/plain");
+			request.setHeaderField("Slug", Slug.encode(filename));
+			setAuthentication(request);
+			WebResponse postResponse = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, postResponse.getResponseCode());
+			String location = postResponse.getHeaderField("Location");
+			assertNotNull(location);
+			URI importURI = URIUtil.fromString(importPath);
+			location = importURI.resolve(location).toString();
 
-		//assert the file is present in the workspace
-		assertTrue(checkFileExists(directoryPath + File.separator + filename));
-		//assert that imported file has same content as original client.zip
-		assertTrue(checkContentEquals(source, directoryPath + File.separator + filename));
+			doImport(source, length, location, "text/plain");
+
+			//assert the file is present in the workspace
+			assertTrue(checkFileExists(directoryPath + File.separator + filename));
+			//assert that imported file has same content as original client.zip
+			assertTrue(checkContentEquals(source, directoryPath + File.separator + filename));
+		} finally {
+			// Delete the temp file
+			FileUtils.deleteQuietly(source);
+		}
 	}
 
 	@Test
@@ -334,29 +366,34 @@ public class TransferTest extends FileSystemTest {
 		//start the import
 		// file with DBCS character in the filename.
 		String filename = "\u3042.txt";
-		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/" + filename);
-		File source = new File(FileLocator.toFileURL(entry).getPath());
-		long length = source.length();
-		String importPath = getImportRequestPath(directoryPath);
-		PostMethodWebRequest request = new PostMethodWebRequest(importPath);
-		request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
-		request.setHeaderField("X-Xfer-Options", "raw");
+		File source = null;
+		try {
+			source = createTempFile(filename, "No content");
+			long length = source.length();
+			String importPath = getImportRequestPath(directoryPath);
+			PostMethodWebRequest request = new PostMethodWebRequest(importPath);
+			request.setHeaderField("X-Xfer-Content-Length", Long.toString(length));
+			request.setHeaderField("X-Xfer-Options", "raw");
 
-		request.setHeaderField("Slug", Slug.encode(filename));
-		setAuthentication(request);
-		WebResponse postResponse = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, postResponse.getResponseCode());
-		String location = postResponse.getHeaderField("Location");
-		assertNotNull(location);
-		URI importURI = URIUtil.fromString(importPath);
-		location = importURI.resolve(location).toString();
+			request.setHeaderField("Slug", Slug.encode(filename));
+			setAuthentication(request);
+			WebResponse postResponse = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, postResponse.getResponseCode());
+			String location = postResponse.getHeaderField("Location");
+			assertNotNull(location);
+			URI importURI = URIUtil.fromString(importPath);
+			location = importURI.resolve(location).toString();
 
-		doImport(source, length, location, "text/plain");
+			doImport(source, length, location, "text/plain");
 
-		//assert the file is present in the workspace
-		assertTrue(checkFileExists(directoryPath + File.separator + filename));
-		//assert that imported file has same content as original client.zip
-		assertTrue(checkContentEquals(source, directoryPath + File.separator + filename));
+			//assert the file is present in the workspace
+			assertTrue(checkFileExists(directoryPath + File.separator + filename));
+			//assert that imported file has same content as original client.zip
+			assertTrue(checkContentEquals(source, directoryPath + File.separator + filename));
+		} finally {
+			// Delete the temp file
+			FileUtils.deleteQuietly(source);
+		}
 	}
 
 	@Test
