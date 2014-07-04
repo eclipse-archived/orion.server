@@ -50,11 +50,7 @@ public class TransferTest extends FileSystemTest {
 	}
 
 	private void doImport(File source, long length, String location, String contentType) throws FileNotFoundException, IOException, SAXException {
-		doImport(new BufferedInputStream(new FileInputStream(source)), source.length(), location, contentType);
-	}
-
-	private void doImport(InputStream input, long length, String location, String contentType) throws FileNotFoundException, IOException, SAXException {
-		if (length == 0) {
+		if (source.length() == 0) {
 			PutMethodWebRequest put = new PutMethodWebRequest(location, new ByteArrayInputStream(new byte[0], 0, 0), contentType);
 			put.setHeaderField("Content-Range", "bytes 0-0/0");
 			put.setHeaderField("Content-Length", "0");
@@ -66,7 +62,7 @@ public class TransferTest extends FileSystemTest {
 		}
 		//repeat putting chunks until done
 		byte[] chunk = new byte[64 * 1024];
-		InputStream in = new BufferedInputStream(input);
+		InputStream in = new BufferedInputStream(new FileInputStream(source));
 		int chunkSize = 0;
 		int totalTransferred = 0;
 		while ((chunkSize = in.read(chunk, 0, chunk.length)) > 0) {
