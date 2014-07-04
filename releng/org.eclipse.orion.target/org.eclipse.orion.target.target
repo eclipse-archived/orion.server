@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?><?pde version="3.8"?><target name="org.eclipse.orion" sequenceNumber="9">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.jgit" version="3.4.0.201406041058-rc3"/>
-<repository location="http://download.eclipse.org/egit/staging/v3.4.0.201406041058-rc3"/>
+<unit id="org.eclipse.jgit" version="3.4.0.201406110918-r"/>
+<repository location="http://download.eclipse.org/egit/updates-3.4"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="ch.qos.logback.core" version="1.0.7.v20121108-1250"/>
