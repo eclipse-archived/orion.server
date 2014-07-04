@@ -69,18 +69,6 @@ public class HostingTest extends CoreSiteTest {
 	}
 
 	@Test
-	/**
-	 * Attempt to start a site with bad host hint, expect error
-	 */
-	public void testStartSiteBadHostHint() throws SAXException, IOException {
-		final String siteName = "My bad hostname";
-		final String hostHint = "hello_there";
-		WebRequest request = getCreateSiteRequest(siteName, null, null, hostHint);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
-	}
-
-	@Test
 	public void testStartSite() throws SAXException, IOException, JSONException, URISyntaxException {
 		JSONArray mappings = makeMappings(new String[][] {{"/", "/A/bogusWorkspacePath"}});
 		WebResponse siteResp = createSite("Fizz site", workspaceId, mappings, "fizzsite", null);
