@@ -16,7 +16,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.*;
 import java.net.*;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -301,8 +300,7 @@ public class TransferTest extends FileSystemTest {
 	 * @return The temp file
 	 */
 	private File createTempFile(String filename, String contents) throws IOException {
-		java.nio.file.Path tempfilePath = Files.createTempFile(filename, null);
-		File tempFile = tempfilePath.toFile();
+		File tempFile = File.createTempFile(filename, null);
 		if (contents != null) {
 			IOUtilities.pipe(IOUtilities.toInputStream(contents), new FileOutputStream(tempFile), true, true);
 		}
