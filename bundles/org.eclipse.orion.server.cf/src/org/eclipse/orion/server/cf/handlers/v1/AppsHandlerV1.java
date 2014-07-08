@@ -16,6 +16,7 @@ import java.net.URLDecoder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -23,6 +24,7 @@ import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
+import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
@@ -69,6 +71,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 			@Override
 			protected IStatus performJob() {
 				try {
+
 					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
 					IStatus result = computeTarget.doIt();
 					if (!result.isOK())
@@ -129,35 +132,88 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 		/* TODO: The force shouldn't be always with us */
 		final boolean force = jsonData.optBoolean(CFProtocolConstants.KEY_FORCE, true);
 
+		/* non-manifest deployment parameters */
+		final boolean nonManifest = jsonData.optBoolean(CFProtocolConstants.KEY_NON_MANIFEST, false);
+		final boolean persist = jsonData.optBoolean(CFProtocolConstants.KEY_PERSIST, false);
+
 		return new CFJob(request, false) {
+
 			@Override
 			protected IStatus performJob() {
+
 				try {
-					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
+
+					ComputeTargetCommand computeTarget = new ComputeTargetCommand(userId, targetJSON);
 					IStatus status = computeTarget.doIt();
 					if (!status.isOK())
 						return status;
+
 					Target target = computeTarget.getTarget();
 
+					/* manifest name has a higher priority than the parameter name */
+					String applicationName = appName;
+
 					/* parse the application manifest */
-					String manifestAppName = null;
-					ParseManifestCommand parseManifestCommand = null;
+					ManifestParseTree manifest = null;
+					IFileStore applicationStore = null;
+
 					if (contentLocation != null) {
-						parseManifestCommand = new ParseManifestCommand(target, this.userId, contentLocation);
+
+						ParseManifestCommand parseManifestCommand = new ParseManifestCommand(target, userId, contentLocation);
 						status = parseManifestCommand.doIt();
-						if (!status.isOK())
+
+						if (!status.isOK() && parseManifestCommand.hasMissingManifest()) {
+
+							/* try to generate an appropriate deployment description */
+							GetDeploymentDescriptionCommand deploymentDescriptionCommand = new GetDeploymentDescriptionCommand(target, userId, applicationName, contentLocation);
+							IStatus descriptionStatus = deploymentDescriptionCommand.doIt();
+							if (!descriptionStatus.isOK())
+								return status;
+
+							if (!nonManifest) {
+
+								/* client ordered a manifest deployment, without an actual manifest.
+								 * We recognized the application type and should indicate this fact. */
+
+								String applicationType = deploymentDescriptionCommand.getApplicationType();
+								String msg = NLS.bind("Could not find the application manifest. " + //
+										"Project contents indicate the following application type \"{0}\". " //
+										+ "Perhaps you wish to continue with a non-manifest deployment?", //
+										applicationType);
+
+								JSONObject response = new JSONObject();
+								response.put(CFProtocolConstants.V2_KEY_ERROR_CODE, "CF-MissingManifest");
+								response.put(CFProtocolConstants.V2_KEY_APPLICATION_TYPE, applicationType);
+								response.put(CFProtocolConstants.V2_KEY_ERROR_DESCRIPTION, msg);
+
+								return new ServerStatus(IStatus.WARNING, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, response, null);
+							}
+
+							/* parse using the deployment description */
+							parseManifestCommand = new ParseManifestCommand(target, userId, contentLocation, deploymentDescriptionCommand.getManifest());
+							status = parseManifestCommand.doIt();
+							if (!status.isOK())
+								return status;
+
+						} else if (!status.isOK())
 							return status;
 
-						/* get the manifest name */
-						ManifestParseTree manifest = parseManifestCommand.getManifest();
+						/* gather application deployment data */
+						manifest = parseManifestCommand.getManifest();
+						applicationStore = parseManifestCommand.getAppStore();
+
 						if (manifest != null) {
+
+							if (nonManifest && persist)
+								manifest.persist(applicationStore.getChild(ManifestConstants.MANIFEST_FILE_NAME));
+
 							ManifestParseTree applications = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS);
 							if (applications.getChildren().size() > 0)
-								manifestAppName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
+								applicationName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
 						}
 					}
 
-					GetAppCommand getAppCommand = new GetAppCommand(target, appName != null ? appName : manifestAppName);
+					GetAppCommand getAppCommand = new GetAppCommand(target, applicationName);
 					status = getAppCommand.doIt();
 					App app = getAppCommand.getApp();
 
@@ -170,7 +226,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 							return status;
 						return new StopAppCommand(target, app).doIt();
 					} else {
-						if (parseManifestCommand == null) {
+						if (manifest == null) {
 							String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
 							status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, null);
 							logger.error(msg);
@@ -178,27 +234,27 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						}
 					}
 
-					// push new application
+					/* push new application */
 					if (app == null)
 						app = new App();
 
-					app.setName(appName != null ? appName : manifestAppName);
-					app.setManifest(parseManifestCommand.getManifest());
-					app.setAppStore(parseManifestCommand.getAppStore());
+					app.setName(applicationName);
+					app.setManifest(manifest);
+					app.setAppStore(applicationStore);
 
 					status = new PushAppCommand(target, app, force).doIt();
 					if (!status.isOK())
 						return status;
 
-					// get the app again
+					/* get the application again */
 					getAppCommand = new GetAppCommand(target, app.getName());
 					getAppCommand.doIt();
 					app = getAppCommand.getApp();
-					app.setManifest(parseManifestCommand.getManifest());
+					app.setManifest(manifest);
 
 					new StartAppCommand(target, app).doIt();
-
 					return status;
+
 				} catch (Exception e) {
 					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);

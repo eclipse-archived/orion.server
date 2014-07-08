@@ -37,12 +37,22 @@ public class ParseManifestCommand extends AbstractCFCommand {
 
 	private ManifestParseTree manifest;
 	private IFileStore appStore;
+	private boolean missingManifest;
 
 	public ParseManifestCommand(Target target, String userId, String contentLocation) {
 		super(target);
 		this.userId = userId;
+		this.missingManifest = false;
 		this.contentLocation = contentLocation;
 		this.commandName = NLS.bind("Parse application manifest: {0}", contentLocation);
+	}
+
+	public ParseManifestCommand(Target target, String userId, String contentLocation, ManifestParseTree manifest) {
+		super(target);
+		this.userId = userId;
+		this.contentLocation = contentLocation;
+		this.commandName = NLS.bind("Parse application manifest: {0}", contentLocation);
+		this.manifest = manifest;
 	}
 
 	public ManifestParseTree getManifest() {
@@ -51,6 +61,10 @@ public class ParseManifestCommand extends AbstractCFCommand {
 
 	public IFileStore getAppStore() {
 		return appStore;
+	}
+
+	public boolean hasMissingManifest() {
+		return missingManifest;
 	}
 
 	/* checks whether the given path may be access by the user */
@@ -69,6 +83,8 @@ public class ParseManifestCommand extends AbstractCFCommand {
 		// Note: we are assuming the content path is inside a project folder
 		IPath manifestPath = contentPath.removeFirstSegments(2).append(ManifestConstants.MANIFEST_FILE_NAME);
 		String msg = "Failed to find /" + manifestPath + ". If the manifest is in a different folder, please select the manifest file or folder before deploying.";
+		missingManifest = true;
+
 		return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 	}
 
@@ -88,27 +104,29 @@ public class ParseManifestCommand extends AbstractCFCommand {
 				contentPath = contentPath.removeLastSegments(1);
 			}
 
-			if (fileStore == null) {
+			if (fileStore == null)
 				return cannotFindManifest(contentPath);
+
+			ManifestParseTree app = null;
+			if (manifest == null) {
+
+				/* lookup the manifest description */
+				IFileStore manifestStore = fileStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
+				if (!manifestStore.fetchInfo().exists())
+					return cannotFindManifest(contentPath);
+
+				/* parse within the project sandbox */
+				ProjectInfo project = OrionConfiguration.getMetaStore().readProject(contentPath.segment(0), contentPath.segment(1));
+				IFileStore projectStore = NewFileServlet.getFileStore(null, project);
+
+				/* parse the manifest */
+				URI targetURI = URIUtil.toURI(target.getUrl());
+				String targetBase = targetURI.getHost().substring(4);
+				manifest = ManifestUtils.parse(projectStore, manifestStore, targetBase);
 			}
-
-			/* lookup the manifest description */
-			IFileStore manifestStore = fileStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
-			if (!manifestStore.fetchInfo().exists()) {
-				return cannotFindManifest(contentPath);
-			}
-
-			/* parse within the project sandbox */
-			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(contentPath.segment(0), contentPath.segment(1));
-			IFileStore projectStore = NewFileServlet.getFileStore(null, project);
-
-			/* parse the manifest */
-			URI targetURI = URIUtil.toURI(target.getUrl());
-			String targetBase = targetURI.getHost().substring(4);
-			ManifestParseTree manifest = ManifestUtils.parse(projectStore, manifestStore, targetBase);
-			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
 
 			/* optional */
+			app = manifest.get("applications").get(0); //$NON-NLS-1$
 			ManifestParseTree pathNode = app.getOpt(CFProtocolConstants.V2_KEY_PATH);
 			String path = (pathNode != null) ? pathNode.getValue() : ""; //$NON-NLS-1$
 
@@ -128,8 +146,6 @@ public class ParseManifestCommand extends AbstractCFCommand {
 					String msg = NLS.bind("Failed to find application content due to incorrect path parameter: {0}", appStorePath);
 					return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 				}
-
-				this.manifest = manifest;
 
 			} catch (Exception ex) {
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Failed to locate application contents as specified in the manifest.", null);

@@ -10,16 +10,20 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.manifest.v2.utils;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.manifest.v2.*;
+import org.eclipse.orion.server.cf.service.DeploymentDescription;
 import org.eclipse.osgi.util.NLS;
 
 public class ManifestUtils {
+
+	private static final Pattern NON_LATIN_PATTERN = Pattern.compile("[^\\w-]");
+	private static final Pattern WHITESPACE_PATTERN = Pattern.compile("[\\s]");
 
 	public static final String[] RESERVED_PROPERTIES = {//
 	"env", // //$NON-NLS-1$
@@ -39,21 +43,11 @@ public class ManifestUtils {
 	/**
 	 * Inner helper method parsing single manifests with additional semantic analysis.
 	 */
-	private static ManifestParseTree parseManifest(IFileStore manifestFileStore, String targetBase) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException {
-
-		/* basic sanity checks */
-		IFileInfo manifestFileInfo = manifestFileStore.fetchInfo();
-		if (!manifestFileInfo.exists() || manifestFileInfo.isDirectory())
-			throw new IOException(ManifestConstants.MISSING_OR_INVALID_MANIFEST);
-
-		if (manifestFileInfo.getLength() == EFS.NONE || manifestFileInfo.getLength() > ManifestConstants.MANIFEST_SIZE_LIMIT)
-			throw new IOException(ManifestConstants.MANIFEST_FILE_SIZE_EXCEEDED);
-
-		InputStream inputStream = manifestFileStore.openInputStream(EFS.NONE, null);
+	private static ManifestParseTree parseManifest(InputStream manifestInputStream, String targetBase) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException {
 
 		/* run preprocessor */
 		ManifestPreprocessor preprocessor = new ManifestPreprocessor();
-		List<InputLine> inputLines = preprocessor.process(inputStream);
+		List<InputLine> inputLines = preprocessor.process(manifestInputStream);
 
 		/* run parser */
 		ManifestTokenizer tokenizer = new ManifestTokenizer(inputLines);
@@ -75,7 +69,7 @@ public class ManifestUtils {
 	}
 
 	/**
-	 * Utility method wrapping manifest parse process including inheritance and additional semantic analysis.
+	 * Utility method wrapping the manifest parse process including inheritance and additional semantic analysis.
 	 * @param sandbox The file store used to limit manifest inheritance, i.e. each parent manifest has to be a
 	 *  transitive child of the sandbox.
 	 * @param manifestStore Manifest file store used to fetch the manifest contents.
@@ -91,7 +85,17 @@ public class ManifestUtils {
 	 * @throws InvalidAccessException
 	 */
 	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore, String targetBase, List<IPath> manifestList) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException, InvalidAccessException {
-		ManifestParseTree manifest = parseManifest(manifestStore, targetBase);
+
+		/* basic sanity checks */
+		IFileInfo manifestFileInfo = manifestStore.fetchInfo();
+		if (!manifestFileInfo.exists() || manifestFileInfo.isDirectory())
+			throw new IOException(ManifestConstants.MISSING_OR_INVALID_MANIFEST);
+
+		if (manifestFileInfo.getLength() == EFS.NONE || manifestFileInfo.getLength() > ManifestConstants.MANIFEST_SIZE_LIMIT)
+			throw new IOException(ManifestConstants.MANIFEST_FILE_SIZE_EXCEEDED);
+
+		InputStream manifestInputStream = manifestStore.openInputStream(EFS.NONE, null);
+		ManifestParseTree manifest = parseManifest(manifestInputStream, targetBase);
 
 		if (!manifest.has(ManifestConstants.INHERIT))
 			/* nothing to do */
@@ -152,6 +156,36 @@ public class ManifestUtils {
 	}
 
 	/**
+	 * Utility method wrapping the non-manifest, deployment description parse process.
+	 * @param deploymentDescription The single application, non-manifest deployment description.
+	 * @param targetBase Cloud foundry target base used to resolve manifest symbols.
+	 * @return An intermediate manifest tree representation.
+	 * @throws CoreException
+	 * @throws IOException
+	 * @throws TokenizerException
+	 * @throws ParserException
+	 * @throws AnalyzerException
+	 */
+	public static ManifestParseTree parse(DeploymentDescription deploymentDescription, String targetBase) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException {
+		InputStream manifestInputStream = new ByteArrayInputStream(deploymentDescription.toString().getBytes());
+		return parseManifest(manifestInputStream, targetBase);
+	}
+
+	/**
+	 * Helper method for {@link #parse(DeploymentDescription, String)}
+	 * @param deploymentDescription
+	 * @return
+	 * @throws CoreException
+	 * @throws IOException
+	 * @throws TokenizerException
+	 * @throws ParserException
+	 * @throws AnalyzerException
+	 */
+	public static ManifestParseTree parse(DeploymentDescription deploymentDescription) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException {
+		return parse(deploymentDescription, null);
+	}
+
+	/**
 	 * Normalizes the string memory measurement to a MB integer value.
 	 * @param memory Manifest memory measurement.
 	 * @return Normalized MB integer value.
@@ -172,5 +206,16 @@ public class ManifestUtils {
 
 		/* return default memory value, i.e. 1024 MB */
 		return 1024;
+	}
+
+	/**
+	 * Creates a slug for the given input. Used to create default
+	 * host names based on application names.
+	 * @param input Input string, e. g. application name.
+	 * @return Input slug.
+	 */
+	public static String slugify(String input) {
+		String intermediate = WHITESPACE_PATTERN.matcher(input).replaceAll("-");
+		return NON_LATIN_PATTERN.matcher(intermediate).replaceAll("").toLowerCase();
 	}
 }

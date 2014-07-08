@@ -10,8 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.manifest.v2;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.server.core.IOUtilities;
 
 /**
  * Intermediate manifest file representation.
@@ -196,6 +201,27 @@ public class ManifestParseTree {
 		}
 
 		return sb.toString();
+	}
+
+	/**
+	 * Persists the manifest contents in the given file store. 
+	 * Note that this method overrides the previous contents if necessary.
+	 * @param manifestStore File store where the manifest contents are to be persisted.
+	 * @throws CoreException
+	 * @throws IOException
+	 */
+	public void persist(IFileStore manifestStore) throws CoreException, IOException {
+		OutputStream out = manifestStore.openOutputStream(EFS.OVERWRITE, null);
+		try {
+
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(out));
+			writer.append(toString());
+			writer.flush();
+
+		} finally {
+			if (out != null)
+				IOUtilities.safeClose(out);
+		}
 	}
 
 	public boolean isRoot() {

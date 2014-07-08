@@ -10,30 +10,37 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf;
 
-import org.apache.commons.httpclient.params.HttpClientParams;
-
+import java.util.Hashtable;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.params.HttpClientParams;
+import org.eclipse.orion.server.cf.service.*;
 import org.eclipse.orion.server.cf.utils.TargetRegistry;
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
+import org.osgi.framework.*;
+import org.osgi.util.tracker.ServiceTracker;
 
 /**
  * The activator class controls the plug-in life cycle
  */
 public class CFActivator implements BundleActivator {
-
-	// The plug-in ID
 	public static final String PI_CF = "org.eclipse.orion.server.cf"; //$NON-NLS-1$
 
-	// The shared instance
-	private static CFActivator plugin;
-
-	private BundleContext bundleContext;
+	private static CFActivator instance;
+	private static BundleContext context;
 
 	private TargetRegistry targetRegistry = new TargetRegistry();
+	private ServiceTracker<DeploymentService, IDeploymentService> serviceTracker;
 
-	public CFActivator() {
+	public IDeploymentService getDeploymentService() {
+		return serviceTracker.getService();
+	}
+
+	private void registerDeploymentService() {
+
+		/* register the service with minimum priority */
+		Hashtable<String, Integer> dictionary = new Hashtable<String, Integer>();
+		dictionary.put(Constants.SERVICE_RANKING, Integer.MIN_VALUE);
+		context.registerService(IDeploymentService.class.getName(), new DeploymentService(), dictionary);
 	}
 
 	/*
@@ -43,8 +50,15 @@ public class CFActivator implements BundleActivator {
 	 * org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
 	 */
 	public void start(BundleContext context) throws Exception {
-		plugin = this;
-		this.bundleContext = context;
+		CFActivator.instance = this;
+		CFActivator.context = context;
+
+		/* register the default deployment service */
+		registerDeploymentService();
+
+		DeploymentServiceTracker customer = new DeploymentServiceTracker(context);
+		serviceTracker = new ServiceTracker<DeploymentService, IDeploymentService>(context, IDeploymentService.class.getName(), customer);
+		serviceTracker.open();
 	}
 
 	/*
@@ -54,16 +68,17 @@ public class CFActivator implements BundleActivator {
 	 * org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
 	 */
 	public void stop(BundleContext context) throws Exception {
-		this.bundleContext = null;
-		plugin = null;
+		CFActivator.context = null;
+		CFActivator.instance = null;
+		serviceTracker.close();
 	}
 
 	public static CFActivator getDefault() {
-		return plugin;
+		return instance;
 	}
 
 	public BundleContext getContext() {
-		return bundleContext;
+		return context;
 	}
 
 	public TargetRegistry getTargetRegistry() {

@@ -64,6 +64,10 @@ public class CFProtocolConstants {
 
 	public static final String KEY_INVALIDATE = "Invalidate"; //$NON-NLS-1$
 
+	public static final String KEY_NON_MANIFEST = "Non-Manifest"; //$NON-NLS-1$
+
+	public static final String KEY_PERSIST = "Persist"; //$NON-NLS-1$
+
 	// CF REST API protocol constants
 
 	public static final String V2_KEY_METADATA = "metadata"; //$NON-NLS-1$
@@ -101,6 +105,8 @@ public class CFProtocolConstants {
 	public static final String V2_KEY_DOMAIN_GUID = "domain_guid"; //$NON-NLS-1$
 
 	public static final String V2_KEY_APPLICATION = "application"; //$NON-NLS-1$
+
+	public static final String V2_KEY_APPLICATION_TYPE = "applicationType"; //$NON-NLS-1$
 
 	public static final String V2_KEY_STATUS = "status"; //$NON-NLS-1$
 

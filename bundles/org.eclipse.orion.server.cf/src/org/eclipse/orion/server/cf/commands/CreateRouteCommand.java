@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
+import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -88,7 +89,7 @@ public class CreateRouteCommand extends AbstractCFCommand {
 
 			/* if none provided, generate a default one */
 			ManifestParseTree hostNode = app.getOpt(CFProtocolConstants.V2_KEY_HOST);
-			appHost = (hostNode != null) ? hostNode.getValue() : (appName + "-" + UUID.randomUUID()); //$NON-NLS-1$
+			appHost = (hostNode != null) ? hostNode.getValue() : (ManifestUtils.slugify(appName) + "-" + UUID.randomUUID()); //$NON-NLS-1$
 
 			return Status.OK_STATUS;
 
