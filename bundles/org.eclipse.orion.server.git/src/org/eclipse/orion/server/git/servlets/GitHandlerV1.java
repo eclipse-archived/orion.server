@@ -30,6 +30,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<String> configHandlerV1;
 	private ServletResourceHandler<String> diffHandlerV1;
 	private ServletResourceHandler<String> indexHandlerV1;
+	private ServletResourceHandler<String> ignoreHandlerV1;
 	private ServletResourceHandler<String> remoteHandlerV1;
 	private ServletResourceHandler<String> statusHandlerV1;
 	private ServletResourceHandler<String> tagHandlerV1;
@@ -43,6 +44,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 		configHandlerV1 = new GitConfigHandlerV1(statusHandler);
 		diffHandlerV1 = new GitDiffHandlerV1(statusHandler);
 		indexHandlerV1 = new GitIndexHandlerV1(statusHandler);
+		ignoreHandlerV1 = new GitIgnoreHandlerV1(statusHandler);
 		remoteHandlerV1 = new GitRemoteHandlerV1(statusHandler);
 		statusHandlerV1 = new GitStatusHandlerV1(statusHandler);
 		tagHandlerV1 = new GitTagHandlerV1(statusHandler);
@@ -97,6 +99,8 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 			return tagHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(Blame.RESOURCE)) {
 			return blameHandlerV1.handleRequest(request, response, pathString);
+		} else if (infoParts[1].equals(Ignore.RESOURCE)) {
+			return ignoreHandlerV1.handleRequest(request, response, pathString);
 		}
 		return false;
 	}
