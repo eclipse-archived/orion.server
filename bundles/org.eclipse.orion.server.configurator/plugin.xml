@@ -413,7 +413,7 @@
    <extension
          point="org.eclipse.equinox.preferences.preferences">
       <initializer
-            class="org.eclipse.orion.server.configurator.configuration.OrionPreferenceInitializer">
+            class="org.eclipse.orion.server.configurator.OrionPreferenceInitializer">
       </initializer>
    </extension>
 </plugin>

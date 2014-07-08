@@ -12,7 +12,6 @@ package org.eclipse.orion.server.authentication.basic;
 
 import java.io.IOException;
 import java.util.Locale;
-import java.util.Properties;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -40,15 +39,15 @@ public class BasicAuthenticationService implements IAuthenticationService {
 		super();
 	}
 
-	public String authenticateUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
-		String user = getAuthenticatedUser(req, resp, properties);
+	public String authenticateUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		String user = getAuthenticatedUser(req, resp);
 		if (user == null) {
 			setNotAuthenticated(resp);
 		}
 		return user;
 	}
 
-	public String getAuthenticatedUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
+	public String getAuthenticatedUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		String authHead = req.getHeader("Authorization"); //$NON-NLS-1$
 
 		if (authHead != null && authHead.toUpperCase(Locale.ENGLISH).startsWith(getAuthType())) {
@@ -103,10 +102,6 @@ public class BasicAuthenticationService implements IAuthenticationService {
 		return null;
 	}
 
-	public void configure(Properties properties) {
-		// empty block
-	}
-
 	public void bindUserAdmin(IOrionCredentialsService newUserAdmin) {
 		BasicAuthenticationService.userAdmin = newUserAdmin;
 	}
@@ -121,7 +116,7 @@ public class BasicAuthenticationService implements IAuthenticationService {
 		this.registered = registered;
 	}
 
-	public boolean getRegistered() {
+	public boolean isRegistered() {
 		return registered;
 	}
 

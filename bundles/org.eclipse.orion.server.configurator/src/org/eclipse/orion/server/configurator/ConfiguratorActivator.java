@@ -11,13 +11,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.configurator;
 
-import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.DEFAULT_AUTHENTICATION_NAME;
-
+import java.util.*;
 import org.eclipse.orion.server.authentication.IAuthenticationService;
 import org.eclipse.orion.server.authentication.NoneAuthenticationService;
-
-import org.osgi.framework.BundleContext;
-import java.util.*;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.*;
@@ -31,6 +27,7 @@ public class ConfiguratorActivator implements BundleActivator {
 	 * The symbolic id of this bundle.
 	 */
 	public static final String PI_CONFIGURATOR = "org.eclipse.orion.server.configurator"; //$NON-NLS-1$
+	public static final String DEFAULT_AUTHENTICATION_NAME = "FORM+OpenID"; //$NON-NLS-1$
 	/**
 	 * Service reference property indicating if the authentication service has been configured.
 	 */
@@ -42,55 +39,8 @@ public class ConfiguratorActivator implements BundleActivator {
 	private ServiceTracker<Location, Location> instanceLocationTracker;
 	private BundleContext bundleContext;
 
-	Filter getAuthFilter() throws InvalidSyntaxException {
-		StringBuilder sb = new StringBuilder("("); //$NON-NLS-1$
-		sb.append(ServerConstants.CONFIG_AUTH_NAME);
-		sb.append('=');
-		sb.append(getAuthName());
-		sb.append(')');
-		return FrameworkUtil.createFilter(sb.toString());
-	}
-
-	private class AuthServiceTracker extends ServiceTracker<IAuthenticationService, IAuthenticationService> {
-
-		public AuthServiceTracker(BundleContext context) throws InvalidSyntaxException {
-			super(context, getAuthFilter(), null);
-			// TODO: Filters are case sensitive, we should be too
-			if (NoneAuthenticationService.AUTH_TYPE.equalsIgnoreCase(getAuthName())) {
-				Dictionary<String, String> properties = new Hashtable<String, String>();
-				properties.put(ServerConstants.CONFIG_AUTH_NAME, getAuthName());
-				// TODO: shouldn't we always register the none-auth service?
-				context.registerService(IAuthenticationService.class, new NoneAuthenticationService(), properties);
-			}
-		}
-
-		@SuppressWarnings({"rawtypes", "unchecked"})
-		@Override
-		public IAuthenticationService addingService(ServiceReference<IAuthenticationService> reference) {
-			if ("true".equals(reference.getProperty(PROP_CONFIGURED))) //$NON-NLS-1$
-				return null;
-
-			IAuthenticationService authService = super.addingService(reference);
-			// TODO need to read auth properties from InstanceScope preferences
-			authService.configure(new Properties());
-
-			Dictionary dictionary = new Properties();
-			dictionary.put(PROP_CONFIGURED, "true"); //$NON-NLS-1$
-			if (getService() != null) {
-				getService().setRegistered(false);
-			}
-			authService.setRegistered(true);
-			context.registerService(IAuthenticationService.class.getName(), authService, dictionary);
-			return authService;
-		}
-	}
-
 	public static ConfiguratorActivator getDefault() {
 		return singleton;
-	}
-
-	public BundleContext getContext() {
-		return bundleContext;
 	}
 
 	public void start(BundleContext context) throws Exception {
@@ -122,7 +72,11 @@ public class ConfiguratorActivator implements BundleActivator {
 		}
 	}
 
-	protected Bundle getBundle(String symbolicName) {
+	public IAuthenticationService getAuthService() {
+		return authServiceTracker.getService();
+	}
+
+	Bundle getBundle(String symbolicName) {
 		PackageAdmin packageAdmin = packageAdminTracker.getService();
 		if (packageAdmin == null)
 			return null;
@@ -138,14 +92,7 @@ public class ConfiguratorActivator implements BundleActivator {
 		return null;
 	}
 
-	public IAuthenticationService getAuthService() {
-		return authServiceTracker.getService();
-	}
-
-	/**
-	 * Returns the platform instance location.
-	 */
-	public Location getInstanceLocation() {
+	Location getInstanceLocation() {
 		if (instanceLocationTracker == null) {
 			Filter filter;
 			try {
@@ -160,11 +107,55 @@ public class ConfiguratorActivator implements BundleActivator {
 		return instanceLocationTracker.getService();
 	}
 
+	String getProperty(String key) {
+		return bundleContext.getProperty(key);
+	}
+
 	String getAuthName() {
 		//lookup order is:
 		// 1: Defined preference called "orion.auth.name"
 		// 2: System property called "orion.tests.authtype"
 		// 3: Default to Form+OpenID
 		return PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_NAME, System.getProperty("orion.tests.authtype", DEFAULT_AUTHENTICATION_NAME)); //$NON-NLS-1$
+	}
+
+	Filter getAuthFilter() throws InvalidSyntaxException {
+		StringBuilder sb = new StringBuilder("("); //$NON-NLS-1$
+		sb.append(ServerConstants.CONFIG_AUTH_NAME);
+		sb.append('=');
+		sb.append(getAuthName());
+		sb.append(')');
+		return FrameworkUtil.createFilter(sb.toString());
+	}
+
+	private class AuthServiceTracker extends ServiceTracker<IAuthenticationService, IAuthenticationService> {
+
+		public AuthServiceTracker(BundleContext context) throws InvalidSyntaxException {
+			super(context, getAuthFilter(), null);
+			// TODO: Filters are case sensitive, we should be too
+			if (NoneAuthenticationService.AUTH_TYPE.equalsIgnoreCase(getAuthName())) {
+				Dictionary<String, String> properties = new Hashtable<String, String>();
+				properties.put(ServerConstants.CONFIG_AUTH_NAME, getAuthName());
+				// TODO: shouldn't we always register the none-auth service?
+				context.registerService(IAuthenticationService.class, new NoneAuthenticationService(), properties);
+			}
+		}
+
+		@SuppressWarnings({"rawtypes", "unchecked"})
+		@Override
+		public IAuthenticationService addingService(ServiceReference<IAuthenticationService> reference) {
+			if ("true".equals(reference.getProperty(PROP_CONFIGURED))) //$NON-NLS-1$
+				return null;
+
+			IAuthenticationService authService = super.addingService(reference);
+			Dictionary dictionary = new Properties();
+			dictionary.put(PROP_CONFIGURED, "true"); //$NON-NLS-1$
+			if (getService() != null) {
+				getService().setRegistered(false);
+			}
+			authService.setRegistered(true);
+			context.registerService(IAuthenticationService.class.getName(), authService, dictionary);
+			return authService;
+		}
 	}
 }

@@ -8,15 +8,14 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.configurator.configuration;
+package org.eclipse.orion.server.configurator;
 
-import org.eclipse.orion.server.core.IOUtilities;
-
-import java.io.*;
+import java.io.File;
 import java.net.URL;
+import org.eclipse.orion.server.core.IOUtilities;
+import java.io.*;
 import java.util.Properties;
 import org.eclipse.core.runtime.preferences.*;
-import org.eclipse.orion.server.configurator.ConfiguratorActivator;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.slf4j.Logger;
@@ -27,13 +26,14 @@ import org.slf4j.LoggerFactory;
  */
 public class OrionPreferenceInitializer extends AbstractPreferenceInitializer {
 	private static final String DEFAULT_CONFIG_FILE = "orion.conf"; //$NON-NLS-1$
+
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 
 	/**
 	 * Locate and return the server configuration file. Returns null if the file could not be found.
 	 */
-	private File findServerConfigFile() {
-		String location = ConfiguratorActivator.getDefault().getContext().getProperty(ServerConstants.PROP_CONFIG_FILE_LOCATION);
+	public File findServerConfigFile() {
+		String location = ConfiguratorActivator.getDefault().getProperty(ServerConstants.PROP_CONFIG_FILE_LOCATION);
 		if (location == null)
 			location = DEFAULT_CONFIG_FILE;
 
@@ -89,5 +89,4 @@ public class OrionPreferenceInitializer extends AbstractPreferenceInitializer {
 		logger.info("Server configuration file loaded from: " + propFile); //$NON-NLS-1$
 		return props;
 	}
-
 }

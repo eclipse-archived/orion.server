@@ -48,10 +48,6 @@ public class ManageOpenidsServlet extends HttpServlet {
 		this.authenticationService = formOpenIdAuthenticationService;
 	}
 
-	private String getConfiguredOpenIds() {
-		return (String) (authenticationService.getDefaultAuthenticationProperties() == null ? null : authenticationService.getDefaultAuthenticationProperties().get(OPENIDS_PROPERTY));
-	}
-
 	private static void writeOpenIdError(String error, HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (req.getParameter("redirect") == null) {
 			resp.setContentType("text/html; charset=UTF-8");
@@ -95,7 +91,7 @@ public class ManageOpenidsServlet extends HttpServlet {
 	
 	private List<OpendIdProviderDescription> getSupportedOpenids(HttpServletRequest req) {
 		List<OpendIdProviderDescription> openidProviders;
-		String customOpenids = req.getAttribute(OPENIDS_PROPERTY) == null ? getConfiguredOpenIds() : (String) req.getAttribute(OPENIDS_PROPERTY);
+		String customOpenids = (String) req.getAttribute(OPENIDS_PROPERTY);
 		if (customOpenids == null || customOpenids.trim().length() == 0) {
 			openidProviders = OpenIdHelper.getDefaultOpenIdProviders();
 		} else {

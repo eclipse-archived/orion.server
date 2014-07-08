@@ -30,24 +30,19 @@ import org.osgi.service.http.NamespaceException;
 
 public class FormOpenIdAuthenticationService implements IAuthenticationService {
 
-	private Properties defaultAuthenticationProperties;
 	public static final String OPENIDS_PROPERTY = "openids"; //$NON-NLS-1$
 
 	private boolean registered = false;
 
-	public Properties getDefaultAuthenticationProperties() {
-		return defaultAuthenticationProperties;
-	}
-
-	public String authenticateUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
-		String user = getAuthenticatedUser(req, resp, properties);
+	public String authenticateUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		String user = getAuthenticatedUser(req, resp);
 		if (user == null) {
-			setNotAuthenticated(req, resp, properties);
+			setNotAuthenticated(req, resp);
 		}
 		return user;
 	}
 
-	public String getAuthenticatedUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
+	public String getAuthenticatedUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		HttpSession s = req.getSession(true);
 		return (String) s.getAttribute("user");//$NON-NLS-1$
 	}
@@ -57,11 +52,7 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 		return "FORM"; //$NON-NLS-1$
 	}
 
-	public void configure(Properties properties) {
-		this.defaultAuthenticationProperties = properties;
-	}
-
-	private void setNotAuthenticated(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException {
+	private void setNotAuthenticated(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		resp.setHeader("WWW-Authenticate", HttpServletRequest.FORM_AUTH); //$NON-NLS-1$
 		resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
@@ -114,7 +105,7 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 		this.registered = registered;
 	}
 
-	public boolean getRegistered() {
+	public boolean isRegistered() {
 		return registered;
 	}
 }

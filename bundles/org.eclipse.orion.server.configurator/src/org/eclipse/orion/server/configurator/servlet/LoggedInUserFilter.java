@@ -29,7 +29,6 @@ import org.osgi.service.http.HttpContext;
 public class LoggedInUserFilter implements Filter {
 
 	private IAuthenticationService authenticationService;
-	private Properties authProperties;
 	private boolean redirect = true;
 
 	public void init(FilterConfig filterConfig) throws ServletException {
@@ -58,12 +57,12 @@ public class LoggedInUserFilter implements Filter {
 
 		String login;
 		if (redirect) {
-			login = authenticationService.authenticateUser(httpRequest, httpResponse, authProperties);
+			login = authenticationService.authenticateUser(httpRequest, httpResponse);
 			if (login == null) {
 				return;
 			}
 		} else {
-			login = authenticationService.getAuthenticatedUser(httpRequest, httpResponse, authProperties);
+			login = authenticationService.getAuthenticatedUser(httpRequest, httpResponse);
 			if (login == null) {
 				chain.doFilter(request, response);
 				return;

@@ -10,13 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.configurator;
 
-import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.HTTPS_PORT;
-import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.HTTP_PORT;
-import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.SSL_KEYPASSWORD;
-import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.SSL_KEYSTORE;
-import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.SSL_PASSWORD;
-import static org.eclipse.orion.server.configurator.configuration.ConfigurationFormat.SSL_PROTOCOL;
-
 import java.util.Dictionary;
 import java.util.Hashtable;
 import org.eclipse.core.runtime.IStatus;
@@ -25,10 +18,8 @@ import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.eclipse.equinox.http.jetty.JettyConfigurator;
 import org.eclipse.equinox.http.jetty.JettyConstants;
-import org.eclipse.orion.server.configurator.configuration.ConfigurationFormat;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
-
 import java.io.File;
 import java.io.IOException;
 import org.eclipse.equinox.app.IApplication;
@@ -45,6 +36,16 @@ import org.slf4j.LoggerFactory;
  * closed from the OSGi console.
  */
 public class WebApplication implements IApplication {
+
+	private static final String JETTY = "jetty"; //$NON-NLS-1$
+	private static final String HTTPS_ENABLED = JETTY + '.' + JettyConstants.HTTPS_ENABLED;
+	private static final String HTTPS_PORT = JETTY + '.' + JettyConstants.HTTPS_PORT;
+	private static final String HTTP_PORT = JETTY + '.' + JettyConstants.HTTP_PORT;
+	private static final String SSL_KEYSTORE = JETTY + '.' + JettyConstants.SSL_KEYSTORE;
+	private static final String SSL_PASSWORD = JETTY + '.' + JettyConstants.SSL_PASSWORD;
+	private static final String SSL_KEYPASSWORD = JETTY + '.' + JettyConstants.SSL_KEYPASSWORD;
+	private static final String SSL_PROTOCOL = JETTY + '.' + JettyConstants.SSL_PROTOCOL;
+
 	/**
 	 * A special return code that will be recognized by the PDE launcher and used to
 	 * show an error dialog if the workspace is locked.
@@ -61,7 +62,7 @@ public class WebApplication implements IApplication {
 		ensureBundleStarted(EQUINOX_HTTP_REGISTRY);
 
 		IEclipsePreferences preferences = DefaultScope.INSTANCE.getNode(ServerConstants.PREFERENCE_SCOPE);
-		Boolean httpsEnabled = new Boolean(preferences.get(ConfigurationFormat.HTTPS_ENABLED, "false")); //$NON-NLS-1$
+		Boolean httpsEnabled = new Boolean(preferences.get(HTTPS_ENABLED, "false")); //$NON-NLS-1$
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(JettyConstants.CONTEXT_SESSIONINACTIVEINTERVAL, new Integer(4 * 60 * 60)); // 4 hours

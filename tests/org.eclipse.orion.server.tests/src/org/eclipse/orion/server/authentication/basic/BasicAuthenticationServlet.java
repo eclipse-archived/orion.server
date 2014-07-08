@@ -77,7 +77,7 @@ public class BasicAuthenticationServlet extends OrionServlet {
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setCharacterEncoding("UTF-8");
 		try {
-			resp.getWriter().print(getUserJson(authService.getAuthenticatedUser(req, resp, null)));
+			resp.getWriter().print(getUserJson(authService.getAuthenticatedUser(req, resp)));
 		} catch (JSONException e) {
 			//can't fail
 		}
@@ -85,6 +85,6 @@ public class BasicAuthenticationServlet extends OrionServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		authService.authenticateUser(req, resp, null);
+		authService.authenticateUser(req, resp);
 	}
 }

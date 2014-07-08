@@ -142,7 +142,7 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 
 		String user = req.getRemoteUser();
 		if (user == null) {
-			user = authenticationService.getAuthenticatedUser(req, resp, authenticationService.getDefaultAuthenticationProperties());
+			user = authenticationService.getAuthenticatedUser(req, resp);
 		}
 
 		if (user != null) {

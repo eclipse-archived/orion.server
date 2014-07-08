@@ -32,19 +32,16 @@ public interface IAuthenticationService {
 	 * {@link HttpServletRequest}. This method returns only information and does
 	 * not modify entry parameters to notify user about the authentication
 	 * failure, method
-	 * {@link #authenticateUser(HttpServletRequest, HttpServletResponse, Properties)}
+	 * {@link #authenticateUser(HttpServletRequest, HttpServletResponse)}
 	 * should be used to achieve this.
 	 * 
 	 * @param req
 	 * @param resp
-	 * @param properties
-	 *            Properties set in <code>configuration.xml</code> file. They
-	 *            may be used to configure the authentication plugin.
 	 * @return authenticated username or <code>null</code> if users could not be
 	 *         authenticated.
 	 * @throws IOException
 	 */
-	public String getAuthenticatedUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException;
+	public String getAuthenticatedUser(HttpServletRequest req, HttpServletResponse resp) throws IOException;
 
 	/**
 	 * This method is called before any request is passed to a servlet.
@@ -58,14 +55,11 @@ public interface IAuthenticationService {
 	 * 
 	 * @param req
 	 * @param resp
-	 * @param properties
-	 *            Properties set in <code>configuration.xml</code> file. They
-	 *            may be used to configure the authentication plugin.
 	 * @return authenticated username or <code>null</code> if users could not be
 	 *         authenticated.
 	 * @throws IOException
 	 */
-	public String authenticateUser(HttpServletRequest req, HttpServletResponse resp, Properties properties) throws IOException;
+	public String authenticateUser(HttpServletRequest req, HttpServletResponse resp) throws IOException;
 
 	/**
 	 * The string representation of authentication type. It is used to set
@@ -77,8 +71,5 @@ public interface IAuthenticationService {
 	
 	public void setRegistered(boolean registered);
 	
-	public boolean getRegistered();
-
-	public void configure(Properties properties);
-
+	public boolean isRegistered();
 }

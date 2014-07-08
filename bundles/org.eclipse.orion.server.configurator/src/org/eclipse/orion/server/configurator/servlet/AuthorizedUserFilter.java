@@ -38,7 +38,6 @@ import org.osgi.service.http.HttpContext;
 public class AuthorizedUserFilter implements Filter {
 
 	private IAuthenticationService authenticationService;
-	private Properties authProperties;
 
 	public void init(FilterConfig filterConfig) throws ServletException {
 		authenticationService = ConfiguratorActivator.getDefault().getAuthService();
@@ -59,7 +58,7 @@ public class AuthorizedUserFilter implements Filter {
 
 		String userName = remoteUser;
 		if (userName == null) {
-			userName = authenticationService.getAuthenticatedUser(httpRequest, httpResponse, authProperties);
+			userName = authenticationService.getAuthenticatedUser(httpRequest, httpResponse);
 			if (userName == null)
 				userName = IAuthenticationService.ANONYMOUS_LOGIN_VALUE;
 		}
@@ -68,7 +67,7 @@ public class AuthorizedUserFilter implements Filter {
 			String requestPath = httpRequest.getServletPath() + (httpRequest.getPathInfo() == null ? "" : httpRequest.getPathInfo());
 			if (!AuthorizationService.checkRights(userName, requestPath, httpRequest.getMethod())) {
 				if (IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userName)) {
-					userName = authenticationService.authenticateUser(httpRequest, httpResponse, authProperties);
+					userName = authenticationService.authenticateUser(httpRequest, httpResponse);
 					if (userName == null)
 						return;
 				} else {
