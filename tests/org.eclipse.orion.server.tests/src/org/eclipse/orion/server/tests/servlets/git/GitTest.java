@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import org.eclipse.core.filesystem.EFS;
@@ -311,15 +312,13 @@ public abstract class GitTest extends FileSystemTest {
 	protected static String getMethodName() {
 		final StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 		//this method is sometimes called from a helper method rather than by the test itself
-		String name = ste[2].getMethodName();
-		if (!name.startsWith("test")) {
-			name = ste[3].getMethodName();
+		for (int i = 1; i < ste.length; i++) {
+			String name = ste[i].getMethodName();
+			if (name.startsWith("test") && !"testUriCheck".equals(name)) {
+				return name;
+			}
 		}
-		if (name.equals("testUriCheck")) {
-			// get the name of the actual test rather than testUriCheck() 
-			name = ste[4].getMethodName();
-		}
-		return name;
+		return "noMethod" + new Random().nextInt();
 	}
 
 	protected static JSONObject getChildByKey(List<JSONObject> children, String key, String value) throws JSONException {
