@@ -52,7 +52,7 @@ public abstract class AbstractCFCommand implements ICFCommand {
 		return result;
 	}
 
-	private ServerStatus retryIfNeeded(ServerStatus doItStatus) {
+	protected ServerStatus retryIfNeeded(ServerStatus doItStatus) {
 		CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
 		if (doItStatus.getHttpCode() == 401 && target.getCloud().getAccessToken() != null && helper != null && helper.getService() != null) {
 			target.getCloud().setAccessToken(helper.getService().getToken(target.getCloud()));
