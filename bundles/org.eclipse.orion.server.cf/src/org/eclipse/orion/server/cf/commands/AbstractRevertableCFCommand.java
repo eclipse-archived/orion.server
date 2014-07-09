@@ -24,11 +24,11 @@ public abstract class AbstractRevertableCFCommand extends AbstractCFCommand {
 	}
 
 	protected ServerStatus revert(ServerStatus status) {
-		DeleteApplicationCommand deleteApplicationCommand = new DeleteApplicationCommand(target, application);
-		deleteApplicationCommand.doIt(); /* we don't need to know whether the deletion succeeded or not */
-
-		DeleteApplicationRoutesCommand deleteRouteCommand = new DeleteApplicationRoutesCommand(target, application);
-		deleteRouteCommand.doIt(); /* we don't need to know whether the deletion succeeded or not */
+		//		DeleteApplicationCommand deleteApplicationCommand = new DeleteApplicationCommand(target, application);
+		//		deleteApplicationCommand.doIt(); /* we don't need to know whether the deletion succeeded or not */
+		//
+		//		DeleteApplicationRoutesCommand deleteRouteCommand = new DeleteApplicationRoutesCommand(target, application);
+		//		deleteRouteCommand.doIt(); /* we don't need to know whether the deletion succeeded or not */
 
 		return status;
 	}
