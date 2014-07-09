@@ -30,7 +30,7 @@ public class GetInfoCommand extends AbstractCFCommand {
 
 	public GetInfoCommand(String userId, Target target) {
 		super(target);
-		this.commandName = "Get Spaces";
+		this.commandName = "Get Info";
 	}
 
 	@Override

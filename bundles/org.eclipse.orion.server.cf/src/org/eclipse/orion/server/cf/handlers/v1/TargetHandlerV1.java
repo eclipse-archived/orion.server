@@ -15,10 +15,12 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFActivator;
+import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
+import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
@@ -95,7 +97,7 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 
 	@Override
 	protected CFJob handleDelete(Target resource, HttpServletRequest request, HttpServletResponse response, final String path) {
-		//final JSONObject jsonData = extractJSONData(request);
+		final String invalidate = IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_INVALIDATE);
 
 		return new CFJob(request, false) {
 			@Override
@@ -107,7 +109,7 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
 					}
 
-					LogoutCommand logoutCommand = new LogoutCommand(target);
+					LogoutCommand logoutCommand = new LogoutCommand(target, Boolean.parseBoolean(invalidate));
 					return logoutCommand.doIt();
 				} catch (Exception e) {
 					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
