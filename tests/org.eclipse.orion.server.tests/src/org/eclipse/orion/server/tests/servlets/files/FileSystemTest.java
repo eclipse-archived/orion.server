@@ -373,6 +373,20 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		return json;
 	}
 
+	protected WebRequest getPatchFileRequest(String uri, String json) {
+		try {
+			WebRequest request = new PostMethodWebRequest(makeResourceURIAbsolute(uri), IOUtilities.toInputStream(json), "application/json");
+			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+			request.setHeaderField(ProtocolConstants.HEADER_METHOD_OVERRIDE, "PATCH");
+			setAuthentication(request);
+			return request;
+		} catch (UnsupportedEncodingException e) {
+			fail(e.getMessage());
+		}
+		//Java is cool
+		return null;
+	}
+
 	protected WebRequest getPostFilesRequest(String uri, String json, String slug) {
 		try {
 			WebRequest request = new PostMethodWebRequest(makeResourceURIAbsolute(uri), IOUtilities.toInputStream(json), "application/json");

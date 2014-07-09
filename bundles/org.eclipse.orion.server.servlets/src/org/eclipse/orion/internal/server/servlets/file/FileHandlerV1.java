@@ -10,23 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.file;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
+import java.io.*;
 import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.ServletInputStream;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -43,9 +33,7 @@ import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 
 /**
  * Handles files in version 1 of eclipse web protocol syntax.
@@ -63,16 +51,33 @@ class FileHandlerV1 extends GenericFileHandler {
 	 */
 	private static final String EOL = "\r\n"; //$NON-NLS-1$
 
-	// responseWriter is used, as in some cases response should be
-	// appended to response generated earlier (i.e. multipart get)
-	protected void handleGetMetadata(HttpServletRequest request, HttpServletResponse response, Writer responseWriter, IFileStore file) throws IOException, NoSuchAlgorithmException, JSONException, CoreException {
-		JSONObject result = ServletFileStoreHandler.toJSON(file, file.fetchInfo(EFS.NONE, null), getURI(request));
-		String etag = generateFileETag(file);
-		result.put(ProtocolConstants.KEY_ETAG, etag);
-		response.setHeader(ProtocolConstants.KEY_ETAG, etag);
+	/**
+	 * Appends metadata to a Writer. Does not flush the Writer.
+	 */
+	protected void appendGetMetadata(HttpServletRequest request, HttpServletResponse response, Writer responseWriter, IFileStore file) throws IOException, NoSuchAlgorithmException, JSONException, CoreException {
+		JSONObject metadata = getMetadata(request, file);
+		response.setHeader(ProtocolConstants.KEY_ETAG, metadata.getString(ProtocolConstants.KEY_ETAG));
 		response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
-		OrionServlet.decorateResponse(request, result, JsonURIUnqualificationStrategy.ALL);
-		responseWriter.append(result.toString());
+		OrionServlet.decorateResponse(request, metadata, JsonURIUnqualificationStrategy.ALL);
+		responseWriter.append(metadata.toString());
+	}
+
+	/**
+	 * Writes metadata to the response.
+	 */
+	protected void handleGetMetadata(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws IOException, NoSuchAlgorithmException, JSONException, CoreException {
+		JSONObject metadata = getMetadata(request, file);
+		response.setHeader(ProtocolConstants.KEY_ETAG, metadata.getString(ProtocolConstants.KEY_ETAG));
+		OrionServlet.writeJSONResponse(request, response, metadata);
+	}
+
+	/**
+	 * @return Metadata for the file. The returned object is guaranteed to have an ETag string.
+	 */
+	private JSONObject getMetadata(HttpServletRequest request, IFileStore file) throws CoreException, NoSuchAlgorithmException, IOException, JSONException {
+		JSONObject metadata = ServletFileStoreHandler.toJSON(file, file.fetchInfo(EFS.NONE, null), getURI(request));
+		metadata.put(ProtocolConstants.KEY_ETAG, generateFileETag(file));
+		return metadata;
 	}
 
 	private void handleMultiPartGet(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException {
@@ -80,10 +85,10 @@ class FileHandlerV1 extends GenericFileHandler {
 		response.setHeader(ProtocolConstants.HEADER_ACCEPT_PATCH, ProtocolConstants.CONTENT_TYPE_JSON_PATCH);
 		response.setHeader(ProtocolConstants.HEADER_CONTENT_TYPE, "multipart/related; boundary=\"" + boundary + '"'); //$NON-NLS-1$
 		OutputStream outputStream = response.getOutputStream();
-		Writer out = new OutputStreamWriter(outputStream);
+		Writer out = new OutputStreamWriter(outputStream, "UTF-8");
 		out.write("--" + boundary + EOL); //$NON-NLS-1$
 		out.write("Content-Type: application/json" + EOL + EOL); //$NON-NLS-1$
-		handleGetMetadata(request, response, out, file);
+		appendGetMetadata(request, response, out, file);
 		out.write(EOL + "--" + boundary + EOL); //$NON-NLS-1$
 		// headers for file contents go here
 		out.write(EOL);
@@ -108,7 +113,7 @@ class FileHandlerV1 extends GenericFileHandler {
 		}
 
 		// return metadata with the new Etag
-		handleGetMetadata(request, response, response.getWriter(), file);
+		handleGetMetadata(request, response, file);
 	}
 
 	private void handlePatchContents(HttpServletRequest request, BufferedReader requestReader, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException, ServletException {
@@ -145,7 +150,7 @@ class FileHandlerV1 extends GenericFileHandler {
 		}
 
 		// return metadata with the new Etag
-		handleGetMetadata(request, response, response.getWriter(), file);
+		handleGetMetadata(request, response, file);
 	}
 
 	private void handleMultiPartPut(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws IOException, CoreException, JSONException, NoSuchAlgorithmException {
@@ -210,8 +215,7 @@ class FileHandlerV1 extends GenericFileHandler {
 			if ("meta".equals(parts)) { //$NON-NLS-1$
 				switch (getMethod(request)) {
 					case GET :
-						response.setCharacterEncoding("UTF-8");
-						handleGetMetadata(request, response, response.getWriter(), file);
+						handleGetMetadata(request, response, file);
 						return true;
 					case PUT :
 						handlePutMetadata(request.getReader(), null, file);

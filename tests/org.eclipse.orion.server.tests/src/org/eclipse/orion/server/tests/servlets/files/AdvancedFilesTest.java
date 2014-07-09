@@ -15,21 +15,22 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.*;
 
 public class AdvancedFilesTest extends FileSystemTest {
 	private JSONObject getFileMetadataObject(Boolean readonly, Boolean executable) throws JSONException {
@@ -212,5 +213,55 @@ public class AdvancedFilesTest extends FileSystemTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
 
+	}
+
+	/**
+	 * @returns A Patch with a single diff 
+	 */
+	private JSONObject createPatch(int start, int end, String text) throws JSONException {
+		JSONObject diff = new JSONObject();
+		diff.put("start", start);
+		diff.put("end", end);
+		diff.put("text", text);
+
+		JSONArray diffArray = new JSONArray();
+		diffArray.put(diff);
+
+		JSONObject patch = new JSONObject();
+		patch.put("diff", diffArray);
+		return patch;
+	}
+
+	@Test
+	public void testPatchEmptyFile() throws JSONException, IOException, SAXException {
+		String fileName = "testPatch.txt";
+		String patchedContents = "hi there";
+
+		//setup: create an empty file
+		WebRequest request = getPostFilesRequest("", getNewFileJSON(fileName).toString(), fileName);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		//patch it, ensure the metadata is returned and is correct
+		JSONObject patch = createPatch(0, 0, patchedContents);
+		request = getPatchFileRequest(fileName, patch.toString());
+		response = webConversation.getResponse(request);
+		JSONObject patchedMetadata = new JSONObject(response.getText());
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals("Has expected content type", "application/json", response.getContentType());
+		assertEquals("Has expected length", patchedContents.length(), patchedMetadata.getInt(ProtocolConstants.KEY_LENGTH));
+
+		//fetch metadata, make sure it is consistent with metadata returned from patch response.
+		request = getGetFilesRequest(fileName + "?parts=meta");
+		response = webConversation.getResponse(request);
+		JSONObject getMetadata = new JSONObject(response.getText());
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals("ETag is consistent", patchedMetadata.getString(ProtocolConstants.KEY_ETAG), getMetadata.getString(ProtocolConstants.KEY_ETAG));
+
+		//fetch contents, make sure they are correct
+		request = getGetFilesRequest(fileName);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals("Has expected contents", patchedContents, response.getText());
 	}
 }
