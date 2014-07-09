@@ -40,8 +40,6 @@ import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,9 +65,6 @@ public class SimpleMetaStoreMigration {
 	 * Storage will use this password. Expected value: {@link PBEKeySpec}.
 	 */
 	static final public String DEFAULT_PASSWORD = "org.eclipse.equinox.security.storage.defaultPassword"; //$NON-NLS-1$
-
-	private ITaskService taskService;
-	private ServiceReference<ITaskService> taskServiceRef;
 
 	public boolean isMigrationRequired(File rootLocation) {
 		File secureStorage = new File(rootLocation, SECURESTORAGE);
@@ -538,18 +533,7 @@ public class SimpleMetaStoreMigration {
 	}
 
 	private ITaskService getTaskService() {
-		if (taskService == null) {
-			BundleContext context = Activator.getDefault().getContext();
-			if (taskServiceRef == null) {
-				taskServiceRef = context.getServiceReference(ITaskService.class);
-				if (taskServiceRef == null)
-					throw new IllegalStateException("Task service not available");
-			}
-			taskService = context.getService(taskServiceRef);
-			if (taskService == null)
-				throw new IllegalStateException("Task service not available");
-		}
-		return taskService;
+		return Activator.getDefault().getTaskService();
 	}
 
 	/**

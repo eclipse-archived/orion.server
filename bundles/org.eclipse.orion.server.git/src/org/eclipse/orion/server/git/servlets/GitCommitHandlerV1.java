@@ -70,7 +70,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		}
 
 		public EmailContent(String fileName) throws URISyntaxException, IOException {
-			URL entry = GitActivator.getDefault().getBundleContext().getBundle().getEntry(fileName);
+			URL entry = this.getClass().getResource(fileName);
 			if (entry == null)
 				throw new IOException("File not found: " + fileName);
 			BufferedReader reader = new BufferedReader(new InputStreamReader(entry.openStream()));

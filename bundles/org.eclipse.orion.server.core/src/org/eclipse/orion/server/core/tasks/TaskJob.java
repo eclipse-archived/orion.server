@@ -22,8 +22,6 @@ import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 
 public abstract class TaskJob extends Job implements ITaskCanceller {
 
@@ -31,8 +29,6 @@ public abstract class TaskJob extends Job implements ITaskCanceller {
 	private boolean keep;
 	private String finalMessage = "Done";
 	private TaskInfo task;
-	private ITaskService taskService;
-	private ServiceReference<ITaskService> taskServiceRef;
 	private IStatus realResult;
 	private Long taskExpirationTime = null;
 
@@ -60,29 +56,13 @@ public abstract class TaskJob extends Job implements ITaskCanceller {
 		return realResult;
 	}
 
-	ITaskService getTaskService() {
-		if (taskService == null) {
-			BundleContext context = Activator.getDefault().getContext();
-			if (taskServiceRef == null) {
-				taskServiceRef = context.getServiceReference(ITaskService.class);
-				if (taskServiceRef == null)
-					throw new IllegalStateException("Task service not available");
-			}
-			taskService = context.getService(taskServiceRef);
-			if (taskService == null)
-				throw new IllegalStateException("Task service not available");
-		}
-		return taskService;
+	private ITaskService getTaskService() {
+		return Activator.getDefault().getTaskService();
 	}
 
 	private synchronized void cleanUp() {
 		if (task != null && task.isRunning() == true) {
 			setTaskResult(getRealResult() == null ? new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Task finished with unknown status.") : getRealResult());
-		}
-		taskService = null;
-		if (taskServiceRef != null) {
-			Activator.getDefault().getContext().ungetService(taskServiceRef);
-			taskServiceRef = null;
 		}
 	}
 

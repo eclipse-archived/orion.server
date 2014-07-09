@@ -39,13 +39,14 @@ import org.slf4j.LoggerFactory;
  */
 public class Activator implements BundleActivator {
 
-	public static volatile BundleContext bundleContext;
-	public static final String PROP_USER_AREA = "org.eclipse.orion.server.core.userArea"; //$NON-NLS-1$
+	static volatile BundleContext bundleContext;
+	private static final String PROP_USER_AREA = "org.eclipse.orion.server.core.userArea"; //$NON-NLS-1$
 
-	static Activator singleton;
-	ServiceTracker<FrameworkLog, FrameworkLog> logTracker;
+	private static Activator singleton;
+	private	ServiceTracker<FrameworkLog, FrameworkLog> logTracker;
 	ServiceTracker<IPreferencesService, IPreferencesService> prefTracker;
 	private ServiceRegistration<ITaskService> taskServiceRegistration;
+	private ITaskService taskService;
 	private IMetaStore metastore;
 	private URI rootStoreURI;
 
@@ -88,6 +89,11 @@ public class Activator implements BundleActivator {
 			return null;
 		return tracker.getService();
 	}
+	
+	public ITaskService getTaskService() {
+		return taskService;
+	}
+	
 
 	public BundleContext getContext() {
 		return bundleContext;
@@ -180,8 +186,8 @@ public class Activator implements BundleActivator {
 	private void registerServices() {
 		try {
 			IPath taskLocation = getTaskLocation();
-			ITaskService service = new TaskService(taskLocation);
-			taskServiceRegistration = bundleContext.registerService(ITaskService.class, service, null);
+			taskService = new TaskService(taskLocation);
+			taskServiceRegistration = bundleContext.registerService(ITaskService.class, taskService, null);
 		} catch (IOException e) {
 			LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Failed to initialize task service", e)); //$NON-NLS-1$
 		}
@@ -255,6 +261,7 @@ public class Activator implements BundleActivator {
 	private void stopTaskService() {
 		ServiceRegistration<ITaskService> reg = taskServiceRegistration;
 		taskServiceRegistration = null;
+		taskService = null;
 		if (reg != null)
 			reg.unregister();
 	}

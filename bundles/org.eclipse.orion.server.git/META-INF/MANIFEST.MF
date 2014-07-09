@@ -5,7 +5,6 @@ Bundle-SymbolicName: org.eclipse.orion.server.git;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.eclipse.orion.server.git.GitActivator
 Require-Bundle: org.eclipse.orion.server.servlets;bundle-version="0.1.0",
- org.eclipse.osgi;bundle-version="3.7.0",
  org.eclipse.orion.server.core;bundle-version="0.2.0",
  org.json;bundle-version="1.0.0",
  org.eclipse.core.filesystem;bundle-version="1.3.100",
@@ -27,4 +26,7 @@ Export-Package: org.eclipse.orion.server.git;x-friends:="org.eclipse.orion.serve
  org.eclipse.orion.server.jsch;x-internal:=true
 Bundle-Localization: bundle
 Import-Package: javax.servlet;version="2.5.0",
- javax.servlet.http;version="2.5.0"
+ javax.servlet.http;version="2.5.0",
+ org.eclipse.osgi.service.resolver;version="1.6.0",
+ org.eclipse.osgi.util;version="1.1.0",
+ org.osgi.framework;version="1.8.0"
