@@ -11,14 +11,14 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.multipart.*;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
@@ -35,6 +35,7 @@ public class UploadBitsCommand extends AbstractRevertableCFCommand {
 
 	private String commandName;
 	private String deployedAppPackageName;
+	private File appPackage;
 
 	public UploadBitsCommand(Target target, App app) {
 		super(target, app);
@@ -54,13 +55,13 @@ public class UploadBitsCommand extends AbstractRevertableCFCommand {
 
 		try {
 			/* upload project contents */
-			File appPackage = PackageUtils.getApplicationPackage(application.getAppStore());
-			deployedAppPackageName = PackageUtils.getApplicationPackageType(application.getAppStore());
-
-			if (appPackage == null) {
-				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to read application content", null));
+			ServerStatus createPkgStatus = createAppPackage();
+			status.add(createPkgStatus);
+			if (!createPkgStatus.isOK())
 				return revert(status);
-			}
+
+			File appPackage = getCreatedAppPackage();
+			deployedAppPackageName = PackageUtils.getApplicationPackageType(application.getAppStore());
 
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			PutMethod uploadMethod = new PutMethod(targetURI.resolve("/v2/apps/" + application.getGuid() + "/bits?async=true").toString());
@@ -130,5 +131,23 @@ public class UploadBitsCommand extends AbstractRevertableCFCommand {
 			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 			return revert(status);
 		}
+	}
+
+	/**
+	 * @returns An OK status if the app package was created successfully.
+	 */
+	protected ServerStatus createAppPackage() throws IOException, CoreException {
+		appPackage = PackageUtils.getApplicationPackage(application.getAppStore());
+
+		if (appPackage == null)
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to read application content", null);
+		return new ServerStatus(IStatus.OK, HttpServletResponse.SC_OK, null, null);
+	}
+
+	/**
+	 * @return The app package file that was created by {@link #createAppPackage()}.
+	 */
+	protected File getCreatedAppPackage() {
+		return appPackage;
 	}
 }

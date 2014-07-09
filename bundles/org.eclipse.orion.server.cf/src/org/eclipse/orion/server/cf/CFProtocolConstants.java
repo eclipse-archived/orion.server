@@ -72,6 +72,10 @@ public class CFProtocolConstants {
 
 	public static final String KEY_ORPHANED = "Orphaned"; //$NON-NLS-1$
 
+	public static final String KEY_DEBUG_PASSWORD = "DebugPassword"; //$NON-NLS-1$
+
+	public static final String KEY_DEBUG_URL_PREFIX = "DebugUrlPrefix"; //$NON-NLS-1$
+
 	// CF REST API protocol constants
 
 	public static final String V2_KEY_METADATA = "metadata"; //$NON-NLS-1$
