@@ -93,9 +93,6 @@
                value="false">
          </init-param>
       </servlet>
-      <serviceSelector
-            filter="(other.info=org.eclipse.orion)">
-      </serviceSelector>
       <servlet
             alias="/useremailconfirmation"
             class="org.eclipse.orion.server.useradmin.servlets.EmailConfirmationServlet">
@@ -104,6 +101,9 @@
             alias="/docker"
             class="org.eclipse.orion.server.docker.servlets.DockerServlet">
       </servlet>
+      <serviceSelector
+            filter="(other.info=org.eclipse.orion)">
+      </serviceSelector>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.filters">
