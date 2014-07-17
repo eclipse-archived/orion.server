@@ -283,7 +283,6 @@ public class CoreFilesTest extends FileSystemTest {
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
-		System.out.println(responseObject);
 		JSONArray children = responseObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 		assertEquals(1, children.length());
 		JSONObject child = children.getJSONObject(0);
