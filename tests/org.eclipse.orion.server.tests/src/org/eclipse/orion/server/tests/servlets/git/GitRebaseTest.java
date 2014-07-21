@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c)  2011, 2012 IBM Corporation and others.
+ * Copyright (c)  2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -26,6 +26,7 @@ import org.eclipse.jgit.api.RebaseCommand.Operation;
 import org.eclipse.jgit.api.RebaseResult;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -42,7 +43,7 @@ import com.meterware.httpunit.WebResponse;
 public class GitRebaseTest extends GitTest {
 	@Test
 	public void testRebaseSelf() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -67,7 +68,7 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebase() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -163,7 +164,7 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebaseStopOnConflictAndAbort() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -267,7 +268,7 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebaseStopOnConflictAndContinue() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -378,7 +379,7 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebaseStopOnConflictAndSkipPatch() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -487,7 +488,7 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebaseInvalidOperation() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -519,7 +520,7 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebaseOnRemote() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[][] clonePaths = createTestClonePairs(workspaceLocation);
 
 		for (IPath[] clonePath : clonePaths) {

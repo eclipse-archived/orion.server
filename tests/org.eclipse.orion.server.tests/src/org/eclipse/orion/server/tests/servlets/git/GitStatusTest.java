@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others
+ * Copyright (c) 2011, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -27,6 +27,7 @@ import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
@@ -42,7 +43,7 @@ public class GitStatusTest extends GitTest {
 
 	@Test
 	public void testStatusCleanClone() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -66,7 +67,7 @@ public class GitStatusTest extends GitTest {
 	// "status -s" > ""
 	@Test
 	public void testStatusCleanLink() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -80,7 +81,7 @@ public class GitStatusTest extends GitTest {
 	// "status -s" > "A  new.txt", staged
 	@Test
 	public void testStatusAdded() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -123,7 +124,7 @@ public class GitStatusTest extends GitTest {
 	// "status -s" > "M  test.txt", staged
 	@Test
 	public void testStatusChanged() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -142,7 +143,7 @@ public class GitStatusTest extends GitTest {
 	// "status -s" > "MM test.txt", portions staged for commit
 	@Test
 	public void testStatusChangedAndModified() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -163,7 +164,7 @@ public class GitStatusTest extends GitTest {
 	// "status -s" > " D test.txt", not staged
 	@Test
 	public void testStatusMissing() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -180,7 +181,7 @@ public class GitStatusTest extends GitTest {
 	// "status -s" > " M test.txt", not staged
 	@Test
 	public void testStatusModified() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -197,7 +198,7 @@ public class GitStatusTest extends GitTest {
 	// "status -s" > "D  test.txt", staged
 	@Test
 	public void testStatusRemoved() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -220,7 +221,7 @@ public class GitStatusTest extends GitTest {
 	// "status -s" > "?? new.txt", not staged
 	@Test
 	public void testStatusUntracked() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -248,7 +249,7 @@ public class GitStatusTest extends GitTest {
 
 	@Test
 	public void testStatusWithPath() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -280,7 +281,7 @@ public class GitStatusTest extends GitTest {
 
 	@Test
 	public void testStatusLocation() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -326,7 +327,7 @@ public class GitStatusTest extends GitTest {
 
 	@Test
 	public void testStatusDiff() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -378,7 +379,7 @@ public class GitStatusTest extends GitTest {
 
 	@Test
 	public void testStatusSubfolderDiff() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -418,7 +419,7 @@ public class GitStatusTest extends GitTest {
 
 	@Test
 	public void testStatusCommit() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -457,7 +458,7 @@ public class GitStatusTest extends GitTest {
 	// "status -s" > "UU test.txt", both modified
 	@Test
 	public void testConflict() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1: create
@@ -545,7 +546,7 @@ public class GitStatusTest extends GitTest {
 
 	@Test
 	public void testFileLogFromStatus() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -625,7 +626,7 @@ public class GitStatusTest extends GitTest {
 
 	@Test
 	public void testCloneAndBranchNameFromStatus() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {

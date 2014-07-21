@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others
+ * Copyright (c) 2013, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,21 +12,36 @@ package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.*;
-import java.net.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLEncoder;
 
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.useradmin.User;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import com.meterware.httpunit.*;
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Basic tests:
@@ -228,11 +243,10 @@ public class HostingTest extends CoreSiteTest {
 		filepath = filepath.addTrailingSeparator();
 		String parentFolder = filepath.toString();
 
-		// User B: Create a workspace that User B has access to
-		WebResponse createWorkspaceResp = basicCreateWorkspace("userB");
-		String bWorkspaceId = new JSONObject(createWorkspaceResp.getText()).getString(ProtocolConstants.KEY_ID);
-		AuthorizationService.addUserRight(userBObject.getUid(), createWorkspaceResp.getURL().getPath());
-		AuthorizationService.addUserRight(userBObject.getUid(), createWorkspaceResp.getURL().getPath() + "/*");
+		// User B: Give access to test's workspace
+		String bWorkspaceId = workspaceId;
+		AuthorizationService.addUserRight(userBObject.getUid(), "/workspace/" + bWorkspaceId);
+		AuthorizationService.addUserRight(userBObject.getUid(), "/workspace/" + bWorkspaceId + "/*");
 
 		// User B: create a site against B's workspace that exposes a file in test's workspace
 		final String siteName = "My hosted site";

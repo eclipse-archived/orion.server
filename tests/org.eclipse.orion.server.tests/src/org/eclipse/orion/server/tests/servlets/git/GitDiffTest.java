@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others
+ * Copyright (c) 2011, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -30,6 +30,7 @@ import java.util.List;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.git.GitConstants;
@@ -51,7 +52,7 @@ import com.meterware.httpunit.WebResponse;
 public class GitDiffTest extends GitTest {
 	@Test
 	public void testNoDiff() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -72,7 +73,7 @@ public class GitDiffTest extends GitTest {
 			w.close();
 		}
 
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -97,7 +98,7 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffModifiedByOrion() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -124,7 +125,7 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffFilter() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -169,7 +170,7 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffPaths() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -220,7 +221,7 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffCached() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -250,7 +251,7 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffCommits() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -301,7 +302,7 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffCommitWithWorkingTree() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -351,7 +352,7 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffBranchWithWorkingTree() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -382,7 +383,7 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffPost() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -426,7 +427,7 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffParts() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -475,7 +476,7 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffUntrackedUri() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -519,7 +520,7 @@ public class GitDiffTest extends GitTest {
 	@Test
 	public void testDiffWithCommonAncestor() throws Exception {
 		// clone: create
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -603,7 +604,7 @@ public class GitDiffTest extends GitTest {
 	@Test
 	public void testDiffForBranches() throws Exception {
 		// clone
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);

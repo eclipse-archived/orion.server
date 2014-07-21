@@ -377,14 +377,14 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		WorkspaceInfo workspaceInfo2 = new WorkspaceInfo();
 		workspaceInfo2.setFullName(workspaceName2);
 		workspaceInfo2.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo2);
 
-		try {
-			metaStore.createWorkspace(workspaceInfo2);
-		} catch (CoreException e) {
-			// we expect to get a core exception here
-			String message = e.getMessage();
-			assertTrue(message.contains("could not create workspace"));
-		}
+		// read the workspace
+		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceInfo2.getUniqueId());
+		assertNotNull(readWorkspaceInfo);
+		assertEquals(readWorkspaceInfo.getFullName(), workspaceInfo1.getFullName());
+		assertEquals(readWorkspaceInfo.getUniqueId(), workspaceInfo1.getUniqueId());
+		assertEquals(readWorkspaceInfo.getUserId(), workspaceInfo1.getUserId());
 
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());

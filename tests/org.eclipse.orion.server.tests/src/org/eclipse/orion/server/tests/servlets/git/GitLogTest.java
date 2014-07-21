@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,8 +16,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
-import com.meterware.httpunit.*;
-
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -26,19 +24,26 @@ import java.net.URI;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Diff;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Assume;
 import org.junit.Test;
+
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 public class GitLogTest extends GitTest {
 
 	@Test
 	public void testLog() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -127,7 +132,7 @@ public class GitLogTest extends GitTest {
 		File orionServer = new File("").getAbsoluteFile().getParentFile(/*org.eclipse.orion.server.tests*/).getParentFile(/*tests*/);
 		Assume.assumeTrue(new File(orionServer, Constants.DOT_GIT).exists());
 
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), orionServer.toURI().toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
@@ -147,7 +152,7 @@ public class GitLogTest extends GitTest {
 
 	@Test
 	public void testLogRemoteBranch() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -173,7 +178,7 @@ public class GitLogTest extends GitTest {
 
 	@Test
 	public void testLogWithTag() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -210,7 +215,7 @@ public class GitLogTest extends GitTest {
 
 	@Test
 	public void testLogWithBranch() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -246,7 +251,7 @@ public class GitLogTest extends GitTest {
 
 	@Test
 	public void testLogWithParents() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -306,7 +311,7 @@ public class GitLogTest extends GitTest {
 
 	@Test
 	public void testLogAllBranches() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -389,7 +394,7 @@ public class GitLogTest extends GitTest {
 
 	@Test
 	public void testLogFolder() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -455,7 +460,7 @@ public class GitLogTest extends GitTest {
 
 	@Test
 	public void testLogFile() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -549,7 +554,7 @@ public class GitLogTest extends GitTest {
 
 	@Test
 	public void testLogNewBranch() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
@@ -584,7 +589,7 @@ public class GitLogTest extends GitTest {
 
 	@Test
 	public void testDiffFromLog() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -649,7 +654,7 @@ public class GitLogTest extends GitTest {
 
 	@Test
 	public void testToRefKey() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -682,7 +687,7 @@ public class GitLogTest extends GitTest {
 
 	@Test
 	public void testFromRefKey() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -716,7 +721,7 @@ public class GitLogTest extends GitTest {
 
 	@Test
 	public void testRefPropertiesForCommits() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -764,7 +769,7 @@ public class GitLogTest extends GitTest {
 
 	@Test
 	public void testGetNonExistingCommit() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		JSONObject testTxt = getChild(project, "test.txt");

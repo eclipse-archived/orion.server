@@ -77,7 +77,7 @@ public class CoreFilesTest extends FileSystemTest {
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
-		createTestProject("CoreFilesTest");
+		createTestProject("CoreFilesTest-" + testName.getMethodName());
 	}
 
 	@After

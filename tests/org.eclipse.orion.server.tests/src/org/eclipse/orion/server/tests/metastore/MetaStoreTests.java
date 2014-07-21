@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -233,7 +233,7 @@ public abstract class MetaStoreTests {
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUserName(), userInfo.getUserName());
 		assertEquals("Should be one workspace", 1, readUserInfo.getWorkspaceIds().size());
-		assertFalse(readUserInfo.getWorkspaceIds().contains(workspaceInfo.getUniqueId()));
+		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo.getUniqueId()));
 
 		// delete the workspace
 		metaStore.deleteWorkspace(userInfo.getUniqueId(), workspaceInfo.getUniqueId());

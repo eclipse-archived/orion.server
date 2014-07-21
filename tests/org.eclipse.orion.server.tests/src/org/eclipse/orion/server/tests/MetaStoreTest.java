@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2013 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
@@ -31,7 +32,7 @@ public class MetaStoreTest extends AbstractServerTest {
 		user.setUserName("MetaStoreTestUser");
 		store.createUser(user);
 		WorkspaceInfo workspace = new WorkspaceInfo();
-		workspace.setFullName("MetaStoreTestWorkspace");
+		workspace.setFullName(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		workspace.setUserId(user.getUniqueId());
 		store.createWorkspace(workspace);
 		return workspace;

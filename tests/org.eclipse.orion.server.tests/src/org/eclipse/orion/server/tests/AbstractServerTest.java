@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2013 IBM Corporation and others.
+ * Copyright (c) 2010, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -24,6 +24,9 @@ import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.WebRequest;
@@ -34,13 +37,23 @@ import com.meterware.httpunit.WebRequest;
  */
 public class AbstractServerTest {
 
-	protected static String testUserLogin = "test";
-	protected static String testUserPassword = "test";
+	protected static String testUserLogin;
+	protected static String testUserPassword;
 	protected String testUserId;
 
 	public static final String SERVER_LOCATION = ServerTestsActivator.getServerLocation();
 	public static final URI SERVER_URI = URI.create(SERVER_LOCATION);
 	public static final URI SERVER_PATH_URI = URI.create(SERVER_URI.getRawPath());
+
+	@Rule
+	public TestName testName = new TestName();
+
+	@Before
+	public void before() {
+		// the test user by default is the test method name
+		testUserLogin = testName.getMethodName();
+		testUserPassword = testName.getMethodName();
+	}
 
 	public static void setAuthentication(WebRequest request) {
 		setAuthentication(request, testUserLogin, testUserPassword);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others
+ * Copyright (c) 2013, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,6 +19,7 @@ import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteInfo;
@@ -67,7 +68,7 @@ public class SiteTest extends CoreSiteTest {
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
-		workspaceResponse = basicCreateWorkspace(this.getClass().getName());
+		workspaceResponse = basicCreateWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		workspaceObject = new JSONObject(workspaceResponse.getText());
 	}
 

@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import org.eclipse.core.filesystem.EFS;
@@ -57,6 +56,7 @@ import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.core.IOUtilities;
@@ -192,7 +192,7 @@ public abstract class GitTest extends FileSystemTest {
 
 	protected JSONObject linkProject(String contentLocation, String projectName) throws JSONException, IOException, SAXException {
 		// TODO: remove me
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		return createProjectOrLink(workspaceLocation, projectName, contentLocation);
 	}
 
@@ -309,16 +309,8 @@ public abstract class GitTest extends FileSystemTest {
 		}
 	}
 
-	protected static String getMethodName() {
-		final StackTraceElement[] ste = Thread.currentThread().getStackTrace();
-		//this method is sometimes called from a helper method rather than by the test itself
-		for (int i = 1; i < ste.length; i++) {
-			String name = ste[i].getMethodName();
-			if (name.startsWith("test") && !"testUriCheck".equals(name)) {
-				return name;
-			}
-		}
-		return "noMethod" + new Random().nextInt();
+	protected String getMethodName() {
+		return testName.getMethodName();
 	}
 
 	protected static JSONObject getChildByKey(List<JSONObject> children, String key, String value) throws JSONException {
@@ -1546,7 +1538,7 @@ public abstract class GitTest extends FileSystemTest {
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
 		assertNotNull(workspace);
-		String name = workspace.getFullName();
+		String name = workspace.getUniqueId();
 		JSONObject projectTop = createProjectOrLink(workspaceLocation, name + "-top", null);
 		IPath clonePathTop = getClonePath(workspaceId, projectTop);
 		JSONObject projectFolder = createProjectOrLink(workspaceLocation, name + "-folder", null);
@@ -1566,7 +1558,7 @@ public abstract class GitTest extends FileSystemTest {
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
 		assertNotNull(workspace);
-		String name = workspace.getFullName();
+		String name = workspace.getUniqueId();
 		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, name + "-top1", null);
 		IPath clonePathTop1 = getClonePath(workspaceId, projectTop1);
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 IBM Corporation and others.
+ * Copyright (c) 2012, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -29,17 +29,12 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.search.SearchActivator;
-import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.metastore.IMetaStore;
-import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.xfer.TransferTest;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -59,8 +54,6 @@ import com.meterware.httpunit.WebResponse;
 public class SearchTest extends FileSystemTest {
 
 	private static final String SEARCH_LOCATION = toAbsoluteURI("filesearch?q=");
-	private String oldTestUserLogin;
-
 	@BeforeClass
 	public static void setupWorkspace() {
 		initializeWorkspaceLocation();
@@ -154,42 +147,11 @@ public class SearchTest extends FileSystemTest {
 		HttpUnitOptions.setDefaultCharacterSet("UTF-8");
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
-		//use a different user to avoid search result contamination from other tests
-		oldTestUserLogin = testUserLogin;
-		testUserLogin = "SearchTestUser";
 		setUpAuthorization();
-		//search tests don't damage files, so only need to do this once per suite
-		if (!testProjectExists("Search TestProject")) {
-			createTestProject("Search Test");
-			createTestData();
-			//wait for indexer to finish
-			SearchActivator.getInstance().testWaitForIndex();
-		}
-	}
-
-	@After
-	public void tearDown() {
-		//reset back to default user login
-		testUserLogin = oldTestUserLogin;
-	}
-
-	/**
-	 * Returns whether a project already exists with the given name.
-	 * @throws CoreException 
-	 */
-	private boolean testProjectExists(String name) throws CoreException {
-		IMetaStore metaStore = OrionConfiguration.getMetaStore();
-		UserInfo userInfo = metaStore.readUser(testUserId);
-		if (userInfo.getWorkspaceIds().isEmpty()) {
-			return false;
-		}
-		String workspaceId = userInfo.getWorkspaceIds().get(0);
-		WorkspaceInfo workspaceInfo = metaStore.readWorkspace(workspaceId);
-		for (String project : workspaceInfo.getProjectNames()) {
-			if (name.equals(project))
-				return true;
-		}
-		return false;
+		createTestProject("Search Test");
+		createTestData();
+		//wait for indexer to finish
+		SearchActivator.getInstance().testWaitForIndex();
 	}
 
 	/**
@@ -255,6 +217,7 @@ public class SearchTest extends FileSystemTest {
 	 */
 	@Test
 	public void testSearchInProjectWithURLName() throws Exception {
+		clearWorkspace();
 		final String projectName = "[breakme]";
 		createTestProject(projectName);
 		createFile("smaug.txt", "Chiefest and Greatest of Calamities");

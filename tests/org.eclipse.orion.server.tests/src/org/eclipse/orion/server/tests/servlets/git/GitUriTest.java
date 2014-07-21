@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others
+ * Copyright (c) 2011, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -23,6 +23,7 @@ import java.util.List;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.util.FileUtils;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.git.GitConstants;
@@ -35,7 +36,7 @@ import com.meterware.httpunit.WebResponse;
 public class GitUriTest extends GitTest {
 	@Test
 	public void testGitUrisAfterLinkingToExistingClone() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		assertGitSectionExists(project);
@@ -45,7 +46,7 @@ public class GitUriTest extends GitTest {
 
 	@Test
 	public void testGitUrisInContentLocation() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String projectName = getMethodName();
 		// http://<host>/workspace/<workspaceId>/
 		JSONObject newProject = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -94,7 +95,7 @@ public class GitUriTest extends GitTest {
 
 	@Test
 	public void testGitUrisForEmptyDir() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		File emptyDir = AllGitTests.getRandomLocation().toFile();
 		emptyDir.mkdir();
 		ServletTestingSupport.allowedPrefixes = emptyDir.toString();
@@ -122,7 +123,7 @@ public class GitUriTest extends GitTest {
 
 	@Test
 	public void testGitUrisForFile() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		File dir = AllGitTests.getRandomLocation().toFile();
 		dir.mkdir();
@@ -153,7 +154,7 @@ public class GitUriTest extends GitTest {
 
 	@Test
 	public void testGitUrisForRepositoryClonedIntoSubfolder() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);

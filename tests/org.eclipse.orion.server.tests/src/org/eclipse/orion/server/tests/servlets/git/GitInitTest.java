@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others
+ * Copyright (c) 2011, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,6 +20,7 @@ import java.net.URI;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,7 +33,7 @@ public class GitInitTest extends GitTest {
 
 	@Test
 	public void testInit() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath initPath = getClonePath(workspaceId, project);
@@ -43,7 +44,7 @@ public class GitInitTest extends GitTest {
 
 	@Test
 	public void testInitAndCreateProjectByName() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath initPath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
 
 		JSONObject repo = init(initPath, null, getMethodName());
@@ -66,7 +67,7 @@ public class GitInitTest extends GitTest {
 
 	@Test
 	public void testInitAndCreateFolderByPath() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath initPath = getClonePath(workspaceId, project).append("repos").append("repo1").makeAbsolute();
@@ -84,7 +85,7 @@ public class GitInitTest extends GitTest {
 
 	@Test
 	public void testInitWithoutNameAndFilePath() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath initPath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
 
 		WebRequest request = getPostGitInitRequest(initPath, null, null);
