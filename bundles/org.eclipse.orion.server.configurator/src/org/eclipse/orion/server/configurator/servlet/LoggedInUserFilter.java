@@ -12,7 +12,6 @@ package org.eclipse.orion.server.configurator.servlet;
 
 import org.eclipse.orion.server.authentication.IAuthenticationService;
 import java.io.IOException;
-import java.util.Properties;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -32,7 +31,7 @@ public class LoggedInUserFilter implements Filter {
 	private boolean redirect = true;
 
 	public void init(FilterConfig filterConfig) throws ServletException {
-		if (Boolean.FALSE.toString().equals(filterConfig.getInitParameter("redirect"))) {
+		if (Boolean.FALSE.toString().equals(filterConfig.getInitParameter("redirect"))) { //$NON-NLS-1$
 			redirect = false;
 		};
 

@@ -88,10 +88,6 @@
       <servlet
             alias="/logapi"
             class="org.eclipse.orion.server.logs.servlets.LogServlet">
-         <init-param
-               name="enabled"
-               value="false">
-         </init-param>
       </servlet>
       <servlet
             alias="/useremailconfirmation"
@@ -191,6 +187,10 @@
       <filter
             alias="/logapi"
             class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
+      </filter>
+      <filter
+            alias="/logapi"
+            class="org.eclipse.orion.server.configurator.servlet.AuthorizedUserFilter">
       </filter>
       <filter
             alias="/users"
