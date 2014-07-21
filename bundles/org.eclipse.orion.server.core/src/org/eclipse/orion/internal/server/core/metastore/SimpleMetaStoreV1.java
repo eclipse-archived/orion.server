@@ -504,6 +504,11 @@ public class SimpleMetaStoreV1 extends SimpleMetaStore {
 						}
 					}
 					userInfo.setWorkspaceIds(userWorkspaceIds);
+					if (userInfo.getWorkspaceIds().size() > 1) {
+						// It is currently unexpected that a user has more than one workspace. See Bug 439735
+						Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+						logger.warn("SimpleMetaStore.readUser: user id " + userInfo.getUniqueId() + " has a multiple workspace conflict: workspace: " + userInfo.getWorkspaceIds().get(0) + " and workspace: " + userInfo.getWorkspaceIds().get(1));  
+					}
 					setProperties(userInfo, jsonObject.getJSONObject("Properties"));
 					userInfo.flush();
 				} catch (JSONException e) {

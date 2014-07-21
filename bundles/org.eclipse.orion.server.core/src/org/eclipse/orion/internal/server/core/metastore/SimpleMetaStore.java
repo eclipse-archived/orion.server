@@ -23,12 +23,17 @@ import org.json.JSONObject;
  */
 public abstract class SimpleMetaStore implements IMetaStore {
 
+	/**
+	 * The default name of a workspace for a user: Orion Content.
+	 */
+	public final static String DEFAULT_WORKSPACE_NAME = "Orion Content";
 	public final static int NO_ORION_VERSION = -1;
 	public final static String ORION_VERSION = "OrionVersion";
 	public final static String PROJECT = "project";
 	public static final String ROOT = "metastore";
 	public final static String USER = "user";
 	public final static String WORKSPACE = "workspace";
+
 	/**
 	 * Get the Orion version of the simple metadata storage.
 	 * 

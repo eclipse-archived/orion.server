@@ -726,7 +726,7 @@ public class SimpleMetaStoreMigration {
 			workspaceJSON.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStoreV1.VERSION);
 			String userId = workspaceProperties.get("UserId");
 			workspaceJSON.put("UniqueId", userId + "-OrionContent");
-			workspaceJSON.put("FullName", "Orion Content");
+			workspaceJSON.put("FullName", SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 			workspaceJSON.put("UserId", userId);
 			workspaceJSON.put("Properties", new JSONObject());
 			JSONArray projectNames = new JSONArray(workspaceProperties.get("ProjectNames"));

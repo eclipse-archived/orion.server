@@ -350,6 +350,46 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
+	/**
+	 * You cannot create a second workspace for a user. See Bug 439735
+	 * @throws CoreException
+	 */
+	@Test
+	public void testCreateSecondWorkspace() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName("anthony");
+		userInfo.setFullName("Anthony Hunter");
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName1 = "Orion Content";
+		WorkspaceInfo workspaceInfo1 = new WorkspaceInfo();
+		workspaceInfo1.setFullName(workspaceName1);
+		workspaceInfo1.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo1);
+
+		// create another workspace with the same workspace name
+		String workspaceName2 = "Orion Sandbox";
+		WorkspaceInfo workspaceInfo2 = new WorkspaceInfo();
+		workspaceInfo2.setFullName(workspaceName2);
+		workspaceInfo2.setUserId(userInfo.getUniqueId());
+
+		try {
+			metaStore.createWorkspace(workspaceInfo2);
+		} catch (CoreException e) {
+			// we expect to get a core exception here
+			String message = e.getMessage();
+			assertTrue(message.contains("could not create workspace"));
+		}
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+	}
+
 	@Test
 	public void testCreateTwoWorkspacesWithSameName() throws CoreException {
 		// create the MetaStore
@@ -379,7 +419,7 @@ public abstract class ExtendedMetaStoreTests extends MetaStoreTests {
 		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUserName(), userInfo.getUserName());
-		assertEquals(2, readUserInfo.getWorkspaceIds().size());
+		assertEquals(1, readUserInfo.getWorkspaceIds().size());
 		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo1.getUniqueId()));
 		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo2.getUniqueId()));
 

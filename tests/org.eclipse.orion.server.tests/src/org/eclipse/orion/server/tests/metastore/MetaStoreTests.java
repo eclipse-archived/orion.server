@@ -222,29 +222,28 @@ public abstract class MetaStoreTests {
 		metaStore.createUser(userInfo);
 
 		// create the workspace
-		String workspaceName1 = "Orion Content";
-		WorkspaceInfo workspaceInfo1 = new WorkspaceInfo();
-		workspaceInfo1.setFullName(workspaceName1);
-		workspaceInfo1.setUserId(userInfo.getUniqueId());
-		metaStore.createWorkspace(workspaceInfo1);
-
-		// create another workspace
-		String workspaceName2 = "Workspace2";
-		WorkspaceInfo workspaceInfo2 = new WorkspaceInfo();
-		workspaceInfo2.setFullName(workspaceName2);
-		workspaceInfo2.setUserId(userInfo.getUniqueId());
-		metaStore.createWorkspace(workspaceInfo2);
-
-		// delete the first workspace
-		metaStore.deleteWorkspace(userInfo.getUniqueId(), workspaceInfo1.getUniqueId());
+		String workspaceName = "Orion Content";
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
 
 		// read the user
 		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUserName(), userInfo.getUserName());
-		assertEquals("Should only be one workspace", 1, readUserInfo.getWorkspaceIds().size());
-		assertFalse(readUserInfo.getWorkspaceIds().contains(workspaceInfo1.getUniqueId()));
-		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo2.getUniqueId()));
+		assertEquals("Should be one workspace", 1, readUserInfo.getWorkspaceIds().size());
+		assertFalse(readUserInfo.getWorkspaceIds().contains(workspaceInfo.getUniqueId()));
+
+		// delete the workspace
+		metaStore.deleteWorkspace(userInfo.getUniqueId(), workspaceInfo.getUniqueId());
+
+		// read the user
+		UserInfo readUserInfo2 = metaStore.readUser(userInfo.getUniqueId());
+		assertNotNull(readUserInfo2);
+		assertEquals(readUserInfo2.getUserName(), userInfo.getUserName());
+		assertEquals("Should be zero workspaces", 0, readUserInfo2.getWorkspaceIds().size());
+		assertFalse(readUserInfo2.getWorkspaceIds().contains(workspaceInfo.getUniqueId()));
 
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());
@@ -388,7 +387,7 @@ public abstract class MetaStoreTests {
 		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUserName(), userInfo.getUserName());
-		assertEquals(2, readUserInfo.getWorkspaceIds().size());
+		assertEquals(1, readUserInfo.getWorkspaceIds().size());
 		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo1.getUniqueId()));
 		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo2.getUniqueId()));
 
