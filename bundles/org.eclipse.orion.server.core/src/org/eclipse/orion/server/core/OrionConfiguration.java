@@ -113,9 +113,9 @@ public class OrionConfiguration {
 			throw new Error("Failed to access platform instance location", e); //$NON-NLS-1$
 		}
 	}
-
+	
 	/**
-	 * Returns the root file system location for the workspace.
+	 * Returns the OSGi instance location for this server.
 	 */
 	public static IPath getPlatformLocation() {
 		return Activator.getDefault().getPlatformLocation();
