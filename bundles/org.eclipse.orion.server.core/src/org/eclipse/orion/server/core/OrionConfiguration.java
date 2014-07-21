@@ -113,9 +113,23 @@ public class OrionConfiguration {
 			throw new Error("Failed to access platform instance location", e); //$NON-NLS-1$
 		}
 	}
+	
+	/**
+	 * Consults the Orion configuration and files on disk if needed to determine if the root
+	 * of the Orion content location should be different than the OSGi instance location.
+	 * 
+	 * @return an absolute path on the local file system.
+	 */
+	public static String getRootContentLocationPreference() {
+		String prop = System.getProperty(ServerConstants.CONFIG_FILE_USER_CONTENT + ".test");
+		if (prop != null) {
+			return prop;
+		}
+		return PreferenceHelper.getString(ServerConstants.CONFIG_FILE_USER_CONTENT);
+	}
 
 	/**
-	 * Returns the root file system location for the workspace.
+	 * Returns the OSGi instance location for this server.
 	 */
 	public static IPath getPlatformLocation() {
 		return Activator.getDefault().getPlatformLocation();
