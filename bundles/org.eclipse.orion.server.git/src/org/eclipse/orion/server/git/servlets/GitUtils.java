@@ -27,6 +27,8 @@ import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GitUtils {
 
@@ -115,7 +117,19 @@ public class GitUtils {
 
 	private static void getGitDirsInParents(File file, Map<IPath, File> gitDirs) {
 		int levelUp = 0;
-		File workspaceRoot = OrionConfiguration.getPlatformLocation().toFile();
+		File workspaceRoot = null;
+		try {
+			workspaceRoot = OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null);
+		} catch (CoreException e) {
+			Logger logger = LoggerFactory.getLogger(GitUtils.class);
+			logger.error("Unable to get the root location", e);
+			return;
+		}
+		if (workspaceRoot == null) {
+			Logger logger = LoggerFactory.getLogger(GitUtils.class);
+			logger.error("Unable to get the root location from " + OrionConfiguration.getRootLocation());
+			return;
+		}
 		while (file != null && !file.getAbsolutePath().equals(workspaceRoot.getAbsolutePath())) {
 			if (file.exists()) {
 				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
