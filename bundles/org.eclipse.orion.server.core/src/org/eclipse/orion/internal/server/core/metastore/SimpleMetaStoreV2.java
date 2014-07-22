@@ -445,11 +445,19 @@ public class SimpleMetaStoreV2 extends SimpleMetaStore {
 		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceId);
 		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 		if (userId == null || encodedWorkspaceName == null) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			if (logger.isDebugEnabled()) {
+				logger.debug("SimpleMetaStore.readProject: requested with a bad workspaceId " + workspaceId); //$NON-NLS-1$
+			}
 			return null;
 		}
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
 		if (workspaceMetaFolder == null) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			if (logger.isDebugEnabled()) {
+				logger.debug("SimpleMetaStore.readProject: workspaceMetaFolder does not exist for workspace " + workspaceId); //$NON-NLS-1$
+			}
 			return null;
 		}
 		String projectId = SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectName);
@@ -459,6 +467,10 @@ public class SimpleMetaStoreV2 extends SimpleMetaStore {
 			if (SimpleMetaStoreUtil.isMetaFolder(workspaceMetaFolder, projectId) && !SimpleMetaStoreUtil.isMetaFile(userMetaFolder, projectId)) {
 				// the project folder exists but the project json file does not, so create it
 				File projectMetaFolder = SimpleMetaStoreUtil.readMetaFolder(workspaceMetaFolder, projectId);
+				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+				if (logger.isDebugEnabled()) {
+					logger.info("SimpleMetaStore.readProject: the project folder " + projectMetaFolder.toString() + " exists but the project json file does not, so creating it in " + workspaceId); //$NON-NLS-1$
+				}
 				URI projectLocation = projectMetaFolder.toURI();
 				projectInfo.setFullName(projectName);
 				projectInfo.setWorkspaceId(workspaceId);
