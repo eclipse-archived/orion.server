@@ -55,11 +55,12 @@ public class GetRoutesCommand extends AbstractCFCommand {
 	@Override
 	protected ServerStatus _doIt() {
 		try {
-			/* get available orgs */
+			/* get available routes */
 			URI targetURI = URIUtil.toURI(target.getUrl());
-			URI orgsURI = targetURI.resolve("/v2/routes");
+			String routesURL = target.getSpace().getCFJSON().getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_ROUTES_URL);
+			URI routesURI = targetURI.resolve(routesURL);
 
-			GetMethod getRoutesMethod = new GetMethod(orgsURI.toString());
+			GetMethod getRoutesMethod = new GetMethod(routesURI.toString());
 			HttpUtil.configureHttpMethod(getRoutesMethod, target);
 			getRoutesMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 

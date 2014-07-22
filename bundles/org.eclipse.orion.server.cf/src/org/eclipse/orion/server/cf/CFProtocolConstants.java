@@ -94,6 +94,8 @@ public class CFProtocolConstants {
 
 	public static final String V2_KEY_DOMAINS_URL = "domains_url"; //$NON-NLS-1$
 
+	public static final String V2_KEY_ROUTES_URL = "routes_url"; //$NON-NLS-1$
+
 	public static final String V2_KEY_TOTAL_RESULTS = "total_results"; //$NON-NLS-1$
 
 	public static final String V2_KEY_RESOURCES = "resources"; //$NON-NLS-1$
