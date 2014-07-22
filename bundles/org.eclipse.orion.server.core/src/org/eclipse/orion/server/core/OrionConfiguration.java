@@ -12,10 +12,12 @@ package org.eclipse.orion.server.core;
 
 import java.io.File;
 import java.net.URI;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.core.metastore.*;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
@@ -133,5 +135,22 @@ public class OrionConfiguration {
 	 */
 	public static IPath getPlatformLocation() {
 		return Activator.getDefault().getPlatformLocation();
+	}
+	
+	/**
+	 * A separate path for the search index location.
+	 * 
+	 * @return An absolute path on the local file system, or <code>null</code>.
+	 */
+	public static IPath getSearchIndexLocation() {
+		String prop = System.getProperty(ServerConstants.CONFIG_SEARCH_INDEX_LOCATION + ".test");
+		if (prop != null) {
+			return new Path(prop);
+		}
+		prop = PreferenceHelper.getString(ServerConstants.CONFIG_SEARCH_INDEX_LOCATION);
+		if (prop != null) {
+			return new Path(prop);
+		}
+		return null;
 	}
 }

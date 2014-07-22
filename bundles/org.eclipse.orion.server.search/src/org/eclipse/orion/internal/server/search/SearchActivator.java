@@ -31,6 +31,7 @@ import org.apache.solr.core.SolrCore;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
@@ -103,8 +104,17 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	 */
 	private void createServer() {
 		try {
-			File rootFile = OrionConfiguration.getPlatformLocation().toFile();
-			File baseDir = new File(rootFile, ".metadata/.plugins/" + PI_SEARCH); //$NON-NLS-1$
+			File baseDir;
+			IPath rootPath = OrionConfiguration.getSearchIndexLocation();
+			if (rootPath == null) {
+				rootPath = OrionConfiguration.getPlatformLocation();
+				File rootFile = rootPath.toFile();
+				baseDir = new File(rootFile, ".metadata/.plugins/" + PI_SEARCH + "/v" + CURRENT_INDEX_GENERATION); //$NON-NLS-1$
+			} else {
+				File rootFile = rootPath.toFile();
+				baseDir = new File(rootFile, PI_SEARCH + "/v" + CURRENT_INDEX_GENERATION); //$NON-NLS-1$
+			}
+
 			// discard all server data if the index generation has changed
 			if (readIndexGeneration(baseDir) != CURRENT_INDEX_GENERATION) {
 				delete(baseDir);

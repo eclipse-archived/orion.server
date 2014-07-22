@@ -185,6 +185,12 @@ public class ServerConstants {
 	public static final String CONFIG_DISK_USAGE_ENABLED = "orion.file.diskUsageEnabled"; //$NON-NLS-1$
 
 	/**
+	 * The name of the configuration property specifying the root location to use for 
+	 * Orion search indices.  Must be an absolute path on the server file system.
+	 */
+	public static final String CONFIG_SEARCH_INDEX_LOCATION = "orion.search.index.location"; //$NON-NLS-1$
+	
+	/**
 	 * The name of a configuration property specifying the virtual hosts to use for
 	 * test sites launched by this server. The property value is a comma-separated 
 	 * list of host names.
