@@ -25,6 +25,7 @@ import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -117,7 +118,9 @@ public class CloneJob extends GitJob {
 
 			// Configure the clone, see Bug 337820
 			GitCloneHandlerV1.doConfigureClone(git, user, gitUserName, gitUserMail);
-			git.getRepository().close();
+			Repository repo = git.getRepository();
+			GitJobUtils.packRefs(repo);
+			repo.close();
 
 			if (initProject) {
 				File projectJsonFile = new File(cloneFolder.getPath() + File.separator + "project.json");

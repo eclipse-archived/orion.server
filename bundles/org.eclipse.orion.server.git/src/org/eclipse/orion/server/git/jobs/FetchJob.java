@@ -117,7 +117,8 @@ public class FetchJob extends GitJob {
 			fc.setRefSpecs(spec);
 		}
 		FetchResult fetchResult = fc.call();
-		git.getRepository().close();
+		GitJobUtils.packRefs(db);
+		db.close();
 		return handleFetchResult(fetchResult);
 	}
 
