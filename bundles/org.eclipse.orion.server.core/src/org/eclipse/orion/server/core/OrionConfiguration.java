@@ -12,10 +12,12 @@ package org.eclipse.orion.server.core;
 
 import java.io.File;
 import java.net.URI;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.internal.server.core.metastore.*;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
