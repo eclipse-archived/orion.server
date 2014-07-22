@@ -17,7 +17,8 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.cf.objects.*;
+import org.eclipse.orion.server.cf.objects.Route;
+import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
@@ -30,20 +31,22 @@ public class GetRoutesCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-	private Domain domain;
+	private String domainName;
 	private String hostName;
+	private boolean orphaned;
 
 	private List<Route> routes;
 
-	public GetRoutesCommand(Target target) {
+	public GetRoutesCommand(Target target, boolean orphaned) {
 		super(target);
 		this.commandName = "Get Routes";
+		this.orphaned = orphaned;
 	}
 
-	public GetRoutesCommand(Target target, Domain domain, String hostName) {
+	public GetRoutesCommand(Target target, String domainName, String hostName) {
 		super(target);
 		this.commandName = "Get Routes";
-		this.domain = domain;
+		this.domainName = domainName;
 		this.hostName = hostName;
 	}
 
@@ -83,9 +86,11 @@ public class GetRoutesCommand extends AbstractCFCommand {
 				Route route = new Route();
 				route.setCFJSON(routeJSON);
 
-				if (hostName == null || hostName.equals(route.getHost())) {
-					routes.add(route);
-					result.append("Routes", route.toJSON());
+				if (domainName == null || (domainName.equals(route.getDomainName()) && (hostName == null || hostName.equals(route.getHost())))) {
+					if (!orphaned || route.getCFJSON().getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getJSONArray(CFProtocolConstants.V2_KEY_APPS).length() == 0) {
+						routes.add(route);
+						result.append("Routes", route.toJSON());
+					}
 				}
 			}
 
