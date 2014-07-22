@@ -11,10 +11,8 @@
 package org.eclipse.orion.server.authentication.formopenid;
 
 import java.io.IOException;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others 
+ * Copyright (c) 2010, 2012 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,7 +20,6 @@ public class Activator implements BundleActivator {
 	public static final String PI_AUTHENTICATION_SERVLETS = "org.eclipse.orion.server.authentication"; //$NON-NLS-1$
 
 	private static volatile BundleContext bundleContext;
-
 
 	public static Activator singleton;
 

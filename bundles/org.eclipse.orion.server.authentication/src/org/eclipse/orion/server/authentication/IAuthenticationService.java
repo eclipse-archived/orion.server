@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others 
+ * Copyright (c) 2010, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.authentication;
 
 import java.io.IOException;
-import java.util.Properties;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -23,10 +22,10 @@ public interface IAuthenticationService {
 
 	static final String ADMIN_LOGIN_VALUE = "admin"; //$NON-NLS-1$
 	static final String ADMIN_NAME_VALUE = "Administrator"; //$NON-NLS-1$
-	
+
 	static final String ANONYMOUS_LOGIN_VALUE = "anonymous"; //$NON-NLS-1$
 	static final String ANONYMOUS_NAME_VALUE = "Anonymous"; //$NON-NLS-1$
-	
+
 	/**
 	 * This method verifies the user identity send in the
 	 * {@link HttpServletRequest}. This method returns only information and does
@@ -68,8 +67,8 @@ public interface IAuthenticationService {
 	 * @return String representation of authentication type.
 	 */
 	public String getAuthType();
-	
+
 	public void setRegistered(boolean registered);
-	
+
 	public boolean isRegistered();
 }
