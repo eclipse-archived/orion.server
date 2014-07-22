@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2013 IBM Corporation and others.
+ * Copyright (c) 2010, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -24,8 +24,8 @@ import java.util.List;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.server.core.IOUtilities;
-import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -46,15 +46,11 @@ public class PreferenceTest extends FileSystemTest {
 
 	@Before
 	public void setUp() throws Exception {
-		clearWorkspace();
-		List<String> userIds = OrionConfiguration.getMetaStore().readAllUsers();
-		for (String userId : userIds) {
-			OrionConfiguration.getMetaStore().deleteUser(userId);
-		}
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
-		createTestProject("PreferenceTest");
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createTestProject(testName.getMethodName());
 	}
 
 	/**

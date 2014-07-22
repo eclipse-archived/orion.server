@@ -17,7 +17,6 @@ import static org.junit.Assert.assertNotSame;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -41,7 +40,7 @@ public class GitBlameTest extends GitTest {
 
 	@Test
 	public void testBlameNoCommits() throws IOException, SAXException, JSONException, CoreException {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -75,7 +74,7 @@ public class GitBlameTest extends GitTest {
 	@Test
 	public void testBlameOneCommit() throws IOException, SAXException, JSONException, CoreException {
 
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -140,7 +139,7 @@ public class GitBlameTest extends GitTest {
 	@Test
 	public void testBlameMultiCommit() throws IOException, SAXException, JSONException, CoreException {
 
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -267,7 +266,7 @@ public class GitBlameTest extends GitTest {
 	@Test
 	public void testBlameMultiFile() throws IOException, SAXException, JSONException, CoreException {
 
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 		for (IPath clonePath : clonePaths) {
 			//clone a repo
@@ -425,7 +424,7 @@ public class GitBlameTest extends GitTest {
 	@Test
 	public void testFolderBlame() throws IOException, SAXException, JSONException, CoreException {
 
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {

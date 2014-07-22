@@ -17,7 +17,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jgit.api.Git;
@@ -42,7 +41,7 @@ public class GitPullTest extends GitTest {
 	@Test
 	public void testPullRemoteUpToDate() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -100,7 +99,7 @@ public class GitPullTest extends GitTest {
 
 	@Test
 	public void testPullRemote() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1: create

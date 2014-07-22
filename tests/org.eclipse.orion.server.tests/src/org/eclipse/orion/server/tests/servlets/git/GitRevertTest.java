@@ -15,7 +15,6 @@ import static org.junit.Assert.assertEquals;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
@@ -36,7 +35,7 @@ public class GitRevertTest extends GitTest {
 
 	@Test
 	public void testRevert() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -84,7 +83,7 @@ public class GitRevertTest extends GitTest {
 
 	@Test
 	public void testRevertFailure() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {

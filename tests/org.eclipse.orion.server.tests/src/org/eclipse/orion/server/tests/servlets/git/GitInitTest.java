@@ -15,7 +15,6 @@ import static org.junit.Assert.assertNotNull;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -33,7 +32,7 @@ public class GitInitTest extends GitTest {
 
 	@Test
 	public void testInit() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath initPath = getClonePath(workspaceId, project);
@@ -44,7 +43,7 @@ public class GitInitTest extends GitTest {
 
 	@Test
 	public void testInitAndCreateProjectByName() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath initPath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
 
 		JSONObject repo = init(initPath, null, getMethodName());
@@ -67,7 +66,7 @@ public class GitInitTest extends GitTest {
 
 	@Test
 	public void testInitAndCreateFolderByPath() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath initPath = getClonePath(workspaceId, project).append("repos").append("repo1").makeAbsolute();
@@ -85,7 +84,7 @@ public class GitInitTest extends GitTest {
 
 	@Test
 	public void testInitWithoutNameAndFilePath() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath initPath = new Path("workspace").append(getWorkspaceId(workspaceLocation)).makeAbsolute();
 
 		WebRequest request = getPostGitInitRequest(initPath, null, null);

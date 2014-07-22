@@ -192,7 +192,7 @@ public abstract class GitTest extends FileSystemTest {
 
 	protected JSONObject linkProject(String contentLocation, String projectName) throws JSONException, IOException, SAXException {
 		// TODO: remove me
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		return createProjectOrLink(workspaceLocation, projectName, contentLocation);
 	}
 
@@ -1538,7 +1538,7 @@ public abstract class GitTest extends FileSystemTest {
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
 		assertNotNull(workspace);
-		String name = workspace.getUniqueId();
+		String name = testName.getMethodName();
 		JSONObject projectTop = createProjectOrLink(workspaceLocation, name + "-top", null);
 		IPath clonePathTop = getClonePath(workspaceId, projectTop);
 		JSONObject projectFolder = createProjectOrLink(workspaceLocation, name + "-folder", null);
@@ -1558,7 +1558,7 @@ public abstract class GitTest extends FileSystemTest {
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
 		assertNotNull(workspace);
-		String name = workspace.getUniqueId();
+		String name = testName.getMethodName();
 		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, name + "-top1", null);
 		IPath clonePathTop1 = getClonePath(workspaceId, projectTop1);
 

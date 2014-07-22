@@ -57,7 +57,7 @@ public class GitConfigTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone a  repo
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -119,7 +119,7 @@ public class GitConfigTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// init a repo
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath initPath = getClonePath(workspaceId, project);
@@ -176,7 +176,7 @@ public class GitConfigTest extends GitTest {
 	*/
 	@Test
 	public void testGetListOfConfigEntries() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -207,7 +207,7 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testAddConfigEntry() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -260,7 +260,7 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testGetSingleConfigEntry() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -292,7 +292,7 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testUpdateConfigEntryUsingPOST() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -334,7 +334,7 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testUpdateConfigEntryUsingPUT() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -374,7 +374,7 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testDeleteConfigEntry() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -424,7 +424,7 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testCreateInvalidConfigEntry() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -451,7 +451,7 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testUpdateNonExistingConfigEntryUsingPUT() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -485,7 +485,7 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testRequestWithMissingArguments() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -534,7 +534,7 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testGetConfigEntryForNonExistingRepository() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = getWorkspaceId(workspaceLocation);
 
 		JSONArray clonesArray = listClones(workspaceId, null);

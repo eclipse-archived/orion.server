@@ -18,7 +18,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jgit.api.CherryPickResult.CherryPickStatus;
@@ -39,7 +38,7 @@ import com.meterware.httpunit.WebResponse;
 public class GitCherryPickTest extends GitTest {
 	@Test
 	public void testCherryPick() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {

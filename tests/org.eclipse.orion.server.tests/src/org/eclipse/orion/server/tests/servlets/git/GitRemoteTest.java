@@ -77,7 +77,7 @@ public class GitRemoteTest extends GitTest {
 
 	@Test
 	public void testGetOrigin() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -103,7 +103,7 @@ public class GitRemoteTest extends GitTest {
 	@Test
 	public void testGetUnknownRemote() throws Exception {
 		// clone a  repo
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -150,7 +150,7 @@ public class GitRemoteTest extends GitTest {
 
 	@Test
 	public void testGetRemoteCommits() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -221,7 +221,7 @@ public class GitRemoteTest extends GitTest {
 	@Test
 	public void testGetRemoteBranches() throws Exception {
 		// clone a  repo
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -269,7 +269,7 @@ public class GitRemoteTest extends GitTest {
 
 	@Test
 	public void testAddRemoveRemote() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -320,7 +320,7 @@ public class GitRemoteTest extends GitTest {
 
 	@Test
 	public void testRemoteProperties() throws IOException, SAXException, JSONException, CoreException, URISyntaxException {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);

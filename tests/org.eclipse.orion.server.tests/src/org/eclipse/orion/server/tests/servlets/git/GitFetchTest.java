@@ -17,7 +17,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
@@ -55,7 +54,7 @@ public class GitFetchTest extends GitTest {
 	@Test
 	public void testFetchRemoteBranchUpToDate() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -100,7 +99,7 @@ public class GitFetchTest extends GitTest {
 	@Test
 	public void testFetchRemoteUpToDate() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -135,7 +134,7 @@ public class GitFetchTest extends GitTest {
 
 	@Test
 	public void testPushCommitAndFetch() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1
@@ -222,7 +221,7 @@ public class GitFetchTest extends GitTest {
 		Assume.assumeTrue(privateKey != null);
 		Assume.assumeTrue(passphrase != null);
 
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		URIish uri = new URIish(sshRepo2);
 
@@ -309,7 +308,7 @@ public class GitFetchTest extends GitTest {
 
 	@Test
 	public void testFetchRemote() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1: create
@@ -422,7 +421,7 @@ public class GitFetchTest extends GitTest {
 
 	@Test
 	public void testFetchRemoteBranch() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1: create
@@ -519,7 +518,7 @@ public class GitFetchTest extends GitTest {
 		cfg.setBoolean("receive", null, "denyNonFastforwards", false);
 		cfg.save();
 
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[][] clonePaths = createTestClonePairs(workspaceLocation);
 
 		for (IPath[] clonePath : clonePaths) {

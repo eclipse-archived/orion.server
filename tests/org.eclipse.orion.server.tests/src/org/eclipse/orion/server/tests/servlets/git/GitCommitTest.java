@@ -16,7 +16,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
@@ -38,7 +37,7 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitOnly() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -73,7 +72,7 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitNoComment() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -94,7 +93,7 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitEmptyComment() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -115,7 +114,7 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitAll() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -150,7 +149,7 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitAmend() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -187,7 +186,7 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitHeadContent() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -222,7 +221,7 @@ public class GitCommitTest extends GitTest {
 	@Test
 	public void testCommitAllInFolder() throws Exception {
 		// see bug 349480
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -313,7 +312,7 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitWithCommiterOverwritten() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -355,7 +354,7 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitWithAuthorOverwritten() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -397,7 +396,7 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitterAndAuthorFallback() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {

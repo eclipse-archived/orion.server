@@ -39,16 +39,12 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.Slug;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
-import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
@@ -82,6 +78,11 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	 */
 	protected String testProjectLocalFileLocation = "";
 
+	/**
+	 * The workspace location for the test user.
+	 */
+	protected URI workspaceLocation = null;
+
 	protected WebConversation webConversation;
 
 	/**
@@ -90,9 +91,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	 * @throws IOException 
 	 */
 	protected void createTestProject(String name) throws Exception {
-		//create workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		URI workspaceLocation = createWorkspace(workspaceName);
+		assertNotNull(workspaceLocation);
 
 		//create a project
 		String projectName = name + "Project";
@@ -124,36 +123,6 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	protected boolean checkContentEquals(File expected, String actual) throws IOException, CoreException {
 		File actualContent = EFS.getStore(makeLocalPathAbsolute(actual)).toLocalFile(EFS.NONE, null);
 		return FileUtils.contentEquals(expected, actualContent);
-	}
-
-	protected static void clearWorkspace() throws CoreException {
-		IMetaStore store = OrionConfiguration.getMetaStore();
-		List<String> userIds = store.readAllUsers();
-		for (String userId : userIds) {
-			IFileStore userHome = OrionConfiguration.getMetaStore().getUserHome(userId);
-			UserInfo user = store.readUser(userId);
-			for (String workspaceId : user.getWorkspaceIds()) {
-				WorkspaceInfo workspace = store.readWorkspace(workspaceId);
-				List<String> projectNames = workspace.getProjectNames();
-				for (String projectName : projectNames) {
-					ProjectInfo project = store.readProject(workspaceId, projectName);
-					URI contentLocation = project.getContentLocation();
-					// delete the project folders
-					IFileStore projectDir = EFS.getStore(contentLocation);
-					if (userHome.isParentOf(projectDir)) {
-						for (IFileStore child : projectDir.childStores(EFS.NONE, null)) {
-							if (!child.getName().equals("project.json")) {
-								child.delete(EFS.NONE, null);
-							}
-						}
-					}
-					// delete the project metadata
-					store.deleteProject(workspaceId, projectName);
-				}
-				// delete the workspace metadata
-				store.deleteWorkspace(userId, workspaceId);
-			}
-		}
 	}
 
 	/**
@@ -543,9 +512,9 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	/**
 	 * Creates a new workspace, and returns the URI of the resulting resource.
 	 */
-	protected URI createWorkspace(String workspaceName) throws IOException, SAXException {
+	protected void createWorkspace(String workspaceName) throws IOException, SAXException {
 		WebResponse response = basicCreateWorkspace(workspaceName);
-		return SERVER_URI.resolve(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+		workspaceLocation = SERVER_URI.resolve(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
 	}
 
 }

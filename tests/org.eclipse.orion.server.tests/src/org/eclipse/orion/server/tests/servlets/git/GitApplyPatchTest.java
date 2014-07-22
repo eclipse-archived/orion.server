@@ -16,7 +16,6 @@ import static org.junit.Assert.assertNotNull;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
@@ -42,7 +41,7 @@ public class GitApplyPatchTest extends GitTest {
 	@Test
 	public void testApplyPatch_addFile() throws Exception {
 		// clone: create
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -81,7 +80,7 @@ public class GitApplyPatchTest extends GitTest {
 	@Test
 	public void testApplyPatch_deleteFile() throws Exception {
 		// clone: create
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -117,7 +116,7 @@ public class GitApplyPatchTest extends GitTest {
 	@Test
 	public void testApplyPatch_modifyFile() throws Exception {
 		// clone: create
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -159,7 +158,7 @@ public class GitApplyPatchTest extends GitTest {
 	@Test
 	public void testApplyPatch_modifyFileFormatError() throws Exception {
 		// clone: create
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		clone(clonePath);
@@ -192,7 +191,7 @@ public class GitApplyPatchTest extends GitTest {
 	@Test
 	public void testApplyPatch_modifyFileApplyError() throws Exception {
 		// clone: create
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);

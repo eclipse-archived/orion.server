@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,10 +13,9 @@ package org.eclipse.orion.server.tests.performance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.net.URI;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
@@ -27,6 +26,10 @@ import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
+
 /**
  * A simple stress test of the Orion server.
  */
@@ -34,7 +37,6 @@ public class SimpleServerStressTest extends FileSystemTest {
 
 	@Before
 	public void setUp() throws CoreException {
-		clearWorkspace();
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
@@ -46,7 +48,7 @@ public class SimpleServerStressTest extends FileSystemTest {
 		PerformanceMeter meter = performance.createPerformanceMeter("SimpleServerStressTest#testCreateProject");
 		//create workspace
 		String workspaceName = SimpleServerStressTest.class.getName() + "#testCreateProject";
-		URI workspaceLocation = createWorkspace(workspaceName);
+		createWorkspace(workspaceName);
 		final int PROJECT_COUNT = 1000;//increase this value for a real stress test
 		meter.start();
 		long start = System.currentTimeMillis();

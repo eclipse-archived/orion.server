@@ -17,7 +17,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.util.List;
 
 import org.eclipse.core.runtime.IPath;
@@ -36,7 +35,7 @@ import com.meterware.httpunit.WebResponse;
 public class GitUriTest extends GitTest {
 	@Test
 	public void testGitUrisAfterLinkingToExistingClone() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		assertGitSectionExists(project);
@@ -46,7 +45,7 @@ public class GitUriTest extends GitTest {
 
 	@Test
 	public void testGitUrisInContentLocation() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String projectName = getMethodName();
 		// http://<host>/workspace/<workspaceId>/
 		JSONObject newProject = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -95,7 +94,7 @@ public class GitUriTest extends GitTest {
 
 	@Test
 	public void testGitUrisForEmptyDir() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		File emptyDir = AllGitTests.getRandomLocation().toFile();
 		emptyDir.mkdir();
 		ServletTestingSupport.allowedPrefixes = emptyDir.toString();
@@ -123,7 +122,7 @@ public class GitUriTest extends GitTest {
 
 	@Test
 	public void testGitUrisForFile() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		File dir = AllGitTests.getRandomLocation().toFile();
 		dir.mkdir();
@@ -154,7 +153,7 @@ public class GitUriTest extends GitTest {
 
 	@Test
 	public void testGitUrisForRepositoryClonedIntoSubfolder() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);

@@ -28,6 +28,7 @@ import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.search.SearchActivator;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
@@ -54,6 +55,7 @@ import com.meterware.httpunit.WebResponse;
 public class SearchTest extends FileSystemTest {
 
 	private static final String SEARCH_LOCATION = toAbsoluteURI("filesearch?q=");
+
 	@BeforeClass
 	public static void setupWorkspace() {
 		initializeWorkspaceLocation();
@@ -148,7 +150,8 @@ public class SearchTest extends FileSystemTest {
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
-		createTestProject("Search Test");
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createTestProject(testName.getMethodName());
 		createTestData();
 		//wait for indexer to finish
 		SearchActivator.getInstance().testWaitForIndex();
@@ -217,7 +220,6 @@ public class SearchTest extends FileSystemTest {
 	 */
 	@Test
 	public void testSearchInProjectWithURLName() throws Exception {
-		clearWorkspace();
 		final String projectName = "[breakme]";
 		createTestProject(projectName);
 		createFile("smaug.txt", "Chiefest and Greatest of Calamities");

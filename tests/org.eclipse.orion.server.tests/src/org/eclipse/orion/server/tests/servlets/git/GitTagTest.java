@@ -36,7 +36,7 @@ import com.meterware.httpunit.WebResponse;
 public class GitTagTest extends GitTest {
 	@Test
 	public void testTag() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -74,7 +74,7 @@ public class GitTagTest extends GitTest {
 
 	@Test
 	public void testListDeleteTags() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -135,7 +135,7 @@ public class GitTagTest extends GitTest {
 
 	@Test
 	public void testTagFailed() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -206,7 +206,7 @@ public class GitTagTest extends GitTest {
 
 	@Test
 	public void testTagFromLogAll() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -241,7 +241,7 @@ public class GitTagTest extends GitTest {
 
 	@Test
 	public void testCheckoutTag() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -303,7 +303,7 @@ public class GitTagTest extends GitTest {
 		File orionServer = new File("").getAbsoluteFile().getParentFile(/*org.eclipse.orion.server.tests*/).getParentFile(/*tests*/);
 		Assume.assumeTrue(new File(orionServer, Constants.DOT_GIT).exists());
 
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), orionServer.toURI().toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 

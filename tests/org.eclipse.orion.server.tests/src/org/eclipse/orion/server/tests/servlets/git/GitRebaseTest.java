@@ -17,7 +17,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.IPath;
@@ -43,7 +42,7 @@ import com.meterware.httpunit.WebResponse;
 public class GitRebaseTest extends GitTest {
 	@Test
 	public void testRebaseSelf() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -68,7 +67,7 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebase() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -164,7 +163,7 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebaseStopOnConflictAndAbort() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -268,7 +267,7 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebaseStopOnConflictAndContinue() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -379,7 +378,7 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebaseStopOnConflictAndSkipPatch() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -488,7 +487,7 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebaseInvalidOperation() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
@@ -520,7 +519,7 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebaseOnRemote() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[][] clonePaths = createTestClonePairs(workspaceLocation);
 
 		for (IPath[] clonePath : clonePaths) {

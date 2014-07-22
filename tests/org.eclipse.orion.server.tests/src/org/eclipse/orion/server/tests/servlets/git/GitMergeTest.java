@@ -17,7 +17,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.util.List;
 
 import org.eclipse.core.runtime.IPath;
@@ -41,7 +40,7 @@ import com.meterware.httpunit.WebResponse;
 public class GitMergeTest extends GitTest {
 	@Test
 	public void testMergeSelf() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -59,7 +58,7 @@ public class GitMergeTest extends GitTest {
 	@Test
 	public void testMerge() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -154,7 +153,7 @@ public class GitMergeTest extends GitTest {
 
 	@Test
 	public void testMergeAlreadyUpToDate() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
@@ -186,7 +185,7 @@ public class GitMergeTest extends GitTest {
 	@Test
 	public void testMergeConflict() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -286,7 +285,7 @@ public class GitMergeTest extends GitTest {
 	@Test
 	public void testMergeIntoLocalFailedDirtyWorkTree() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -341,7 +340,7 @@ public class GitMergeTest extends GitTest {
 	@Test
 	public void testMergeFailedDirtyWorkTree() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -402,7 +401,7 @@ public class GitMergeTest extends GitTest {
 
 	@Test
 	public void testMergeRemote() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1
@@ -488,7 +487,7 @@ public class GitMergeTest extends GitTest {
 	@Test
 	public void testMergeRemovingFolders() throws Exception {
 		// see org.eclipse.jgit.api.MergeCommandTest.testMergeRemovingFolders()
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {

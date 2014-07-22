@@ -13,7 +13,6 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 
 import java.net.HttpURLConnection;
-import java.net.URI;
 
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -28,7 +27,7 @@ import com.meterware.httpunit.WebResponse;
 public class GitIndexTest extends GitTest {
 	@Test
 	public void testIndexModifiedByOrion() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String projectName = getMethodName();
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());

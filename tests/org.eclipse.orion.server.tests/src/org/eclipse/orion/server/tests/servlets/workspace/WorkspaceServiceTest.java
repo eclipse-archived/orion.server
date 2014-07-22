@@ -37,8 +37,6 @@ import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSuppor
 import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceServlet;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.IOUtilities;
-import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
@@ -89,12 +87,6 @@ public class WorkspaceServiceTest extends FileSystemTest {
 
 	@Before
 	public void setUp() throws CoreException {
-		clearWorkspace();
-		IMetaStore store = OrionConfiguration.getMetaStore();
-		List<String> userIds = store.readAllUsers();
-		for (String userId : userIds) {
-			store.deleteUser(userId);
-		}
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
@@ -116,8 +108,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	@Test
 	public void testCreateProject() throws Exception {
 		//create workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		URI workspaceLocation = createWorkspace(workspaceName);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		//create a project
 		String projectName = "My Project";
@@ -185,8 +176,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	@Test
 	public void testMoveBadRequest() throws IOException, SAXException {
 		//create workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		URI workspaceLocation = createWorkspace(workspaceName);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		//request a bogus move
 		String projectName = "My Project";
@@ -198,8 +188,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	@Test
 	public void testMoveFolderToProject() throws IOException, SAXException, JSONException {
 		//create workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		URI workspaceLocation = createWorkspace(workspaceName);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		//create a project
 		String sourceName = "Source Project";
@@ -257,8 +246,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	@Test
 	public void testMoveProject() throws IOException, SAXException, JSONException {
 		//create workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		URI workspaceLocation = createWorkspace(workspaceName);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		//create a project
 		String projectName = "Source Project";
@@ -284,8 +272,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	@Test
 	public void testMoveProjectToFolder() throws IOException, SAXException, JSONException {
 		//create workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		URI workspaceLocation = createWorkspace(workspaceName);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		//create a source project
 		String projectName = "Source Project";
@@ -339,8 +326,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	@Test
 	public void testCopyProjectNonDefaultLocation() throws IOException, SAXException, JSONException {
 		//create workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		URI workspaceLocation = createWorkspace(workspaceName);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String tmp = System.getProperty("java.io.tmpdir");
 		File projectLocation = new File(new File(tmp), "Orion-testCopyProjectNonDefaultLocation");
@@ -405,8 +391,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	@Test
 	public void testCopyFolderToProject() throws IOException, SAXException, JSONException {
 		//create workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		URI workspaceLocation = createWorkspace(workspaceName);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		//create a project
 		String sourceName = "Source Project";
@@ -466,8 +451,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	@Test
 	public void testCopyProject() throws IOException, SAXException, JSONException {
 		//create workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		URI workspaceLocation = createWorkspace(workspaceName);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		//create a project
 		String sourceName = "Source Project";
@@ -522,8 +506,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	@Test
 	public void testCreateProjectBadName() throws IOException, SAXException, JSONException {
 		//create workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		URI workspaceLocation = createWorkspace(workspaceName);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		//check a variety of bad project names
 		for (String badName : Arrays.asList("", " ", "/")) {
@@ -540,8 +523,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	@Test
 	public void testCreateProjectNonDefaultLocation() throws IOException, SAXException, JSONException {
 		//create workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		URI workspaceLocation = createWorkspace(workspaceName);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String tmp = System.getProperty("java.io.tmpdir");
 		File projectLocation = new File(new File(tmp), "Orion-testCreateProjectNonDefaultLocation");
@@ -609,8 +591,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	@Test
 	public void testGetProjectMetadata() throws IOException, SAXException, JSONException {
 		//create workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		URI workspaceLocation = createWorkspace(workspaceName);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		//create a project
 		String sourceName = "testGetProjectMetadata Project";
@@ -647,8 +628,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 	@Test
 	public void testDeleteProject() throws IOException, SAXException, JSONException, URISyntaxException, CoreException {
 		//create workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		URI workspaceLocation = createWorkspace(workspaceName);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		//create a project
 		String projectName = "My Project";

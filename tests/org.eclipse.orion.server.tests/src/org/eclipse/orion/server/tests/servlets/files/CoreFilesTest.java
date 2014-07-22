@@ -77,12 +77,12 @@ public class CoreFilesTest extends FileSystemTest {
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
-		createTestProject("CoreFilesTest-" + testName.getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createTestProject(testName.getMethodName());
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		clearWorkspace();
 		remove("sample");
 		TestFilesystemModificationListener.cleanup(modListener);
 	}

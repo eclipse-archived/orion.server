@@ -64,7 +64,6 @@ public class SiteTest extends CoreSiteTest {
 	 * Before each test, create a workspace and prepare fields for use by test methods.
 	 */
 	public void setUp() throws CoreException, SAXException, IOException, JSONException {
-		clearWorkspace();
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();

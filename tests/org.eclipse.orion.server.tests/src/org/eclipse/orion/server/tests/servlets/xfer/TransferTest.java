@@ -14,25 +14,49 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.*;
-import java.net.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.Slug;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import com.meterware.httpunit.*;
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.HttpUnitOptions;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * 
@@ -123,7 +147,6 @@ public class TransferTest extends FileSystemTest {
 
 	@After
 	public void tearDown() throws CoreException {
-		clearWorkspace();
 		remove("sample");
 	}
 
@@ -133,7 +156,8 @@ public class TransferTest extends FileSystemTest {
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
-		createTestProject("TransferTest");
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createTestProject(testName.getMethodName());
 	}
 
 	@Test

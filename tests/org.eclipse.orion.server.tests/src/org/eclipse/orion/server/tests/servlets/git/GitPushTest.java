@@ -18,7 +18,6 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
@@ -57,7 +56,7 @@ public class GitPushTest extends GitTest {
 	@Test
 	public void testPushNoBody() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -84,7 +83,7 @@ public class GitPushTest extends GitTest {
 
 	@Test
 	public void testPushHead() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1
@@ -174,7 +173,7 @@ public class GitPushTest extends GitTest {
 		Assume.assumeTrue(privateKey != null);
 		Assume.assumeTrue(passphrase != null);
 
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		URIish uri = new URIish(sshRepo2);
 
@@ -270,7 +269,7 @@ public class GitPushTest extends GitTest {
 
 	@Test
 	public void testPushBranch() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1: create
@@ -353,7 +352,7 @@ public class GitPushTest extends GitTest {
 
 	@Test
 	public void testPushToDelete() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[][] clonePaths = createTestClonePairs(workspaceLocation);
 
 		for (IPath[] clonePath : clonePaths) {
@@ -487,7 +486,7 @@ public class GitPushTest extends GitTest {
 	@Test
 	public void testPushFromLog() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -539,7 +538,7 @@ public class GitPushTest extends GitTest {
 
 	@Test
 	public void testPushRejected() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1
@@ -617,7 +616,7 @@ public class GitPushTest extends GitTest {
 	@Test
 	public void testPushRemoteRejected() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
 		IPath clonePath = getClonePath(workspaceId, project);
@@ -668,7 +667,7 @@ public class GitPushTest extends GitTest {
 		cfg.setBoolean("receive", null, "denyNonFastforwards", false);
 		cfg.save();
 
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[][] clonePaths = createTestClonePairs(workspaceLocation);
 
 		for (IPath[] clonePath : clonePaths) {
@@ -744,7 +743,7 @@ public class GitPushTest extends GitTest {
 
 	@Test
 	public void testPushTags() throws Exception {
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1
@@ -804,7 +803,7 @@ public class GitPushTest extends GitTest {
 	@Test
 	public void testPushNewBranchToSecondaryRemote() throws Exception {
 		// see bug 353557
-		URI workspaceLocation = createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 

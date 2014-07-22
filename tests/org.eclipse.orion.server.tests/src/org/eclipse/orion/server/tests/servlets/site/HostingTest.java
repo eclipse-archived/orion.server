@@ -24,6 +24,7 @@ import java.net.URLEncoder;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
@@ -75,11 +76,11 @@ public class HostingTest extends CoreSiteTest {
 	 * Before each test, create a workspace and prepare fields for use by test methods.
 	 */
 	public void setUp() throws Exception {
-		clearWorkspace();
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
-		createTestProject("HostingTest");
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createTestProject(testName.getMethodName());
 		workspaceId = new Path(testProjectBaseLocation).segment(0);
 	}
 
