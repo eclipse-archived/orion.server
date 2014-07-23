@@ -1583,4 +1583,47 @@ public abstract class GitTest extends FileSystemTest {
 		IPath[][] clonePaths = new IPath[][] {clonePathsTop, clonePathsFolder, clonePathsMixed};
 		return clonePaths;
 	}
+
+	protected JSONObject createFile(JSONObject locationJSON, String filename) throws Exception {
+		WebRequest request = getPostFilesRequest(locationJSON.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON(filename).toString(), filename);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		return getChild(locationJSON, filename);
+	}
+
+	protected JSONObject getContentLocationFromProject(JSONObject project) throws Exception {
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		return new JSONObject(response.getText());
+
+	}
+
+	protected WebResponse stashCreate(JSONObject project, boolean includeUntracked) throws Exception {
+		return stashCreate(project, includeUntracked, null, null);
+	}
+
+	protected WebResponse stashCreate(JSONObject project, boolean includeUntracked, String indexMessage, String workingDirectoryMessage) throws Exception {
+
+		String location = project.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_STASH);
+
+		WebRequest request = GitStashTest.getStashCreatePostRequest(location, includeUntracked, indexMessage, workingDirectoryMessage);
+		WebResponse response = webConversation.getResponse(request);
+
+		return response;
+	}
+
+	protected WebResponse stashApply(JSONObject project, boolean applyIndex, boolean applyUntracked) throws Exception {
+
+		String location = project.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_STASH);
+
+		WebRequest request = GitStashTest.getStashApplyPostRequest(location, applyIndex, applyUntracked);
+		WebResponse response = webConversation.getResponse(request);
+
+		return response;
+	}
+
+	protected WebResponse stashList() {
+		return null;
+	}
 }
