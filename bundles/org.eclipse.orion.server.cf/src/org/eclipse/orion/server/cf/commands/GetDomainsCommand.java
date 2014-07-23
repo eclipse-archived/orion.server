@@ -84,6 +84,9 @@ public class GetDomainsCommand extends AbstractCFCommand {
 				}
 			}
 
+			if (domains.isEmpty())
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Domain can not be found", null);
+
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$

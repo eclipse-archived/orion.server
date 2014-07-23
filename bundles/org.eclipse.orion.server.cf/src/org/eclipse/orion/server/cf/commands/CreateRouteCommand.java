@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others 
+ * Copyright (c) 2013, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,8 +19,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
-import org.eclipse.orion.server.cf.objects.App;
-import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.objects.*;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
@@ -32,20 +31,31 @@ public class CreateRouteCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-	private App application;
 
-	private String appName;
-	private String appHost;
-	private String domainGUID;
+	private Domain domain;
+	private String hostName;
+	private App app;
 
-	public CreateRouteCommand(Target target, App app, String domainGUID) {
+	private Route route;
+
+	public CreateRouteCommand(Target target, Domain domain, String hostName) {
 		super(target);
 
-		String[] bindings = {domainGUID};
-		this.commandName = NLS.bind("Create a new route (domain guid: {0})", bindings);
+		this.domain = domain;
+		this.hostName = hostName;
+		this.commandName = NLS.bind("Create a new route (domain guid: {0})", domain.getGuid());
+	}
 
-		this.application = app;
-		this.domainGUID = domainGUID;
+	public CreateRouteCommand(Target target, Domain domain, App app) {
+		super(target);
+
+		this.domain = domain;
+		this.app = app;
+		this.commandName = NLS.bind("Create a new route (domain guid: {0})", domain.getGuid());
+	}
+
+	public Route getRoute() {
+		return route;
 	}
 
 	@Override
@@ -61,12 +71,17 @@ public class CreateRouteCommand extends AbstractCFCommand {
 			/* set request body */
 			JSONObject routeRequest = new JSONObject();
 			routeRequest.put(CFProtocolConstants.V2_KEY_SPACE_GUID, target.getSpace().getCFJSON().getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID));
-			routeRequest.put(CFProtocolConstants.V2_KEY_HOST, appHost);
-			routeRequest.put(CFProtocolConstants.V2_KEY_DOMAIN_GUID, domainGUID);
+			routeRequest.put(CFProtocolConstants.V2_KEY_HOST, hostName);
+			routeRequest.put(CFProtocolConstants.V2_KEY_DOMAIN_GUID, domain.getGuid());
 			createRouteMethod.setRequestEntity(new StringRequestEntity(routeRequest.toString(), "application/json", "utf-8")); //$NON-NLS-1$//$NON-NLS-2$
 
-			return HttpUtil.executeMethod(createRouteMethod);
+			ServerStatus createRouteStatus = HttpUtil.executeMethod(createRouteMethod);
+			if (!createRouteStatus.isOK())
+				return createRouteStatus;
 
+			route = new Route().setCFJSON(createRouteStatus.getJsonData());
+
+			return createRouteStatus;
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
@@ -77,21 +92,26 @@ public class CreateRouteCommand extends AbstractCFCommand {
 	@Override
 	protected IStatus validateParams() {
 		try {
-			/* read deploy parameters */
-			ManifestParseTree manifest = application.getManifest();
-			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
+			if (app == null && hostName != null)
+				return Status.OK_STATUS;
+			else if (app == null && hostName == null)
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Missing host name parameter", null);
 
-			if (application.getName() != null)
-				appName = application.getName();
+			/* read deploy parameters */
+			ManifestParseTree manifest = app.getManifest();
+			ManifestParseTree appNode = manifest.get("applications").get(0); //$NON-NLS-1$
+
+			String appName = null;
+			if (app.getName() != null)
+				appName = app.getName();
 			else
-				appName = app.get(CFProtocolConstants.V2_KEY_NAME).getValue();
+				appName = appNode.get(CFProtocolConstants.V2_KEY_NAME).getValue();
 
 			/* if none provided, generate a default one */
-			ManifestParseTree hostNode = app.getOpt(CFProtocolConstants.V2_KEY_HOST);
-			appHost = (hostNode != null) ? hostNode.getValue() : (appName + "-" + UUID.randomUUID()); //$NON-NLS-1$
+			ManifestParseTree hostNode = appNode.getOpt(CFProtocolConstants.V2_KEY_HOST);
+			hostName = (hostNode != null) ? hostNode.getValue() : (appName + "-" + UUID.randomUUID()); //$NON-NLS-1$
 
 			return Status.OK_STATUS;
-
 		} catch (InvalidAccessException e) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		}

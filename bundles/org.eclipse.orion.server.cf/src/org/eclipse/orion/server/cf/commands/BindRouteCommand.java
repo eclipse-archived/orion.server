@@ -33,7 +33,7 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 
 	/* shared properties */
 	private String appDomain;
-	private String domainName;
+	private Domain domain;
 	private JSONObject route;
 	private boolean noRoute;
 
@@ -46,7 +46,7 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 	}
 
 	public String getDomainName() {
-		return domainName;
+		return domain.getDomainName();
 	}
 
 	public BindRouteCommand(Target target, App app) {
@@ -81,40 +81,34 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 				return revert(status);
 			}
 
-			String domainGUID = null;
 			if (!appDomain.isEmpty()) {
 				/* look if the domain is available */
 				for (Iterator<Domain> iterator = domains.iterator(); iterator.hasNext();) {
 					Domain domain = iterator.next();
 					if (appDomain.equals(domain.getDomainName())) {
-						domainGUID = domain.getGuid();
-						domainName = domain.getDomainName();
+						this.domain = domain;
 						break;
 					}
 				}
 
 				/* client requested an unavailable domain, fail */
-				if (domainGUID == null) {
+				if (domain == null) {
 					String msg = NLS.bind("Failed to find domain {0} in target", appDomain);
 					status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 					return revert(status);
 				}
-
 			} else {
 				/* client has not requested a specific domain, get the first available */
-				Domain domain = domains.get(0);
-				domainName = domain.getDomainName();
-				domainGUID = domain.getGuid();
+				this.domain = domains.get(0);
 			}
 
 			/* find out whether the declared host can be reused */
 			String routeGUID = null;
-			FindRouteCommand findRouteCommand = new FindRouteCommand(target, application, domainGUID);
+			FindRouteCommand findRouteCommand = new FindRouteCommand(target, application, domain.getGuid());
 			jobStatus = (ServerStatus) findRouteCommand.doIt(); /* FIXME: unsafe type cast */
 			status.add(jobStatus);
 
 			if (jobStatus.isOK()) {
-
 				/* extract route guid */
 				route = jobStatus.getJsonData();
 				routeGUID = route.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
@@ -134,7 +128,7 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 			}
 
 			/* create a new route */
-			CreateRouteCommand createRoute = new CreateRouteCommand(target, application, domainGUID);
+			CreateRouteCommand createRoute = new CreateRouteCommand(target, domain, application);
 			jobStatus = (ServerStatus) createRoute.doIt(); /* FIXME: unsafe type cast */
 			status.add(jobStatus);
 

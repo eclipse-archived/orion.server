@@ -45,6 +45,46 @@ public class RoutesHandlerV1 extends AbstractRESTHandler<Route> {
 	}
 
 	@Override
+	protected CFJob handlePut(Route route, HttpServletRequest request, HttpServletResponse response, final String path) {
+		final JSONObject jsonData = extractJSONData(request);
+
+		final JSONObject targetJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_TARGET);
+		final String domainName = jsonData.optString(CFProtocolConstants.KEY_DOMAIN_NAME, null);
+		final String hostName = jsonData.optString(CFProtocolConstants.KEY_HOST, null);
+
+		return new CFJob(request, false) {
+			@Override
+			protected IStatus performJob() {
+				try {
+					ComputeTargetCommand computeTargetCommand = new ComputeTargetCommand(this.userId, targetJSON);
+					computeTargetCommand.doIt();
+					Target target = computeTargetCommand.getTarget();
+					if (target == null) {
+						return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
+					}
+
+					GetDomainsCommand getDomainsCommand = new GetDomainsCommand(target, domainName);
+					IStatus getDomainsStatus = getDomainsCommand.doIt();
+					if (!getDomainsStatus.isOK())
+						return getDomainsStatus;
+
+					CreateRouteCommand createRouteCommand = new CreateRouteCommand(target, getDomainsCommand.getDomains().get(0), hostName);
+					IStatus createRouteStatus = createRouteCommand.doIt();
+					if (!createRouteStatus.isOK())
+						return createRouteStatus;
+
+					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, createRouteCommand.getRoute().toJSON());
+				} catch (Exception e) {
+					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
+					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+					logger.error(msg, e);
+					return status;
+				}
+			}
+		};
+	}
+
+	@Override
 	protected CFJob handleGet(Route route, HttpServletRequest request, HttpServletResponse response, final String path) {
 		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
 
@@ -89,21 +129,14 @@ public class RoutesHandlerV1 extends AbstractRESTHandler<Route> {
 
 					JSONArray deletedRoutesJSON = new JSONArray();
 
-					//					GetDomainsCommand getDomainsCommand = new GetDomainsCommand(target, routeJSON.getString(CFProtocolConstants.KEY_DOMAIN_NAME));
-					//					IStatus getDomainsStatus = getDomainsCommand.doIt();
-					//					if (!getDomainsStatus.isOK())
-					//						return getDomainsStatus;
-					//					List<Domain> domains = getDomainsCommand.getDomains();
-					//					if (domains == null || domains.size() == 0)
-					//						return new ServerStatus(IStatus.OK, HttpServletResponse.SC_NOT_FOUND, "Domain not found", null);
-
-					//					for (Iterator<Domain> iterator = domains.iterator(); iterator.hasNext();) {
-					//						Domain domain = iterator.next();
-
 					GetRoutesCommand getRoutesCommand = null;
 					if (Boolean.parseBoolean(orphaned)) {
 						getRoutesCommand = new GetRoutesCommand(target, true);
 					} else {
+						GetDomainsCommand getDomainsCommand = new GetDomainsCommand(target, routeJSON.getString(CFProtocolConstants.KEY_DOMAIN_NAME));
+						IStatus getDomainsStatus = getDomainsCommand.doIt();
+						if (!getDomainsStatus.isOK())
+							return getDomainsStatus;
 						getRoutesCommand = new GetRoutesCommand(target, routeJSON.getString(CFProtocolConstants.KEY_DOMAIN_NAME), routeJSON.getString(CFProtocolConstants.KEY_HOST));
 					}
 
@@ -124,7 +157,6 @@ public class RoutesHandlerV1 extends AbstractRESTHandler<Route> {
 
 						deletedRoutesJSON.put(route.toJSON());
 					}
-					//					}
 
 					JSONObject result = new JSONObject();
 					result.put("Routes", deletedRoutesJSON);
