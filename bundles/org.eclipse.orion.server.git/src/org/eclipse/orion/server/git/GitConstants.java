@@ -204,4 +204,53 @@ public class GitConstants {
 	public static final String KEY_SSO_TOKEN = "SSOToken"; //$NON-NLS-1$
 
 	public static final String KEY_COOKIE = "Cookie"; //$NON-NLS-1$
+
+	public static final String KEY_STASH = "StashLocation"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_POST_OPERATION_TYPE = "type"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_APPLY_COMMAND = "apply"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_CREATE_COMMAND = "create"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_REF = "stashRef"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_APPLY_INDEX = "applyIndex"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_APPLY_UNTRACKED = "applyUntracked"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_INCLUDE_UNTRACKED = "includeUntracked"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_SET_REF = "ref"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_WORKING_DIRECTORY_MESSAGE = "workingDirectoryMessage"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_INDEX_MESSAGE = "indexMessage"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_DROP_ALL = "dropAll"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_DROP_REF = "dropIndex"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_LIST_PAGE_SIZE = "pageSize"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_LIST_PAGE = "page"; //$NON-NLS-1$
+
+	public static final String STASH_LIST_EMPTY_MESSAGE = "Stash list is empty"; //$NON-NLS-1$
+
+	public static final String STASH_TOP_REF = "stash@{0}"; //$NON-NLS-1$
+
+	public static final String STASH_ILLEGAL_OPERATION_MESSAGE = "Illegal operation type"; //$NON-NLS-1$
+
+	public static final String STASH_DROP_ILLEGAL_REF_MESSAGE = "Illegal stash ref value. Should be a positive number of -1 if all refs should be dropped"; //$NON-NLS-1$
+
+	public static final String STASH_DROP_ERROR_MESSAGE = "An error occured while dropping stash."; //$NON-NLS-1$
+
+	public static final String STASH_LIST_ERROR_MESSAGE = "An error occured while getting stash list."; //$NON-NLS-1$
+
+	public static final String STASH_ERROR_MESSAGE = "An error occured for stash command."; //$NON-NLS-1$
+
+	public static final String STASH_ILLEGAL_REF_MESSAGE = "Illegal stash ref value"; //$NON-NLS-1$
+
+	public static final String STASH_LIST_ILLEGAL_PARAMS_MESSAGE = "Illegal page and pageSize parameters"; //$NON-NLS-1$
+
 }
