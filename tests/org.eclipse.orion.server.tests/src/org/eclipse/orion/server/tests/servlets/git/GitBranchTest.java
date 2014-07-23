@@ -42,7 +42,7 @@ public class GitBranchTest extends GitTest {
 	public void testListBranches() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
@@ -74,7 +74,7 @@ public class GitBranchTest extends GitTest {
 	public void testAddRemoveBranch() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);

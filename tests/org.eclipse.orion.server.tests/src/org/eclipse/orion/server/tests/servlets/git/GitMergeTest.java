@@ -42,7 +42,7 @@ public class GitMergeTest extends GitTest {
 	public void testMergeSelf() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
@@ -60,7 +60,7 @@ public class GitMergeTest extends GitTest {
 		// clone a repo
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
@@ -155,7 +155,7 @@ public class GitMergeTest extends GitTest {
 	public void testMergeAlreadyUpToDate() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -187,7 +187,7 @@ public class GitMergeTest extends GitTest {
 		// clone a repo
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
@@ -287,7 +287,7 @@ public class GitMergeTest extends GitTest {
 		// clone a repo
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
@@ -301,7 +301,7 @@ public class GitMergeTest extends GitTest {
 		String gitRemoteUri = gitSection.getString(GitConstants.KEY_REMOTE);
 
 		// add a parallel commit in secondary clone and push it to the remote
-		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project2"), null);
 		IPath clonePath2 = getClonePath(workspaceId, project2);
 		clone(clonePath2);
 
@@ -342,7 +342,7 @@ public class GitMergeTest extends GitTest {
 		// clone a repo
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
@@ -405,7 +405,7 @@ public class GitMergeTest extends GitTest {
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1
-		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project1"), null);
 		IPath clonePath1 = getClonePath(workspaceId, project1);
 		clone(clonePath1);
 
@@ -418,7 +418,7 @@ public class GitMergeTest extends GitTest {
 		String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
 
 		// clone2
-		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project2"), null);
 		IPath clonePath2 = getClonePath(workspaceId, project2);
 		clone(clonePath2);
 

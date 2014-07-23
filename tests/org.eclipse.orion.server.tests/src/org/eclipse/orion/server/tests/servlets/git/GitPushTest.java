@@ -58,7 +58,7 @@ public class GitPushTest extends GitTest {
 		// clone a repo
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
@@ -87,7 +87,7 @@ public class GitPushTest extends GitTest {
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1
-		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project1"), null);
 		IPath clonePath1 = getClonePath(workspaceId, project1);
 		clone(clonePath1);
 
@@ -102,7 +102,7 @@ public class GitPushTest extends GitTest {
 		String gitHeadUri1 = gitSection1.getString(GitConstants.KEY_HEAD);
 
 		// clone2
-		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project2"), null);
 		IPath clonePath2 = getClonePath(workspaceId, project2);
 		clone(clonePath2);
 
@@ -178,7 +178,7 @@ public class GitPushTest extends GitTest {
 		URIish uri = new URIish(sshRepo2);
 
 		// clone1: create
-		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project1"), null);
 		IPath clonePath = getClonePath(workspaceId, project1);
 
 		WebRequest request = new PostGitCloneRequest().setURIish(uri).setFilePath(clonePath).setKnownHosts(knownHosts2).setPrivateKey(privateKey).setPublicKey(publicKey).setPassphrase(passphrase).getWebRequest();
@@ -197,7 +197,7 @@ public class GitPushTest extends GitTest {
 		String gitHeadUri1 = gitSection1.optString(GitConstants.KEY_HEAD);
 
 		// clone2: create
-		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project2"), null);
 		clonePath = getClonePath(workspaceId, project2);
 		request = new PostGitCloneRequest().setURIish(uri).setFilePath(clonePath).setKnownHosts(knownHosts2).setPrivateKey(privateKey).setPublicKey(publicKey).setPassphrase(passphrase).getWebRequest();
 		String cloneContentLocation2 = clone(request);
@@ -273,7 +273,7 @@ public class GitPushTest extends GitTest {
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1: create
-		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project1"), null);
 		IPath clonePath1 = getClonePath(workspaceId, project1);
 		JSONObject clone1 = clone(clonePath1);
 		String cloneLocation1 = clone1.getString(ProtocolConstants.KEY_LOCATION);
@@ -323,7 +323,7 @@ public class GitPushTest extends GitTest {
 		String remoteBranchName1 = remoteBranch1.getString(ProtocolConstants.KEY_NAME);
 
 		// clone2
-		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project2"), null);
 		IPath clonePath2 = getClonePath(workspaceId, project2);
 		JSONObject clone2 = clone(clonePath2);
 		String cloneLocation2 = clone2.getString(ProtocolConstants.KEY_LOCATION);
@@ -488,7 +488,7 @@ public class GitPushTest extends GitTest {
 		// clone a repo
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
@@ -542,7 +542,7 @@ public class GitPushTest extends GitTest {
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1
-		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project1"), null);
 		IPath clonePath1 = getClonePath(workspaceId, project1);
 		clone(clonePath1);
 
@@ -558,7 +558,7 @@ public class GitPushTest extends GitTest {
 		String gitHeadUri1 = gitSection1.optString(GitConstants.KEY_HEAD);
 
 		// clone2
-		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project2"), null);
 		IPath clonePath2 = getClonePath(workspaceId, project2);
 		clone(clonePath2);
 
@@ -618,7 +618,7 @@ public class GitPushTest extends GitTest {
 		// clone a repo
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
@@ -747,7 +747,7 @@ public class GitPushTest extends GitTest {
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1
-		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project1"), null);
 		IPath clonePath1 = getClonePath(workspaceId, project1);
 		clone(clonePath1);
 
@@ -763,7 +763,7 @@ public class GitPushTest extends GitTest {
 		String gitTagUri1 = gitSection1.optString(GitConstants.KEY_TAG);
 
 		// clone2
-		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project2"), null);
 		IPath clonePath2 = getClonePath(workspaceId, project2);
 		clone(clonePath2);
 
@@ -892,7 +892,7 @@ public class GitPushTest extends GitTest {
 			assertEquals("secondary/branch", remoteBranchLocations.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
 
 			// clone the secondary branch and check if the new branch is there
-			JSONObject secondProject = createProjectOrLink(workspaceLocation, getMethodName() + "-second-" + i, null);
+			JSONObject secondProject = createProjectOrLink(workspaceLocation, getMethodName().concat("-second-").concat(Integer.toString(i)), null);
 			IPath secondClonePath = getClonePath(workspaceId, secondProject);
 			URIish uri = new URIish(dotGitDir.getParentFile().toURI().toURL());
 			JSONObject clone2 = clone(uri, null, secondClonePath, null, null, null);

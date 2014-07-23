@@ -34,7 +34,7 @@ public class GitInitTest extends GitTest {
 	public void testInit() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath initPath = getClonePath(workspaceId, project);
 		String contentLocation = init(null, initPath, null).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		Repository repository = getRepositoryForContentLocation(toAbsoluteURI(contentLocation));
@@ -68,7 +68,7 @@ public class GitInitTest extends GitTest {
 	public void testInitAndCreateFolderByPath() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath initPath = getClonePath(workspaceId, project).append("repos").append("repo1").makeAbsolute();
 
 		// /file/{id}/repos/repo1, folders: 'repo' and 'repo1' don't exist

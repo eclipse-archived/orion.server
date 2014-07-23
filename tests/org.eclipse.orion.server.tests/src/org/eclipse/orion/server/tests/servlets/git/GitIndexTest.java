@@ -29,7 +29,7 @@ public class GitIndexTest extends GitTest {
 	public void testIndexModifiedByOrion() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");

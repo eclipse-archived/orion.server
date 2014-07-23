@@ -54,7 +54,7 @@ public class GitDiffTest extends GitTest {
 	public void testNoDiff() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
@@ -75,7 +75,7 @@ public class GitDiffTest extends GitTest {
 
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
@@ -100,7 +100,7 @@ public class GitDiffTest extends GitTest {
 	public void testDiffModifiedByOrion() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -127,7 +127,7 @@ public class GitDiffTest extends GitTest {
 	public void testDiffFilter() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -172,7 +172,7 @@ public class GitDiffTest extends GitTest {
 	public void testDiffPaths() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -223,7 +223,7 @@ public class GitDiffTest extends GitTest {
 	public void testDiffCached() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -253,7 +253,7 @@ public class GitDiffTest extends GitTest {
 	public void testDiffCommits() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -304,7 +304,7 @@ public class GitDiffTest extends GitTest {
 	public void testDiffCommitWithWorkingTree() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -354,7 +354,7 @@ public class GitDiffTest extends GitTest {
 	public void testDiffBranchWithWorkingTree() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		JSONObject clone = getCloneForGitResource(project);
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
@@ -385,7 +385,7 @@ public class GitDiffTest extends GitTest {
 	public void testDiffPost() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
@@ -429,7 +429,7 @@ public class GitDiffTest extends GitTest {
 	public void testDiffParts() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -478,7 +478,7 @@ public class GitDiffTest extends GitTest {
 	public void testDiffUntrackedUri() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		String fileName = "new.txt";
@@ -522,7 +522,7 @@ public class GitDiffTest extends GitTest {
 		// clone: create
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
@@ -606,7 +606,7 @@ public class GitDiffTest extends GitTest {
 		// clone
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);

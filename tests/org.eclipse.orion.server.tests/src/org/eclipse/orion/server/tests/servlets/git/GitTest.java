@@ -1539,9 +1539,9 @@ public abstract class GitTest extends FileSystemTest {
 		WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
 		assertNotNull(workspace);
 		String name = testName.getMethodName();
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, name + "-top", null);
+		JSONObject projectTop = createProjectOrLink(workspaceLocation, name.concat("-top"), null);
 		IPath clonePathTop = getClonePath(workspaceId, projectTop);
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, name + "-folder", null);
+		JSONObject projectFolder = createProjectOrLink(workspaceLocation, name.concat("-folder"), null);
 		IPath clonePathFolder = getClonePath(workspaceId, projectFolder).append("folder").makeAbsolute();
 
 		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
@@ -1559,22 +1559,22 @@ public abstract class GitTest extends FileSystemTest {
 		WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
 		assertNotNull(workspace);
 		String name = testName.getMethodName();
-		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, name + "-top1", null);
+		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, name.concat("-top1"), null);
 		IPath clonePathTop1 = getClonePath(workspaceId, projectTop1);
 
-		JSONObject projectTop2 = createProjectOrLink(workspaceLocation, name + "-top2", null);
+		JSONObject projectTop2 = createProjectOrLink(workspaceLocation, name.concat("-top2"), null);
 		IPath clonePathTop2 = getClonePath(workspaceId, projectTop2);
 
-		JSONObject projectFolder1 = createProjectOrLink(workspaceLocation, name + "-folder1", null);
+		JSONObject projectFolder1 = createProjectOrLink(workspaceLocation, name.concat("-folder1"), null);
 		IPath clonePathFolder1 = getClonePath(workspaceId, projectFolder1).append("folder1").makeAbsolute();
 
-		JSONObject projectFolder2 = createProjectOrLink(workspaceLocation, name + "-folder2", null);
+		JSONObject projectFolder2 = createProjectOrLink(workspaceLocation, name.concat("-folder2"), null);
 		IPath clonePathFolder2 = getClonePath(workspaceId, projectFolder2).append("folder2").makeAbsolute();
 
-		JSONObject projectTop3 = createProjectOrLink(workspaceLocation, name + "-top3", null);
+		JSONObject projectTop3 = createProjectOrLink(workspaceLocation, name.concat("-top3"), null);
 		IPath clonePathTop3 = getClonePath(workspaceId, projectTop3);
 
-		JSONObject projectFolder3 = createProjectOrLink(workspaceLocation, name + "-folder3", null);
+		JSONObject projectFolder3 = createProjectOrLink(workspaceLocation, name.concat("-folder3"), null);
 		IPath clonePathFolder3 = getClonePath(workspaceId, projectFolder3).append("folder1").makeAbsolute();
 
 		IPath[] clonePathsTop = new IPath[] {clonePathTop1, clonePathTop2};

@@ -304,7 +304,7 @@ public class GitTagTest extends GitTest {
 		Assume.assumeTrue(new File(orionServer, Constants.DOT_GIT).exists());
 
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), orionServer.toURI().toString());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), orionServer.toURI().toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// get project/folder metadata

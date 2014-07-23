@@ -69,7 +69,7 @@ public class GitCloneTest extends GitTest {
 	@Test
 	public void testClone() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		String contentLocation = clone(workspaceId, project).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
@@ -94,17 +94,17 @@ public class GitCloneTest extends GitTest {
 		List<String> locations = new ArrayList<String>();
 
 		// 1st clone
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project1"), null);
 		String contentLocation = clone(workspaceId, project).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		locations.add(contentLocation);
 
 		// 2nd clone
-		project = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
+		project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project2"), null);
 		contentLocation = clone(workspaceId, project).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		locations.add(contentLocation);
 
 		// 3rd clone
-		project = createProjectOrLink(workspaceLocation, getMethodName() + "3", null);
+		project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project3"), null);
 		contentLocation = clone(workspaceId, project).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		locations.add(contentLocation);
 
@@ -189,7 +189,7 @@ public class GitCloneTest extends GitTest {
 	public void testCloneAndCreateFolderByPath() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = new Path("file").append(workspaceId).append(project.getString(ProtocolConstants.KEY_NAME)).append("clones").append("clone1").makeAbsolute();
 
 		// /file/{id}/clones/clone1, folders: 'clones' and 'clone1' don't exist
@@ -311,7 +311,7 @@ public class GitCloneTest extends GitTest {
 	public void testCloneMissingUserInfo() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = getClonePath(workspaceId, project);
 
 		// see bug 369282
@@ -332,7 +332,7 @@ public class GitCloneTest extends GitTest {
 	public void testCloneNotGitRepository() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = getWorkspaceId(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = new Path("file").append(workspaceId).append(project.getString(ProtocolConstants.KEY_NAME)).makeAbsolute();
 
 		// clone
@@ -357,11 +357,11 @@ public class GitCloneTest extends GitTest {
 	public void testCloneAndLink() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		String contentLocation = clone(workspaceId, project).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		File contentFile = getRepositoryForContentLocation(contentLocation).getDirectory().getParentFile();
 
-		JSONObject newProject = createProjectOrLink(workspaceLocation, getMethodName() + "-link", contentFile.toString());
+		JSONObject newProject = createProjectOrLink(workspaceLocation, getMethodName().concat("-link"), contentFile.toString());
 		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// http://<host>/file/<projectId>/
@@ -388,12 +388,12 @@ public class GitCloneTest extends GitTest {
 	public void testCloneAndLinkToFolder() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		String contentLocation = clone(workspaceId, project).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		File folder = new File(getRepositoryForContentLocation(contentLocation).getDirectory().getParentFile(), "folder");
 
-		JSONObject newProject = createProjectOrLink(workspaceLocation, getMethodName() + "-link", folder.toURI().toString());
+		JSONObject newProject = createProjectOrLink(workspaceLocation, getMethodName().concat("-link"), folder.toURI().toString());
 		String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// http://<host>/file/<projectId>/
@@ -431,7 +431,7 @@ public class GitCloneTest extends GitTest {
 
 			String contentLocation = new File(gitDir, "folder").getAbsolutePath();
 
-			JSONObject newProject = createProjectOrLink(workspaceLocation, getMethodName() + "-link", contentLocation);
+			JSONObject newProject = createProjectOrLink(workspaceLocation, getMethodName().concat("-link"), contentLocation);
 			String projectContentLocation = newProject.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// http://<host>/file/<projectId>/
@@ -556,7 +556,7 @@ public class GitCloneTest extends GitTest {
 		Assume.assumeTrue(knownHosts != null);
 
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		IPath clonePath = getClonePath(workspaceId, project);
 		URIish uri = new URIish(sshRepo);
@@ -576,7 +576,7 @@ public class GitCloneTest extends GitTest {
 
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = getClonePath(workspaceId, project);
 		URIish uri = new URIish(sshRepo2);
 		WebRequest request = new PostGitCloneRequest().setURIish(uri).setFilePath(clonePath).setKnownHosts(knownHosts2).setPrivateKey(privateKey).setPublicKey(publicKey).setPassphrase(passphrase).getWebRequest();
@@ -600,7 +600,7 @@ public class GitCloneTest extends GitTest {
 		Assume.assumeTrue(projects.length() == 0);
 
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 
 		JSONObject clone = clone(workspaceId, project);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
@@ -641,7 +641,7 @@ public class GitCloneTest extends GitTest {
 	public void testDeleteInFolder() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 
 		IPath clonePath = getClonePath(workspaceId, project).append("clone").makeAbsolute();
 		JSONObject clone = clone(clonePath);
@@ -675,7 +675,7 @@ public class GitCloneTest extends GitTest {
 	public void testDeleteInWorkspace() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		JSONObject clone = clone(workspaceId, project);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
 		String contentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
@@ -702,7 +702,7 @@ public class GitCloneTest extends GitTest {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = getWorkspaceId(workspaceLocation);
 
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		String contentLocation = clone(workspaceId, project).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		JSONArray clonesArray = listClones(workspaceId, null);
@@ -758,7 +758,7 @@ public class GitCloneTest extends GitTest {
 		// my clone
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = getWorkspaceId(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		clone(workspaceId, project);
 
 		JSONArray clonesArray = listClones(workspaceId, null);
@@ -826,7 +826,7 @@ public class GitCloneTest extends GitTest {
 	public void testCloneAlreadyExists() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		clone(workspaceId, project);
 
 		// clone again into the same path
@@ -852,7 +852,7 @@ public class GitCloneTest extends GitTest {
 		GitUtils._testAllowFileScheme(false);
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = getClonePath(workspaceId, project);
 
 		WebRequest request = new PostGitCloneRequest().setURIish(uri).setFilePath(clonePath).getWebRequest();
