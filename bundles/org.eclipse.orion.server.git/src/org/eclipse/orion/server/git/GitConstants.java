@@ -204,4 +204,35 @@ public class GitConstants {
 	public static final String KEY_SSO_TOKEN = "SSOToken"; //$NON-NLS-1$
 
 	public static final String KEY_COOKIE = "Cookie"; //$NON-NLS-1$
+
+	public static final String KEY_STASH = "StashLocation"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_POST_OPERATION_TYPE = "type";
+
+	public static final String KEY_STASH_APPLY_COMMAND = "apply"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_CREATE_COMMAND = "create"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_REF = "stashRef"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_APPLY_INDEX = "applyIndex"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_APPLY_UNTRACKED = "applyUntracked"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_INCLUDE_UNTRACKED = "includeUntracked"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_SET_REF = "ref"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_WORKING_DIRECTORY_MESSAGE = "workingDirectoryMessage"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_INDEX_MESSAGE = "indexMessage"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_DROP_ALL = "dropAll"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_DROP_REF = "dropIndex"; //$NON-NLS-1$
+
+	public static final String STASH_LIST_EMPTY_MESSAGE = "Stash list is empty"; //$NON-NLS-1$
+
+	public static final String STASH_TOP_REF = "stash@{0}"; //$NON-NLS-1$
+
 }
