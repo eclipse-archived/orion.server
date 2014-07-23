@@ -62,7 +62,8 @@ public class Clone {
 				new Property(GitConstants.KEY_IGNORE), //
 				new Property(GitConstants.KEY_STATUS), //
 				new Property(GitConstants.KEY_DIFF), //
-				new Property(GitConstants.KEY_URL)};
+				new Property(GitConstants.KEY_URL), //
+				new Property(GitConstants.KEY_STASH)}; //
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 	protected Serializer<JSONObject> jsonSerializer = new JSONSerializer();
@@ -240,6 +241,12 @@ public class Clone {
 			// ignore and skip Git URL
 		}
 		return null;
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_STASH)
+	private URI getStashUrl() throws URISyntaxException {
+		IPath np = new Path(GitServlet.GIT_URI).append(Stash.RESOURCE).append(getId());
+		return createUriWithPath(np);
 	}
 
 	private URI createUriWithPath(final IPath path) throws URISyntaxException {
