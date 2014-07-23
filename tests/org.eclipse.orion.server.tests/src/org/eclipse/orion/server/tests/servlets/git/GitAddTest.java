@@ -36,7 +36,7 @@ public class GitAddTest extends GitTest {
 	public void testAddChanged() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), gitDir.toString());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
 		modifyFile(testTxt, "hello");
@@ -54,7 +54,7 @@ public class GitAddTest extends GitTest {
 	public void testAddMissing() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		JSONObject testTxt = getChild(project, "test.txt");
 
@@ -74,7 +74,7 @@ public class GitAddTest extends GitTest {
 	public void testAddAll() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -106,7 +106,7 @@ public class GitAddTest extends GitTest {
 	public void testAddFolder() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -170,7 +170,7 @@ public class GitAddTest extends GitTest {
 	public void testAddSelected() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), gitDir.toString());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), gitDir.toString());
 
 		// get project/folder metadata
 		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));

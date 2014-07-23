@@ -94,7 +94,7 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		assertNotNull(workspaceLocation);
 
 		//create a project
-		String projectName = name + "Project";
+		String projectName = name.concat("Project");
 		WebRequest request = getCreateProjectRequest(workspaceLocation, projectName, null);
 		WebResponse response = webConversation.getResponse(request);
 		if (response.getResponseCode() != HttpURLConnection.HTTP_CREATED) {

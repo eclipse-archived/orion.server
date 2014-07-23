@@ -43,7 +43,7 @@ public class GitUtilsTest extends GitTest {
 	@Test
 	public void testGitDirPathNoGit() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(location);
 		File dir = GitUtils.getGitDir(new Path(uri.getPath()));
@@ -53,7 +53,7 @@ public class GitUtilsTest extends GitTest {
 	@Test
 	public void testGitDirPathLinked() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), gitDir.toURI().toString());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), gitDir.toURI().toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(toRelativeURI(location));
 		File gitDirFile = GitUtils.getGitDir(new Path(uri.getPath()));
@@ -64,7 +64,7 @@ public class GitUtilsTest extends GitTest {
 	@Test
 	public void testGitDirPathLinkedToSubfolder() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), new File(gitDir, "folder").toURI().toString());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), new File(gitDir, "folder").toURI().toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(toRelativeURI(location));
 		Set<Entry<IPath, File>> set = GitUtils.getGitDirs(new Path(uri.getPath()), Traverse.GO_UP).entrySet();
@@ -108,7 +108,7 @@ public class GitUtilsTest extends GitTest {
 		assertNotNull(repository);
 
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(location);
 		File dir = GitUtils.getGitDir(new Path(uri.getPath()));
@@ -125,7 +125,7 @@ public class GitUtilsTest extends GitTest {
 	@Test
 	public void testGitDirsNoGit() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(toRelativeURI(location));
 		IPath projectPath = new Path(uri.getPath());
@@ -136,7 +136,7 @@ public class GitUtilsTest extends GitTest {
 	@Test
 	public void testGitDirPathLinkedRemovedFile() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), gitDir.toURI().toString());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), gitDir.toURI().toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// drill down to folder/folder.txt and delete it
@@ -175,7 +175,7 @@ public class GitUtilsTest extends GitTest {
 	@Ignore(/*TODO*/"not yet implemented")
 	public void testGitDirsLinked() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), gitDir.toURI().toString());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), gitDir.toURI().toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(location);
 		IPath projectPath = new Path(uri.getPath());
@@ -187,7 +187,7 @@ public class GitUtilsTest extends GitTest {
 	public void testGitDirsCloned() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
@@ -201,7 +201,7 @@ public class GitUtilsTest extends GitTest {
 	public void testGitDirsClonedIntoSubfolder() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 
 		// create folder1
 		String folderName = "clone1";

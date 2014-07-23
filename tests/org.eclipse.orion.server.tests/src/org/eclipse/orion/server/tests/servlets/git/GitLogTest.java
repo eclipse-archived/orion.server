@@ -132,7 +132,7 @@ public class GitLogTest extends GitTest {
 		Assume.assumeTrue(new File(orionServer, Constants.DOT_GIT).exists());
 
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), orionServer.toURI().toString());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), orionServer.toURI().toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// get project/folder metadata
@@ -395,7 +395,7 @@ public class GitLogTest extends GitTest {
 	public void testLogFolder() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
@@ -461,7 +461,7 @@ public class GitLogTest extends GitTest {
 	public void testLogFile() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
@@ -556,7 +556,7 @@ public class GitLogTest extends GitTest {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		JSONObject clone = clone(getClonePath(workspaceId, project));
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
@@ -769,7 +769,7 @@ public class GitLogTest extends GitTest {
 	@Test
 	public void testGetNonExistingCommit() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		JSONObject testTxt = getChild(project, "test.txt");
 

@@ -36,7 +36,7 @@ public class GitUriTest extends GitTest {
 	@Test
 	public void testGitUrisAfterLinkingToExistingClone() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		assertGitSectionExists(project);
 		// TODO: it's a linked repo, see bug 346114
@@ -46,7 +46,7 @@ public class GitUriTest extends GitTest {
 	@Test
 	public void testGitUrisInContentLocation() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		// http://<host>/workspace/<workspaceId>/
 		JSONObject newProject = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String contentLocation = newProject.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
@@ -99,7 +99,7 @@ public class GitUriTest extends GitTest {
 		emptyDir.mkdir();
 		ServletTestingSupport.allowedPrefixes = emptyDir.toString();
 
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), emptyDir.toString());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), emptyDir.toString());
 		project.getString(ProtocolConstants.KEY_ID);
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
@@ -131,7 +131,7 @@ public class GitUriTest extends GitTest {
 
 		ServletTestingSupport.allowedPrefixes = dir.toString();
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, dir.toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
@@ -156,7 +156,7 @@ public class GitUriTest extends GitTest {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		String folderName = "subfolder";
 		WebRequest request = getPostFilesRequest("", getNewDirJSON(folderName).toString(), folderName);
 		WebResponse response = webConversation.getResponse(request);
