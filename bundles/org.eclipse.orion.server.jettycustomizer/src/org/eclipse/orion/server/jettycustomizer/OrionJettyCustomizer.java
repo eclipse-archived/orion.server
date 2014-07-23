@@ -37,7 +37,7 @@ public final class OrionJettyCustomizer extends JettyCustomizer {
 		if (context instanceof ServletContextHandler) {
 			ServletContextHandler jettyContext = (ServletContextHandler) context;
 
-			IFileStore fileStore = OrionConfiguration.getUserHome(null);
+			IFileStore fileStore = OrionConfiguration.getRootLocation();
 			File rootLocation = null;
 			try {
 				rootLocation = fileStore.toLocalFile(EFS.NONE, null);
@@ -75,6 +75,9 @@ public final class OrionJettyCustomizer extends JettyCustomizer {
 			requestLogHandler.setRequestLog(requestLog);
 
 			jettyContext.setHandler(requestLogHandler);
+			Logger logger = LoggerFactory
+					.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.info("Initialized NCSA Request Logs in " + logsFolder.toString()); //$NON-NLS-1$
 		}
 		return super.customizeContext(context, settings);
 	}
