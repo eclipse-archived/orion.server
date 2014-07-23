@@ -48,6 +48,7 @@ import org.junit.runners.Suite.SuiteClasses;
 		GitRevertTest.class, //
 		GitPullTest.class, //
 		GitApplyPatchTest.class, //
+		GitStashTest.class, //
 		IOUtilitiesTest.class, //
 		EndingAwareLineReaderTest.class})
 public class AllGitTests {
