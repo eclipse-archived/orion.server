@@ -1583,4 +1583,22 @@ public abstract class GitTest extends FileSystemTest {
 		IPath[][] clonePaths = new IPath[][] {clonePathsTop, clonePathsFolder, clonePathsMixed};
 		return clonePaths;
 	}
+
+	protected JSONObject createFile(JSONObject locationJSON, String filename) throws Exception {
+
+		WebRequest request = getPostFilesRequest(locationJSON.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON(filename).toString(), filename);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		return getChild(locationJSON, filename);
+	}
+
+	protected JSONObject getExtraProjectData(JSONObject project) throws Exception {
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		return new JSONObject(response.getText());
+
+	}
+
 }
