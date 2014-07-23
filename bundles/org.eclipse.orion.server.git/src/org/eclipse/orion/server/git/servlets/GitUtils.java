@@ -11,8 +11,7 @@
 package org.eclipse.orion.server.git.servlets;
 
 import java.io.*;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
+import java.net.*;
 import java.util.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -24,9 +23,9 @@ import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
-import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.GitCredentialsProvider;
-import org.json.JSONObject;
+import org.eclipse.orion.server.git.*;
+import org.eclipse.orion.server.git.objects.GitObject;
+import org.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -299,5 +298,82 @@ public class GitUtils {
 		} else {
 			uriSchemeWhitelist.remove("file"); //$NON-NLS-1$
 		}
+	}
+
+	/**
+	 * Paginates given collection, using positive page and pageSize numbers.
+	 * Returns JSONObject containing result list as ProtocolConstants.KEY_CHILDREN
+	 * and ProtocolConstants.NEXT_LOCATION if more results can be fetched.
+	 * @param collection
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 * @throws JSONException
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 * @throws CoreException
+	 */
+	public static <T extends GitObject> PaginatedResult paginate(Collection<T> collection, int pageNo, int pageSize, URI baseLocation) throws JSONException, URISyntaxException, IOException, CoreException {
+
+		PaginatedResult result;
+
+		if (pageNo < 0 || pageSize <= 0)
+			return new PaginatedResult();
+
+		JSONArray resultList = new JSONArray();
+
+		if (pageNo == 0) {
+			for (T element : collection) {
+				resultList.put(element.toJSON());
+			}
+
+			result = new PaginatedResult(resultList, false);
+			return result;
+		}
+
+		List<T> entriesList = new ArrayList<T>(collection);
+
+		int size = entriesList.size();
+		int firstElement = (pageNo - 1) * pageSize;
+		int lastElement = firstElement + pageSize - 1;
+
+		// if both indexes are contained in list then add all elements in between to result array
+		// otherwise if last element is not contained in the upper boundary, then keep adding elements until 
+		// size - 1 index is reached. Notice that for empty list it will not iterate at all
+		if (firstElement < size && lastElement < size) {
+			for (int i = firstElement; i <= lastElement; i++) {
+				resultList.put(entriesList.get(i).toJSON());
+			}
+		} else if (firstElement < size && lastElement >= size) {
+			for (int i = firstElement; i < size; i++) {
+				resultList.put(entriesList.get(i).toJSON());
+			}
+		}
+
+		result = new PaginatedResult();
+		result.setChildren(resultList);
+
+		if (lastElement < entriesList.size() - 1) {
+			result.setHasNext(true);
+		}
+
+		return result;
+	}
+
+	public static String constructStashNextLocationString(String baseLocation, int pageNo, int pageSize) {
+
+		StringBuilder sb = new StringBuilder();
+
+		sb.append('?');
+		sb.append(GitConstants.KEY_STASH_LIST_PAGE);
+		sb.append('=');
+		sb.append(pageNo);
+		sb.append('&');
+		sb.append(GitConstants.KEY_STASH_LIST_PAGE_SIZE);
+		sb.append('=');
+		sb.append(pageSize);
+
+		String next = baseLocation + sb.toString();
+		return next;
 	}
 }
