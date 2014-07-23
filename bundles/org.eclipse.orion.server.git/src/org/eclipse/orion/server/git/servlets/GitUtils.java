@@ -11,8 +11,7 @@
 package org.eclipse.orion.server.git.servlets;
 
 import java.io.*;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
+import java.net.*;
 import java.util.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -26,7 +25,8 @@ import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
-import org.json.JSONObject;
+import org.eclipse.orion.server.git.objects.GitObject;
+import org.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -299,5 +299,45 @@ public class GitUtils {
 		} else {
 			uriSchemeWhitelist.remove("file"); //$NON-NLS-1$
 		}
+	}
+
+	/**
+	 * Paginates given collection, using positive page and pageSize numbers. Returns JSONArray of paginated objects.
+	 * @param collection
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 * @throws JSONException
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 * @throws CoreException
+	 */
+	public static <T extends GitObject> JSONArray paginate(Collection<T> collection, int pageNo, int pageSize) throws JSONException, URISyntaxException, IOException, CoreException {
+
+		JSONArray result = new JSONArray();
+
+		if (pageNo <= 0 || pageSize <= 0)
+			return result;
+
+		List<T> entriesList = new ArrayList<T>(collection);
+
+		int size = entriesList.size();
+		int firstElement = (pageNo - 1) * pageSize;
+		int lastElement = firstElement + pageSize - 1;
+
+		// if both indexes are contained in list then add all elements in between to result array
+		// otherwise if last element is not contained in the upper boundary, then keep adding elements until 
+		// size - 1 index is reached. Notice that for empty list it will not iterate at all
+		if (firstElement < size && lastElement < size) {
+			for (int i = firstElement; i <= lastElement; i++) {
+				result.put(entriesList.get(i).toJSON());
+			}
+		} else if (firstElement < size && lastElement >= size) {
+			for (int i = firstElement; i < size; i++) {
+				result.put(entriesList.get(i).toJSON());
+			}
+		}
+
+		return result;
 	}
 }

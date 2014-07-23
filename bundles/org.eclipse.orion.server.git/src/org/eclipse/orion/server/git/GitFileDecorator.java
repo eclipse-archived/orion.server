@@ -187,6 +187,10 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		// add Git Clone URI
 		gitSection.put(GitConstants.KEY_CLONE, cloneLocation);
 
+		path = new Path(GitServlet.GIT_URI + "/" + Stash.RESOURCE).append(targetPath);
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
+		gitSection.put(GitConstants.KEY_STASH, link);
+
 		representation.put(GitConstants.KEY_GIT, gitSection);
 	}
 
