@@ -10,20 +10,19 @@
  *******************************************************************************/
 package org.eclipse.orion.server.configurator;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Dictionary;
 import java.util.Hashtable;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.DefaultScope;
 import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.equinox.http.jetty.JettyConfigurator;
-import org.eclipse.equinox.http.jetty.JettyConstants;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.ServerConstants;
-import java.io.File;
-import java.io.IOException;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
+import org.eclipse.equinox.http.jetty.JettyConfigurator;
+import org.eclipse.equinox.http.jetty.JettyConstants;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
@@ -66,7 +65,12 @@ public class WebApplication implements IApplication {
 
 		Dictionary<String, Object> properties = new Hashtable<String, Object>();
 		properties.put(JettyConstants.CONTEXT_SESSIONINACTIVEINTERVAL, new Integer(4 * 60 * 60)); // 4 hours
-		//properties.put(JettyConstants.CONTEXT_PATH, "/cc");
+
+		String contextPath = preferences.get(ServerConstants.CONFIG_CONTEXT_PATH, null);
+		if (contextPath != null) {
+			properties.put(JettyConstants.CONTEXT_PATH, contextPath);
+		}
+
 		if (httpsEnabled) {
 			LogHelper.log(new Status(IStatus.INFO, ConfiguratorActivator.PI_CONFIGURATOR, "Https is enabled", null)); //$NON-NLS-1$
 

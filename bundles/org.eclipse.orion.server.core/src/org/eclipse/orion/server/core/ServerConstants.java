@@ -183,6 +183,12 @@ public class ServerConstants {
 	 * list of host names.
 	 */
 	public static final String CONFIG_SITE_VIRTUAL_HOSTS = "orion.site.virtualHosts"; //$NON-NLS-1$
+	
+	/**
+	 * The name of a configuration property specifying the context path to use
+	 *  for the server (e.g. /code).
+	 */
+	public static final String CONFIG_CONTEXT_PATH = "orion.context.path";
 
 	/**
 	 * The bundle ID of the server core. 
