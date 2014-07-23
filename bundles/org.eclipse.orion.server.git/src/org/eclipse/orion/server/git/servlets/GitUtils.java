@@ -11,8 +11,7 @@
 package org.eclipse.orion.server.git.servlets;
 
 import java.io.*;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
+import java.net.*;
 import java.util.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -26,7 +25,8 @@ import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
-import org.json.JSONObject;
+import org.eclipse.orion.server.git.objects.GitObject;
+import org.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -299,5 +299,38 @@ public class GitUtils {
 		} else {
 			uriSchemeWhitelist.remove("file"); //$NON-NLS-1$
 		}
+	}
+
+	/**
+	 * Paginates given collection, using positive page and pageSize numbers 
+	 * @param collection
+	 * @param pageNo
+	 * @param pageSize
+	 * @return
+	 * @throws JSONException
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 * @throws CoreException
+	 */
+	public static <T extends GitObject> JSONArray paginate(Collection<T> collection, int pageNo, int pageSize) throws JSONException, URISyntaxException, IOException, CoreException {
+
+		JSONArray result = new JSONArray();
+
+		if (pageNo <= 0 || pageSize <= 0)
+			return result;
+
+		List<T> entriesList = new ArrayList<T>(collection);
+
+		int size = entriesList.size();
+		int firstElement = pageSize > 0 ? (pageNo - 1) * pageSize : 0;
+		int lastElement = pageSize > 0 && firstElement + pageSize - 1 <= size ? firstElement + pageSize - 1 : size - 1;
+
+		if (lastElement < size) {
+			for (int i = firstElement; i <= lastElement; i++) {
+				result.put(entriesList.get(i).toJSON());
+			}
+		}
+
+		return result;
 	}
 }
