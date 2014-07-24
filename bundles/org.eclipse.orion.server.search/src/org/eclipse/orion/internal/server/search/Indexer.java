@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
@@ -51,6 +53,7 @@ import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.core.resources.FileLocker;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,10 +78,12 @@ public class Indexer extends Job {
 	private final List<String> INDEXED_FILE_TYPES;
 	private final SolrServer server;
 	Logger logger;
+	private File lockFile;
 
-	public Indexer(SolrServer server) {
+	public Indexer(SolrServer server, File indexRoot) {
 		super("Indexing"); //$NON-NLS-1$
 		this.server = server;
+		this.lockFile = new File(indexRoot, "lock.txt");
 		setSystem(true);
 		INDEXED_FILE_TYPES = Arrays.asList("css", "js", "html", "txt", "xml", "java", "properties", "php", "htm", "project", "conf", "pl", "sh", "text", "xhtml", "mf", "manifest", "md", "yaml", "yml", "go");
 		Collections.sort(INDEXED_FILE_TYPES);
@@ -348,8 +353,16 @@ public class Indexer extends Job {
 			return Status.OK_STATUS;
 		}
 		long start = System.currentTimeMillis();
+		FileLocker lock = new FileLocker(lockFile);
 		int indexed = 0;
 		try {
+			if (!lock.tryLock()) {
+				if (logger.isInfoEnabled()) {
+					logger.info("Search indexer: another process is currently indexing");
+				}
+				schedule(IDLE_DELAY);
+				return Status.OK_STATUS;
+			}
 			List<String> userIds = metaStore.readAllUsers();
 			SubMonitor progress = SubMonitor.convert(monitor, userIds.size());
 			List<SolrInputDocument> documents = new ArrayList<SolrInputDocument>();
@@ -359,6 +372,16 @@ public class Indexer extends Job {
 			}
 		} catch (CoreException e) {
 			handleIndexingFailure(e, null);
+		} catch (FileNotFoundException e) {
+			// We shouldn't get here
+			handleIndexingFailure(e, null);
+		} catch (IOException e) {
+			// We shouldn't get here
+			handleIndexingFailure(e, null);
+		} finally {
+			if (lock.isValid()) {
+				lock.release();
+			}
 		}
 		long duration = System.currentTimeMillis() - start;
 		if (logger.isInfoEnabled())
