@@ -71,6 +71,7 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	private SolrServer server;
 	private SolrCore solrCore;
 	private CoreContainer solrContainer;
+	private File baseDir;
 
 	static BundleContext getContext() {
 		return context;
@@ -219,10 +220,10 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 		SearchActivator.context = bundleContext;
 		createServer();
 		if (server != null) {
-			indexer = new Indexer(server);
+			indexer = new Indexer(server, baseDir);
 			indexer.schedule();
 
-			purgeJob = new IndexPurgeJob(server);
+			purgeJob = new IndexPurgeJob(server, baseDir);
 			purgeJob.schedule();
 		}
 		searchDecoratorRegistration = context.registerService(IWebResourceDecorator.class, this, null);
