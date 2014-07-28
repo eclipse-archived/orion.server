@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2014 IBM Corporation and others 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ * IBM Corporation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.orion.server.authentication.oauth;
 
 import java.io.BufferedReader;
@@ -12,11 +22,16 @@ import org.eclipse.orion.server.authentication.Activator;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * A set of abstract methods used to store information for OAuth token providers
+ * @author Aidan Redpath
+ *
+ */
 public abstract class OAuthParams {
 	
 	private static final String CREDENTIAL_FILE = "oauths/credentials.json"; 
 	
-	protected static final  String CLIENT_KEY = "client_key";
+	protected static final String CLIENT_KEY = "client_key";
 	
 	protected static final String CLIENT_SECRET = "client_secret";
 	
@@ -35,6 +50,8 @@ public abstract class OAuthParams {
 	public abstract GrantType getGrantType();
 	
 	public abstract Class<? extends OAuthAccessTokenResponse> getTokenResponseClass();
+	
+	public abstract OAuthConsumer getNewOAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse) throws OAuthException;
 	
 	protected JSONObject readCredentialFile() throws OAuthException{
 		try {

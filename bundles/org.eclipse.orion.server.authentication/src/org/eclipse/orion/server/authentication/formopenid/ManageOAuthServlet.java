@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2014 IBM Corporation and others 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ * IBM Corporation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.orion.server.authentication.formopenid;
 
 import java.io.IOException;
@@ -13,6 +23,11 @@ import org.eclipse.orion.server.authentication.oauth.OAuthHelper;
 import org.eclipse.orion.server.authentication.oauth.OAuthParams;
 import org.eclipse.orion.server.servlets.OrionServlet;
 
+/**
+ * Methods to handles OAuth requests.
+ * @author Aidan Redpath
+ *
+ */
 public class ManageOAuthServlet extends OrionServlet {
 
 	/**
@@ -26,7 +41,7 @@ public class ManageOAuthServlet extends OrionServlet {
 		traceRequest(req);
 		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
 		if (pathInfo.startsWith("/oauth")) {
-			String oauthParam = req.getParameter(OAuthHelper.OATUH);
+			String oauthParam = req.getParameter(OAuthHelper.OAUTH);
 			if(oauthParam != null){
 					OAuthHelper.redirectToOAuthProvider(req, resp, getOAuthParams(oauthParam, login));
 			}else {

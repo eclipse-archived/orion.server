@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2014 IBM Corporation and others 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ * IBM Corporation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.orion.server.authentication.oauth;
 
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
@@ -6,6 +16,12 @@ import org.apache.oltu.oauth2.common.message.types.GrantType;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * Google specific OAuthParams containing all information related to google
+ * oauth requests and responses.
+ * @author Aidan Redpath
+ *
+ */
 public class GoogleOAuthParams extends OAuthParams {
 	
 	private static final OAuthProviderType PROVIDER_TYPE = OAuthProviderType.GOOGLE;
@@ -21,6 +37,8 @@ public class GoogleOAuthParams extends OAuthParams {
 	private static final String SCOPE = "profile";
 	
 	private static final GrantType GRANT_TYPE = GrantType.AUTHORIZATION_CODE;
+	
+	private static final Class<? extends OAuthAccessTokenResponse> TOKEN_RESPONSE_CLASS = GoogleTokenResponse.class;
 	
 	private String client_key = null;
 	private String client_secret = null;
@@ -66,8 +84,13 @@ public class GoogleOAuthParams extends OAuthParams {
 	}
 
 	public Class<? extends OAuthAccessTokenResponse> getTokenResponseClass() {
-		return GoogleTokenResponse.class;
+		return TOKEN_RESPONSE_CLASS;
 	}
+	
+	public OAuthConsumer getNewOAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse) throws OAuthException {
+		return new GoogleOAuthConsumer(oauthAccessTokenResponse);
+	}
+	
 	
 	private void setCredentials() throws OAuthException{
 		JSONObject json = readCredentialFile();
@@ -79,5 +102,6 @@ public class GoogleOAuthParams extends OAuthParams {
 			throw new OAuthException("Error getting oauth credentials");
 		}
 	}
-	
+
+
 }

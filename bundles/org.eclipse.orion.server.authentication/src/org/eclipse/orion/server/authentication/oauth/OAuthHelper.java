@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2014 IBM Corporation and others 
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ * IBM Corporation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.orion.server.authentication.oauth;
 
 import java.awt.PageAttributes.OriginType;
@@ -33,9 +43,14 @@ import org.json.JSONObject;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
+/**
+ * Groups methods to handle session attributes for OAuth authentication.
+ * @author Aidan Redpath
+ *
+ */
 public class OAuthHelper {
 	
-	public static final String OATUH = "oauth"; //$NON-NLS-1$
+	public static final String OAUTH = "oauth"; //$NON-NLS-1$
 	public static final String REDIRECT = "redirect"; //$NON-NLS-1$
 	public static final String REDIRECT_TYPE = "redirect_type"; //$NON-NLS-1$
 	static final String OAUTH_IDENTIFIER = "oauth_identifier"; //$NON-NLS-1$
@@ -106,7 +121,7 @@ public class OAuthHelper {
 			// Send request to oauth server
 			OAuthAccessTokenResponse oauthAccessTokenResponse = oAuthClient.accessToken(request, oauthParams.getTokenResponseClass());
 			
-			OAuthConsumer consumer = new GoogleOAuthConsumer(oauthAccessTokenResponse);
+			OAuthConsumer consumer = oauthParams.getNewOAuthConsumer(oauthAccessTokenResponse);
 			
 			return consumer;
 		} catch (OAuthSystemException e) {
@@ -208,7 +223,7 @@ public class OAuthHelper {
 	
 
 	public static String getAuthType() {
-		return OATUH; //$NON-NLS-1$
+		return OAUTH; //$NON-NLS-1$
 	}
 
 	public static IOrionCredentialsService getDefaultUserAdmin() {
