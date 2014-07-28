@@ -679,7 +679,7 @@ public class CoreFilesTest extends FileSystemTest {
 			assertEquals("Should not be able to get metadata", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
 
 			//should not be allowed to read specific metadata files
-			request = getGetRequest("file/" + ".metadata/.plugins/org.eclipse.orion.server.user.securestorage/user_store");
+			request = getGetRequest("file/" + ".metadata/.plugins/org.eclipse.orion.server.core.search/index.generation");
 			setAuthentication(request);
 			response = webConversation.getResponse(request);
 			assertEquals("Should not be able to get metadata", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
