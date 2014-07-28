@@ -23,8 +23,7 @@ import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
-import org.eclipse.orion.server.cf.objects.App;
-import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.objects.*;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.IOUtilities;
@@ -114,12 +113,53 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 	}
 
 	@Override
-	protected CFJob handlePut(App resource, HttpServletRequest request, HttpServletResponse response, final String path) {
+	protected CFJob handlePut(App resource, HttpServletRequest request, HttpServletResponse response, final String pathString) {
+		final JSONObject targetJSON2 = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
+
+		IPath path = new Path(pathString);
+		final String appGuid = path.segment(0);
+		boolean addRoute = "routes".equals(path.segment(1));
+		final String routeGuid = addRoute ? path.segment(2) : null;
+
+		if (addRoute)
+			return new CFJob(request, false) {
+				@Override
+				protected IStatus performJob() {
+					try {
+						ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON2);
+						IStatus status = computeTarget.doIt();
+						if (!status.isOK())
+							return status;
+						Target target = computeTarget.getTarget();
+
+						GetAppByGuidCommand getAppByGuid = new GetAppByGuidCommand(target.getCloud(), appGuid);
+						IStatus getAppByGuidStatus = getAppByGuid.doIt();
+						if (!getAppByGuidStatus.isOK())
+							return getAppByGuidStatus;
+						App app = getAppByGuid.getApp();
+
+						GetRouteByGuidCommand getRouteByGuid = new GetRouteByGuidCommand(target.getCloud(), routeGuid);
+						IStatus getRouteByGuidStatus = getRouteByGuid.doIt();
+						if (!getRouteByGuidStatus.isOK())
+							return getRouteByGuidStatus;
+						Route route = getRouteByGuid.getRoute();
+
+						MapRouteCommand unmapRoute = new MapRouteCommand(target, app, route.getGuid());
+						return unmapRoute.doIt();
+					} catch (Exception e) {
+						String msg = NLS.bind("Failed to handle request for {0}", pathString); //$NON-NLS-1$
+						ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+						logger.error(msg, e);
+						return status;
+					}
+				}
+			};
+
 		final JSONObject jsonData = extractJSONData(request);
+		final JSONObject targetJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_TARGET);
 
 		final String state = jsonData.optString(CFProtocolConstants.KEY_STATE, null);
 		final String appName = jsonData.optString(CFProtocolConstants.KEY_NAME, null);
-		final JSONObject targetJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_TARGET);
 		final String contentLocation = ServletResourceHandler.toOrionLocation(request, jsonData.optString(CFProtocolConstants.KEY_CONTENT_LOCATION, null));
 
 		/* default application startup is one minute */
@@ -171,7 +211,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						return new StopAppCommand(target, app).doIt();
 					} else {
 						if (parseManifestCommand == null) {
-							String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
+							String msg = NLS.bind("Failed to handle request for {0}", pathString); //$NON-NLS-1$
 							status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, null);
 							logger.error(msg);
 							return status;
@@ -200,7 +240,50 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 
 					return status;
 				} catch (Exception e) {
-					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
+					String msg = NLS.bind("Failed to handle request for {0}", pathString); //$NON-NLS-1$
+					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+					logger.error(msg, e);
+					return status;
+				}
+			}
+		};
+	}
+
+	@Override
+	protected CFJob handleDelete(App resource, HttpServletRequest request, HttpServletResponse response, final String pathString) {
+		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
+
+		IPath path = new Path(pathString);
+		final String appGuid = path.segment(0);
+		boolean deleteRoute = "routes".equals(path.segment(1));
+		final String routeGuid = deleteRoute ? path.segment(2) : null;
+
+		return new CFJob(request, false) {
+			@Override
+			protected IStatus performJob() {
+				try {
+					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
+					IStatus status = computeTarget.doIt();
+					if (!status.isOK())
+						return status;
+					Target target = computeTarget.getTarget();
+
+					GetAppByGuidCommand getAppByGuid = new GetAppByGuidCommand(target.getCloud(), appGuid);
+					IStatus getAppByGuidStatus = getAppByGuid.doIt();
+					if (!getAppByGuidStatus.isOK())
+						return getAppByGuidStatus;
+					App app = getAppByGuid.getApp();
+
+					GetRouteByGuidCommand getRouteByGuid = new GetRouteByGuidCommand(target.getCloud(), routeGuid);
+					IStatus getRouteByGuidStatus = getRouteByGuid.doIt();
+					if (!getRouteByGuidStatus.isOK())
+						return getRouteByGuidStatus;
+					Route route = getRouteByGuid.getRoute();
+
+					UnmapRouteCommand unmapRoute = new UnmapRouteCommand(target, app, route);
+					return unmapRoute.doIt();
+				} catch (Exception e) {
+					String msg = NLS.bind("Failed to handle request for {0}", pathString); //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 					logger.error(msg, e);
 					return status;
