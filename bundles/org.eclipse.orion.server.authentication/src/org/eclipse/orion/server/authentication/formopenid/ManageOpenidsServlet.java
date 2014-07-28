@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.authentication.Activator;
+import org.eclipse.orion.server.authentication.oauth.OAuthException;
 import org.eclipse.orion.server.authentication.openid.OpenIdException;
 import org.eclipse.orion.server.authentication.openid.OpenIdHelper;
 import org.eclipse.orion.server.authentication.openid.OpendIdProviderDescription;
@@ -42,10 +43,12 @@ public class ManageOpenidsServlet extends HttpServlet {
 	 */
 	private static final long serialVersionUID = 5478748783512325610L;
 	private FormOpenIdAuthenticationService authenticationService;
+	private ManageOAuthServlet manageOAuthServlet;
 	private OpenidConsumer consumer;
 
 	public ManageOpenidsServlet(FormOpenIdAuthenticationService formOpenIdAuthenticationService) {
 		this.authenticationService = formOpenIdAuthenticationService;
+		this.manageOAuthServlet = new ManageOAuthServlet();
 	}
 
 	private static void writeOpenIdError(String error, HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -74,8 +77,8 @@ public class ManageOpenidsServlet extends HttpServlet {
 
 		String url = req.getParameter("redirect");
 		url = url.replaceAll("/&error(\\=[^&]*)?(?=&|$)|^error(\\=[^&]*)?(&|$)/", ""); // remove
-																						// "error"
-																						// parameter
+		// "error"
+		// parameter
 		out.print("<body onload=\"window.location.replace('");
 		out.print(url.toString());
 		if (url.contains("?")) {
@@ -88,7 +91,7 @@ public class ManageOpenidsServlet extends HttpServlet {
 		out.println("</body>"); //$NON-NLS-1$
 		out.println("</html>"); //$NON-NLS-1$
 	}
-	
+
 	private List<OpendIdProviderDescription> getSupportedOpenids(HttpServletRequest req) {
 		List<OpendIdProviderDescription> openidProviders;
 		String customOpenids = (String) req.getAttribute(OPENIDS_PROPERTY);
@@ -108,8 +111,16 @@ public class ManageOpenidsServlet extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse response) throws ServletException, IOException {
 		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
-		try {
-			if (pathInfo.startsWith("/openid")) { //$NON-NLS-1$
+
+		if (pathInfo.startsWith("/oauth")){
+			try {
+				manageOAuthServlet.handleGetAndLink(req, response);
+			} catch (OAuthException e) {
+				writeOpenIdError(e.getMessage(), req, response);
+			}
+			return;
+		} else if (pathInfo.startsWith("/openid")) { //$NON-NLS-1$
+			try {
 				String openid = req.getParameter(OpenIdHelper.OPENID);
 				if (openid != null) {
 					consumer = OpenIdHelper.redirectToOpenIdProvider(req, response, consumer);
@@ -121,10 +132,11 @@ public class ManageOpenidsServlet extends HttpServlet {
 					OpenIdHelper.handleOpenIdReturn(req, response, consumer);
 					return;
 				}
+
+			} catch (OpenIdException e) {
+				writeOpenIdError(e.getMessage(), req, response);
+				return;
 			}
-		} catch (OpenIdException e) {
-			writeOpenIdError(e.getMessage(), req, response);
-			return;
 		}
 
 		JSONArray providersJson = new JSONArray();

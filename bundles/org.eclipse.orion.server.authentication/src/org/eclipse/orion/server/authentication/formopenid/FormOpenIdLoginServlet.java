@@ -12,16 +12,22 @@ package org.eclipse.orion.server.authentication.formopenid;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.authentication.form.FormAuthHelper;
 import org.eclipse.orion.server.authentication.form.FormAuthHelper.LoginResult;
 import org.eclipse.orion.server.authentication.formpersona.*;
+import org.eclipse.orion.server.authentication.oauth.GoogleOAuthParams;
+import org.eclipse.orion.server.authentication.oauth.OAuthConsumer;
+import org.eclipse.orion.server.authentication.oauth.OAuthException;
+import org.eclipse.orion.server.authentication.oauth.OAuthHelper;
 import org.eclipse.orion.server.authentication.openid.*;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64;
@@ -35,10 +41,12 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 
 	private FormOpenIdAuthenticationService authenticationService;
 	private OpenidConsumer consumer;
+	private ManageOAuthServlet manageOAuthServlet;
 
 	public FormOpenIdLoginServlet(FormOpenIdAuthenticationService authenticationService) {
 		super();
 		this.authenticationService = authenticationService;
+		this.manageOAuthServlet = new ManageOAuthServlet();
 	}
 
 	/**
@@ -92,7 +100,6 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 			}
 			return;
 		}
-
 		if (pathInfo.startsWith("/openid")) { //$NON-NLS-1$
 			String openid = req.getParameter(OpenIdHelper.OPENID);
 			if (openid != null) {
@@ -200,6 +207,14 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 		if (pathInfo.startsWith("/openid") //$NON-NLS-1$
 				&& (req.getParameter(OpenIdHelper.OPENID) != null || req.getParameter(OpenIdHelper.OP_RETURN) != null)) {
 			doPost(req, resp);
+			return;
+		}
+		if (pathInfo.startsWith("/oauth")) { //$NON-NLS-1$
+			try {
+				manageOAuthServlet.handleGetAndLogin(req, resp);
+			} catch (OAuthException e) {
+				displayError(e.getMessage(), req, resp);
+			}
 			return;
 		}
 		RequestDispatcher rd = req.getRequestDispatcher("/mixlogin/login"); //$NON-NLS-1$
