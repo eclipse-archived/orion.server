@@ -24,7 +24,6 @@ import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV2;
 import org.eclipse.orion.internal.server.core.tasks.TaskService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.tasks.ITaskService;
@@ -41,6 +40,7 @@ import org.slf4j.LoggerFactory;
 public class Activator implements BundleActivator {
 
 	static volatile BundleContext bundleContext;
+	private static final String PROP_USER_AREA = "org.eclipse.orion.server.core.userArea"; //$NON-NLS-1$
 
 	private static Activator singleton;
 	private	ServiceTracker<FrameworkLog, FrameworkLog> logTracker;
@@ -211,7 +211,7 @@ public class Activator implements BundleActivator {
 	}
 
 	/**
-	 * Returns the root file system location the OSGi instance area.
+	 * Returns the root file system location for the workspace.
 	 */
 	public IPath getPlatformLocation() {
 		BundleContext context = Activator.getDefault().getContext();
@@ -240,18 +240,7 @@ public class Activator implements BundleActivator {
 	}
 
 	private void initializeFileSystem() {
-		String locationPref = System.getProperty(ServerConstants.CONFIG_FILE_USER_CONTENT + ".test");
-		if (locationPref == null) {
-			locationPref = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_USER_CONTENT);
-		}
-
-		IPath location = null;
-		if (locationPref != null) {
-			location = new Path(locationPref);
-		}
-		if (location == null) {
-			location = getPlatformLocation();
-		}
+		IPath location = getPlatformLocation();
 		if (location == null)
 			throw new RuntimeException("Unable to compute base file system location"); //$NON-NLS-1$
 
@@ -261,6 +250,11 @@ public class Activator implements BundleActivator {
 			rootStoreURI = rootStore.toURI();
 		} catch (CoreException e) {
 			throw new RuntimeException("Instance location is read only: " + rootStore, e); //$NON-NLS-1$
+		}
+
+		//initialize user area if not specified
+		if (System.getProperty(PROP_USER_AREA) == null) {
+			System.setProperty(PROP_USER_AREA, rootStore.getFileStore(new Path(".metadata/.plugins/org.eclipse.orion.server.core/userArea")).toString()); //$NON-NLS-1$
 		}
 	}
 
