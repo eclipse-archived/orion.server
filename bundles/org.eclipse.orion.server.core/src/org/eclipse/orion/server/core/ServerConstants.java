@@ -125,7 +125,7 @@ public class ServerConstants {
 	 * system to use for newly created top level folders.
 	 */
 	public static final String CONFIG_FILE_DEFAULT_SCM = "orion.file.defaultSCM"; //$NON-NLS-1$
-	
+
 	/**
 	 * The name of a configuration property specifying the layout format for user data files.
 	 */
@@ -141,13 +141,6 @@ public class ServerConstants {
 	 * hierarchy by the user who created it.
 	 */
 	public static final String CONFIG_FILE_LAYOUT_USERTREE = "usertree"; //$NON-NLS-1$
-
-	/**
-	 * The name of the configuration property specifying the root location to use for all 
-	 * Orion content.  Must be an absolute path on the server file system.
-	 */
-	public static final String CONFIG_FILE_USER_CONTENT = "orion.file.content.location"; //$NON-NLS-1$
-
 	/**
 	 * The name of configuration property specifying the SMTP host for sending mail
 	 */
