@@ -275,7 +275,6 @@
 		<module>bundles/org.eclipse.orion.server.configurator</module>
 		<module>bundles/org.eclipse.orion.server.logback.config</module>
 		<module>bundles/org.eclipse.orion.server.ui</module>
-		<module>bundles/org.eclipse.orion.server.user.securestorage</module>
 		<module>bundles/org.eclipse.orion.server.user.ldap</module>
 		<module>bundles/org.eclipse.orion.server.gerritfs</module>
 		<module>bundles/org.eclipse.orion.server.events</module>
