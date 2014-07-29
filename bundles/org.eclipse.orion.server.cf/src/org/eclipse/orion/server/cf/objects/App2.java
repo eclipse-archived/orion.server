@@ -12,13 +12,14 @@ package org.eclipse.orion.server.cf.objects;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 
 @ResourceDescription(type = App2.TYPE)
 public class App2 extends CFObject {
@@ -30,12 +31,15 @@ public class App2 extends CFObject {
 	{
 		Property[] defaultProperties = new Property[] { //
 		new Property(CFProtocolConstants.KEY_GUID), //
-				new Property(CFProtocolConstants.KEY_NAME) //
+				new Property(CFProtocolConstants.KEY_NAME), //
+				new Property(CFProtocolConstants.KEY_STATE), //
+				new Property(CFProtocolConstants.KEY_ROUTES) //
 		};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
 	private JSONObject appJSON;
+	private List<Route> routes;
 
 	public App2 setCFJSON(JSONObject appJSON) {
 		this.appJSON = appJSON;
@@ -64,6 +68,35 @@ public class App2 extends CFObject {
 	public String getGuid() {
 		try {
 			return appJSON.getJSONObject("metadata").getString("guid");
+		} catch (JSONException e) {
+			return null;
+		}
+	}
+
+	@PropertyDescription(name = CFProtocolConstants.KEY_STATE)
+	public String getState() {
+		try {
+			return appJSON.getJSONObject("entity").getString("state");
+		} catch (JSONException e) {
+			return null;
+		}
+	}
+
+	@PropertyDescription(name = CFProtocolConstants.KEY_ROUTES)
+	private JSONArray getRoutesJSON() {
+		try {
+			JSONArray ret = new JSONArray();
+			if (routes == null) {
+				routes = new ArrayList<Route>();
+				JSONArray routesJSON = appJSON.getJSONObject("entity").getJSONArray("routes");
+
+				for (int i = 0; i < routesJSON.length(); i++) {
+					Route route = new Route().setCFJSON(routesJSON.getJSONObject(i));
+					routes.add(route);
+					ret.put(route.toJSON());
+				}
+			}
+			return ret;
 		} catch (JSONException e) {
 			return null;
 		}

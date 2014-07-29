@@ -29,6 +29,7 @@ import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -294,11 +295,33 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 
 	private IStatus getApps(Target target) throws Exception {
 		String appsUrl = target.getSpace().getCFJSON().getJSONObject("entity").getString("apps_url");
-		appsUrl = appsUrl.replaceAll("apps", "summary");
+		//		appsUrl = appsUrl.replaceAll("apps", "summary");
 		URI appsURI = URIUtil.toURI(target.getUrl()).resolve(appsUrl);
 
-		GetMethod getMethod = new GetMethod(appsURI.toString());
-		HttpUtil.configureHttpMethod(getMethod, target);
-		return HttpUtil.executeMethod(getMethod);
+		GetMethod getAppsMethod = new GetMethod(appsURI.toString());
+		HttpUtil.configureHttpMethod(getAppsMethod, target);
+		getAppsMethod.setQueryString("inline-relations-depth=2"); //$NON-NLS-1$
+
+		ServerStatus getAppsStatus = HttpUtil.executeMethod(getAppsMethod);
+		if (!getAppsStatus.isOK())
+			return getAppsStatus;
+
+		/* extract available apps */
+		JSONObject appsJSON = getAppsStatus.getJsonData();
+
+		if (appsJSON.getInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS) < 1) {
+			return new ServerStatus(IStatus.OK, HttpServletResponse.SC_OK, null, null);
+		}
+
+		JSONObject result = new JSONObject();
+		JSONArray resources = appsJSON.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
+		for (int k = 0; k < resources.length(); ++k) {
+			JSONObject appJSON = resources.getJSONObject(k);
+			App2 app = new App2();
+			app.setCFJSON(appJSON);
+			result.append("Apps", app.toJSON());
+		}
+
+		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 	}
 }
