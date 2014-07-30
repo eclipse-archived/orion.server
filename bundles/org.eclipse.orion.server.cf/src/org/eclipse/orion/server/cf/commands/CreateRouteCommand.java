@@ -74,6 +74,7 @@ public class CreateRouteCommand extends AbstractCFCommand {
 			routeRequest.put(CFProtocolConstants.V2_KEY_HOST, hostName);
 			routeRequest.put(CFProtocolConstants.V2_KEY_DOMAIN_GUID, domain.getGuid());
 			createRouteMethod.setRequestEntity(new StringRequestEntity(routeRequest.toString(), "application/json", "utf-8")); //$NON-NLS-1$//$NON-NLS-2$
+			createRouteMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 
 			ServerStatus createRouteStatus = HttpUtil.executeMethod(createRouteMethod);
 			if (!createRouteStatus.isOK())
