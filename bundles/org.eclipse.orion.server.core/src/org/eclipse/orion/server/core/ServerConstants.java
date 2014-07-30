@@ -157,26 +157,6 @@ public class ServerConstants {
 	public static final String CONFIG_MAIL_SMTP_STARTTLS = "mail.smtp.starttls.enable"; //$NON-NLS-1$
 
 	/**
-	 * The name of configuration property specifying which meta store should be enabled
-	 */
-	public static final String CONFIG_META_STORE = "orion.core.metastore"; //$NON-NLS-1$
-
-	/**
-	 * The name of configuration property specifying the legacy meta store
-	 */
-	public static final String CONFIG_META_STORE_LEGACY = "legacy"; //$NON-NLS-1$
-
-	/**
-	 * The name of configuration property specifying the simple meta store
-	 */
-	public static final String CONFIG_META_STORE_SIMPLE = "simple"; //$NON-NLS-1$
-
-	/**
-	 * The name of configuration property specifying the second version of the simple meta store
-	 */
-	public static final String CONFIG_META_STORE_SIMPLE_V2 = "simple2"; //$NON-NLS-1$
-
-	/**
 	 * name of configuration property for the disk usage calculation support.
 	 * When this property is set to true, the disk usage calculation support is enabled.
 	 */
