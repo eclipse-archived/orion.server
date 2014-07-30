@@ -68,11 +68,15 @@ public class SimpleMetaStoreUtil {
 			fileOutputStream.close();
 		} catch (FileNotFoundException e) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.warn("Meta File Error, cannot create file under " + parent.toString() + ": invalid file name: " + name); //$NON-NLS-1$
+			logger.error("Meta File Error, cannot create file under " + parent.toString() + ": invalid file name: " + name); //$NON-NLS-1$
 			return false;
 		} catch (IOException e) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.error("Meta File Error, file IO error", e); //$NON-NLS-1$
 			throw new RuntimeException("Meta File Error, file IO error", e);
 		} catch (JSONException e) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.error("Meta File Error, cannot create JSON file " + parent.toString() + File.separator + name + METAFILE_EXTENSION + " from disk, reason: " + e.getLocalizedMessage()); //$NON-NLS-1$
 			throw new RuntimeException("Meta File Error, JSON error", e);
 		}
 		return true;
@@ -489,6 +493,8 @@ public class SimpleMetaStoreUtil {
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException("Meta File Error, file not found", e);
 		} catch (IOException e) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.error("Meta File Error, file IO error", e); //$NON-NLS-1$
 			throw new RuntimeException("Meta File Error, file IO error", e);
 		} catch (JSONException e) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
@@ -568,8 +574,12 @@ public class SimpleMetaStoreUtil {
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException("Meta File Error, file not found", e);
 		} catch (IOException e) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.error("Meta File Error, file IO error", e); //$NON-NLS-1$
 			throw new RuntimeException("Meta File Error, file IO error", e);
 		} catch (JSONException e) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.error("Meta File Error, cannot update JSON file " + parent.toString() + File.separator + name + METAFILE_EXTENSION + " from disk, reason: " + e.getLocalizedMessage()); //$NON-NLS-1$
 			throw new RuntimeException("Meta File Error, JSON error", e);
 		}
 		return true;
