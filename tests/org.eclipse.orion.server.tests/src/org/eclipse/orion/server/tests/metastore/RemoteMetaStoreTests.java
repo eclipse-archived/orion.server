@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,7 +22,6 @@ import java.util.Iterator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
 import org.eclipse.orion.server.core.IOUtilities;
-import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -49,13 +48,6 @@ import com.meterware.httpunit.WebResponse;
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RemoteMetaStoreTests {
-
-	/**
-	 * The metastore is either legacy or simple. The values in orion.conf are:
-	 * orion.core.metastore=legacy (Orion 3.0)
-	 * orion.core.metastore=simple (Orion 4.0)
-	 */
-	protected final static String orionMetastore = ServerConstants.CONFIG_META_STORE_SIMPLE;
 
 	protected static String orionTestName = null;
 
@@ -353,9 +345,6 @@ public class RemoteMetaStoreTests {
 	 * @return
 	 */
 	protected String getWorkspaceId(String login) {
-		if (ServerConstants.CONFIG_META_STORE_LEGACY.equals(orionMetastore)) {
-			return login;
-		}
 		return login + "-OrionContent";
 	}
 
