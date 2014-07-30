@@ -14,6 +14,11 @@ package org.eclipse.orion.server.core;
  * Public constants available to clients of the orion server core API.
  */
 public class ServerConstants {
+	
+	/**
+	 * The name of configuration property specifying if access logs in NCSA format should be enabled on the Jetty server (see Bug 429063)
+	 */
+	public static final String CONFIG_ACCESS_LOGS_ENABLED = "orion.jetty.access.logs.enable"; //$NON-NLS-1$
 
 	/**
 	 * The system property name for the secure storage master password.

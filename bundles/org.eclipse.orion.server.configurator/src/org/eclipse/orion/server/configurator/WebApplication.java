@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,7 +22,8 @@ import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
 import org.eclipse.equinox.http.jetty.JettyConfigurator;
 import org.eclipse.equinox.http.jetty.JettyConstants;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
@@ -69,6 +70,11 @@ public class WebApplication implements IApplication {
 		String contextPath = preferences.get(ServerConstants.CONFIG_CONTEXT_PATH, null);
 		if (contextPath != null) {
 			properties.put(JettyConstants.CONTEXT_PATH, contextPath);
+		}
+
+		Boolean jettyAccessLogsEnabled = new Boolean(preferences.get(ServerConstants.CONFIG_ACCESS_LOGS_ENABLED, "false"));
+		if (jettyAccessLogsEnabled) {
+			properties.put(JettyConstants.CUSTOMIZER_CLASS, "org.eclipse.orion.server.jettycustomizer.OrionJettyCustomizer");
 		}
 
 		if (httpsEnabled) {
