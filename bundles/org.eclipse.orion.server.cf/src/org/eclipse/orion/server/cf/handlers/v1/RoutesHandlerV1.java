@@ -115,8 +115,7 @@ public class RoutesHandlerV1 extends AbstractRESTHandler<Route> {
 		final JSONObject routeJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_ROUTE));
 		final String orphaned = IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_ORPHANED);
 
-		IPath path = new Path(pathString);
-		final String routeId = path.segment(0);
+		final String routeId = pathString != null ? new Path(pathString).segment(0) : null;
 
 		return new CFJob(request, false) {
 			@Override

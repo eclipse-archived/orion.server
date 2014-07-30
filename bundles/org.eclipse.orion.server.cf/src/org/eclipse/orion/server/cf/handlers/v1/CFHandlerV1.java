@@ -41,19 +41,33 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String jazzPathInfo) throws ServletException {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String cFPathInfo) throws ServletException {
 
-		String pathString = jazzPathInfo;
-		String[] infoParts = jazzPathInfo.split("\\/", 3); //$NON-NLS-1$
+		//		String pathString = cFPathInfo;
+		//		String[] infoParts = cFPathInfo.split("\\/", 3); //$NON-NLS-1$
+		//
+		//		if (infoParts.length >= 3) {
+		//			pathString = infoParts[2];
+		//			if (request.getContextPath().length() != 0) {
+		//				IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
+		//				IPath contextPath = new Path(request.getContextPath());
+		//				if (contextPath.isPrefixOf(path)) {
+		//					pathString = path.removeFirstSegments(contextPath.segmentCount()).toString();
+		//				}
+		//			}
+		//		}
 
+		String[] infoParts = cFPathInfo.split("\\/", 3); //$NON-NLS-1$
+
+		String pathString = null;
 		if (infoParts.length >= 3) {
 			pathString = infoParts[2];
-			if (request.getContextPath().length() != 0) {
-				IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
-				IPath contextPath = new Path(request.getContextPath());
-				if (contextPath.isPrefixOf(path)) {
-					pathString = path.removeFirstSegments(contextPath.segmentCount()).toString();
-				}
+		}
+		if (request.getContextPath().length() != 0) {
+			IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
+			IPath contextPath = new Path(request.getContextPath());
+			if (contextPath.isPrefixOf(path)) {
+				pathString = path.removeFirstSegments(contextPath.segmentCount()).toString();
 			}
 		}
 
