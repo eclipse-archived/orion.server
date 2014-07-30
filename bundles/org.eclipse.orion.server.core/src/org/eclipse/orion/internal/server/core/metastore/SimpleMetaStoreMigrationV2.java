@@ -92,8 +92,8 @@ public class SimpleMetaStoreMigrationV2 {
 		logger.info("Completed simple storage migration."); //$NON-NLS-1$
 	}
 	
-	public boolean isMigrationRequired(File rootLocation) {
-		if (SimpleMetaStore.getOrionVersion(rootLocation) == SimpleMetaStoreV1.VERSION) {
+	public boolean isMigrationRequired(SimpleMetaStore simpleMetaStore, File rootLocation) {
+		if (simpleMetaStore.getOrionVersion(rootLocation) == SimpleMetaStoreV1.VERSION) {
 			// version one exists, migration is required
 			return true;
 		}

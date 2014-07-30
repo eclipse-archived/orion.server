@@ -19,7 +19,6 @@ import java.util.List;
 
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV1;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -120,7 +119,7 @@ public class SimpleMetaDataCreatorV1 {
 	private JSONObject getProjectMetaData(File folder, String projectName, String workspaceId) {
 		JSONObject jsonObject = new JSONObject();
 		try {
-			jsonObject.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStoreV1.VERSION);
+			jsonObject.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStore.VERSION);
 			jsonObject.put("UniqueId", projectName);
 			jsonObject.put("WorkspaceId", workspaceId);
 			jsonObject.put("FullName", projectName);
@@ -137,7 +136,7 @@ public class SimpleMetaDataCreatorV1 {
 	private JSONObject getRootMetaData() {
 		JSONObject jsonObject = new JSONObject();
 		try {
-			jsonObject.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStoreV1.VERSION);
+			jsonObject.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStore.VERSION);
 		} catch (JSONException e) {
 			creatorLogPrint("SimpleMetaDataCreator: could not create root metadata: " + e.getLocalizedMessage());
 			e.printStackTrace();
@@ -148,7 +147,7 @@ public class SimpleMetaDataCreatorV1 {
 	private JSONObject getUserMetaData(String userId, List<String> workspaceIds) {
 		JSONObject jsonObject = new JSONObject();
 		try {
-			jsonObject.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStoreV1.VERSION);
+			jsonObject.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStore.VERSION);
 			jsonObject.put("UniqueId", userId);
 			jsonObject.put("UserName", userId);
 			JSONArray array = new JSONArray();
@@ -168,7 +167,7 @@ public class SimpleMetaDataCreatorV1 {
 	private JSONObject getWorkspaceMetaData(String userId, String workspaceId, String name, List<String> projectNames) {
 		JSONObject jsonObject = new JSONObject();
 		try {
-			jsonObject.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStoreV1.VERSION);
+			jsonObject.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStore.VERSION);
 			jsonObject.put("UniqueId", workspaceId);
 			jsonObject.put("UserId", userId);
 			jsonObject.put("FullName", name);

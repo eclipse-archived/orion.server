@@ -52,19 +52,59 @@ import org.slf4j.LoggerFactory;
  * @author Anthony Hunter
  *
  */
-public class SimpleMetaStoreV2 extends SimpleMetaStore {
+class SimpleMetaStoreV2 {
 
-	public final static int VERSION = 6;
+	/**
+	 * The default name of a workspace for a user: Orion Content.
+	 */
+	protected final static String DEFAULT_WORKSPACE_NAME = "Orion Content";
+	
+	/**
+	 * The name of the Orion Version property in the JSON file.
+	 */
+	protected final static String ORION_VERSION = "OrionVersion";
+	
+	/**
+	 * Each metadata file is in JSON format and should have a version. A missing version is flagged by this value.
+	 */
+	protected final static int ORION_VERSION_MISSING = -1;
+	
+	/**
+	 * The root of the Simple Meta Store has the root metastore.json metadata file.
+	 */
+	protected static final String ROOT = "metastore";
+	
+	/**
+	 * The root of the user folder has the user.json metadata file.
+	 */
+	protected final static String USER = "user";
+	
+	/**
+	 * The current version of the Simple Meta Store.
+	 */
+	protected final static int VERSION = 6;
 
-	// map of read write locks keyed by userId
+	/**
+	 * The root of the workspace folder has the workspace.json metadata file. (only for OrionVersion 4).
+	 */
+	protected final static String WORKSPACE = "workspace";
+
+	/**
+	 * A map of read write locks keyed by userId.
+	 */
 	private Map<String, ReadWriteLock> lockMap = new ConcurrentHashMap<String, ReadWriteLock>();
+
+	/**
+	 * The root location of this Simple Meta Store.
+	 */
+	private File rootLocation = null;
 
 	/**
 	 * Create an instance of a SimpleMetaStore under the provided folder.
 	 * @param rootLocation The root location for storing content and metadata on this server.
 	 */
 	public SimpleMetaStoreV2(File rootLocation) {
-		super(rootLocation);
+		this.rootLocation = rootLocation;
 	}
 
 	public void createProject(ProjectInfo projectInfo) throws CoreException {
@@ -346,6 +386,10 @@ public class SimpleMetaStoreV2 extends SimpleMetaStore {
 		return lockMap.get(userId);
 	}
 
+	protected File getRootLocation() {
+		return rootLocation;
+	}
+
 	public IFileStore getUserHome(String userId) {
 		IFileStore root = OrionConfiguration.getRootLocation();
 		if (userId != null) {
@@ -421,12 +465,12 @@ public class SimpleMetaStoreV2 extends SimpleMetaStore {
 			try {
 				if (jsonObject == null || jsonObject.getInt(SimpleMetaStore.ORION_VERSION) != VERSION) {
 					// Migration is required
-					SimpleMetaStoreMigrationV2 migration = new SimpleMetaStoreMigrationV2();
-					if (migration.isMigrationRequired(rootLocation)) {
-						migration.doMigration(rootLocation);
-					} else {
-						throw new RuntimeException("SimpleMetaStore.initializeMetaStore: could not read MetaStore");
-					}
+					//SimpleMetaStoreMigrationV2 migration = new SimpleMetaStoreMigrationV2();
+					//if (migration.isMigrationRequired(this, rootLocation)) {
+					//	migration.doMigration(rootLocation);
+					//} else {
+					//	throw new RuntimeException("SimpleMetaStore.initializeMetaStore: could not read MetaStore");
+					//}
 				}
 			} catch (JSONException e) {
 				throw new RuntimeException("SimpleMetaStore.initializeMetaStore: could not read MetaStore.");
