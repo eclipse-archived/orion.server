@@ -10,8 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
@@ -111,10 +110,13 @@ public class RoutesHandlerV1 extends AbstractRESTHandler<Route> {
 	}
 
 	@Override
-	protected CFJob handleDelete(Route route, HttpServletRequest request, HttpServletResponse response, final String path) {
+	protected CFJob handleDelete(Route route, HttpServletRequest request, HttpServletResponse response, final String pathString) {
 		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
 		final JSONObject routeJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_ROUTE));
 		final String orphaned = IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_ORPHANED);
+
+		IPath path = new Path(pathString);
+		final String routeId = path.segment(0);
 
 		return new CFJob(request, false) {
 			@Override
@@ -127,26 +129,38 @@ public class RoutesHandlerV1 extends AbstractRESTHandler<Route> {
 						return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
 					}
 
-					JSONArray deletedRoutesJSON = new JSONArray();
-
-					GetRoutesCommand getRoutesCommand = null;
-					if (Boolean.parseBoolean(orphaned)) {
-						getRoutesCommand = new GetRoutesCommand(target, true);
+					List<Route> routes = null;
+					if (routeId != null) {
+						GetRouteByGuidCommand getRouteByGuid = new GetRouteByGuidCommand(target.getCloud(), routeId);
+						IStatus getRouteByGuidStatus = getRouteByGuid.doIt();
+						if (!getRouteByGuidStatus.isOK())
+							return getRouteByGuidStatus;
+						if (getRouteByGuid.getRoute() != null) {
+							routes = new ArrayList<Route>();
+							routes.add(getRouteByGuid.getRoute());
+						}
+					} else if (Boolean.parseBoolean(orphaned)) {
+						GetRoutesCommand getRoutesCommand = new GetRoutesCommand(target, true);
+						IStatus getRoutesStatus = getRoutesCommand.doIt();
+						if (!getRoutesStatus.isOK())
+							return getRoutesStatus;
+						routes = getRoutesCommand.getRoutes();
 					} else {
 						GetDomainsCommand getDomainsCommand = new GetDomainsCommand(target, routeJSON.getString(CFProtocolConstants.KEY_DOMAIN_NAME));
 						IStatus getDomainsStatus = getDomainsCommand.doIt();
 						if (!getDomainsStatus.isOK())
 							return getDomainsStatus;
-						getRoutesCommand = new GetRoutesCommand(target, routeJSON.getString(CFProtocolConstants.KEY_DOMAIN_NAME), routeJSON.getString(CFProtocolConstants.KEY_HOST));
+						GetRoutesCommand getRoutesCommand = new GetRoutesCommand(target, routeJSON.getString(CFProtocolConstants.KEY_DOMAIN_NAME), routeJSON.getString(CFProtocolConstants.KEY_HOST));
+						IStatus getRoutesStatus = getRoutesCommand.doIt();
+						if (!getRoutesStatus.isOK())
+							return getRoutesStatus;
+						routes = getRoutesCommand.getRoutes();
 					}
 
-					IStatus getRoutesStatus = getRoutesCommand.doIt();
-					if (!getRoutesStatus.isOK())
-						return getRoutesStatus;
-					List<Route> routes = getRoutesCommand.getRoutes();
 					if (routes == null || routes.size() == 0)
 						return new ServerStatus(IStatus.OK, HttpServletResponse.SC_NOT_FOUND, "Host not found", null);
 
+					JSONArray deletedRoutesJSON = new JSONArray();
 					for (Iterator<Route> iterator2 = routes.iterator(); iterator2.hasNext();) {
 						Route route = iterator2.next();
 
@@ -162,7 +176,7 @@ public class RoutesHandlerV1 extends AbstractRESTHandler<Route> {
 					result.put("Routes", deletedRoutesJSON);
 					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 				} catch (Exception e) {
-					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
+					String msg = NLS.bind("Failed to handle request for {0}", pathString); //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 					logger.error(msg, e);
 					return status;
