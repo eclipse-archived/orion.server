@@ -533,12 +533,6 @@ public class DockerHandler extends ServletResourceHandler<String> {
 					logger.warn("No Docker Server specified by \"" + ServerConstants.CONFIG_DOCKER_URI + "\" in orion.conf, trying " + dockerLocation);
 				}
 			}
-			if (!OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_SIMPLE_V2)) {
-				// the docker feature requires version two of the simple metadata storage, so no docker support
-				dockerServer = null;
-				logger.error("Docker Support requires version two of the simple metadata storage, see https://wiki.eclipse.org/Orion/Metadata_migration to migrate to the current version");
-				return;
-			}
 			URI dockerLocationURI = new URI(dockerLocation);
 			URI dockerProxyURI = dockerLocationURI;
 
