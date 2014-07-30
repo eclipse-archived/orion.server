@@ -30,8 +30,6 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV1;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV2;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
@@ -96,12 +94,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		// Test that the project is linked
 		assertFalse(defaultLocation == projectInfo.getProjectStore());
 		// Test that no content folder is created
-		if (getMetaStore() instanceof SimpleMetaStoreV2) {
-			// Bug 437821 is only fixed in SimpleMetaStoreV2
-			assertFalse(defaultLocation.fetchInfo().exists());
-		}
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
+		assertFalse(defaultLocation.fetchInfo().exists());
 	}
 
 	@Test
@@ -140,20 +133,16 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 			String message = e.getMessage();
 			assertTrue(message.contains("cannot create a project named \"workspace\""));
 		}
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
+	/**
+	 * you are allowed to create a project named workspace with the latest SimpleMetaStore 
+	 * @throws CoreException
+	 */
 	@Test
 	public void testCreateProjectNamedWorkspace() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
-
-		if (metaStore instanceof SimpleMetaStoreV2) {
-			// you are allowed to create a project named workspace with SimpleMetaStoreV2 
-			return;
-		}
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -176,19 +165,14 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 			projectInfo.setContentLocation(new URI("file:/home/anthony/orion/project"));
 		} catch (URISyntaxException e) {
 			// should not get an exception here, simple URI
-			fail("URISyntaxException: " + e.getLocalizedMessage());
 		}
 		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
-		try {
-			metaStore.createProject(projectInfo);
-		} catch (CoreException e) {
-			// we expect to get a core exception here
-			String message = e.getMessage();
-			assertTrue(message.contains("cannot create a project named \"workspace\""));
-		}
+		metaStore.createProject(projectInfo);
 
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
+		// read the project
+		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo.getFullName());
+		assertNotNull(readProjectInfo);
+		assertEquals(readProjectInfo.getFullName(), projectInfo.getFullName());
 	}
 
 	@Test
@@ -230,9 +214,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		// read the project, project json will be created
 		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectName);
 		assertNotNull(readProjectInfo);
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -293,9 +274,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo.getFullName());
 		assertNotNull(readProjectInfo);
 		assertEquals(readProjectInfo.getFullName(), projectInfo.getFullName());
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -336,9 +314,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		assertNotNull(readProjectInfo);
 		assertEquals(projectName, readProjectInfo.getFullName());
 		assertEquals(readProjectInfo.getFullName(), projectInfo.getFullName());
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -399,9 +374,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 			String message = e.getMessage();
 			assertTrue(message.contains("could not create project"));
 		}
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	/**
@@ -436,19 +408,9 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		// read the workspace
 		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceInfo2.getUniqueId());
 		assertNotNull(readWorkspaceInfo);
-		if (getMetaStore() instanceof SimpleMetaStoreV1) {
-			assertEquals(readWorkspaceInfo.getFullName(), workspaceInfo2.getFullName());
-			assertEquals(readWorkspaceInfo.getUniqueId(), workspaceInfo2.getUniqueId());
-			assertEquals(readWorkspaceInfo.getUserId(), workspaceInfo2.getUserId());
-		} else {
-			// Bug 439735 was fixed in SimpleMetaStoreV2
-			assertEquals(readWorkspaceInfo.getFullName(), workspaceInfo1.getFullName());
-			assertEquals(readWorkspaceInfo.getUniqueId(), workspaceInfo1.getUniqueId());
-			assertEquals(readWorkspaceInfo.getUserId(), workspaceInfo1.getUserId());
-		}
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
+		assertEquals(readWorkspaceInfo.getFullName(), workspaceInfo1.getFullName());
+		assertEquals(readWorkspaceInfo.getUniqueId(), workspaceInfo1.getUniqueId());
+		assertEquals(readWorkspaceInfo.getUserId(), workspaceInfo1.getUserId());
 	}
 
 	@Test
@@ -480,12 +442,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUserName(), userInfo.getUserName());
-		if (getMetaStore() instanceof SimpleMetaStoreV1) {
-			assertEquals(2, readUserInfo.getWorkspaceIds().size());
-		} else {
-			// Bug 439735 was fixed in SimpleMetaStoreV2
-			assertEquals(1, readUserInfo.getWorkspaceIds().size());
-		}
+		assertEquals(1, readUserInfo.getWorkspaceIds().size());
 		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo1.getUniqueId()));
 		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo2.getUniqueId()));
 
@@ -493,9 +450,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceInfo2.getUniqueId());
 		assertNotNull(readWorkspaceInfo);
 		assertEquals(readWorkspaceInfo.getFullName(), workspaceInfo2.getFullName());
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -561,9 +515,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		workspaceInfo.setFullName(workspaceName);
 		workspaceInfo.setUserId(userInfo.getUniqueId());
 		metaStore.createWorkspace(workspaceInfo);
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -578,9 +529,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		workspaceInfo.setUserId("77");
 		workspaceInfo.setFullName(workspaceName);
 		metaStore.createWorkspace(workspaceInfo);
-
-		// delete the user
-		metaStore.deleteUser(workspaceInfo.getUserId());
 	}
 
 	@Test
@@ -605,9 +553,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 			String message = e.getMessage();
 			assertTrue(message.contains("user id is null"));
 		}
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -631,9 +576,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 			String message = e.getMessage();
 			assertTrue(message.contains("workspace name is null"));
 		}
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -687,9 +629,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		assertEquals(readWorkspaceInfo.getFullName(), workspaceInfo.getFullName());
 		assertFalse(readWorkspaceInfo.getProjectNames().contains(projectInfo1.getFullName()));
 		assertTrue(readWorkspaceInfo.getProjectNames().contains(projectInfo2.getFullName()));
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -745,9 +684,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		assertEquals(readUserInfo2.getUserName(), userInfo.getUserName());
 		assertEquals("Should be zero workspaces", 0, readUserInfo2.getWorkspaceIds().size());
 		assertFalse(readUserInfo2.getWorkspaceIds().contains(workspaceInfo.getUniqueId()));
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -784,9 +720,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		String correctLocation = projectHome.toLocalFile(EFS.NONE, null).toString();
 
 		assertEquals(correctLocation, location);
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -809,9 +742,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		String correctLocation = child.toLocalFile(EFS.NONE, null).toString();
 
 		assertEquals(correctLocation, location);
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -841,9 +771,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		String correctLocation = childLocation.toLocalFile(EFS.NONE, null).toString();
 
 		assertEquals(correctLocation, location);
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -917,9 +844,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		// delete the project contents
 		file.delete(EFS.NONE, null);
 		assertFalse("the file in the project folder should not exist.", file.fetchInfo().exists());
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -992,9 +916,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		// delete the linked project
 		projectFolder.delete(EFS.NONE, null);
 		assertFalse("the linked project should not exist.", projectFolder.fetchInfo().exists());
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -1038,9 +959,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo.getFullName());
 		assertNotNull(readProjectInfo);
 		assertTrue(readProjectInfo.getFullName().equals(movedProjectName));
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -1106,9 +1024,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		ProjectInfo readProjectInfo = metaStore.readProject(readWorkspaceId, readProjectName);
 		assertNotNull(readProjectInfo);
 		assertEquals(readWorkspaceInfo.getUniqueId(), readProjectInfo.getWorkspaceId());
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -1133,12 +1048,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		assertNotNull(allUsers);
 		assertTrue(allUsers.contains(userInfo1.getUniqueId()));
 		assertTrue(allUsers.contains(userInfo2.getUniqueId()));
-
-		// delete the first user
-		metaStore.deleteUser(userInfo1.getUniqueId());
-
-		// delete the second user
-		metaStore.deleteUser(userInfo2.getUniqueId());
 	}
 
 	@Test
@@ -1176,15 +1085,8 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
 
 		assertTrue(SimpleMetaStoreUtil.createMetaFolder(workspaceMetaFolder, projectName));
-		File newFolder = SimpleMetaStoreUtil.retrieveMetaFolder(workspaceMetaFolder, projectName);
 		String corruptedProjectJson = "{\n\"OrionVersion\": 4,";
-		File newFile;
-		if (getMetaStore() instanceof SimpleMetaStoreV1) {
-			newFile = SimpleMetaStoreUtil.retrieveMetaFile(workspaceMetaFolder, projectName);
-		} else {
-			// SimpleMetaStoreV2
-			newFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, projectName);
-		}
+		File newFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, projectName);
 		FileWriter fileWriter = new FileWriter(newFile);
 		fileWriter.write(corruptedProjectJson);
 		fileWriter.write("\n");
@@ -1194,13 +1096,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		// read the project, should return null as the project is corrupted on disk
 		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectName);
 		assertNull(readProjectInfo);
-
-		// delete a folder and project.json for the bad project on the filesystem 
-		newFile.delete();
-		newFolder.delete();
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -1232,10 +1127,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		// read the user, should return null as the user is corrupted on disk
 		UserInfo readUserInfo = metaStore.readUser(baduser);
 		assertNull(readUserInfo);
-
-		// delete the folder and user.json for the bad user on the filesystem
-		newFile.delete();
-		userMetaFolder.delete();
 	}
 
 	@Test
@@ -1264,15 +1155,8 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, userInfo.getUniqueId());
 		assertTrue(SimpleMetaStoreUtil.createMetaFolder(userMetaFolder, encodedWorkspaceName));
-		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
 		String corruptedWorkspaceJson = "{\n\"OrionVersion\": 4,";
-		File newFile;
-		if (getMetaStore() instanceof SimpleMetaStoreV1) {
-			newFile = SimpleMetaStoreUtil.retrieveMetaFile(workspaceMetaFolder, SimpleMetaStore.WORKSPACE);
-		} else {
-			// SimpleMetaStoreV2
-			newFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, encodedWorkspaceName);
-		}
+		File newFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, encodedWorkspaceName);
 		FileWriter fileWriter = new FileWriter(newFile);
 		fileWriter.write(corruptedWorkspaceJson);
 		fileWriter.write("\n");
@@ -1282,13 +1166,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		// read the workspace, should return null as the workspace is corrupted on disk
 		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceId);
 		assertNull(readWorkspaceInfo);
-
-		// delete the folder and workspace.json for the bad workspace on the filesystem
-		newFile.delete();
-		workspaceMetaFolder.delete();
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -1345,9 +1222,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo2.getFullName());
 		assertNotNull(readProjectInfo);
 		assertEquals(readProjectInfo.getFullName(), projectInfo2.getFullName());
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -1371,9 +1245,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		// read the project
 		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo1.getUniqueId(), "Project Zero");
 		assertNull(readProjectInfo);
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -1394,9 +1265,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		// read the project
 		ProjectInfo readProjectInfo = metaStore.readProject(workspaceId, "Project Zero");
 		assertNull(readProjectInfo);
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -1414,9 +1282,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -1429,9 +1294,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		assertNotNull(userInfo);
 		assertEquals("Unnamed User", userInfo.getFullName());
 		assertEquals(testUserLogin, userInfo.getUserName());
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -1463,12 +1325,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUserName(), userInfo.getUserName());
-		if (getMetaStore() instanceof SimpleMetaStoreV1) {
-			assertEquals(2, readUserInfo.getWorkspaceIds().size());
-		} else {
-			// Bug 439735 was fixed in SimpleMetaStoreV2
-			assertEquals(1, readUserInfo.getWorkspaceIds().size());
-		}
+		assertEquals(1, readUserInfo.getWorkspaceIds().size());
 		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo1.getUniqueId()));
 		assertTrue(readUserInfo.getWorkspaceIds().contains(workspaceInfo2.getUniqueId()));
 
@@ -1476,9 +1333,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceInfo2.getUniqueId());
 		assertNotNull(readWorkspaceInfo);
 		assertEquals(readWorkspaceInfo.getFullName(), workspaceInfo2.getFullName());
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -1512,9 +1366,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		// read the workspace that does not exist
 		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace("anthony-Workspace77");
 		assertNull(readWorkspaceInfo);
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -1560,9 +1411,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		assertNotNull(readProjectInfo);
 		assertTrue(readProjectInfo.getContentLocation().equals(newURI));
 		assertEquals(readProjectInfo.getProperty("New"), "Property");
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 	@Test
@@ -1623,9 +1471,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceInfo.getUniqueId());
 		assertNotNull(readWorkspaceInfo);
 		assertEquals(readWorkspaceInfo.getProperty("New"), "Property");
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
 	}
 
 }
