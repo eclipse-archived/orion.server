@@ -59,7 +59,7 @@ public class Clone {
 				new Property(GitConstants.KEY_BRANCH), //
 				new Property(GitConstants.KEY_TAG), //
 				new Property(GitConstants.KEY_INDEX), //
-				new Property(GitConstants.KEY_IGNORE), //
+				new Property(GitConstants.KEY_STASH), //
 				new Property(GitConstants.KEY_STATUS), //
 				new Property(GitConstants.KEY_DIFF), //
 				new Property(GitConstants.KEY_URL)};
@@ -209,9 +209,9 @@ public class Clone {
 	}
 
 	// TODO: expandable
-	@PropertyDescription(name = "IgnoreLocation")
+	@PropertyDescription(name = GitConstants.KEY_STASH)
 	private URI getIgnoreLocation() throws URISyntaxException {
-		IPath np = new Path(GitServlet.GIT_URI).append(Ignore.RESOURCE).append(getId());
+		IPath np = new Path(GitServlet.GIT_URI).append(Stash.RESOURCE).append(getId());
 		return createUriWithPath(np);
 	}
 

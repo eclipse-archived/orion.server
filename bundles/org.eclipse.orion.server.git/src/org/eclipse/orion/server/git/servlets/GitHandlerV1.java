@@ -36,6 +36,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<String> tagHandlerV1;
 	private ServletResourceHandler<String> blameHandlerV1;
 	private ServletResourceHandler<String> treeHandlerV1;
+	private ServletResourceHandler<String> stashHandlerV1;
 
 	GitHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		branchHandlerV1 = new GitBranchHandlerV1(statusHandler);
@@ -50,6 +51,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 		statusHandlerV1 = new GitStatusHandlerV1(statusHandler);
 		tagHandlerV1 = new GitTagHandlerV1(statusHandler);
 		treeHandlerV1 = new GitTreeHandlerV1(statusHandler);
+		stashHandlerV1 = new GitStashHandlerV1(statusHandler);
 	}
 
 	@Override
@@ -105,7 +107,10 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 			return ignoreHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(Tree.RESOURCE)) {
 			return treeHandlerV1.handleRequest(request, response, pathString);
+		} else if (infoParts[1].equals(Stash.RESOURCE)) {
+			return stashHandlerV1.handleRequest(request, response, pathString);
 		}
+
 		return false;
 	}
 }

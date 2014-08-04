@@ -29,6 +29,8 @@ public class GitConstants {
 
 	public static final String KEY_IGNORE = "IgnoreLocation"; //$NON-NLS-1$
 
+	public static final String KEY_STASH = "StashLocation"; //$NON-NLS-1$
+
 	public static final String KEY_COMMIT = "CommitLocation"; //$NON-NLS-1$
 
 	public static final String KEY_REMOTE = "RemoteLocation"; //$NON-NLS-1$
@@ -206,4 +208,18 @@ public class GitConstants {
 	public static final String KEY_SSO_TOKEN = "SSOToken"; //$NON-NLS-1$
 
 	public static final String KEY_COOKIE = "Cookie"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_APPLY_INDEX = "ApplyIndex"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_APPLY_UNTRACKED = "ApplyUntracked"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_INDEX_MESSAGE = "IndexMessage"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_WORKING_DIRECTORY_MESSAGE = "WorkingDirectoryMessage"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_INCLUDE_UNTRACKED = "IncludeUntracked"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_APPLY_LOCATION = "ApplyLocation"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_DROP_LOCATION = "DropLocation"; //$NON-NLS-1$
 }
