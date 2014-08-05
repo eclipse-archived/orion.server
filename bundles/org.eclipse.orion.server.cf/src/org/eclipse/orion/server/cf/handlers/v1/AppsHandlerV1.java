@@ -117,7 +117,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 	protected CFJob handlePut(App resource, HttpServletRequest request, HttpServletResponse response, final String pathString) {
 		final JSONObject targetJSON2 = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
 
-		IPath path = new Path(pathString);
+		IPath path = pathString != null ? new Path(pathString) : new Path("");
 		final String appGuid = path.segment(0);
 		boolean addRoute = "routes".equals(path.segment(1));
 		final String routeGuid = addRoute ? path.segment(2) : null;
