@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.oauth;
 
-import java.awt.PageAttributes.OriginType;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
@@ -31,7 +30,6 @@ import org.apache.oltu.oauth2.common.utils.OAuthUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.events.IEventService;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
@@ -49,7 +47,7 @@ import org.osgi.framework.ServiceReference;
  *
  */
 public class OAuthHelper {
-	
+
 	public static final String OAUTH = "oauth"; //$NON-NLS-1$
 	public static final String REDIRECT = "redirect"; //$NON-NLS-1$
 	public static final String REDIRECT_TYPE = "redirect_type"; //$NON-NLS-1$
@@ -100,7 +98,7 @@ public class OAuthHelper {
 		String error = req.getParameter("error");
 		if(error != null)
 			throw new OAuthException(error);
-		
+
 		// Get the authorization code
 		String code = req.getParameter("code");
 		if (code == null)
@@ -120,9 +118,8 @@ public class OAuthHelper {
 
 			// Send request to oauth server
 			OAuthAccessTokenResponse oauthAccessTokenResponse = oAuthClient.accessToken(request, oauthParams.getTokenResponseClass());
-			
+
 			OAuthConsumer consumer = oauthParams.getNewOAuthConsumer(oauthAccessTokenResponse);
-			
 			return consumer;
 		} catch (OAuthSystemException e) {
 			// Error building request
@@ -132,7 +129,7 @@ public class OAuthHelper {
 			throw new OAuthException(e);
 		}
 	}
-	
+
 	/**
 	 * Method to try and authenticate an oauth consumer.
 	 * @param req The request of to the server.
@@ -152,9 +149,14 @@ public class OAuthHelper {
 		if (users.size() > 0) {
 			user = users.iterator().next();
 		} else {
-			throw new OAuthException("There is no Orion account associated with this Id. Please register or contact your system administrator for assistance.");
+			String url = "/mixloginstatic/LoginWindow.html";
+			url += "?oauth=create&email=" + oauthConsumer.getEmail();
+			url += "&username=" + oauthConsumer.getUsername();
+			url += "&identifier=" + oauthConsumer.getIdentifier();
+			resp.sendRedirect(url);
+			return;
 		}
-		
+
 		req.getSession().setAttribute("user", user.getUid()); //$NON-NLS-1$
 
 		if (getEventService() != null) {
@@ -190,7 +192,7 @@ public class OAuthHelper {
 
 		return;
 	}
-	
+
 	/**
 	 * Prepared javascript to send to the user to link the oauth consumer to the current user.
 	 * @param req The request of to the server.
@@ -220,7 +222,6 @@ public class OAuthHelper {
 			return;
 		}
 	}
-	
 
 	public static String getAuthType() {
 		return OAUTH; //$NON-NLS-1$

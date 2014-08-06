@@ -42,5 +42,10 @@ public abstract class OAuthConsumer implements OAuthToken {
 	public String getScope() {
 		return accessToken.getScope();
 	}
+	
 	public abstract String getIdentifier();
+	
+	public abstract String getEmail();
+	
+	public abstract String getUsername();
 }
