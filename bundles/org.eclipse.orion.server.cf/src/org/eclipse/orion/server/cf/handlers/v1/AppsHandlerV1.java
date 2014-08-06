@@ -23,7 +23,6 @@ import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
-import org.eclipse.orion.server.cf.node.commands.DevelopmentPushAppCommand;
 import org.eclipse.orion.server.cf.objects.*;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -163,8 +162,6 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 		final String state = jsonData.optString(CFProtocolConstants.KEY_STATE, null);
 		final String appName = jsonData.optString(CFProtocolConstants.KEY_NAME, null);
 		final String contentLocation = ServletResourceHandler.toOrionLocation(request, jsonData.optString(CFProtocolConstants.KEY_CONTENT_LOCATION, null));
-		final String debugPassword = jsonData.optString(CFProtocolConstants.KEY_DEBUG_PASSWORD);
-		final String debugURLPrefix = jsonData.optString(CFProtocolConstants.KEY_DEBUG_URL_PREFIX);
 
 		/* default application startup is one minute */
 		int userTimeout = jsonData.optInt(CFProtocolConstants.KEY_TIMEOUT, 60);
@@ -230,15 +227,9 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					app.setManifest(parseManifestCommand.getManifest());
 					app.setAppStore(parseManifestCommand.getAppStore());
 
-					if (debugPassword != null) {
-						status = new DevelopmentPushAppCommand(target, app, force, debugPassword, debugURLPrefix).doIt();
-						if (!status.isOK())
-							return status;
-					} else {
-						status = new PushAppCommand(target, app, force).doIt();
-						if (!status.isOK())
-							return status;
-					}
+					status = new PushAppCommand(target, app, force).doIt();
+					if (!status.isOK())
+						return status;
 
 					// get the app again
 					getAppCommand = new GetAppCommand(target, app.getName());
