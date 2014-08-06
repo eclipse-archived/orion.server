@@ -62,9 +62,7 @@ IBM Corporation - initial API and implementation
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
-		</plugins>
 
-		<plugins>
 			<plugin>
 				<groupId>org.eclipse.cbi.maven.plugins</groupId>
 				<artifactId>eclipse-jarsigner-plugin</artifactId>
