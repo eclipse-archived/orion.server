@@ -65,7 +65,7 @@ public class PushAppCommand extends AbstractCFCommand {
 					return status;
 
 				/* upload project contents */
-				UploadBitsCommand uploadBits = createUploadBitsCommand();
+				UploadBitsCommand uploadBits = new UploadBitsCommand(target, app);
 				multijobStatus = (ServerStatus) uploadBits.doIt(); /* FIXME: unsafe type cast */
 				status.add(multijobStatus);
 				if (!multijobStatus.isOK())
@@ -102,7 +102,7 @@ public class PushAppCommand extends AbstractCFCommand {
 			app.setGuid(app.getSummaryJSON().getString(CFProtocolConstants.V2_KEY_GUID));
 
 			/* upload project contents */
-			UploadBitsCommand uploadBits = createUploadBitsCommand();
+			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app);
 			ServerStatus multijobStatus = (ServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
 			status.add(multijobStatus);
 			if (!multijobStatus.isOK())
@@ -145,9 +145,5 @@ public class PushAppCommand extends AbstractCFCommand {
 			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 			return status;
 		}
-	}
-
-	protected UploadBitsCommand createUploadBitsCommand() {
-		return new UploadBitsCommand(target, app);
 	}
 }
