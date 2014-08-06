@@ -61,6 +61,7 @@ public class Commit extends GitObject {
 				new Property(GitConstants.KEY_TAGS), //
 				new Property(GitConstants.KEY_BRANCHES), //
 				new Property(ProtocolConstants.KEY_PARENTS), //
+				new Property(GitConstants.KEY_TREE), //
 				new Property(GitConstants.KEY_COMMIT_DIFFS)};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
@@ -137,6 +138,11 @@ public class Commit extends GitObject {
 	@PropertyDescription(name = GitConstants.KEY_DIFF)
 	private URI getDiffLocation() throws URISyntaxException {
 		return createDiffLocation(revCommit.getName(), null, pattern);
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_TREE)
+	private URI getTreeLocation() throws URISyntaxException {
+		return createTreeLocation(null);
 	}
 
 	@PropertyDescription(name = ProtocolConstants.KEY_NAME)
@@ -286,6 +292,17 @@ public class Commit extends GitObject {
 		}
 
 		return new URI(cloneLocation.getScheme(), cloneLocation.getAuthority(), diffPath.toString(), null, null);
+	}
+
+	private URI createTreeLocation(String path) throws URISyntaxException {
+		//remove /gitapi/clone from the start of path
+		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
+
+		IPath result = new Path(GitServlet.GIT_URI).append(Tree.RESOURCE).append(this.getName()).append(clonePath);
+		if (path != null) {
+			result.append(path);
+		}
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute().toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
 	private URI createContentLocation(final DiffEntry entr, String path) throws URISyntaxException {
