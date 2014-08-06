@@ -63,6 +63,21 @@ IBM Corporation - initial API and implementation
 				</configuration>
 			</plugin>
 		</plugins>
+
+		<plugins>
+			<plugin>
+				<groupId>org.eclipse.cbi.maven.plugins</groupId>
+				<artifactId>eclipse-jarsigner-plugin</artifactId>
+				<executions>
+					<execution>
+						<!-- do not sign the gerritfs.jar -->
+						<id>sign</id>
+						</configuration>
+						<phase/>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
 	</build>
 
 	<dependencies>
