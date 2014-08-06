@@ -70,7 +70,6 @@ IBM Corporation - initial API and implementation
 					<execution>
 						<!-- do not sign the gerritfs.jar -->
 						<id>sign</id>
-						</configuration>
 						<phase/>
 					</execution>
 				</executions>
