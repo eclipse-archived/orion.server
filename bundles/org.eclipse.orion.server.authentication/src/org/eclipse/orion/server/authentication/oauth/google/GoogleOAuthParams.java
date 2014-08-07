@@ -8,11 +8,15 @@
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.authentication.oauth;
+package org.eclipse.orion.server.authentication.oauth.google;
 
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
 import org.apache.oltu.oauth2.common.OAuthProviderType;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
+import org.eclipse.orion.server.authentication.oauth.OAuthConsumer;
+import org.eclipse.orion.server.authentication.oauth.OAuthException;
+import org.eclipse.orion.server.authentication.oauth.OAuthParams;
+import org.eclipse.orion.server.authentication.oauth.OAuthTokenResponse;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -38,7 +42,7 @@ public class GoogleOAuthParams extends OAuthParams {
 	
 	private static final GrantType GRANT_TYPE = GrantType.AUTHORIZATION_CODE;
 	
-	private static final Class<? extends OAuthAccessTokenResponse> TOKEN_RESPONSE_CLASS = GoogleTokenResponse.class;
+	private static final Class<? extends OAuthAccessTokenResponse> TOKEN_RESPONSE_CLASS = OAuthTokenResponse.class;
 	
 	private String client_key = null;
 	private String client_secret = null;

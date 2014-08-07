@@ -10,7 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.oauth;
 
+import org.apache.oltu.oauth2.client.OAuthClient;
+import org.apache.oltu.oauth2.client.URLConnectionClient;
+import org.apache.oltu.oauth2.client.request.OAuthBearerClientRequest;
+import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
+import org.apache.oltu.oauth2.client.response.OAuthResourceResponse;
+import org.apache.oltu.oauth2.common.OAuth;
+import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
+import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.token.OAuthToken;
 
 /**
@@ -43,9 +51,38 @@ public abstract class OAuthConsumer implements OAuthToken {
 		return accessToken.getScope();
 	}
 	
+	/**
+	 * Makes an authenticated HTTP Get call the the provided url.
+	 * @param url The url to call.
+	 * @return The body of the response.
+	 * @throws OAuthException If an error occurs while making the call.
+	 */
+	protected String getServerResponse(String url) throws OAuthException{
+		OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
+		OAuthClientRequest request;
+		try {
+			request = new OAuthBearerClientRequest(url)
+				.setAccessToken(getAccessToken())
+				.buildQueryMessage();
+		} catch (OAuthSystemException e1) {
+			throw new OAuthException("An error occured while authenticating the user");
+		}
+		OAuthResourceResponse response;
+		try {
+			response = oAuthClient.resource(request, OAuth.HttpMethod.GET, OAuthResourceResponse.class);
+		} catch (OAuthProblemException e) {
+			throw new OAuthException("An error occured while authenticating the user");
+		} catch (OAuthSystemException e) {
+			throw new OAuthException("An error occured while authenticating the user");
+		}
+		return response.getBody();
+	}
+	
 	public abstract String getIdentifier();
 	
 	public abstract String getEmail();
 	
 	public abstract String getUsername();
+	
+	public abstract boolean isEmailVerifiecd();
 }

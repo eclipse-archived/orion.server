@@ -22,12 +22,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * A Google specific OAuthAccessTokenResponse used to handle a google 
- * oauth token response.
+ * A OAuthAccessTokenResponse that handles a json response
  * @author Aidan Redpath
  *
  */
-public class GoogleTokenResponse  extends OAuthAccessTokenResponse {
+public class OAuthTokenResponse  extends OAuthAccessTokenResponse {
 
 
 	public String getAccessToken() {

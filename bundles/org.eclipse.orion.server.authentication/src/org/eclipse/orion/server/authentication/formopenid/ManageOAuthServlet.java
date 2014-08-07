@@ -16,11 +16,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.orion.server.authentication.oauth.GoogleOAuthParams;
 import org.eclipse.orion.server.authentication.oauth.OAuthConsumer;
 import org.eclipse.orion.server.authentication.oauth.OAuthException;
 import org.eclipse.orion.server.authentication.oauth.OAuthHelper;
 import org.eclipse.orion.server.authentication.oauth.OAuthParams;
+import org.eclipse.orion.server.authentication.oauth.github.GitHubOAuthParams;
+import org.eclipse.orion.server.authentication.oauth.google.GoogleOAuthParams;
 import org.eclipse.orion.server.servlets.OrionServlet;
 
 /**
@@ -34,7 +35,7 @@ public class ManageOAuthServlet extends OrionServlet {
 	 * 
 	 */
 	private static final long serialVersionUID = -3863741024714602634L;
-	
+
 	private OAuthParams oauthParams;
 
 	private void handleGet(HttpServletRequest req, HttpServletResponse resp, Boolean login) throws ServletException, IOException, OAuthException {
@@ -43,7 +44,7 @@ public class ManageOAuthServlet extends OrionServlet {
 		if (pathInfo.startsWith("/oauth")) {
 			String oauthParam = req.getParameter(OAuthHelper.OAUTH);
 			if(oauthParam != null){
-					OAuthHelper.redirectToOAuthProvider(req, resp, getOAuthParams(oauthParam, login));
+				OAuthHelper.redirectToOAuthProvider(req, resp, getOAuthParams(oauthParam, login));
 			}else {
 				OAuthConsumer oauthConsumer = OAuthHelper.handleOAuthReturnAndTokenAccess(req, resp, getOAuthParams());
 				if(login)
@@ -53,24 +54,26 @@ public class ManageOAuthServlet extends OrionServlet {
 			}		
 		}
 	}
-	
+
 	private OAuthParams getOAuthParams(String type, boolean login) throws OAuthException{
 		if(type.equals("google")){
 			oauthParams = new GoogleOAuthParams(login);
+		}else if(type.equals("github")){
+			oauthParams = new GitHubOAuthParams(login);
 		}else{
 			throw new OAuthException("No OAuth provider given");
 		}
 		return getOAuthParams();
 	}
-	
+
 	private OAuthParams getOAuthParams(){
 		return oauthParams;
 	}
-	
+
 	public void handleGetAndLink(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, OAuthException {
 		handleGet(req, resp, false);
 	}
-	
+
 	public void handleGetAndLogin(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, OAuthException {
 		handleGet(req, resp, true);
 	}
