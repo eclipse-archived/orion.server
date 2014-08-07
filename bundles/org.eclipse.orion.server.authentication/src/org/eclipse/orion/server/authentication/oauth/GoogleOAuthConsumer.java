@@ -11,8 +11,15 @@
 package org.eclipse.orion.server.authentication.oauth;
 
 
+import org.apache.oltu.oauth2.client.OAuthClient;
+import org.apache.oltu.oauth2.client.URLConnectionClient;
+import org.apache.oltu.oauth2.client.request.OAuthBearerClientRequest;
+import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
-import org.eclipse.orion.server.core.resources.Base64;
+import org.apache.oltu.oauth2.client.response.OAuthResourceResponse;
+import org.apache.oltu.oauth2.common.OAuth;
+import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
+import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -22,61 +29,88 @@ import org.json.JSONObject;
  *
  */
 public class GoogleOAuthConsumer extends OAuthConsumer {
-
-	private static final String ID_TOKEN = "id_token"; 
+	// Parameters
 	private static final String ID_PARAMETER = "sub"; 
-	private static final String ISS_PARAMETER = "iss";
+	private static final String PROFILE_PARAMETER = "profile";
 	private static final String EMAIL_PARAMETER = "email";
 	private static final String EMAIL_VERIFIED_PARAMETER = "email_verified";
 	
-	private final String userId;
-	private final String issuer;
+	private static final String OPENID_URL = "https://www.googleapis.com/plus/v1/people/me/openIdConnect";
+	
+	private String userId;
+	private String profile;
 	private String email;
 	private boolean email_verified;
 	
 	public GoogleOAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse) throws OAuthException {
 		super(oauthAccessTokenResponse);
-		String idToken = oauthAccessTokenResponse.getParam(ID_TOKEN);
 		// No validation required since the token comes directly from the google server
-		// Token Sections: header.claim.signature
-		String [] idTokenSections = idToken.split("\\.");
-		if(idTokenSections.length != 3)
-			throw new OAuthException("Invalid authentication response from the oauth server");
-		String claim = idTokenSections[1];
-		String decodedClaim = new String(Base64.decode(claim.getBytes()));
+		getGoogleProfile();
+		
+	}
+
+	/**
+	 * Gets the user's profile information from google
+	 * @throws OAuthException Thrown if an error occurs while retrieving the profile
+	 */
+	private void getGoogleProfile() throws OAuthException {
+		OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
+		OAuthClientRequest request;
+		try {
+			request = new OAuthBearerClientRequest(OPENID_URL)
+				.setAccessToken(getAccessToken())
+				.buildQueryMessage();
+		} catch (OAuthSystemException e1) {
+			throw new OAuthException("An error occured while authenticating the user");
+		}
+		OAuthResourceResponse response;
+		try {
+			response = oAuthClient.resource(request, OAuth.HttpMethod.GET, OAuthResourceResponse.class);
+		} catch (OAuthProblemException e) {
+			throw new OAuthException("An error occured while authenticating the user");
+		} catch (OAuthSystemException e) {
+			throw new OAuthException("An error occured while authenticating the user");
+		}
+		String body = response.getBody();
 		JSONObject jsonClaim;
 		try {
-			jsonClaim = new JSONObject(decodedClaim);
+			jsonClaim = new JSONObject(body);
 			userId = jsonClaim.getString(ID_PARAMETER);
-			issuer = jsonClaim.getString(ISS_PARAMETER);
+			profile = jsonClaim.getString(PROFILE_PARAMETER);
 		} catch (JSONException e) {
 			throw new OAuthException(e);
 		}
-		try {
+		email = "";
+		email_verified = false;
+		try{
 			email = jsonClaim.getString(EMAIL_PARAMETER);
-		} catch (JSONException e) {
-			email = null;
-		}
-		try {
 			email_verified = jsonClaim.getBoolean(EMAIL_VERIFIED_PARAMETER);
 		} catch (JSONException e) {
-			email_verified = false;
+			// Suppress
 		}
 	}
+	
+	
 
-
+	/**
+	 * Gets a unique identifier for the user.
+	 */	
 	@Override
 	public String getIdentifier() {
-		return issuer + "/" + userId;
+		return profile;
 	}
 
-
+	/**
+	 * Gets the user's email.
+	 */
 	@Override
 	public String getEmail() {
 		return email;
 	}
 
-
+	/**
+	 * Gets a username to user for Orion.
+	 */
 	@Override
 	public String getUsername() {
 		return getEmail() == null ? null : getEmail().split("@")[0];

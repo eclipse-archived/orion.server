@@ -34,7 +34,7 @@ public class GoogleOAuthParams extends OAuthParams {
 	
 	private static final String RESPONSE_TYPE = "code";
 	
-	private static final String SCOPE = "profile email";
+	private static final String SCOPE = "openid email";
 	
 	private static final GrantType GRANT_TYPE = GrantType.AUTHORIZATION_CODE;
 	
