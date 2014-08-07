@@ -196,25 +196,32 @@ public class SearchServlet extends OrionServlet {
 	private void writeResponse(SolrQuery query, HttpServletRequest httpRequest, HttpServletResponse httpResponse, QueryResponse queryResponse) throws IOException {
 		SolrCore core = SearchActivator.getInstance().getSolrCore();
 		//this seems to be the only way to obtain the JSON response representation
-		SolrQueryRequest solrRequest = new LocalSolrQueryRequest(core, query.toNamedList());
-		SolrQueryResponse solrResponse = new SolrQueryResponse();
-		// Added encoding check as per Bugzilla 406757
-		if (httpRequest.getCharacterEncoding() == null) {
-			httpRequest.setCharacterEncoding("UTF-8"); //$NON-NLS-1$
-			httpResponse.setCharacterEncoding("UTF-8"); //$NON-NLS-1$
+		SolrQueryRequest solrRequest = null;
+		try {
+			solrRequest = new LocalSolrQueryRequest(core, query.toNamedList());
+			SolrQueryResponse solrResponse = new SolrQueryResponse();
+			// Added encoding check as per Bugzilla 406757
+			if (httpRequest.getCharacterEncoding() == null) {
+				httpRequest.setCharacterEncoding("UTF-8"); //$NON-NLS-1$
+				httpResponse.setCharacterEncoding("UTF-8"); //$NON-NLS-1$
+			}
+			//bash the query in the response to remove user info
+			@SuppressWarnings("unchecked")
+			NamedList<Object> params = (NamedList<Object>) queryResponse.getHeader().get("params"); //$NON-NLS-1$
+			params.remove(CommonParams.Q);
+			params.add(CommonParams.Q, httpRequest.getParameter(CommonParams.Q));
+			NamedList<Object> values = queryResponse.getResponse();
+			String contextPath = httpRequest.getContextPath();
+			if (contextPath.length() > 0)
+				setSearchResultContext(values, contextPath);
+			solrResponse.setAllValues(values);
+			QueryResponseWriter writer = core.getQueryResponseWriter("json"); //$NON-NLS-1$
+			writer.write(httpResponse.getWriter(), solrRequest, solrResponse);
+		} finally {
+			if (solrRequest != null) {
+				solrRequest.close();
+			}
 		}
-		//bash the query in the response to remove user info
-		@SuppressWarnings("unchecked")
-		NamedList<Object> params = (NamedList<Object>) queryResponse.getHeader().get("params"); //$NON-NLS-1$
-		params.remove(CommonParams.Q);
-		params.add(CommonParams.Q, httpRequest.getParameter(CommonParams.Q));
-		NamedList<Object> values = queryResponse.getResponse();
-		String contextPath = httpRequest.getContextPath();
-		if (contextPath.length() > 0)
-			setSearchResultContext(values, contextPath);
-		solrResponse.setAllValues(values);
-		QueryResponseWriter writer = core.getQueryResponseWriter("json"); //$NON-NLS-1$
-		writer.write(httpResponse.getWriter(), solrRequest, solrResponse);
 	}
 
 	/**
