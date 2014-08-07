@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.cf.commands;
 
 import javax.servlet.http.HttpServletResponse;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
@@ -31,12 +32,14 @@ public class PushAppCommand extends AbstractCFCommand {
 
 	private String commandName;
 	private App app;
+	private IFileStore appStore;
 	private boolean reset;
 
-	public PushAppCommand(Target target, App app, boolean reset) {
+	public PushAppCommand(Target target, App app, IFileStore appStore, boolean reset) {
 		super(target);
 		this.commandName = "Push application"; //$NON-NLS-1$
 		this.app = app;
+		this.appStore = appStore;
 		this.reset = reset;
 	}
 
@@ -65,7 +68,7 @@ public class PushAppCommand extends AbstractCFCommand {
 					return status;
 
 				/* upload project contents */
-				UploadBitsCommand uploadBits = new UploadBitsCommand(target, app);
+				UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, appStore);
 				multijobStatus = (ServerStatus) uploadBits.doIt(); /* FIXME: unsafe type cast */
 				status.add(multijobStatus);
 				if (!multijobStatus.isOK())
@@ -102,7 +105,7 @@ public class PushAppCommand extends AbstractCFCommand {
 			app.setGuid(app.getSummaryJSON().getString(CFProtocolConstants.V2_KEY_GUID));
 
 			/* upload project contents */
-			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app);
+			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, appStore);
 			ServerStatus multijobStatus = (ServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
 			status.add(multijobStatus);
 			if (!multijobStatus.isOK())

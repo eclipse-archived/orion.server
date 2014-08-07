@@ -12,7 +12,6 @@ package org.eclipse.orion.server.cf.objects;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.core.resources.Property;
@@ -30,7 +29,6 @@ public class App extends CFObject {
 	private JSONObject appJSON;
 
 	private String name;
-	private IFileStore appStore;
 	private String guid;
 
 	private ManifestParseTree manifest;
@@ -87,14 +85,6 @@ public class App extends CFObject {
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public IFileStore getAppStore() {
-		return appStore;
-	}
-
-	public void setAppStore(IFileStore appStore) {
-		this.appStore = appStore;
 	}
 
 	@Override

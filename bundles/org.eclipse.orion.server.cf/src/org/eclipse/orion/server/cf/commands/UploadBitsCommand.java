@@ -17,6 +17,7 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.multipart.*;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
@@ -34,13 +35,15 @@ public class UploadBitsCommand extends AbstractRevertableCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
+	private IFileStore appStore;
 	private String deployedAppPackageName;
 
-	public UploadBitsCommand(Target target, App app) {
+	public UploadBitsCommand(Target target, App app, IFileStore appStore) {
 		super(target, app);
 
 		String[] bindings = {app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Upload application {0} bits (guid: {1})", bindings);
+		this.appStore = appStore;
 	}
 
 	public String getDeployedAppPackageName() {
@@ -54,8 +57,8 @@ public class UploadBitsCommand extends AbstractRevertableCFCommand {
 
 		try {
 			/* upload project contents */
-			File appPackage = PackageUtils.getApplicationPackage(application.getAppStore());
-			deployedAppPackageName = PackageUtils.getApplicationPackageType(application.getAppStore());
+			File appPackage = PackageUtils.getApplicationPackage(appStore);
+			deployedAppPackageName = PackageUtils.getApplicationPackageType(appStore);
 
 			if (appPackage == null) {
 				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to read application content", null));

@@ -225,9 +225,8 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 
 					app.setName(appName != null ? appName : manifestAppName);
 					app.setManifest(parseManifestCommand.getManifest());
-					app.setAppStore(parseManifestCommand.getAppStore());
 
-					status = new PushAppCommand(target, app, force).doIt();
+					status = new PushAppCommand(target, app, parseManifestCommand.getAppStore(), force).doIt();
 					if (!status.isOK())
 						return status;
 
