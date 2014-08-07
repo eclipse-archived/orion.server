@@ -130,7 +130,7 @@ public class ServerConstants {
 	 * system to use for newly created top level folders.
 	 */
 	public static final String CONFIG_FILE_DEFAULT_SCM = "orion.file.defaultSCM"; //$NON-NLS-1$
-	
+
 	/**
 	 * The name of a configuration property specifying the layout format for user data files.
 	 */
@@ -162,26 +162,6 @@ public class ServerConstants {
 	 * The name of configuration property specifying if TLS should be enabled
 	 */
 	public static final String CONFIG_MAIL_SMTP_STARTTLS = "mail.smtp.starttls.enable"; //$NON-NLS-1$
-
-	/**
-	 * The name of configuration property specifying which meta store should be enabled
-	 */
-	public static final String CONFIG_META_STORE = "orion.core.metastore"; //$NON-NLS-1$
-
-	/**
-	 * The name of configuration property specifying the legacy meta store
-	 */
-	public static final String CONFIG_META_STORE_LEGACY = "legacy"; //$NON-NLS-1$
-
-	/**
-	 * The name of configuration property specifying the simple meta store
-	 */
-	public static final String CONFIG_META_STORE_SIMPLE = "simple"; //$NON-NLS-1$
-
-	/**
-	 * The name of configuration property specifying the second version of the simple meta store
-	 */
-	public static final String CONFIG_META_STORE_SIMPLE_V2 = "simple2"; //$NON-NLS-1$
 
 	/**
 	 * name of configuration property for the disk usage calculation support.

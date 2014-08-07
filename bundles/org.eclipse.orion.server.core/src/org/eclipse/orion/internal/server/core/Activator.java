@@ -23,8 +23,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.IPreferencesService;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV1;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV2;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.core.tasks.TaskService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -160,23 +159,10 @@ public class Activator implements BundleActivator {
 	}
 
 	private void initializeMetaStore() {
-		String pref = OrionConfiguration.getMetaStorePreference();
-		if (ServerConstants.CONFIG_META_STORE_SIMPLE_V2.equals(pref)) {
-			try {
-				metastore =  new SimpleMetaStoreV2(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null));
-			} catch (CoreException e) {
-				throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
-			}
-		} else if (ServerConstants.CONFIG_META_STORE_SIMPLE.equals(pref)) {
-			try {
-				metastore = new SimpleMetaStoreV1(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null));
-			} catch (CoreException e) {
-				throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
-			}
-		} else {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.error("Preference orion.core.metastore was not supplied and legacy files exist, see https://wiki.eclipse.org/Orion/Metadata_migration to migrate to the current version");
-			return;
+		try {
+			metastore =  new SimpleMetaStore(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null));
+		} catch (CoreException e) {
+			throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
 		}
 		bundleContext.registerService(IMetaStore.class, metastore, null);
 	}
