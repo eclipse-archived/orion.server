@@ -333,11 +333,29 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	}
 
 	/**
+	 * A user with no workspaces.
+	 * @param version The SimpleMetaStore version 
+	 * @throws Exception
+	 */
+	protected void testUserWithNoWorkspaces(int version) throws Exception {
+		// create metadata on disk
+		testUserId = testName.getMethodName();
+		JSONObject newUserJSON = createUserJson(version, testUserId, EMPTY_LIST);
+		createUserMetaData(newUserJSON, testUserId);
+
+		// verify web requests
+		verifyWorkspaceRequest(EMPTY_LIST);
+
+		// verify metadata on disk
+		verifyUserMetaData(testUserId, EMPTY_LIST);
+	}
+
+	/**
 	 * A user with no workspaces created by the tests framework.
 	 * @throws Exception
 	 */
 	@Test
-	public void testUserWithNoWorkspaces() throws Exception {
+	public void testUserWithNoWorkspacesUsingFramework() throws Exception {
 		// perform the basic step from the parent abstract test class.
 		setUpAuthorization();
 
@@ -352,18 +370,9 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	 * A user with no workspaces in SimpleMetaStore version 4 format.
 	 * @throws Exception
 	 */
-	//@Test
+	@Test
 	public void testUserWithNoWorkspacesVersionFour() throws Exception {
-		// create metadata on disk
-		testUserId = testName.getMethodName();
-		JSONObject newUserJSON = createUserJson(VERSION4, testUserId, EMPTY_LIST);
-		createUserMetaData(newUserJSON, testUserId);
-
-		// verify web requests
-		verifyWorkspaceRequest(EMPTY_LIST);
-
-		// verify metadata on disk
-		verifyUserMetaData(testUserId, EMPTY_LIST);
+		testUserWithNoWorkspaces(VERSION4);
 	}
 
 	/**
@@ -372,34 +381,42 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	 */
 	@Test
 	public void testUserWithNoWorkspacesVersionSeven() throws Exception {
-		// create metadata on disk
-		testUserId = testName.getMethodName();
-		JSONObject newUserJSON = createUserJson(SimpleMetaStore.VERSION, testUserId, EMPTY_LIST);
-		createUserMetaData(newUserJSON, testUserId);
-
-		// verify web requests
-		verifyWorkspaceRequest(EMPTY_LIST);
-
-		// verify metadata on disk
-		verifyUserMetaData(testUserId, EMPTY_LIST);
+		testUserWithNoWorkspaces(SimpleMetaStore.VERSION);
 	}
 
 	/**
 	 * A user with no workspaces in SimpleMetaStore version 6 format.
 	 * @throws Exception
 	 */
-	//@Test
+	@Test
 	public void testUserWithNoWorkspacesVersionSix() throws Exception {
+		testUserWithNoWorkspaces(VERSION6);
+	}
+
+	/**
+	 * A user with one workspace and no projects.
+	 * @param version The SimpleMetaStore version 
+	 * @throws Exception
+	 */
+	protected void testUserWithOneWorkspaceNoProjects(int version) throws Exception {
+		testUserId = testName.getMethodName();
+		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		List<String> workspaceIds = new ArrayList<String>();
+		workspaceIds.add(workspaceId);
+
 		// create metadata on disk
 		testUserId = testName.getMethodName();
-		JSONObject newUserJSON = createUserJson(VERSION6, testUserId, EMPTY_LIST);
+		JSONObject newUserJSON = createUserJson(version, testUserId, workspaceIds);
 		createUserMetaData(newUserJSON, testUserId);
+		JSONObject newWorkspaceJSON = createWorkspaceJson(version, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, EMPTY_LIST);
+		createWorkspaceMetaData(version, newWorkspaceJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
 		// verify web requests
-		verifyWorkspaceRequest(EMPTY_LIST);
+		verifyWorkspaceRequest(workspaceIds);
 
 		// verify metadata on disk
-		verifyUserMetaData(testUserId, EMPTY_LIST);
+		verifyUserMetaData(testUserId, workspaceIds);
+		verifyWorkspaceMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, EMPTY_LIST);
 	}
 
 	/**
@@ -407,7 +424,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	 * @throws Exception
 	 */
 	@Test
-	public void testUserWithOneWorkspaceNoProjects() throws Exception {
+	public void testUserWithOneWorkspaceNoProjectsUsingFramework() throws Exception {
 		// perform the basic steps from the parent abstract test class.
 		setUpAuthorization();
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
@@ -424,55 +441,67 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	}
 
 	/**
+	* A user with one workspace and no projects in SimpleMetaStore version 4 format.
+	* @throws Exception
+	*/
+	@Test
+	public void testUserWithOneWorkspaceNoProjectsVersionFour() throws Exception {
+		testUserWithOneWorkspaceNoProjects(VERSION6);
+	}
+
+	/**
 	 * A user with one workspace and no projects in SimpleMetaStore version 7 format.
 	 * @throws Exception
 	 */
 	@Test
 	public void testUserWithOneWorkspaceNoProjectsVersionSeven() throws Exception {
-		testUserId = testName.getMethodName();
-		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		List<String> workspaceIds = new ArrayList<String>();
-		workspaceIds.add(workspaceId);
-
-		// create metadata on disk
-		testUserId = testName.getMethodName();
-		JSONObject newUserJSON = createUserJson(SimpleMetaStore.VERSION, testUserId, workspaceIds);
-		createUserMetaData(newUserJSON, testUserId);
-		JSONObject newWorkspaceJSON = createWorkspaceJson(SimpleMetaStore.VERSION, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, EMPTY_LIST);
-		createWorkspaceMetaData(SimpleMetaStore.VERSION, newWorkspaceJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-
-		// verify web requests
-		verifyWorkspaceRequest(workspaceIds);
-
-		// verify metadata on disk
-		verifyUserMetaData(testUserId, workspaceIds);
-		verifyWorkspaceMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, EMPTY_LIST);
+		testUserWithOneWorkspaceNoProjects(SimpleMetaStore.VERSION);
 	}
 
 	/**
-	 * A user with one workspace and no projects in SimpleMetaStore version 4 format.
+	 * A user with one workspace and no projects in SimpleMetaStore version 6 format.
 	 * @throws Exception
 	 */
 	@Test
-	public void testUserWithOneWorkspaceNoProjectsVersionFour() throws Exception {
+	public void testUserWithOneWorkspaceNoProjectsVersionSix() throws Exception {
+		testUserWithOneWorkspaceNoProjects(VERSION6);
+	}
+
+	/**
+	 * A user with one workspace and one project.
+	 * @param version The SimpleMetaStore version 
+	 * @throws Exception
+	 */
+	protected void testUserWithOneWorkspaceOneProject(int version) throws Exception {
 		testUserId = testName.getMethodName();
 		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		List<String> workspaceIds = new ArrayList<String>();
 		workspaceIds.add(workspaceId);
+		List<String> projectNames = new ArrayList<String>();
+		projectNames.add(testName.getMethodName().concat("Project"));
 
 		// create metadata on disk
-		testUserId = testName.getMethodName();
-		JSONObject newUserJSON = createUserJson(VERSION4, testUserId, workspaceIds);
+		JSONObject newUserJSON = createUserJson(version, testUserId, workspaceIds);
 		createUserMetaData(newUserJSON, testUserId);
-		JSONObject newWorkspaceJSON = createWorkspaceJson(SimpleMetaStore.VERSION, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, EMPTY_LIST);
-		createWorkspaceMetaData(VERSION4, newWorkspaceJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		JSONObject newWorkspaceJSON = createWorkspaceJson(version, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames);
+		createWorkspaceMetaData(version, newWorkspaceJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		File defaultContentLocation = getProjectDefaultContentLocation(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
+		JSONObject newProjectJSON = createProjectJson(version, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0), defaultContentLocation);
+		createProjectMetaData(version, newProjectJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
+
+		// create the sample content
+		String directoryPath = createSampleDirectory();
+		String fileName = createSampleFile(directoryPath);
 
 		// verify web requests
 		verifyWorkspaceRequest(workspaceIds);
+		verifyProjectRequest(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
+		verifySampleFileContents(directoryPath, fileName);
 
 		// verify metadata on disk
 		verifyUserMetaData(testUserId, workspaceIds);
-		verifyWorkspaceMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, EMPTY_LIST);
+		verifyWorkspaceMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames);
+		verifyProjectMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
 	}
 
 	/**
@@ -480,7 +509,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	 * @throws Exception
 	 */
 	@Test
-	public void testUserWithOneWorkspaceOneProject() throws Exception {
+	public void testUserWithOneWorkspaceOneProjectUsingFramework() throws Exception {
 		// perform the basic steps from the parent abstract test class.
 		setUpAuthorization();
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
@@ -507,40 +536,30 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	}
 
 	/**
+	* A user with one workspace and one project in SimpleMetaStore version 4 format.
+	* @throws Exception
+	*/
+	@Test
+	public void testUserWithOneWorkspaceOneProjectVersionFour() throws Exception {
+		testUserWithOneWorkspaceOneProject(VERSION6);
+	}
+
+	/**
 	 * A user with one workspace and one project in SimpleMetaStore version 7 format.
 	 * @throws Exception
 	 */
 	@Test
 	public void testUserWithOneWorkspaceOneProjectVersionSeven() throws Exception {
-		testUserId = testName.getMethodName();
-		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		List<String> workspaceIds = new ArrayList<String>();
-		workspaceIds.add(workspaceId);
-		List<String> projectNames = new ArrayList<String>();
-		projectNames.add(testName.getMethodName().concat("Project"));
+		testUserWithOneWorkspaceOneProject(SimpleMetaStore.VERSION);
+	}
 
-		// create metadata on disk
-		JSONObject newUserJSON = createUserJson(SimpleMetaStore.VERSION, testUserId, workspaceIds);
-		createUserMetaData(newUserJSON, testUserId);
-		JSONObject newWorkspaceJSON = createWorkspaceJson(SimpleMetaStore.VERSION, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames);
-		createWorkspaceMetaData(SimpleMetaStore.VERSION, newWorkspaceJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		File defaultContentLocation = getProjectDefaultContentLocation(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
-		JSONObject newProjectJSON = createProjectJson(SimpleMetaStore.VERSION, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0), defaultContentLocation);
-		createProjectMetaData(SimpleMetaStore.VERSION, newProjectJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
-
-		// create the sample content
-		String directoryPath = createSampleDirectory();
-		String fileName = createSampleFile(directoryPath);
-
-		// verify web requests
-		verifyWorkspaceRequest(workspaceIds);
-		verifyProjectRequest(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
-		verifySampleFileContents(directoryPath, fileName);
-
-		// verify metadata on disk
-		verifyUserMetaData(testUserId, workspaceIds);
-		verifyWorkspaceMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames);
-		verifyProjectMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
+	/**
+	 * A user with one workspace and one project in SimpleMetaStore version 6 format.
+	 * @throws Exception
+	 */
+	@Test
+	public void testUserWithOneWorkspaceOneProjectVersionSix() throws Exception {
+		testUserWithOneWorkspaceOneProject(VERSION6);
 	}
 
 	protected void verifyProjectJson(JSONObject jsonObject, String userId, String workspaceId, String projectName, File contentLocation) throws Exception {
