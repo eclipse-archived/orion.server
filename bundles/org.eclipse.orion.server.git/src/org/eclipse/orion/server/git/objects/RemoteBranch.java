@@ -41,6 +41,7 @@ public class RemoteBranch extends GitObject {
 				new Property(ProtocolConstants.KEY_FULL_NAME), //
 				new Property(ProtocolConstants.KEY_ID), //
 				new Property(GitConstants.KEY_COMMIT), //
+				new Property(GitConstants.KEY_TREE), //
 				new Property(GitConstants.KEY_HEAD), //
 				new Property(GitConstants.KEY_INDEX), //
 				new Property(GitConstants.KEY_DIFF)};
@@ -120,6 +121,22 @@ public class RemoteBranch extends GitObject {
 	@PropertyDescription(name = GitConstants.KEY_COMMIT)
 	private URI getCommitLocation() throws IOException, URISyntaxException {
 		return BaseToCommitConverter.getCommitLocation(cloneLocation, getName(true, true), BaseToCommitConverter.REMOVE_FIRST_2);
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_TREE)
+	private URI getTreeLocation() throws URISyntaxException {
+		return createTreeLocation(null);
+	}
+
+	private URI createTreeLocation(String path) throws URISyntaxException {
+		//remove /gitapi/clone from the start of path
+		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
+
+		IPath result = new Path(GitServlet.GIT_URI).append(Tree.RESOURCE).append(GitUtils.encode(this.getName())).append(clonePath);
+		if (path != null) {
+			result.append(path);
+		}
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute().toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_HEAD)
