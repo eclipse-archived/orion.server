@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.oauth.google;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
+import org.apache.oltu.oauth2.client.request.OAuthClientRequest.AuthenticationRequestBuilder;
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
 import org.apache.oltu.oauth2.common.OAuthProviderType;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
@@ -27,32 +31,34 @@ import org.json.JSONObject;
  *
  */
 public class GoogleOAuthParams extends OAuthParams {
-	
+
 	private static final OAuthProviderType PROVIDER_TYPE = OAuthProviderType.GOOGLE;
-	
+
 	private static final String GOOGLE = "Google";
-		
+
 	private static final String REDIRECT_URI_LOGIN = "http://localhost:8080/login/oauth";
-	
+
 	private static final String REDIRECT_URI_LINK = "http://localhost:8080/mixlogin/manageopenids/oauth";
-	
+
 	private static final String RESPONSE_TYPE = "code";
-	
+
 	private static final String SCOPE = "openid email";
-	
+
+	private static final String OPEN_ID_PARAMETER = "openid.realm";
+
 	private static final GrantType GRANT_TYPE = GrantType.AUTHORIZATION_CODE;
-	
+
 	private static final Class<? extends OAuthAccessTokenResponse> TOKEN_RESPONSE_CLASS = OAuthTokenResponse.class;
-	
+
 	private String client_key = null;
 	private String client_secret = null;
-	
+
 	private final boolean login;
-	
+
 	public GoogleOAuthParams(boolean login) {
 		this.login = login;
 	}
-	
+
 	public OAuthProviderType getProviderType() {
 		return PROVIDER_TYPE;
 	}
@@ -90,12 +96,12 @@ public class GoogleOAuthParams extends OAuthParams {
 	public Class<? extends OAuthAccessTokenResponse> getTokenResponseClass() {
 		return TOKEN_RESPONSE_CLASS;
 	}
-	
+
 	public OAuthConsumer getNewOAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse) throws OAuthException {
 		return new GoogleOAuthConsumer(oauthAccessTokenResponse);
 	}
-	
-	
+
+
 	private void setCredentials() throws OAuthException{
 		JSONObject json = readCredentialFile();
 		try { 
@@ -107,5 +113,15 @@ public class GoogleOAuthParams extends OAuthParams {
 		}
 	}
 
-
+	public void addAdditionsParams(AuthenticationRequestBuilder requestBuiler) throws OAuthException {
+		URL url;
+		try {
+			url = new URL (REDIRECT_URI_LOGIN);
+			// Add realm for openId 2.0 migration
+			String realm = new URL(url.getProtocol(), url.getHost(), url.getPort(), "").toString();
+			requestBuiler.setParameter(OPEN_ID_PARAMETER, realm);
+		} catch (MalformedURLException e) {
+			throw new OAuthException("An Error occured while building the request URL");
+		}
+	}
 }

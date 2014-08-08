@@ -23,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.oltu.oauth2.client.OAuthClient;
 import org.apache.oltu.oauth2.client.URLConnectionClient;
 import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
+import org.apache.oltu.oauth2.client.request.OAuthClientRequest.AuthenticationRequestBuilder;
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
@@ -67,14 +68,15 @@ public class OAuthHelper {
 	 */
 	public static void redirectToOAuthProvider(HttpServletRequest req, HttpServletResponse resp, OAuthParams oauthParams) throws OAuthException {
 		try {
-			OAuthClientRequest request = OAuthClientRequest
+			AuthenticationRequestBuilder requestBuilder = OAuthClientRequest
 					.authorizationProvider(oauthParams.getProviderType())
 					.setClientId(oauthParams.getClientKey())
 					.setRedirectURI(oauthParams.getRedirectURI())
 					.setResponseType(oauthParams.getResponseType())
-					.setScope(oauthParams.getScope())
-					// Add anti-forgery state
-					.buildQueryMessage();
+					.setScope(oauthParams.getScope());
+			// TODO: Add anti-forgery state
+			oauthParams.addAdditionsParams(requestBuilder);
+			OAuthClientRequest request = requestBuilder.buildQueryMessage();
 			resp.sendRedirect(request.getLocationUri());
 		} catch (OAuthSystemException e) {
 			// Error building request
@@ -143,12 +145,8 @@ public class OAuthHelper {
 		if(oauthConsumer == null || OAuthUtils.isEmpty(oauthConsumer.getIdentifier())) {
 			throw new OAuthException("There is no Orion account associated with this Id. Please register or contact your system administrator for assistance.");
 		}
-		String userId = oauthConsumer.getIdentifier();
-		Set<User> users = userAdmin.getUsersByProperty("oauth", ".*\\Q" + userId + "\\E.*", true, false);
-		User user;
-		if (users.size() > 0) {
-			user = users.iterator().next();
-		} else {
+		User user = getUser(oauthConsumer);
+		if (user == null) {
 			String url = "/mixloginstatic/LoginWindow.html";
 			url += "?oauth=create&email=" + oauthConsumer.getEmail();
 			url += "&username=" + oauthConsumer.getUsername();
@@ -191,6 +189,51 @@ public class OAuthHelper {
 		}
 
 		return;
+	}
+
+	private static User getUser(OAuthConsumer oauthConsumer){
+		// Get user by oauth property
+		Set<User> users = userAdmin.getUsersByProperty("oauth", ".*\\Q" + oauthConsumer.getIdentifier() + "\\E.*", true, false);
+		if (users.size() > 0) {
+			return users.iterator().next();
+		}
+		// Might need migration, try openid property
+		String openidIdentifier = oauthConsumer.getOpenidIdentifier();
+		if(openidIdentifier == null)
+			return null;
+		users = userAdmin.getUsersByProperty("openid", ".*\\Q" + openidIdentifier + "\\E.*", true, false);
+		if (users.size() > 0) {
+			User user = users.iterator().next();
+			// Remove old property
+			String openidsString = (String) user.getProperty("openid");
+			String [] openIds = openidsString.split("\n");
+			if (openIds.length == 1) {
+				user.removeProperty("openid");
+			} else {
+				// Multiple open id's
+				// Remove the current one
+				String newOpenIds = "";
+				for (String openid : openIds) {
+					if (!openid.equals(oauthConsumer.getOpenidIdentifier())) {
+						newOpenIds += openid + "\n";
+					}
+				}
+				newOpenIds = newOpenIds.substring(0, newOpenIds.length() - 1);
+				user.addProperty("openid", newOpenIds);
+			}
+			// Add new property
+			String oauths = (String) user.getProperty("oauth");
+			if(oauths != null && !oauths.equals("")){
+				oauths += '\n';
+			} else {
+				oauths = "";
+			}
+			oauths += oauthConsumer.getIdentifier();
+			user.addProperty("oauth", oauths);
+			userAdmin.updateUser(user.getUid(), user);
+			return user;
+		}
+		return null;
 	}
 
 	/**

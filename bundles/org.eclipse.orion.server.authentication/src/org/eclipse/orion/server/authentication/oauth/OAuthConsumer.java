@@ -85,4 +85,8 @@ public abstract class OAuthConsumer implements OAuthToken {
 	public abstract String getUsername();
 	
 	public abstract boolean isEmailVerifiecd();
+	
+	public String getOpenidIdentifier(){
+		return null;
+	}
 }
