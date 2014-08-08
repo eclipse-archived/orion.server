@@ -108,7 +108,6 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	 */
 	private void createServer() {
 		try {
-			File baseDir;
 			String prop = PreferenceHelper.getString(ServerConstants.CONFIG_SEARCH_INDEX_LOCATION);
 			if (prop != null) {
 				IPath rootPath = new Path(prop);
