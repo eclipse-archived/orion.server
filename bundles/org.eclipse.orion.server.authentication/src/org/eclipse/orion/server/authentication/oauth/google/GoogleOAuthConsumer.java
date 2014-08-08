@@ -11,9 +11,11 @@
 package org.eclipse.orion.server.authentication.oauth.google;
 
 
+import org.apache.oltu.oauth2.client.request.OAuthClientRequest.AuthenticationRequestBuilder;
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
 import org.eclipse.orion.server.authentication.oauth.OAuthConsumer;
 import org.eclipse.orion.server.authentication.oauth.OAuthException;
+import org.eclipse.orion.server.core.resources.Base64;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -24,36 +26,51 @@ import org.json.JSONObject;
  */
 public class GoogleOAuthConsumer extends OAuthConsumer {
 	// Parameters
+	private static final String TOKEN_PARAMETER = "id_token";
 	private static final String ID_PARAMETER = "sub"; 
-	private static final String PROFILE_PARAMETER = "profile";
+	private static final String PROVIDER_PARAMETER = "iss";
 	private static final String EMAIL_PARAMETER = "email";
 	private static final String EMAIL_VERIFIED_PARAMETER = "email_verified";
+	private static final String OPEN_ID_PARAMETER = "openid_id";
 	
 	private static final String OPENID_URL = "https://www.googleapis.com/plus/v1/people/me/openIdConnect";
 	
 	private String userId;
-	private String profile;
+	private String provider;
+	private String openid_id;
 	private String email;
 	private boolean email_verified;
 	
 	public GoogleOAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse) throws OAuthException {
 		super(oauthAccessTokenResponse);
-		// No validation required since the token comes directly from the google server
-		getGoogleProfile();
-		
+		try {
+			JSONObject json = new JSONObject(oauthAccessTokenResponse.getBody());
+			String jwt = json.getString(TOKEN_PARAMETER);
+			parseToken(jwt);
+		} catch (JSONException e) {
+			throw new OAuthException(e);
+		}
 	}
 
-	/**
-	 * Gets the user's profile information from google
-	 * @throws OAuthException Thrown if an error occurs while retrieving the profile
-	 */
-	private void getGoogleProfile() throws OAuthException {
-		String body = getServerResponse(OPENID_URL);
+	private void parseToken(String jwt) throws OAuthException {
+		String [] sections = jwt.split("\\.");
+		if(sections.length != 3)
+			throw new OAuthException("An error occured while authenticating");
+		// No validation required since the token comes directly from the google server
+		// JWT Structure
+		// Header.Claim.Signature
+		String claim = sections[1];
+		int buffer = 4 - (claim.length() % 4);
+		for(int i = 0; i < buffer; i++){
+			claim += "=";
+		}
+		String decodedClaim = new String(Base64.decode(claim.getBytes()));
 		JSONObject jsonClaim;
 		try {
-			jsonClaim = new JSONObject(body);
+			jsonClaim = new JSONObject(decodedClaim);
 			userId = jsonClaim.getString(ID_PARAMETER);
-			profile = jsonClaim.getString(PROFILE_PARAMETER);
+			provider = jsonClaim.getString(PROVIDER_PARAMETER);
+			openid_id = jsonClaim.getString(OPEN_ID_PARAMETER);
 		} catch (JSONException e) {
 			throw new OAuthException(e);
 		}
@@ -66,15 +83,17 @@ public class GoogleOAuthConsumer extends OAuthConsumer {
 			// Suppress
 		}
 	}
-	
-	
 
 	/**
 	 * Gets a unique identifier for the user.
 	 */	
 	@Override
 	public String getIdentifier() {
-		return profile;
+		return provider + "/" + userId;
+	}
+
+	public String getOpenidIdentifier(){
+		return openid_id;
 	}
 
 	/**

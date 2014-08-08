@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
+import org.apache.oltu.oauth2.client.request.OAuthClientRequest.AuthenticationRequestBuilder;
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
 import org.apache.oltu.oauth2.common.OAuthProviderType;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
@@ -28,31 +29,35 @@ import org.json.JSONObject;
  *
  */
 public abstract class OAuthParams {
-	
+
 	private static final String CREDENTIAL_FILE = "oauths/credentials.json"; 
-	
+
 	protected static final String CLIENT_KEY = "client_key";
-	
+
 	protected static final String CLIENT_SECRET = "client_secret";
-	
+
 	public abstract OAuthProviderType getProviderType();
-	
+
 	public abstract String getClientKey() throws OAuthException;
-	
+
 	public abstract String getClientSecret() throws OAuthException;
-	
+
 	public abstract String getRedirectURI();
-	
+
 	public abstract String getResponseType();
-	
+
 	public abstract String getScope();
-	
+
 	public abstract GrantType getGrantType();
-	
+
 	public abstract Class<? extends OAuthAccessTokenResponse> getTokenResponseClass();
-	
+
 	public abstract OAuthConsumer getNewOAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse) throws OAuthException;
-	
+
+	public void addAdditionsParams(AuthenticationRequestBuilder requestBuiler) throws OAuthException {
+		return;
+	}
+
 	protected JSONObject readCredentialFile() throws OAuthException{
 		try {
 			JSONObject json = new JSONObject(getFileContents());
@@ -63,7 +68,7 @@ public abstract class OAuthParams {
 			throw new OAuthException("Error getting oauth credentials");
 		}
 	}
-	
+
 	private String getFileContents() throws IOException {
 		StringBuilder sb = new StringBuilder();
 		InputStream is = Activator.getBundleContext().getBundle().getEntry(CREDENTIAL_FILE).openStream();

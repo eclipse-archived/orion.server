@@ -208,6 +208,12 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 			IOrionUserProfileNode profileProperties = userProfileNode.getUserProfileNode(USER_PROPERTIES);
 			String oldOpenid = profileProperties.get("openid", null);
 			String newOpenid = "";
+			// Clear old properties
+			String[] oldKeys = profileProperties.keys();
+			for (int i = 0; i < oldKeys.length; i++) {
+				profileProperties.remove(oldKeys[i]);
+			}
+			// Add new properties
 			Enumeration<?> keys = user.getProperties().keys();
 			while (keys.hasMoreElements()) {
 				String property = (String) keys.nextElement();
