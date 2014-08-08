@@ -21,6 +21,7 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.orion.server.core.resources.FileLocker;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -58,14 +59,26 @@ public class SimpleMetaStoreUtil {
 				throw new RuntimeException("Meta File Error, parent is not a folder");
 			}
 			File newFile = retrieveMetaFile(parent, name);
-			FileOutputStream fileOutputStream = new FileOutputStream(newFile);
-			Charset utf8 = Charset.forName("UTF-8");
-			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
-			outputStreamWriter.write(jsonObject.toString(4));
-			outputStreamWriter.write("\n");
-			outputStreamWriter.flush();
-			outputStreamWriter.close();
-			fileOutputStream.close();
+			FileLocker locker = new FileLocker(newFile);
+			try {
+				locker.lock();
+			} catch (IOException e) {
+				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+				logger.warn("Meta File Error, cannot create file under " + parent.toString() + ": invalid file name: " + name); //$NON-NLS-1$
+				return false;
+			}
+			try {
+				FileOutputStream fileOutputStream = new FileOutputStream(newFile);
+				Charset utf8 = Charset.forName("UTF-8");
+				OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
+				outputStreamWriter.write(jsonObject.toString(4));
+				outputStreamWriter.write("\n");
+				outputStreamWriter.flush();
+				outputStreamWriter.close();
+				fileOutputStream.close();
+			} finally {
+				locker.release();
+			}
 		} catch (FileNotFoundException e) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			logger.warn("Meta File Error, cannot create file under " + parent.toString() + ": invalid file name: " + name); //$NON-NLS-1$
@@ -181,8 +194,16 @@ public class SimpleMetaStoreUtil {
 			throw new RuntimeException("Meta File Error, cannot delete, does not exist.");
 		}
 		File savedFile = retrieveMetaFile(parent, name);
-		if (!savedFile.delete()) {
-			throw new RuntimeException("Meta File Error, cannot delete file.");
+		FileLocker locker = new FileLocker(savedFile);
+		try {
+			locker.lock();
+			if (!savedFile.delete()) {
+				throw new RuntimeException("Meta File Error, cannot delete file.");
+			}
+		} catch (IOException e) {
+			throw new RuntimeException("Meta File Error, cannot delete file.", e);
+		} finally {
+			locker.release();
 		}
 		return true;
 	}
@@ -409,6 +430,7 @@ public class SimpleMetaStoreUtil {
 		}
 		File oldFile = retrieveMetaFile(parent, oldName);
 		File newFile = retrieveMetaFile(parent, newName);
+		// don't lock because behaviour is unclear
 		return oldFile.renameTo(newFile);
 	}
 
@@ -425,6 +447,7 @@ public class SimpleMetaStoreUtil {
 		}
 		File oldFolder = retrieveMetaFolder(parent, oldName);
 		File newFolder = retrieveMetaFolder(parent, newName);
+		// don't lock because behaviour is unclear
 		return oldFolder.renameTo(newFolder);
 	}
 
@@ -478,13 +501,19 @@ public class SimpleMetaStoreUtil {
 				return null;
 			}
 			File savedFile = retrieveMetaFile(parent, name);
-			FileInputStream fileInputStream = new FileInputStream(savedFile);
 			char[] chars = new char[(int) savedFile.length()];
-			Charset utf8 = Charset.forName("UTF-8");
-			InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, utf8);
-			inputStreamReader.read(chars);
-			inputStreamReader.close();
-			fileInputStream.close();
+			FileLocker locker = new FileLocker(savedFile);
+			locker.lock();
+			try {
+				FileInputStream fileInputStream = new FileInputStream(savedFile);
+				Charset utf8 = Charset.forName("UTF-8");
+				InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, utf8);
+				inputStreamReader.read(chars);
+				inputStreamReader.close();
+				fileInputStream.close();
+			} finally {
+				locker.release();
+			}
 			jsonObject = new JSONObject(new String(chars));
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException("Meta File Error, file not found", e);
@@ -557,14 +586,20 @@ public class SimpleMetaStoreUtil {
 				throw new RuntimeException("Meta File Error, cannot update, does not exist.");
 			}
 			File savedFile = retrieveMetaFile(parent, name);
-			FileOutputStream fileOutputStream = new FileOutputStream(savedFile);
-			Charset utf8 = Charset.forName("UTF-8");
-			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
-			outputStreamWriter.write(jsonObject.toString(4));
-			outputStreamWriter.write("\n");
-			outputStreamWriter.flush();
-			outputStreamWriter.close();
-			fileOutputStream.close();
+			FileLocker locker = new FileLocker(savedFile);
+			locker.lock();
+			try {
+				FileOutputStream fileOutputStream = new FileOutputStream(savedFile);
+				Charset utf8 = Charset.forName("UTF-8");
+				OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
+				outputStreamWriter.write(jsonObject.toString(4));
+				outputStreamWriter.write("\n");
+				outputStreamWriter.flush();
+				outputStreamWriter.close();
+				fileOutputStream.close();
+			} finally {
+				locker.release();
+			}
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException("Meta File Error, file not found", e);
 		} catch (IOException e) {
