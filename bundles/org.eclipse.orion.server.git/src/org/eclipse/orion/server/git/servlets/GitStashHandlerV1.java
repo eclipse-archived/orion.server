@@ -42,6 +42,12 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 
 	/**
 	 * Helper method extracting the StashRef for the stash commit rev
+	 * @param git Git handler object
+	 * @param stashRev Git commit name
+	 * @return StashRef wrapper object or <code>null</code> if the given commit
+	 * 	is not present in the stash
+	 * @throws InvalidRefNameException
+	 * @throws GitAPIException
 	 */
 	protected StashRef getStashRef(Git git, String stashRev) throws InvalidRefNameException, GitAPIException {
 
@@ -59,6 +65,19 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 				++k;
 
 		return null;
+	}
+
+	/**
+	 * Helper method returning whether the stash is empty or not
+	 * @param git Git handler object
+	 * @return <code>true</code> iff the git stash is empty
+	 * @throws InvalidRefNameException
+	 * @throws GitAPIException
+	 */
+	protected boolean isStashEmpty(Git git) throws InvalidRefNameException, GitAPIException {
+		StashListCommand stashList = git.stashList();
+		Collection<RevCommit> stashedRefsCollection = stashList.call();
+		return stashedRefsCollection.isEmpty();
 	}
 
 	@Override
@@ -112,6 +131,13 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 		try {
 
 			Git git = new Git(db);
+
+			/* check for empty stash */
+			if (isStashEmpty(git)) {
+				String msg = "Failed to apply stashed changes due to an empty stash.";
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.WARNING, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+			}
+
 			StashApplyCommand applyCommand = git.stashApply();
 
 			if (stashRev != null) {
@@ -123,12 +149,23 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 				}
 
 				applyCommand.setStashRef(stashRef.getStringRef());
+				applyCommand.setApplyUntracked(applyUntracked);
+				applyCommand.setApplyIndex(applyIndex);
+				applyCommand.call();
+
+			} else {
+
+				/* git stash pop */
+				applyCommand.setApplyUntracked(applyUntracked);
+				applyCommand.setApplyIndex(applyIndex);
+				applyCommand.call();
+
+				StashDropCommand dropCommand = git.stashDrop();
+				dropCommand.setAll(false);
+				dropCommand.call();
+
 			}
 
-			applyCommand.setApplyIndex(applyIndex);
-			applyCommand.setApplyUntracked(applyUntracked);
-
-			applyCommand.call();
 			return true;
 
 		} catch (Exception ex) {
@@ -179,6 +216,13 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 		try {
 
 			Git git = new Git(db);
+
+			/* check for empty stash */
+			if (isStashEmpty(git)) {
+				String msg = "Failed to drop stashed changes due to an empty stash.";
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.WARNING, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+			}
+
 			StashDropCommand dropCommand = git.stashDrop();
 
 			if (stashRev != null) {
