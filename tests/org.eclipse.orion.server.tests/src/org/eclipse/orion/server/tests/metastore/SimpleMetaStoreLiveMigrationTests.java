@@ -446,7 +446,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	*/
 	@Test
 	public void testUserWithOneWorkspaceNoProjectsVersionFour() throws Exception {
-		testUserWithOneWorkspaceNoProjects(VERSION6);
+		testUserWithOneWorkspaceNoProjects(VERSION4);
 	}
 
 	/**
@@ -541,7 +541,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	*/
 	@Test
 	public void testUserWithOneWorkspaceOneProjectVersionFour() throws Exception {
-		testUserWithOneWorkspaceOneProject(VERSION6);
+		testUserWithOneWorkspaceOneProject(VERSION4);
 	}
 
 	/**
@@ -560,6 +560,153 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	@Test
 	public void testUserWithOneWorkspaceOneProjectVersionSix() throws Exception {
 		testUserWithOneWorkspaceOneProject(VERSION6);
+	}
+
+	/**
+	 * A user with one workspace and two projects.
+	 * @param version The SimpleMetaStore version 
+	 * @throws Exception
+	 */
+	protected void testUserWithOneWorkspaceTwoProjects(int version) throws Exception {
+		testUserId = testName.getMethodName();
+		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		List<String> workspaceIds = new ArrayList<String>();
+		workspaceIds.add(workspaceId);
+		List<String> projectNames = new ArrayList<String>();
+		projectNames.add(testName.getMethodName().concat("Project"));
+		projectNames.add("Second Project");
+
+		// create metadata on disk
+		JSONObject newUserJSON = createUserJson(version, testUserId, workspaceIds);
+		createUserMetaData(newUserJSON, testUserId);
+		JSONObject newWorkspaceJSON = createWorkspaceJson(version, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames);
+		createWorkspaceMetaData(version, newWorkspaceJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		File defaultContentLocation = getProjectDefaultContentLocation(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
+		JSONObject newProjectJSON = createProjectJson(version, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0), defaultContentLocation);
+		createProjectMetaData(version, newProjectJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
+		defaultContentLocation = getProjectDefaultContentLocation(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(1));
+		newProjectJSON = createProjectJson(version, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(1), defaultContentLocation);
+		createProjectMetaData(version, newProjectJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(1));
+
+		// create the sample content
+		String directoryPath = createSampleDirectory();
+		String fileName = createSampleFile(directoryPath);
+
+		// verify web requests
+		verifyWorkspaceRequest(workspaceIds);
+		verifyProjectRequest(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
+		verifyProjectRequest(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(1));
+		verifySampleFileContents(directoryPath, fileName);
+
+		// verify metadata on disk
+		verifyUserMetaData(testUserId, workspaceIds);
+		verifyWorkspaceMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames);
+		verifyProjectMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
+		verifyProjectMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(1));
+	}
+
+	/**
+	* A user with one workspace and two projects in SimpleMetaStore version 4 format.
+	* @throws Exception
+	*/
+	@Test
+	public void testUserWithOneWorkspaceTwoProjectsVersionFour() throws Exception {
+		testUserWithOneWorkspaceTwoProjects(VERSION4);
+	}
+
+	/**
+	 * A user with one workspace and two projects in SimpleMetaStore version 7 format.
+	 * @throws Exception
+	 */
+	@Test
+	public void testUserWithOneWorkspaceTwoProjectsVersionSeven() throws Exception {
+		testUserWithOneWorkspaceTwoProjects(SimpleMetaStore.VERSION);
+	}
+
+	/**
+	 * A user with one workspace and two projects in SimpleMetaStore version 6 format.
+	 * @throws Exception
+	 */
+	@Test
+	public void testUserWithOneWorkspaceTwoProjectsVersionSix() throws Exception {
+		testUserWithOneWorkspaceTwoProjects(VERSION6);
+	}
+
+	/**
+	 * A user with two workspaces and two projects.
+	 * @param version The SimpleMetaStore version 
+	 * @throws Exception
+	 */
+	protected void testUserWithTwoWorkspacesTwoProjects(int version) throws Exception {
+		testUserId = "twtest1407786485204";
+		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		List<String> workspaceIds = new ArrayList<String>();
+		workspaceIds.add(workspaceId);
+		List<String> projectNames = new ArrayList<String>();
+		projectNames.add(testName.getMethodName().concat("Project"));
+		String secondWorkspaceName = "Second Workspace";
+		String secondWorkspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(testUserId, secondWorkspaceName);
+		workspaceIds.add(secondWorkspaceId);
+		List<String> secondProjectNames = new ArrayList<String>();
+		secondProjectNames.add("Second Project");
+
+		// create metadata on disk
+		JSONObject newUserJSON = createUserJson(version, testUserId, workspaceIds);
+		createUserMetaData(newUserJSON, testUserId);
+		JSONObject newWorkspaceJSON = createWorkspaceJson(version, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames);
+		createWorkspaceMetaData(version, newWorkspaceJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		newWorkspaceJSON = createWorkspaceJson(version, testUserId, secondWorkspaceName, secondProjectNames);
+		createWorkspaceMetaData(version, newWorkspaceJSON, testUserId, secondWorkspaceName);
+
+		File defaultContentLocation = getProjectDefaultContentLocation(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
+		JSONObject newProjectJSON = createProjectJson(version, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0), defaultContentLocation);
+		createProjectMetaData(version, newProjectJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
+
+		defaultContentLocation = getProjectDefaultContentLocation(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, secondProjectNames.get(0));
+		newProjectJSON = createProjectJson(version, testUserId, secondWorkspaceName, secondProjectNames.get(0), defaultContentLocation);
+		createProjectMetaData(version, newProjectJSON, testUserId, secondWorkspaceName, secondProjectNames.get(0));
+
+		// create the sample content
+		String directoryPath = createSampleDirectory();
+		String fileName = createSampleFile(directoryPath);
+
+		// verify web requests
+		verifyWorkspaceRequest(workspaceIds);
+		verifyProjectRequest(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
+		verifyProjectRequest(testUserId, secondWorkspaceName, secondProjectNames.get(0));
+		verifySampleFileContents(directoryPath, fileName);
+
+		// verify metadata on disk
+		verifyUserMetaData(testUserId, workspaceIds);
+		verifyWorkspaceMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames);
+		verifyWorkspaceMetaData(testUserId, secondWorkspaceName, secondProjectNames);
+		verifyProjectMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
+		verifyProjectMetaData(testUserId, secondWorkspaceName, secondProjectNames.get(0));
+	}
+
+	/**
+	* A user with two workspaces and two projects in SimpleMetaStore version 4 format.
+	* @throws Exception
+	*/
+	@Test
+	public void testUserWithTwoWorkspacesTwoProjectsVersionFour() throws Exception {
+		testUserWithTwoWorkspacesTwoProjects(VERSION4);
+	}
+
+	/**
+	 * A user with two workspaces and two projects in SimpleMetaStore version 7 format.
+	 * @throws Exception
+	 */
+	public void testUserWithTwoWorkspacesTwoProjectsVersionSeven() throws Exception {
+		testUserWithTwoWorkspacesTwoProjects(SimpleMetaStore.VERSION);
+	}
+
+	/**
+	 * A user with two workspaces and two projects in SimpleMetaStore version 6 format.
+	 * @throws Exception
+	 */
+	public void testUserWithTwoWorkspacesTwoProjectsVersionSix() throws Exception {
+		testUserWithTwoWorkspacesTwoProjects(VERSION6);
 	}
 
 	protected void verifyProjectJson(JSONObject jsonObject, String userId, String workspaceId, String projectName, File contentLocation) throws Exception {
