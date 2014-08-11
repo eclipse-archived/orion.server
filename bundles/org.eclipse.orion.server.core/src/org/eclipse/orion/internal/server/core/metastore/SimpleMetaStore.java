@@ -583,6 +583,12 @@ public class SimpleMetaStore implements IMetaStore {
 				}
 				UserInfo userInfo = new UserInfo();
 				try {
+					SimpleMetaStoreMigration migration = new SimpleMetaStoreMigration();
+					if (migration.isMigrationRequired(jsonObject)) {
+						// Migration is required
+						migration.doMigration(userMetaFolder);
+						jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
+					}
 					userInfo.setUniqueId(jsonObject.getString("UniqueId"));
 					userInfo.setUserName(jsonObject.getString("UserName"));
 					if (jsonObject.isNull("FullName")) {
