@@ -18,10 +18,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.cf.TaskHandler;
+import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.objects.CFObject;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -177,19 +178,19 @@ public abstract class AbstractRESTHandler<T extends CFObject> extends ServletRes
 			switch (getMethod(request)) {
 				case GET :
 					CFJob getJob = handleGet(resource, request, response, path);
-					return TaskHandler.handleTaskJob(request, response, getJob, statusHandler);
+					return TaskJobHandler.handleTaskJob(request, response, getJob, statusHandler, JsonURIUnqualificationStrategy.LOCATION_ONLY);
 
 				case PUT :
 					CFJob putJob = handlePut(resource, request, response, path);
-					return TaskHandler.handleTaskJob(request, response, putJob, statusHandler);
+					return TaskJobHandler.handleTaskJob(request, response, putJob, statusHandler, JsonURIUnqualificationStrategy.LOCATION_ONLY);
 
 				case POST :
 					CFJob postJob = handlePost(resource, request, response, path);
-					return TaskHandler.handleTaskJob(request, response, postJob, statusHandler);
+					return TaskJobHandler.handleTaskJob(request, response, postJob, statusHandler, JsonURIUnqualificationStrategy.LOCATION_ONLY);
 
 				case DELETE :
 					CFJob deleteJob = handleDelete(resource, request, response, path);
-					return TaskHandler.handleTaskJob(request, response, deleteJob, statusHandler);
+					return TaskJobHandler.handleTaskJob(request, response, deleteJob, statusHandler, JsonURIUnqualificationStrategy.LOCATION_ONLY);
 
 				default :
 					/* we don't know how to handle this request */
