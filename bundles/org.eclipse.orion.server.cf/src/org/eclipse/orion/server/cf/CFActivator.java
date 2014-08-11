@@ -10,10 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf;
 
-import org.apache.commons.httpclient.params.HttpClientParams;
-
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
+import org.apache.commons.httpclient.params.HttpClientParams;
 import org.eclipse.orion.server.cf.utils.TargetRegistry;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -32,9 +31,6 @@ public class CFActivator implements BundleActivator {
 	private BundleContext bundleContext;
 
 	private TargetRegistry targetRegistry = new TargetRegistry();
-
-	public CFActivator() {
-	}
 
 	/*
 	 * (non-Javadoc)
