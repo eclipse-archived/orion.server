@@ -438,7 +438,7 @@ class SimpleMetaStoreV1 {
 	protected void initializeMetaStore(File rootLocation) {
 		if (!SimpleMetaStoreUtil.isMetaFile(rootLocation, SimpleMetaStore.ROOT)) {
 			// the root metastore.json file does not exist, see if migration is required
-			SimpleMetaStoreMigration migration = new SimpleMetaStoreMigration();
+			SimpleMetaStoreMigrationV1 migration = new SimpleMetaStoreMigrationV1();
 			if (migration.isMigrationRequired(rootLocation)) {
 				// Migration is required
 				migration.doMigration(rootLocation);
