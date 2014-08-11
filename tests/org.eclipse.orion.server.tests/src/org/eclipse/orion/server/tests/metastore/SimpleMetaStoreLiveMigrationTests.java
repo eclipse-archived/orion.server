@@ -638,7 +638,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	 * @throws Exception
 	 */
 	protected void testUserWithTwoWorkspacesTwoProjects(int version) throws Exception {
-		testUserId = "twtest1407786485204";
+		testUserId = testName.getMethodName();
 		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		List<String> workspaceIds = new ArrayList<String>();
 		workspaceIds.add(workspaceId);
