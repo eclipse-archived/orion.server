@@ -26,7 +26,7 @@ public class RestartAppCommand extends AbstractCFCommand {
 	private String commandName;
 	private App application;
 
-	protected RestartAppCommand(Target target, App app) {
+	public RestartAppCommand(Target target, App app) {
 		super(target);
 
 		String[] bindings = {app.getName(), app.getGuid()};

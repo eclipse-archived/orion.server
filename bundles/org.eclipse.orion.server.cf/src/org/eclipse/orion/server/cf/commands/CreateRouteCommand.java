@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
-import java.util.UUID;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
@@ -19,6 +18,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
+import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
 import org.eclipse.orion.server.cf.objects.*;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -110,7 +110,7 @@ public class CreateRouteCommand extends AbstractCFCommand {
 
 			/* if none provided, generate a default one */
 			ManifestParseTree hostNode = appNode.getOpt(CFProtocolConstants.V2_KEY_HOST);
-			hostName = (hostNode != null) ? hostNode.getValue() : (appName + "-" + UUID.randomUUID()); //$NON-NLS-1$
+			hostName = (hostNode != null) ? hostNode.getValue() : ManifestUtils.slugify(appName);
 
 			return Status.OK_STATUS;
 		} catch (InvalidAccessException e) {
