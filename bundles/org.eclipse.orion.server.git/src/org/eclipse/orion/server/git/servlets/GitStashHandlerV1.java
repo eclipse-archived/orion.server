@@ -125,8 +125,8 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 		/* gitapi/stash/<stashRev>/file/(...) */
 		String stashRev = requestInfo.gitSegment;
 
-		boolean applyIndex = requestPayload.optBoolean(GitConstants.KEY_STASH_APPLY_INDEX, false);
-		boolean applyUntracked = requestPayload.optBoolean(GitConstants.KEY_STASH_APPLY_UNTRACKED, false);
+		boolean applyIndex = requestPayload.optBoolean(GitConstants.KEY_STASH_APPLY_INDEX, true);
+		boolean applyUntracked = requestPayload.optBoolean(GitConstants.KEY_STASH_APPLY_UNTRACKED, true);
 
 		try {
 
