@@ -53,10 +53,8 @@ public class GoogleOAuthParams extends OAuthParams {
 	private String client_key = null;
 	private String client_secret = null;
 
-	private final boolean login;
-
 	public GoogleOAuthParams(boolean login) {
-		this.login = login;
+		super(login);
 	}
 
 	public OAuthProviderType getProviderType() {

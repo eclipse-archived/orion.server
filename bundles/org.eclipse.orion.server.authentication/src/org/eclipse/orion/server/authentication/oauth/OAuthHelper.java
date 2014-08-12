@@ -73,8 +73,8 @@ public class OAuthHelper {
 					.setClientId(oauthParams.getClientKey())
 					.setRedirectURI(oauthParams.getRedirectURI())
 					.setResponseType(oauthParams.getResponseType())
-					.setScope(oauthParams.getScope());
-			// TODO: Add anti-forgery state
+					.setScope(oauthParams.getScope())
+					.setState(oauthParams.getState());
 			oauthParams.addAdditionsParams(requestBuilder);
 			OAuthClientRequest request = requestBuilder.buildQueryMessage();
 			resp.sendRedirect(request.getLocationUri());
@@ -100,6 +100,11 @@ public class OAuthHelper {
 		String error = req.getParameter("error");
 		if(error != null)
 			throw new OAuthException(error);
+
+		String state = req.getParameter("state");
+		if (state == null || !state.equals(oauthParams.getState())) {
+			throw new OAuthException("The OAuth states do not match. Token provided by an unauthorized third party.");
+		}
 
 		// Get the authorization code
 		String code = req.getParameter("code");

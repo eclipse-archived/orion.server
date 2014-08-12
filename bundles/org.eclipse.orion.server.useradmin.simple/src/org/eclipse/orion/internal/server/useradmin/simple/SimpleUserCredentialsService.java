@@ -61,12 +61,16 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 
 	static final String ADMIN_LOGIN_VALUE = "admin"; //$NON-NLS-1$
 	static final String ADMIN_NAME_VALUE = "Administrative User"; //$NON-NLS-1$
+	static final String OAUTH_KEY = "oauth";
 
 	// Map of email addresses to userids for an email cache
 	private Map<String, String> emailCache = new HashMap<String, String>();
 
 	// Map of openids to userids for an openid cache
 	private Map<String, String> openidCache = new HashMap<String, String>();
+
+	// Map of oauths to userids for an oauth cache
+	private Map<String, String> oauthCache = new HashMap<String, String>();
 
 	public SimpleUserCredentialsService() {
 		super();
@@ -99,7 +103,7 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 			admin = createUser(new User(userInfo.getUniqueId(), ADMIN_LOGIN_VALUE, ADMIN_NAME_VALUE, adminDefaultPassword));
 		}
 
-		// initialize the email and openid cache
+		// initialize the email and openid cache and oauth cache
 		Collection<User> users = getUsers();
 		users.clear();
 
@@ -132,7 +136,12 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 			if (property.equals("openid") && !value.equals("")) {
 				// update the openid cache
 				openidCache.remove(value);
+			} else if (property.equals(OAUTH_KEY) && !value.equals("")) {
+				// Update the oauth cache
+				oauthCache.remove(value);
 			}
+
+
 		}
 
 		// Since the user profile is stored with the user metadata, it will automatically be deleted when the user metadata is deleted.
@@ -208,6 +217,8 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 			IOrionUserProfileNode profileProperties = userProfileNode.getUserProfileNode(USER_PROPERTIES);
 			String oldOpenid = profileProperties.get("openid", null);
 			String newOpenid = "";
+			String oldOAuth = profileProperties.get(OAUTH_KEY, null);
+			String newOAuth = "";
 			// Clear old properties
 			String[] oldKeys = profileProperties.keys();
 			for (int i = 0; i < oldKeys.length; i++) {
@@ -221,6 +232,8 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 				profileProperties.put(property, value, false);
 				if (property.equals("openid")) {
 					newOpenid = value;
+				}else if(profileProperties.equals(OAUTH_KEY)){
+					newOAuth = value;
 				}
 			}
 			if (!newOpenid.equals(oldOpenid)) {
@@ -232,6 +245,17 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 				if (!newOpenid.equals("")) {
 					// update the openid cache
 					openidCache.put(newOpenid, user.getLogin());
+				}
+			}
+			if (!newOAuth.equals(oldOAuth)) {
+				// update the oauth cache
+				if (oldOAuth != null && !oldOAuth.equals("")) {
+					// remove the old oauth from the oauth cache
+					oauthCache.remove(oldOAuth);
+				}
+				if (!newOAuth.equals("")) {
+					// update the oauth cache
+					oauthCache.put(newOAuth, user.getLogin());
 				}
 			}
 			if (user.getLogin() != null) {
@@ -279,6 +303,9 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 						if (key.equals("openid")) {
 							// update the openid cache
 							openidCache.put(value, childName);
+						}else if(key.equals(OAUTH_KEY)){
+							// update the oauth cache
+							oauthCache.put(value, childName);
 						}
 					}
 				}
@@ -391,6 +418,22 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 					hasMatch = p.matcher(openid).matches();
 				} else {
 					hasMatch = ignoreCase ? openid.equalsIgnoreCase(value) : openid.equals(value);
+				}
+				if (hasMatch) {
+					IOrionUserProfileNode userNode = root.getUserProfileNode(uid);
+					ret.add(formUser(userNode));
+				}
+			}
+		} else if (key.equals(OAUTH_KEY)){
+			// Use the oauth cache to lookup the user for the oauth property
+			for (Map.Entry<String, String> entry : oauthCache.entrySet()) {
+				String oauth = entry.getKey();
+				String uid = entry.getValue();
+				boolean hasMatch;
+				if (p != null) {
+					hasMatch = p.matcher(oauth).matches();
+				} else {
+					hasMatch = ignoreCase ? oauth.equalsIgnoreCase(value) : oauth.equals(value);
 				}
 				if (hasMatch) {
 					IOrionUserProfileNode userNode = root.getUserProfileNode(uid);

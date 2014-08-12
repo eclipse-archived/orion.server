@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.UUID;
 
 import org.apache.oltu.oauth2.client.request.OAuthClientRequest.AuthenticationRequestBuilder;
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
@@ -54,8 +55,20 @@ public abstract class OAuthParams {
 
 	public abstract OAuthConsumer getNewOAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse) throws OAuthException;
 
+	protected final boolean login;
+	private final String state;
+
+	public OAuthParams(boolean login){
+		this.login = login;
+		state = UUID.randomUUID().toString();
+	}
+
 	public void addAdditionsParams(AuthenticationRequestBuilder requestBuiler) throws OAuthException {
 		return;
+	}
+
+	public String getState(){
+		return state;
 	}
 
 	protected JSONObject readCredentialFile() throws OAuthException{
