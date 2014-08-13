@@ -585,4 +585,23 @@ public class SimpleMetaStoreUtil {
 		return true;
 	}
 
+	/**
+	 * Move the MetaFolder in the provided parent folder to a new parent folder 
+	 * @param parent The parent folder.
+	 * @param oldName The old name of the MetaFolder
+	 * @param newName The new name of the MetaFolder
+	 * @return true if the move was successful.
+	 */
+	public static boolean moveMetaFolder(File parent, String oldName, File newParent, String newName) {
+		if (!isMetaFolder(parent, oldName)) {
+			throw new RuntimeException("Meta File Error, folder "+ oldName + " not found in folder " + parent.getAbsolutePath() , null);
+		}
+		if (! newParent.exists() || ! newParent.isDirectory()) {
+			throw new RuntimeException("Meta File Error, folder does not exist " + newParent.getAbsolutePath() , null);
+		}
+		File oldFolder = retrieveMetaFolder(parent, oldName);
+		File newFolder = retrieveMetaFolder(newParent, newName);
+		return oldFolder.renameTo(newFolder);
+	}
+
 }
