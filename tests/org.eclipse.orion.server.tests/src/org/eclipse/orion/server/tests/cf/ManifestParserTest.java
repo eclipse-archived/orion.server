@@ -62,6 +62,7 @@ public class ManifestParserTest {
 
 			/* export the manifest and parse the output */
 			String exported = exportManifest(inputStream);
+
 			inputStream = new ByteArrayInputStream(exported.getBytes());
 			String exportedOutput = exportManifest(inputStream);
 			assertEquals(exported, exportedOutput);

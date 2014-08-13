@@ -154,6 +154,14 @@ public class ServerConstants {
 	public static final String CONFIG_FILE_USER_CONTENT = "orion.file.content.location"; //$NON-NLS-1$
 
 	/**
+	 * The name of the configuration property specifying that process file locking
+	 * should be used.  Helps with multiple Orion servers running against the same
+	 * user content or search indices.  Values are <code>true</code> or <code>false</code>.
+	 * Default is <code>false</code>.
+	 */
+	public static final String CONFIG_FILE_CONTENT_LOCKING = "orion.file.content.locking"; //$NON-NLS-1$
+
+	/**
 	 * The name of configuration property specifying the SMTP host for sending mail
 	 */
 	public static final String CONFIG_MAIL_SMTP_HOST = "mail.smtp.host"; //$NON-NLS-1$

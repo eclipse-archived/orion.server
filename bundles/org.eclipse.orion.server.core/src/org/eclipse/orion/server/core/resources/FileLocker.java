@@ -17,6 +17,8 @@ import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 
 import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -26,6 +28,7 @@ public class FileLocker {
 	private File lockFile;
 	private RandomAccessFile raFile = null;
 	private FileLock lock = null;
+	private boolean locking;
 
 	/**
 	 * Create the locker.
@@ -34,6 +37,7 @@ public class FileLocker {
 	 * exist.
 	 */
 	public FileLocker(File toLock) {
+		locking = Boolean.parseBoolean(PreferenceHelper.getString(ServerConstants.CONFIG_FILE_CONTENT_LOCKING));
 		this.lockFile = toLock;
 	}
 
@@ -49,6 +53,9 @@ public class FileLocker {
 	 * @throws IOException
 	 */
 	public synchronized boolean tryLock() throws IOException {
+		if (!locking) {
+			return true;
+		}
 		lockFile.createNewFile();
 		raFile = new RandomAccessFile(lockFile, "rw"); //$NON-NLS-1$
 		try {
@@ -80,19 +87,30 @@ public class FileLocker {
 	 * @throws IOException
 	 */
 	public synchronized void lock() throws IOException {
+		if (!locking) {
+			return;
+		}
 		lockFile.createNewFile();
 		raFile = new RandomAccessFile(lockFile, "rw"); //$NON-NLS-1$
+		boolean locked = false;
 		try {
-			lock = raFile.getChannel().lock(0, 1L, false);
+			do {
+				try {
+					lock = raFile.getChannel().lock(0, 1L, false);
+					locked = true;
+				} catch (OverlappingFileLockException e) {
+					// another thread within this process probably has the lock
+					Thread.sleep(1L);
+				}
+			} while (!locked);
+		} catch (InterruptedException e1) {
+			String specificMessage = NLS.bind("An error occurred while locking file \"{0}\": \"{1}\". A common reason is that the file system or Runtime Environment does not support file locking for that location.", new Object[] {lock, e1.getMessage()});
+			lock = null;
+			throw new IOException(specificMessage);
 		} catch (IOException ioe) {
 			// produce a more specific message for clients
-			String specificMessage = NLS.bind("An error occurred while locking file \"{0}\": \"{1}\". A common reason is that the file system or Runtime Environment does not support file locking for that location.", 
-					new Object[] {lock, ioe.getMessage()});
-			throw new IOException(specificMessage);
-		} catch (OverlappingFileLockException e) {
+			String specificMessage = NLS.bind("An error occurred while locking file \"{0}\": \"{1}\". A common reason is that the file system or Runtime Environment does not support file locking for that location.", new Object[] {lock, ioe.getMessage()});
 			lock = null;
-			String specificMessage = NLS.bind("An error occurred while locking file \"{0}\": \"{1}\". A common reason is that the file system or Runtime Environment does not support file locking for that location.", 
-					new Object[] {lock, e.getMessage()});
 			throw new IOException(specificMessage);
 		} finally {
 			if (lock == null) {
@@ -107,13 +125,16 @@ public class FileLocker {
 	 * @return <code>true</code> if the lock is valid, <code>false</code> otherwise
 	 */
 	public synchronized boolean isValid() {
-		return lock != null && lock.isValid();
+		return !locking || (lock != null && lock.isValid());
 	}
 
 	/**
 	 * Release the file lock.  If this lock has already been released, this is a no-op.
 	 */
 	public synchronized void release() {
+		if (!locking) {
+			return;
+		}
 		if (lock != null) {
 			try {
 				lock.release();

@@ -22,7 +22,16 @@ public class ManifestTokenizer implements Tokenizer {
 	private static TokenPattern[] tokenPatterns = {new TokenPattern("- ", TokenType.ITEM_CONSTANT), //$NON-NLS-1$
 			new TokenPattern("(: +)|(:$)", TokenType.MAPPING_CONSTANT), //$NON-NLS-1$
 			new TokenPattern("\\$\\{[^ \\t\\n\\x0b\\r\\f\\$\\{\\}]+\\} *", TokenType.SYMBOL), //$NON-NLS-1$
-			new TokenPattern("(\"[^\\t\\n\\x0b\\r\\f\\$\\{\\}]*\")|([^ \\t\\n\\x0b\\r\\f\\$\\{\\}:][^ \\t\\n\\x0b\\r\\f\\$\\{\\}]*[^ \\t\\n\\x0b\\r\\f\\$\\{\\}:] *)|([^ \\t\\n\\x0b\\r\\f\\$\\{\\}] *)|(\\$[a-zA-Z0-9]+)", TokenType.LITERAL), //$NON-NLS-1$
+			new TokenPattern( //
+
+					/* quotation marks around a string literal (note, around equals no " sign allowed inside */
+					"(\"[^\\t\\n\\x0b\\r\\f\\$\\{\\}\"]*\" *)|" + //$NON-NLS-1$
+
+							/* special string literals with : inside, e.g. URLs */
+							"([^ \\t\\n\\x0b\\r\\f\\$\\{\\}:][^ \\t\\n\\x0b\\r\\f\\$\\{\\}]*[^ \\t\\n\\x0b\\r\\f\\$\\{\\}:] *)" + //$NON-NLS-1$
+
+							/* other, unquoted string literals */
+							"|([^ \\t\\n\\x0b\\r\\f\\$\\{\\}] *)|(\\$[a-zA-Z0-9]+ *)", TokenType.LITERAL), //$NON-NLS-1$
 	};
 
 	private List<InputLine> input;
