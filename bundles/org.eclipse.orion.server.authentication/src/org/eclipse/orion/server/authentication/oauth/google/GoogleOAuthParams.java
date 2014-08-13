@@ -13,6 +13,8 @@ package org.eclipse.orion.server.authentication.oauth.google;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.oltu.oauth2.client.request.OAuthClientRequest.AuthenticationRequestBuilder;
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
 import org.apache.oltu.oauth2.common.OAuthProviderType;
@@ -36,9 +38,9 @@ public class GoogleOAuthParams extends OAuthParams {
 
 	private static final String GOOGLE = "Google";
 
-	private static final String REDIRECT_URI_LOGIN = "http://localhost:8080/login/oauth";
+	private static final String REDIRECT_URI_LOGIN = "/login/oauth";
 
-	private static final String REDIRECT_URI_LINK = "http://localhost:8080/mixlogin/manageopenids/oauth";
+	private static final String REDIRECT_URI_LINK = "/mixlogin/manageopenids/oauth";
 
 	private static final String RESPONSE_TYPE = "code";
 
@@ -53,8 +55,8 @@ public class GoogleOAuthParams extends OAuthParams {
 	private String client_key = null;
 	private String client_secret = null;
 
-	public GoogleOAuthParams(boolean login) {
-		super(login);
+	public GoogleOAuthParams(HttpServletRequest req, boolean login) throws OAuthException {
+		super(req, login);
 	}
 
 	public OAuthProviderType getProviderType() {
@@ -76,7 +78,7 @@ public class GoogleOAuthParams extends OAuthParams {
 	}
 
 	public String getRedirectURI() {
-		return login ? REDIRECT_URI_LOGIN : REDIRECT_URI_LINK;
+		return currentURL.toString() + (login ? REDIRECT_URI_LOGIN : REDIRECT_URI_LINK);
 	}
 
 	public String getResponseType() {
@@ -112,11 +114,9 @@ public class GoogleOAuthParams extends OAuthParams {
 	}
 
 	public void addAdditionsParams(AuthenticationRequestBuilder requestBuiler) throws OAuthException {
-		URL url;
 		try {
-			url = new URL (REDIRECT_URI_LOGIN);
 			// Add realm for openId 2.0 migration
-			String realm = new URL(url.getProtocol(), url.getHost(), url.getPort(), "").toString();
+			String realm = new URL(currentURL.getProtocol(), currentURL.getHost(), currentURL.getPort(), "").toString();
 			requestBuiler.setParameter(OPEN_ID_PARAMETER, realm);
 		} catch (MalformedURLException e) {
 			throw new OAuthException("An Error occured while building the request URL");

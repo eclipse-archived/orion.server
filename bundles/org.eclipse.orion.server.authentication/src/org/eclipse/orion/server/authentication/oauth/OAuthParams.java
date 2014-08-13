@@ -14,7 +14,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.UUID;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.oltu.oauth2.client.request.OAuthClientRequest.AuthenticationRequestBuilder;
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
@@ -56,11 +60,18 @@ public abstract class OAuthParams {
 	public abstract OAuthConsumer getNewOAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse) throws OAuthException;
 
 	protected final boolean login;
+	protected final URL currentURL;
 	private final String state;
 
-	public OAuthParams(boolean login){
+
+	public OAuthParams(HttpServletRequest req, boolean login) throws OAuthException{
 		this.login = login;
 		state = UUID.randomUUID().toString();
+		try {
+			currentURL = new URL(req.getScheme(), req.getServerName(), req.getServerPort(), req.getContextPath());
+		} catch (MalformedURLException e) {
+			throw new OAuthException("An error occured while authenticating");
+		}
 	}
 
 	public void addAdditionsParams(AuthenticationRequestBuilder requestBuiler) throws OAuthException {

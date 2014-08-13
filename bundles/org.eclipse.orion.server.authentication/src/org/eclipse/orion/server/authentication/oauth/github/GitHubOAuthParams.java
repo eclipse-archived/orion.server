@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.authentication.oauth.github;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
 import org.apache.oltu.oauth2.common.OAuthProviderType;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
@@ -32,9 +34,9 @@ public class GitHubOAuthParams extends OAuthParams {
 	
 	private static final String GITHUB = "GitHub";
 		
-	private static final String REDIRECT_URI_LOGIN = "http://localhost:8080/login/oauth";
+	private static final String REDIRECT_URI_LOGIN = "/login/oauth";
 	
-	private static final String REDIRECT_URI_LINK = "http://localhost:8080/mixlogin/manageopenids/oauth";
+	private static final String REDIRECT_URI_LINK = "/mixlogin/manageopenids/oauth";
 	
 	private static final String RESPONSE_TYPE = "code";
 	
@@ -48,8 +50,8 @@ public class GitHubOAuthParams extends OAuthParams {
 	private String client_secret = null;
 	
 
-	public GitHubOAuthParams(boolean login) {
-		super(login);
+	public GitHubOAuthParams(HttpServletRequest req, boolean login) throws OAuthException {
+		super(req, login);
 	}
 	
 	public OAuthProviderType getProviderType() {
@@ -71,7 +73,7 @@ public class GitHubOAuthParams extends OAuthParams {
 	}
 
 	public String getRedirectURI() {
-		return login ? REDIRECT_URI_LOGIN : REDIRECT_URI_LINK;
+		return currentURL.toString() + (login ? REDIRECT_URI_LOGIN : REDIRECT_URI_LINK);
 	}
 
 	public String getResponseType() {

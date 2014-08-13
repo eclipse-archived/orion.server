@@ -44,7 +44,7 @@ public class ManageOAuthServlet extends OrionServlet {
 		if (pathInfo.startsWith("/oauth")) {
 			String oauthParam = req.getParameter(OAuthHelper.OAUTH);
 			if(oauthParam != null){
-				OAuthHelper.redirectToOAuthProvider(req, resp, getOAuthParams(oauthParam, login));
+				OAuthHelper.redirectToOAuthProvider(req, resp, getOAuthParams(req, oauthParam, login));
 			}else {
 				OAuthConsumer oauthConsumer = OAuthHelper.handleOAuthReturnAndTokenAccess(req, resp, getOAuthParams());
 				if(login)
@@ -55,18 +55,20 @@ public class ManageOAuthServlet extends OrionServlet {
 		}
 	}
 
-	private OAuthParams getOAuthParams(String type, boolean login) throws OAuthException{
+	private OAuthParams getOAuthParams(HttpServletRequest req, String type, boolean login) throws OAuthException{
 		if(type.equals("google")){
-			oauthParams = new GoogleOAuthParams(login);
+			oauthParams = new GoogleOAuthParams(req, login);
 		}else if(type.equals("github")){
-			oauthParams = new GitHubOAuthParams(login);
+			oauthParams = new GitHubOAuthParams(req, login);
 		}else{
 			throw new OAuthException("No OAuth provider given");
 		}
 		return getOAuthParams();
 	}
 
-	private OAuthParams getOAuthParams(){
+	private OAuthParams getOAuthParams() throws OAuthException{
+		if (oauthParams == null)
+			throw new OAuthException("No OAuth provider given");
 		return oauthParams;
 	}
 
