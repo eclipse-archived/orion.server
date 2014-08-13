@@ -514,6 +514,13 @@ public class SimpleMetaStore implements IMetaStore {
 
 	public ProjectInfo readProject(String workspaceId, String projectName) throws CoreException {
 		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceId);
+		if (readUser(userId) == null) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			if (logger.isDebugEnabled()) {
+				logger.debug("SimpleMetaStore.readProject: requested with a bad userId in the workspaceId " + workspaceId); //$NON-NLS-1$
+			}
+			return null;
+		}
 		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 		if (userId == null || encodedWorkspaceName == null) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
@@ -585,9 +592,10 @@ public class SimpleMetaStore implements IMetaStore {
 				try {
 					SimpleMetaStoreMigration migration = new SimpleMetaStoreMigration();
 					if (migration.isMigrationRequired(jsonObject)) {
-						// Migration is required
+						// Migration to the latest version is required for this user
 						migration.doMigration(userMetaFolder);
 						jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
+
 					}
 					userInfo.setUniqueId(jsonObject.getString("UniqueId"));
 					userInfo.setUserName(jsonObject.getString("UserName"));
