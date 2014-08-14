@@ -76,13 +76,15 @@ public class CloneJob extends GitJob {
 		this.cookie = (Cookie) cookie;
 	}
 
-	private IStatus doClone() {
+	private IStatus doClone(IProgressMonitor monitor) {
+		EclipseGitProgressTransformer gitMonitor = new EclipseGitProgressTransformer(monitor);
 		try {
 			File cloneFolder = new File(clone.getContentLocation().getPath());
 			if (!cloneFolder.exists()) {
 				cloneFolder.mkdir();
 			}
 			CloneCommand cc = Git.cloneRepository();
+			cc.setProgressMonitor(gitMonitor);
 			cc.setBare(false);
 			cc.setCredentialsProvider(credentials);
 			cc.setDirectory(cloneFolder);
@@ -116,11 +118,17 @@ public class CloneJob extends GitJob {
 			}
 			Git git = cc.call();
 
+			if (monitor.isCanceled()) {
+				return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
+			}
 			// Configure the clone, see Bug 337820
 			GitCloneHandlerV1.doConfigureClone(git, user, gitUserName, gitUserMail);
 			Repository repo = git.getRepository();
-			GitJobUtils.packRefs(repo);
+			GitJobUtils.packRefs(repo, gitMonitor);
 			repo.close();
+			if (monitor.isCanceled()) {
+				return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
+			}
 
 			if (initProject) {
 				File projectJsonFile = new File(cloneFolder.getPath() + File.separator + "project.json");
@@ -174,8 +182,8 @@ public class CloneJob extends GitJob {
 	}
 
 	@Override
-	protected IStatus performJob() {
-		IStatus result = doClone();
+	protected IStatus performJob(IProgressMonitor monitor) {
+		IStatus result = doClone(monitor);
 		if (result.isOK())
 			return result;
 		try {

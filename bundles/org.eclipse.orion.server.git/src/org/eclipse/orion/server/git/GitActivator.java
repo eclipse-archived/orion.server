@@ -10,8 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git;
 
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jgit.transport.SshSessionFactory;
 import org.eclipse.orion.server.core.IWebResourceDecorator;
+import org.eclipse.orion.server.git.jobs.GitJob;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
@@ -42,5 +44,8 @@ public class GitActivator implements BundleActivator {
 	 * org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
 	 */
 	public void stop(BundleContext context) throws Exception {
+		Job.getJobManager().cancel(GitJob.FAMILY);
+		// TODO might have to use something to cancel this join
+		Job.getJobManager().join(GitJob.FAMILY, null);
 	}
 }

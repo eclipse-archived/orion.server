@@ -37,6 +37,13 @@ import org.json.JSONObject;
 @SuppressWarnings("restriction")
 public abstract class GitJob extends TaskJob {
 
+	public static final Object FAMILY = "org.eclipse.orion.server.git.jobs.GitJob";
+
+	@Override
+	public boolean belongsTo(Object family) {
+		return FAMILY.equals(family);
+	}
+
 	private static final String KEY_SCHEME = "Scheme"; //$NON-NLS-1$
 	private static final String KEY_PORT = "Port"; //$NON-NLS-1$
 	private static final String KEY_PASSWORD = "Password"; //$NON-NLS-1$

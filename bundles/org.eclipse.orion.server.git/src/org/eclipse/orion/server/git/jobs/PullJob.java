@@ -23,6 +23,7 @@ import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.*;
@@ -57,11 +58,13 @@ public class PullJob extends GitJob {
 		this.cookie = (Cookie) cookie;
 	}
 
-	private IStatus doPull() throws IOException, GitAPIException, CoreException {
+	private IStatus doPull(IProgressMonitor monitor) throws IOException, GitAPIException, CoreException {
+		ProgressMonitor gitMonitor = new EclipseGitProgressTransformer(monitor);
 		Repository db = FileRepositoryBuilder.create(GitUtils.getGitDir(path));
 
 		Git git = new Git(db);
 		PullCommand pc = git.pull();
+		pc.setProgressMonitor(gitMonitor);
 		pc.setCredentialsProvider(credentials);
 		pc.setTransportConfigCallback(new TransportConfigCallback() {
 			@Override
@@ -92,6 +95,10 @@ public class PullJob extends GitJob {
 		// close the git repository
 		db.close();
 
+		if (monitor.isCanceled()) {
+			return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
+		}
+
 		// handle result
 		if (pullResult.isSuccessful()) {
 			return Status.OK_STATUS;
@@ -110,10 +117,10 @@ public class PullJob extends GitJob {
 	}
 
 	@Override
-	protected IStatus performJob() {
+	protected IStatus performJob(IProgressMonitor monitor) {
 		IStatus result = Status.OK_STATUS;
 		try {
-			result = doPull();
+			result = doPull(monitor);
 		} catch (IOException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Pulling error", e);
 		} catch (CoreException e) {
