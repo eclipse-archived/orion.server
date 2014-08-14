@@ -514,7 +514,7 @@ public class SimpleMetaStore implements IMetaStore {
 
 	public ProjectInfo readProject(String workspaceId, String projectName) throws CoreException {
 		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceId);
-		if (readUser(userId) == null) {
+		if (userId == null || readUser(userId) == null) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			if (logger.isDebugEnabled()) {
 				logger.debug("SimpleMetaStore.readProject: requested with a bad userId in the workspaceId " + workspaceId); //$NON-NLS-1$
