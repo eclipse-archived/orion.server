@@ -278,7 +278,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	 * Matches a user on an internal server.
 	 * @throws Exception
 	 */
-	//@Test
+	@Test
 	public void testUserGrowth8WithOneWorkspaceTwoProjectsVersionFour() throws Exception {
 		testUserId = "growth8";
 		testUserLogin = testUserId;
@@ -295,7 +295,6 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		JSONObject newUserJSON = createUserJson(SimpleMetaStoreMigration.VERSION4, testUserId, workspaceIds);
 		// tweak the default to match the internal server's metadata.
 		newUserJSON.put("FullName", "Unnamed User");
-		newUserJSON.remove("password");
 		createUserMetaData(newUserJSON, testUserId);
 		JSONObject newWorkspaceJSON = createWorkspaceJson(SimpleMetaStoreMigration.VERSION4, testUserId, workspaceName, projectNames);
 		createWorkspaceMetaData(SimpleMetaStoreMigration.VERSION4, newWorkspaceJSON, testUserId, workspaceName);
@@ -459,13 +458,13 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	}
 
 	/**
-	 * A user with one workspace and one project.
+	 * A user with one workspace and one project. Additionally confirm the workspace is given the default workspace name.
 	 * @param version The SimpleMetaStore version 
 	 * @throws Exception
 	 */
-	protected void testUserWithOneWorkspaceOneProject(int version) throws Exception {
+	protected void testUserWithOneWorkspaceOneProject(int version, String workspaceName) throws Exception {
 		testUserId = testName.getMethodName();
-		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(testUserId, workspaceName);
 		List<String> workspaceIds = new ArrayList<String>();
 		workspaceIds.add(workspaceId);
 		List<String> projectNames = new ArrayList<String>();
@@ -474,11 +473,11 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		// create metadata on disk
 		JSONObject newUserJSON = createUserJson(version, testUserId, workspaceIds);
 		createUserMetaData(newUserJSON, testUserId);
-		JSONObject newWorkspaceJSON = createWorkspaceJson(version, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames);
-		createWorkspaceMetaData(version, newWorkspaceJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		File defaultContentLocation = getProjectDefaultContentLocation(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
-		JSONObject newProjectJSON = createProjectJson(version, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0), defaultContentLocation);
-		createProjectMetaData(version, newProjectJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
+		JSONObject newWorkspaceJSON = createWorkspaceJson(version, testUserId, workspaceName, projectNames);
+		createWorkspaceMetaData(version, newWorkspaceJSON, testUserId, workspaceName);
+		File defaultContentLocation = getProjectDefaultContentLocation(testUserId, workspaceName, projectNames.get(0));
+		JSONObject newProjectJSON = createProjectJson(version, testUserId, workspaceName, projectNames.get(0), defaultContentLocation);
+		createProjectMetaData(version, newProjectJSON, testUserId, workspaceName, projectNames.get(0));
 
 		// create the sample content
 		String directoryPath = createSampleDirectory();
@@ -486,13 +485,13 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 
 		// verify web requests
 		verifyWorkspaceRequest(workspaceIds);
-		verifyProjectRequest(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
+		verifyProjectRequest(testUserId, workspaceName, projectNames.get(0));
 		verifySampleFileContents(directoryPath, fileName);
 
 		// verify metadata on disk
 		verifyUserMetaData(testUserId, workspaceIds);
-		verifyWorkspaceMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames);
-		verifyProjectMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
+		verifyWorkspaceMetaData(testUserId, workspaceName, projectNames);
+		verifyProjectMetaData(testUserId, workspaceName, projectNames.get(0));
 	}
 
 	/**
@@ -532,7 +531,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	*/
 	@Test
 	public void testUserWithOneWorkspaceOneProjectVersionFour() throws Exception {
-		testUserWithOneWorkspaceOneProject(SimpleMetaStoreMigration.VERSION4);
+		testUserWithOneWorkspaceOneProject(SimpleMetaStoreMigration.VERSION4, "Work SandBox");
 	}
 
 	/**
@@ -541,7 +540,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	 */
 	@Test
 	public void testUserWithOneWorkspaceOneProjectVersionSeven() throws Exception {
-		testUserWithOneWorkspaceOneProject(SimpleMetaStore.VERSION);
+		testUserWithOneWorkspaceOneProject(SimpleMetaStore.VERSION, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 	}
 
 	/**
@@ -550,7 +549,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	 */
 	@Test
 	public void testUserWithOneWorkspaceOneProjectVersionSix() throws Exception {
-		testUserWithOneWorkspaceOneProject(SimpleMetaStoreMigration.VERSION6);
+		testUserWithOneWorkspaceOneProject(SimpleMetaStoreMigration.VERSION6, "Sandbox");
 	}
 
 	/**
