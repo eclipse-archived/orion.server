@@ -74,11 +74,13 @@ public class FetchJob extends GitJob {
 		}
 	}
 
-	private IStatus doFetch() throws IOException, CoreException, URISyntaxException, GitAPIException {
+	private IStatus doFetch(IProgressMonitor monitor) throws IOException, CoreException, URISyntaxException, GitAPIException {
+		ProgressMonitor gitMonitor = new EclipseGitProgressTransformer(monitor);
 		Repository db = getRepository();
 
 		Git git = new Git(db);
 		FetchCommand fc = git.fetch();
+		fc.setProgressMonitor(gitMonitor);
 
 		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
 		credentials.setUri(remoteConfig.getURIs().get(0));
@@ -116,9 +118,19 @@ public class FetchJob extends GitJob {
 			spec = spec.setForceUpdate(force);
 			fc.setRefSpecs(spec);
 		}
-		FetchResult fetchResult = fc.call();
-		GitJobUtils.packRefs(db);
-		db.close();
+		FetchResult fetchResult;
+		try {
+			fetchResult = fc.call();
+			if (monitor.isCanceled()) {
+				return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
+			}
+			GitJobUtils.packRefs(db, gitMonitor);
+			if (monitor.isCanceled()) {
+				return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
+			}
+		} finally {
+			db.close();
+		}
 		return handleFetchResult(fetchResult);
 	}
 
@@ -156,10 +168,10 @@ public class FetchJob extends GitJob {
 	}
 
 	@Override
-	protected IStatus performJob() {
+	protected IStatus performJob(IProgressMonitor monitor) {
 		IStatus result = Status.OK_STATUS;
 		try {
-			result = doFetch();
+			result = doFetch(monitor);
 		} catch (IOException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e);
 		} catch (CoreException e) {

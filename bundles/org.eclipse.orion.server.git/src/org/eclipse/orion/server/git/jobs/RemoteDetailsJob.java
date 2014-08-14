@@ -97,7 +97,7 @@ public class RemoteDetailsJob extends GitJob {
 	}
 
 	@Override
-	protected IStatus performJob() {
+	protected IStatus performJob(IProgressMonitor monitor) {
 		Repository db = null;
 		try {
 			File gitDir = GitUtils.getGitDir(path);
@@ -136,6 +136,9 @@ public class RemoteDetailsJob extends GitJob {
 
 					JSONArray newChildren = new JSONArray();
 					for (int i = firstChild; i <= lastChild; i++) {
+						if (monitor.isCanceled()) {
+							return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
+						}
 						JSONObject branch = children.getJSONObject(i);
 						if (commitsSize == 0) {
 							newChildren.put(branch);
