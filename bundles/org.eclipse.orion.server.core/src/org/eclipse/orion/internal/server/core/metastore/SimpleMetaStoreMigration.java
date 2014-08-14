@@ -95,97 +95,11 @@ public class SimpleMetaStoreMigration {
 	//		logger.info("Completed simple storage migration."); //$NON-NLS-1$
 	//	}
 
-	public boolean isMigrationRequired(JSONObject jsonObject) throws JSONException {
-		if (!jsonObject.has(SimpleMetaStore.ORION_VERSION)) {
-			return true;
-		}
-		int version = jsonObject.getInt(SimpleMetaStore.ORION_VERSION);
-		if (version != SimpleMetaStore.VERSION) {
-			return true;
-		}
-		return false;
-	}
-
-	private void moveProjectJsonFile(File folder, String projectName) {
-		File userMetaFolder = folder.getParentFile();
-		JSONObject projectMetaFile = SimpleMetaStoreUtil.readMetaFile(folder, projectName);
-		File newProjectMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, projectName);
-		if (newProjectMetaFile.exists()) {
-			logger.error("Duplicate project metadata file at " + newProjectMetaFile.toString()); //$NON-NLS-1$
-			return;
-		}
-		SimpleMetaStoreUtil.createMetaFile(userMetaFolder, projectName, projectMetaFile);
-		logger.debug("Migration: Created project MetaData file: " + newProjectMetaFile.getAbsolutePath());
-
-		File oldProjectMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(folder, projectName);
-		SimpleMetaStoreUtil.deleteMetaFile(folder, projectName);
-		logger.debug("Migration: Deleted old project MetaData file: " + oldProjectMetaFile.getAbsolutePath());
-	}
-
-	private String moveWorkspaceJsonFile(File folder) throws JSONException {
-		File parent = folder.getParentFile();
-		File workspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(folder, SimpleMetaStore.WORKSPACE);
-		JSONObject workspaceMetaData = SimpleMetaStoreUtil.readMetaFile(folder, SimpleMetaStore.WORKSPACE);
-		if (!workspaceMetaData.has("UniqueId")) {
-			logger.error("Workspace metadata is missing UniqueId " + workspaceMetaFile.toString()); //$NON-NLS-1$
-			return null;
-		}
-		String workspaceId = workspaceMetaData.getString("UniqueId");
-		File newWorkspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(parent, workspaceId);
-		if (newWorkspaceMetaFile.exists()) {
-			logger.error("Duplicate workspace metadata file at " + newWorkspaceMetaFile.toString()); //$NON-NLS-1$
-			return null;
-		}
-		SimpleMetaStoreUtil.createMetaFile(parent, workspaceId, workspaceMetaData);
-
-		logger.debug("Migration: Created workspace MetaData file: " + newWorkspaceMetaFile.getAbsolutePath());
-
-		File oldWorkspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(folder, SimpleMetaStore.WORKSPACE);
-		SimpleMetaStoreUtil.deleteMetaFile(folder, SimpleMetaStore.WORKSPACE);
-		logger.debug("Migration: Deleted old workspace MetaData file: " + oldWorkspaceMetaFile.getAbsolutePath());
-		return workspaceId;
-	}
-
-	//	private void updateOrganizationalFolder(File folder) {
-	//		File[] files = folder.listFiles();
-	//		for (int i = 0; i < files.length; i++) {
-	//			File next = files[i];
-	//			if (next.isDirectory()) {
-	//				// process user folder "anthony" in /serverworkspace/an/anthony
-	//				updateUserFolder(next);
-	//			} else {
-	//				logger.info("Organizational folder contains invalid metadata: deleted orphan file " + next.toString()); //$NON-NLS-1$
-	//				deleteFile(next);
-	//			}
-	//		}
-	//	}
-
-	/**
-	 * Update the Orion version in the provided file and folder.
-	 * @param parent The parent folder containing the metadata (JSON) file.
-	 * @param name The name of the file without the ".json" extension.
-	 * @return The previous version that was in the metadata file.
-	 * @throws JSONException 
-	 */
-	private int updateOrionVersion(File parent, String name) throws JSONException {
-		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(parent, name);
-		int oldVersion = -1;
-		if (jsonObject.has(SimpleMetaStore.ORION_VERSION)) {
-			oldVersion = jsonObject.getInt(SimpleMetaStore.ORION_VERSION);
-		}
-		jsonObject.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStore.VERSION);
-		SimpleMetaStoreUtil.updateMetaFile(parent, name, jsonObject);
-		File metaFile = SimpleMetaStoreUtil.retrieveMetaFile(parent, name);
-		String oldVersionStr = (oldVersion == -1) ? "UNKNOWN" : Integer.toString(oldVersion);
-		logger.debug("Migration: Updated Orion version from version " + oldVersionStr + " to version " + SimpleMetaStore.VERSION + " in MetaData file: " + metaFile.getAbsolutePath());
-		return oldVersion;
-	}
-
-	public void doMigration(File folder) throws JSONException {
-		logger.info("Migration: Migrating user " + folder.getName() + " to the latest (version " + SimpleMetaStore.VERSION + ")");
-		int oldVersion = updateOrionVersion(folder, SimpleMetaStore.USER);
-		File userMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(folder, SimpleMetaStore.USER);
-		File[] files = folder.listFiles();
+	public void doMigration(File userMetaFolder) throws JSONException {
+		logger.info("Migration: Migrating user " + userMetaFolder.getName() + " to the latest (version " + SimpleMetaStore.VERSION + ")");
+		int oldVersion = updateOrionVersion(userMetaFolder, SimpleMetaStore.USER);
+		File userMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, SimpleMetaStore.USER);
+		File[] files = userMetaFolder.listFiles();
 		int directoryCount = 0;
 		for (int i = 0; i < files.length; i++) {
 			File next = files[i];
@@ -211,8 +125,19 @@ public class SimpleMetaStoreMigration {
 			}
 		}
 		if ((oldVersion == VERSION4 || oldVersion == VERSION6) && directoryCount >= 1) {
-			mergeMultipleWorkspaces(directoryCount, folder);
+			mergeMultipleWorkspaces(directoryCount, userMetaFolder);
 		}
+	}
+
+	public boolean isMigrationRequired(JSONObject jsonObject) throws JSONException {
+		if (!jsonObject.has(SimpleMetaStore.ORION_VERSION)) {
+			return true;
+		}
+		int version = jsonObject.getInt(SimpleMetaStore.ORION_VERSION);
+		if (version != SimpleMetaStore.VERSION) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -282,10 +207,7 @@ public class SimpleMetaStoreMigration {
 				}
 			}
 			if (firstWorkspaceId != null && changedUserJSON) {
-				workspaceIds = new JSONArray();
-				workspaceIds.put(firstWorkspaceId);
-				userJSON.put("WorkspaceIds", workspaceIds);
-				SimpleMetaStoreUtil.updateMetaFile(userMetaFolder, SimpleMetaStore.USER, userJSON);
+				updateUserJson(userMetaFolder, userJSON, firstWorkspaceId);
 				logger.debug("Migration: Updated user metadata: user has one workspace " + firstWorkspaceId);
 			}
 			if (firstWorkspaceId != null && changedWorkspaceJSON) {
@@ -294,6 +216,128 @@ public class SimpleMetaStoreMigration {
 				logger.debug("Migration: Updated workspace metadata: updated workspace metadata at " + updatedMetaFile.getAbsolutePath());
 			}
 		}
+	}
+
+	//	private void updateOrganizationalFolder(File folder) {
+	//		File[] files = folder.listFiles();
+	//		for (int i = 0; i < files.length; i++) {
+	//			File next = files[i];
+	//			if (next.isDirectory()) {
+	//				// process user folder "anthony" in /serverworkspace/an/anthony
+	//				updateUserFolder(next);
+	//			} else {
+	//				logger.info("Organizational folder contains invalid metadata: deleted orphan file " + next.toString()); //$NON-NLS-1$
+	//				deleteFile(next);
+	//			}
+	//		}
+	//	}
+
+	private void moveProjectJsonFile(File folder, String projectName) {
+		File userMetaFolder = folder.getParentFile();
+		JSONObject projectMetaFile = SimpleMetaStoreUtil.readMetaFile(folder, projectName);
+		File newProjectMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, projectName);
+		if (newProjectMetaFile.exists()) {
+			logger.error("Duplicate project metadata file at " + newProjectMetaFile.toString()); //$NON-NLS-1$
+			return;
+		}
+		SimpleMetaStoreUtil.createMetaFile(userMetaFolder, projectName, projectMetaFile);
+		logger.debug("Migration: Created project MetaData file: " + newProjectMetaFile.getAbsolutePath());
+
+		File oldProjectMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(folder, projectName);
+		SimpleMetaStoreUtil.deleteMetaFile(folder, projectName);
+		logger.debug("Migration: Deleted old project MetaData file: " + oldProjectMetaFile.getAbsolutePath());
+	}
+
+	private String moveWorkspaceJsonFile(File folder) throws JSONException {
+		File parent = folder.getParentFile();
+		File workspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(folder, SimpleMetaStore.WORKSPACE);
+		JSONObject workspaceMetaData = SimpleMetaStoreUtil.readMetaFile(folder, SimpleMetaStore.WORKSPACE);
+		if (!workspaceMetaData.has("UniqueId")) {
+			logger.error("Workspace metadata is missing UniqueId " + workspaceMetaFile.toString()); //$NON-NLS-1$
+			return null;
+		}
+		String workspaceId = workspaceMetaData.getString("UniqueId");
+		File newWorkspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(parent, workspaceId);
+		if (newWorkspaceMetaFile.exists()) {
+			logger.error("Duplicate workspace metadata file at " + newWorkspaceMetaFile.toString()); //$NON-NLS-1$
+			return null;
+		}
+		SimpleMetaStoreUtil.createMetaFile(parent, workspaceId, workspaceMetaData);
+
+		logger.debug("Migration: Created workspace MetaData file: " + newWorkspaceMetaFile.getAbsolutePath());
+
+		File oldWorkspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(folder, SimpleMetaStore.WORKSPACE);
+		SimpleMetaStoreUtil.deleteMetaFile(folder, SimpleMetaStore.WORKSPACE);
+		logger.debug("Migration: Deleted old workspace MetaData file: " + oldWorkspaceMetaFile.getAbsolutePath());
+		return workspaceId;
+	}
+
+	/**
+	 * Update the Orion version in the provided file and folder.
+	 * @param parent The parent folder containing the metadata (JSON) file.
+	 * @param name The name of the file without the ".json" extension.
+	 * @return The previous version that was in the metadata file.
+	 * @throws JSONException 
+	 */
+	private int updateOrionVersion(File parent, String name) throws JSONException {
+		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(parent, name);
+		int oldVersion = -1;
+		if (jsonObject.has(SimpleMetaStore.ORION_VERSION)) {
+			oldVersion = jsonObject.getInt(SimpleMetaStore.ORION_VERSION);
+		}
+		jsonObject.put(SimpleMetaStore.ORION_VERSION, SimpleMetaStore.VERSION);
+		SimpleMetaStoreUtil.updateMetaFile(parent, name, jsonObject);
+		File metaFile = SimpleMetaStoreUtil.retrieveMetaFile(parent, name);
+		String oldVersionStr = (oldVersion == -1) ? "UNKNOWN" : Integer.toString(oldVersion);
+		logger.debug("Migration: Updated Orion version from version " + oldVersionStr + " to version " + SimpleMetaStore.VERSION + " in MetaData file: " + metaFile.getAbsolutePath());
+		return oldVersion;
+	}
+
+	/**
+	 * Update the user metadata file with the new single workspace and user rights.
+	 * @param userMetaFolder The user metadata folder.
+	 * @param userJSON The current user metadata.
+	 * @param workspaceId the single workspace. 
+	 */
+	private void updateUserJson(File userMetaFolder, JSONObject userJSON, String workspaceId) throws JSONException {
+		JSONArray workspaceIds = new JSONArray();
+		workspaceIds.put(workspaceId);
+		userJSON.put("WorkspaceIds", workspaceIds);
+
+		JSONObject properties = userJSON.getJSONObject("Properties");
+		JSONArray userRights = new JSONArray();
+		JSONObject userRight = new JSONObject();
+		userRight.put("Method", 15);
+		String usersRight = "/users/";
+		userRight.put("Uri", usersRight.concat(userMetaFolder.getName()));
+		userRights.put(userRight);
+
+		userRight = new JSONObject();
+		userRight.put("Method", 15);
+		String workspaceRight = "/workspace/";
+		userRight.put("Uri", workspaceRight.concat(workspaceId));
+		userRights.put(userRight);
+
+		userRight = new JSONObject();
+		userRight.put("Method", 15);
+		userRight.put("Uri", workspaceRight.concat(workspaceId).concat("/*"));
+		userRights.put(userRight);
+
+		userRight = new JSONObject();
+		userRight.put("Method", 15);
+		String fileRight = "/file/";
+		userRight.put("Uri", fileRight.concat(workspaceId));
+		userRights.put(userRight);
+
+		userRight = new JSONObject();
+		userRight.put("Method", 15);
+		userRight.put("Uri", fileRight.concat(workspaceId).concat("/*"));
+		userRights.put(userRight);
+
+		properties.put("UserRights", userRights);
+		userJSON.put("Properties", properties);
+
+		SimpleMetaStoreUtil.updateMetaFile(userMetaFolder, SimpleMetaStore.USER, userJSON);
 	}
 
 	private void updateWorkspaceFolder(File folder) throws JSONException {
