@@ -13,6 +13,7 @@ package org.eclipse.orion.server.git.jobs;
 import java.io.IOException;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.internal.storage.file.GC;
+import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.Repository;
 
 @SuppressWarnings("restriction")
@@ -22,9 +23,10 @@ public class GitJobUtils {
 	 * @param Repository the git repository
 	 * @throws IOException 
 	 */
-	public static void packRefs(Repository repo) throws IOException {
+	public static void packRefs(Repository repo, ProgressMonitor monitor) throws IOException {
 		if (repo != null && repo instanceof FileRepository) {
 			GC gc = new GC(((FileRepository) repo));
+			gc.setProgressMonitor(monitor);
 			gc.packRefs();
 		}
 	}
