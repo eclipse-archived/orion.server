@@ -90,7 +90,7 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 
 		String indexMessage = requestPayload.optString(GitConstants.KEY_STASH_INDEX_MESSAGE);
 		String workingDirectoryMessage = requestPayload.optString(GitConstants.KEY_STASH_WORKING_DIRECTORY_MESSAGE);
-		boolean includeUntracked = requestPayload.optBoolean(GitConstants.KEY_STASH_INCLUDE_UNTRACKED, true);
+		boolean includeUntracked = requestPayload.optBoolean(GitConstants.KEY_STASH_INCLUDE_UNTRACKED, false);
 
 		try {
 

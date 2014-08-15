@@ -227,9 +227,16 @@ public class BindServicesCommand extends AbstractCFApplicationCommand {
 
 						/* send request */
 						jobStatus = HttpUtil.executeMethod(bindServiceMethod);
-						status.add(jobStatus);
-						if (!jobStatus.isOK())
-							return status;
+
+						if (!jobStatus.isOK()) {
+
+							/* the binding might be already present - detect it by checking the error code type */
+							if (!jobStatus.getJsonData().has("error_code") || !"CF-ServiceBindingAppServiceTaken".equals(jobStatus.getJsonData().getString("error_code"))) { //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+								status.add(jobStatus);
+								return status;
+							}
+						} else
+							status.add(jobStatus);
 					}
 				}
 			}

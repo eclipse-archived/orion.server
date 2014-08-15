@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
+import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -89,9 +90,15 @@ public class FindRouteCommand extends AbstractCFCommand {
 			ManifestParseTree manifest = application.getManifest();
 			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
 
+			String appName = null;
+			if (application.getName() != null)
+				appName = application.getName();
+			else
+				appName = app.get(CFProtocolConstants.V2_KEY_NAME).getValue();
+
 			/* extract host information if present */
 			ManifestParseTree hostNode = app.getOpt(CFProtocolConstants.V2_KEY_HOST);
-			appHost = (hostNode != null) ? hostNode.getValue() : null;
+			appHost = (hostNode != null) ? hostNode.getValue() : ManifestUtils.slugify(appName);
 
 			if (appHost != null)
 				return Status.OK_STATUS;

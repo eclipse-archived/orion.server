@@ -45,75 +45,47 @@ public class PushAppCommand extends AbstractCFCommand {
 
 	@Override
 	protected ServerStatus _doIt() {
+
 		/* multi server status */
 		MultiServerStatus status = new MultiServerStatus();
 
 		try {
-			if (app.getSummaryJSON() == null) {
 
-				/* create new application */
-				CreateApplicationCommand createApplication = new CreateApplicationCommand(target, app, reset);
-				ServerStatus jobStatus = (ServerStatus) createApplication.doIt(); /* FIXME: unsafe type cast */
-				status.add(jobStatus);
-				if (!jobStatus.isOK())
-					return status;
+			/* set up the application */
+			AbstractCFCommand setUpApplication = null;
+			if (app.getSummaryJSON() != null) {
 
-				JSONObject appResp = jobStatus.getJsonData();
+				/* set known application guid */
+				app.setGuid(app.getSummaryJSON().getString(CFProtocolConstants.V2_KEY_GUID));
+				setUpApplication = new UpdateApplicationCommand(target, app);
 
-				/* bind route to application */
-				BindRouteCommand bindRoute = new BindRouteCommand(target, app);
-				ServerStatus multijobStatus = (ServerStatus) bindRoute.doIt(); /* FIXME: unsafe type cast */
-				status.add(multijobStatus);
-				if (!multijobStatus.isOK())
-					return status;
+			} else
+				setUpApplication = new CreateApplicationCommand(target, app, reset);
 
-				/* upload project contents */
-				UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, appStore);
-				multijobStatus = (ServerStatus) uploadBits.doIt(); /* FIXME: unsafe type cast */
-				status.add(multijobStatus);
-				if (!multijobStatus.isOK())
-					return status;
-
-				/* bind application specific services */
-				BindServicesCommand bindServices = new BindServicesCommand(target, app);
-				multijobStatus = (ServerStatus) bindServices.doIt(); /* FIXME: unsafe type cast */
-				status.add(multijobStatus);
-				if (!multijobStatus.isOK())
-					return status;
-
-				/* extract user defined timeout if present */
-				ManifestParseTree manifest = app.getManifest();
-				ManifestParseTree timeoutNode = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS).get(0).getOpt(CFProtocolConstants.V2_KEY_TIMEOUT);
-				int timeout = (timeoutNode != null) ? Integer.parseInt(timeoutNode.getValue()) : ManifestConstants.DEFAULT_TIMEOUT;
-
-				/* craft command result */
-				JSONObject result = new JSONObject();
-				result.put("Target", target.toJSON());
-				if (target.getManageUrl() != null)
-					result.put("ManageUrl", target.getManageUrl().toString() + "#/resources/appGuid=" + app.getGuid() + "&orgGuid=" + target.getOrg().getGuid() + "&spaceGuid=" + target.getSpace().getGuid());
-				result.put("App", appResp);
-				result.put("Domain", bindRoute.getDomainName());
-				result.put("Route", bindRoute.getRoute());
-				result.put("Timeout", timeout);
-				result.put("DeployedPackage", uploadBits.getDeployedAppPackageName());
-
-				status.add(new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result));
+			ServerStatus jobStatus = (ServerStatus) setUpApplication.doIt(); /* FIXME: unsafe type cast */
+			status.add(jobStatus);
+			if (!jobStatus.isOK())
 				return status;
-			}
 
-			/* set known application guid */
-			app.setGuid(app.getSummaryJSON().getString(CFProtocolConstants.V2_KEY_GUID));
+			JSONObject respAppJSON = jobStatus.getJsonData();
 
-			/* upload project contents */
-			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, appStore);
-			ServerStatus multijobStatus = (ServerStatus) uploadBits.doIt(); /* TODO: unsafe type cast */
+			/* set up the application route */
+			BindRouteCommand bindRoute = new BindRouteCommand(target, app);
+			ServerStatus multijobStatus = (ServerStatus) bindRoute.doIt(); /* FIXME: unsafe type cast */
 			status.add(multijobStatus);
 			if (!multijobStatus.isOK())
 				return status;
 
-			/* restart the application */
-			RestartAppCommand restartApp = new RestartAppCommand(target, app);
-			multijobStatus = (ServerStatus) restartApp.doIt(); /* TODO: unsafe type cast */
+			/* upload application contents */
+			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, appStore);
+			multijobStatus = (ServerStatus) uploadBits.doIt(); /* FIXME: unsafe type cast */
+			status.add(multijobStatus);
+			if (!multijobStatus.isOK())
+				return status;
+
+			/* bind application specific services */
+			BindServicesCommand bindServices = new BindServicesCommand(target, app);
+			multijobStatus = (ServerStatus) bindServices.doIt(); /* FIXME: unsafe type cast */
 			status.add(multijobStatus);
 			if (!multijobStatus.isOK())
 				return status;
@@ -125,19 +97,14 @@ public class PushAppCommand extends AbstractCFCommand {
 
 			/* craft command result */
 			JSONObject result = new JSONObject();
-
-			result.put("Target", target.toJSON());
+			result.put("Target", target.toJSON()); //$NON-NLS-1$
 			if (target.getManageUrl() != null)
-				result.put("ManageUrl", target.getManageUrl().toString() + "#/resources/appGuid=" + app.getGuid() + "&orgGuid=" + target.getOrg().getGuid() + "&spaceGuid=" + target.getSpace().getGuid());
-
-			result.put("App", app.getSummaryJSON());
-			if (app.getSummaryJSON().has("routes") && app.getSummaryJSON().getJSONArray("routes").length() > 0) {
-				JSONObject route = app.getSummaryJSON().getJSONArray("routes").getJSONObject(0);
-				result.put("Domain", route.getJSONObject("domain").getString("name"));
-				result.put("Route", route);
-			}
-			result.put("Timeout", timeout);
-			result.put("DeployedPackage", uploadBits.getDeployedAppPackageName());
+				result.put("ManageUrl", target.getManageUrl().toString() + "#/resources/appGuid=" + app.getGuid() + "&orgGuid=" + target.getOrg().getGuid() + "&spaceGuid=" + target.getSpace().getGuid()); //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$//$NON-NLS-4$
+			result.put("App", respAppJSON); //$NON-NLS-1$
+			result.put("Domain", bindRoute.getDomainName()); //$NON-NLS-1$
+			result.put("Route", bindRoute.getRoute()); //$NON-NLS-1$
+			result.put("Timeout", timeout); //$NON-NLS-1$
+			result.put("DeployedPackage", uploadBits.getDeployedAppPackageName()); //$NON-NLS-1$
 
 			status.add(new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result));
 			return status;

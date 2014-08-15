@@ -100,13 +100,14 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			RemoteDetailsJob job;
 			String commits = request.getParameter(GitConstants.KEY_TAG_COMMITS);
 			int commitsNumber = commits == null ? 0 : Integer.parseInt(commits);
+			String nameFilter = request.getParameter("filter");
 			String page = request.getParameter("page");
 			if (page != null) {
 				int pageNo = Integer.parseInt(page);
 				int pageSize = request.getParameter("pageSize") == null ? PAGE_SIZE : Integer.parseInt(request.getParameter("pageSize"));
-				job = new RemoteDetailsJob(TaskJobHandler.getUserId(request), p.segment(0), p.removeFirstSegments(1), BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE), commitsNumber, pageNo, pageSize, request.getRequestURI());
+				job = new RemoteDetailsJob(TaskJobHandler.getUserId(request), p.segment(0), p.removeFirstSegments(1), BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE), commitsNumber, pageNo, pageSize, request.getRequestURI(), nameFilter);
 			} else {
-				job = new RemoteDetailsJob(TaskJobHandler.getUserId(request), p.segment(0), p.removeFirstSegments(1), BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE), commitsNumber);
+				job = new RemoteDetailsJob(TaskJobHandler.getUserId(request), p.segment(0), p.removeFirstSegments(1), BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE), commitsNumber, nameFilter);
 			}
 			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 		} else if (p.segment(2).equals("file")) { //$NON-NLS-1$

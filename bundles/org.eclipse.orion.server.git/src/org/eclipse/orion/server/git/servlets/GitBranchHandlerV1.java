@@ -54,13 +54,14 @@ public class GitBranchHandlerV1 extends AbstractGitHandler {
 			if (gitSegment == null) {
 				// branch list: expected path /git/branch/file/{filePath}
 				ListBranchesJob job;
+				String nameFilter = request.getParameter("filter");
 				String commits = request.getParameter(GitConstants.KEY_TAG_COMMITS);
 				int commitsNumber = commits == null ? 0 : Integer.parseInt(commits);
 				String page = request.getParameter("page"); //$NON-NLS-1$
 				if (page != null) {
 					int pageNo = Integer.parseInt(page);
 					int pageSize = request.getParameter("pageSize") == null ? PAGE_SIZE : Integer.parseInt(request.getParameter("pageSize")); //$NON-NLS-1$ //$NON-NLS-2$
-					job = new ListBranchesJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH_LIST), commitsNumber, pageNo, pageSize, request.getRequestURI());
+					job = new ListBranchesJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH_LIST), commitsNumber, pageNo, pageSize, request.getRequestURI(), nameFilter);
 				} else {
 					job = new ListBranchesJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH_LIST), commitsNumber);
 				}

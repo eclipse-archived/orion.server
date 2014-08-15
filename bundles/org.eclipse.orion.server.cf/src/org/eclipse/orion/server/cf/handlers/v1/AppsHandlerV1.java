@@ -219,9 +219,15 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						}
 					}
 
-					// push new application
-					if (app == null)
+					/* indicates whether to restart the application
+					 * or just start it as it's a new deployment */
+					boolean restart = true;
+
+					if (app == null) {
+						/* push new application */
 						app = new App();
+						restart = false;
+					}
 
 					app.setName(appName != null ? appName : manifestAppName);
 					app.setManifest(parseManifestCommand.getManifest());
@@ -236,7 +242,10 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					app = getAppCommand.getApp();
 					app.setManifest(parseManifestCommand.getManifest());
 
-					new StartAppCommand(target, app).doIt();
+					if (restart)
+						new RestartAppCommand(target, app).doIt();
+					else
+						new StartAppCommand(target, app).doIt();
 
 					return status;
 				} catch (Exception e) {

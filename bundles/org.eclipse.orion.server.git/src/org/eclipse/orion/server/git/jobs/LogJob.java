@@ -14,8 +14,6 @@ import java.io.File;
 import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -41,6 +39,9 @@ public class LogJob extends GitJob {
 	private Ref fromRefId;
 	private String refIdsRange;
 	private String pattern;
+	private String messageFilter;
+	private String authorFilter;
+	private String committerFilter;
 
 	/**
 	 * Creates job with given page range and adding <code>commitsSize</code> commits to every branch.
@@ -50,9 +51,12 @@ public class LogJob extends GitJob {
 	 * @param commitsSize user 0 to omit adding any log, only CommitLocation will be attached 
 	 * @param pageNo
 	 * @param pageSize use negative to indicate that all commits need to be returned
+	 * @param messageFilter string used to filter log messages
+	 * @param authorFilter string used to filter author messages
+	 * @param committerFilter string used to filter committer messages
 	 * @param baseLocation URI used as a base for generating next and previous page links. Should not contain any parameters.
 	 */
-	public LogJob(String userRunningTask, IPath filePath, URI cloneLocation, int page, int pageSize, ObjectId toObjectId, ObjectId fromObjectId, Ref toRefId, Ref fromRefId, String refIdsRange, String pattern) {
+	public LogJob(String userRunningTask, IPath filePath, URI cloneLocation, int page, int pageSize, ObjectId toObjectId, ObjectId fromObjectId, Ref toRefId, Ref fromRefId, String refIdsRange, String pattern, String messageFilter, String authorFilter, String committerFilter) {
 		super(userRunningTask, false);
 		this.filePath = filePath;
 		this.cloneLocation = cloneLocation;
@@ -64,6 +68,9 @@ public class LogJob extends GitJob {
 		this.fromRefId = fromRefId;
 		this.refIdsRange = refIdsRange;
 		this.pattern = pattern;
+		this.messageFilter = messageFilter;
+		this.authorFilter = authorFilter;
+		this.committerFilter = committerFilter;
 		setFinalMessage("Generating git log completed.");
 	}
 
@@ -74,8 +81,7 @@ public class LogJob extends GitJob {
 		try {
 			File gitDir = GitUtils.getGitDir(filePath);
 			db = FileRepositoryBuilder.create(gitDir);
-			Git git = new Git(db);
-			logCommand = git.log();
+			logCommand = new LogCommand(db);
 			if (refIdsRange != null) {
 				// set the commit range
 				logCommand.add(toObjectId);
@@ -87,6 +93,18 @@ public class LogJob extends GitJob {
 				// git log --all
 				logCommand.all();
 			}
+			if (messageFilter != null && !messageFilter.equals("")) {
+				logCommand.addMessageFilter(messageFilter);
+			}
+
+			if (authorFilter != null && !authorFilter.equals("")) {
+				logCommand.addAuthFilter(authorFilter);
+			}
+
+			if (committerFilter != null && !committerFilter.equals("")) {
+				logCommand.addCommitterFilter(committerFilter);
+			}
+
 			if (page > 0) {
 				logCommand.setSkip((page - 1) * pageSize);
 				logCommand.setMaxCount(pageSize + 1); // to check if next page link is needed

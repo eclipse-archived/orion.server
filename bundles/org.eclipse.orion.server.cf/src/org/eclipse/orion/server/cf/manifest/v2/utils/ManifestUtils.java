@@ -14,12 +14,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.manifest.v2.*;
 import org.eclipse.osgi.util.NLS;
 
 public class ManifestUtils {
+
+	private static final Pattern NON_SLUG_PATTERN = Pattern.compile("[^\\w-]"); //$NON-NLS-1$
+	private static final Pattern WHITESPACE_PATTERN = Pattern.compile("[\\s]"); //$NON-NLS-1$
 
 	public static final String[] RESERVED_PROPERTIES = {//
 	"env", // //$NON-NLS-1$
@@ -172,5 +176,15 @@ public class ManifestUtils {
 
 		/* return default memory value, i.e. 1024 MB */
 		return 1024;
+	}
+
+	/**
+	 * Slugifies the given input to be reusable as URL pattern.
+	 * @param input Input to be slugified.
+	 * @return Slugified input
+	 */
+	public static String slugify(String input) {
+		input = WHITESPACE_PATTERN.matcher(input).replaceAll("-"); //$NON-NLS-1$
+		return NON_SLUG_PATTERN.matcher(input).replaceAll(""); //$NON-NLS-1$
 	}
 }
