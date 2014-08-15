@@ -57,6 +57,7 @@ public class Log extends GitObject {
 
 	private List<RevCommit> commits;
 	private String pattern;
+	private String messagePattern;
 	private Ref toRefId;
 	private Ref fromRefId;
 	private int page;
@@ -84,6 +85,10 @@ public class Log extends GitObject {
 	public void setPaging(int page, int pageSize) {
 		this.page = page;
 		this.pageSize = pageSize;
+	}
+
+	public void setMessagePattern(String messagePattern) {
+		this.messagePattern = messagePattern;
 	}
 
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
@@ -137,7 +142,10 @@ public class Log extends GitObject {
 				c.append(".."); //$NON-NLS-1$
 			if (toRefId != null)
 				c.append(Repository.shortenRefName(toRefId.getName()));
-			final String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
+			String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
+			if (this.messagePattern != null) {
+				q += "&filter=" + GitUtils.encode(this.messagePattern);
+			}
 			if (page > 1) {
 				return BaseToCommitConverter.getCommitLocation(cloneLocation, GitUtils.encode(c.toString()), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page - 1, pageSize)));
 			}
@@ -155,7 +163,10 @@ public class Log extends GitObject {
 				c.append(".."); //$NON-NLS-1$
 			if (toRefId != null)
 				c.append(Repository.shortenRefName(toRefId.getName()));
-			final String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
+			String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
+			if (this.messagePattern != null) {
+				q += "&filter=" + GitUtils.encode(this.messagePattern);
+			}
 			return BaseToCommitConverter.getCommitLocation(cloneLocation, GitUtils.encode(c.toString()), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page + 1, pageSize)));
 		}
 		return null;

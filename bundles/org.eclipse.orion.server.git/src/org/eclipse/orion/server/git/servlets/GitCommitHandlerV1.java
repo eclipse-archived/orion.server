@@ -108,7 +108,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			}
 			if (p.hasTrailingSeparator())
 				np = np.addTrailingSeparator();
-			URI nu = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), np.toString(), u.getQuery(), u.getFragment());
+			URI nu = new URI(u.getScheme(), u.getUserInfo(), u.getHost(), u.getPort(), np.toString(), request.getQueryString(), u.getFragment());
 			JSONObject result = new JSONObject();
 			result.put(ProtocolConstants.KEY_LOCATION, nu);
 			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
@@ -172,7 +172,9 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 	private boolean handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, IPath filePath, Repository db, String refIdsRange, String pattern) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException, CoreException {
 		int page = request.getParameter("page") != null ? new Integer(request.getParameter("page")).intValue() : 0; //$NON-NLS-1$ //$NON-NLS-2$
 		int pageSize = request.getParameter("pageSize") != null ? new Integer(request.getParameter("pageSize")).intValue() : PAGE_SIZE; //$NON-NLS-1$ //$NON-NLS-2$
-
+		String messageFilter = request.getParameter("filter");
+		String authorFilter = request.getParameter("author");
+		String committerFilter = request.getParameter("committer");
 		ObjectId toObjectId = null;
 		ObjectId fromObjectId = null;
 
@@ -215,7 +217,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		URI baseLocation = getURI(request);
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, refIdsRange == null ? BaseToCloneConverter.COMMIT : BaseToCloneConverter.COMMIT_REFRANGE);
 
-		LogJob job = new LogJob(TaskJobHandler.getUserId(request), filePath, cloneLocation, page, pageSize, toObjectId, fromObjectId, toRefId, fromRefId, refIdsRange, pattern);
+		LogJob job = new LogJob(TaskJobHandler.getUserId(request), filePath, cloneLocation, page, pageSize, toObjectId, fromObjectId, toRefId, fromRefId, refIdsRange, pattern, messageFilter, authorFilter, committerFilter);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 	}
 

@@ -71,13 +71,14 @@ public class GitTagHandlerV1 extends AbstractGitHandler {
 				ListTagsJob job;
 				String commits = request.getParameter(GitConstants.KEY_TAG_COMMITS);
 				int commitsNumber = commits == null ? 0 : Integer.parseInt(commits);
+				String nameFilter = request.getParameter("filter"); //$NON-NLS-1$
 				String page = request.getParameter("page"); //$NON-NLS-1$
 				if (page != null) {
 					int pageNo = Integer.parseInt(page);
 					int pageSize = request.getParameter("pageSize") == null ? PAGE_SIZE : Integer.parseInt(request.getParameter("pageSize")); //$NON-NLS-1$ //$NON-NLS-2$
-					job = new ListTagsJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST), commitsNumber, pageNo, pageSize, request.getRequestURI());
+					job = new ListTagsJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST), commitsNumber, pageNo, pageSize, request.getRequestURI(), nameFilter);
 				} else {
-					job = new ListTagsJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST), commitsNumber);
+					job = new ListTagsJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST), commitsNumber, nameFilter);
 				}
 				return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			}
