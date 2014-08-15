@@ -8,9 +8,10 @@
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.authentication.formopenid;
+package org.eclipse.orion.server.authentication.formoauth;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -22,6 +23,7 @@ import org.eclipse.orion.server.authentication.oauth.OAuthHelper;
 import org.eclipse.orion.server.authentication.oauth.OAuthParams;
 import org.eclipse.orion.server.authentication.oauth.github.GitHubOAuthParams;
 import org.eclipse.orion.server.authentication.oauth.google.GoogleOAuthParams;
+import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.servlets.OrionServlet;
 
 /**
@@ -38,6 +40,47 @@ public class ManageOAuthServlet extends OrionServlet {
 
 	private OAuthParams oauthParams;
 
+	private static void writeOAuthError(String error, HttpServletRequest req, HttpServletResponse resp) throws IOException {
+		if (req.getParameter("redirect") == null) {
+			resp.setContentType("text/html; charset=UTF-8");
+			PrintWriter out = resp.getWriter();
+			out.println("<html><head></head>"); //$NON-NLS-1$
+			// TODO: send a message using
+			// window.eclipseMessage.postImmediate(otherWindow, message) from
+			// /org.eclipse.e4.webide/web/orion/message.js
+			out.print("<body onload=\"window.opener.handleOAuthResponse((window.location+'').split('?')[1],'");
+			out.print(error);
+			out.println("');window.close();\">"); //$NON-NLS-1$
+			out.println("</body>"); //$NON-NLS-1$
+			out.println("</html>"); //$NON-NLS-1$
+
+			out.close();
+			return;
+		}
+		resp.setContentType("text/html; charset=UTF-8");
+		PrintWriter out = resp.getWriter();
+		out.println("<html><head></head>"); //$NON-NLS-1$
+		// TODO: send a message using
+		// window.eclipseMessage.postImmediate(otherWindow, message) from
+		// /org.eclipse.e4.webide/web/orion/message.js
+
+		String url = req.getParameter("redirect");
+		url = url.replaceAll("/&error(\\=[^&]*)?(?=&|$)|^error(\\=[^&]*)?(&|$)/", ""); // remove
+		// "error"
+		// parameter
+		out.print("<body onload=\"window.location.replace('");
+		out.print(url.toString());
+		if (url.contains("?")) {
+			out.print("&error=");
+		} else {
+			out.print("?error=");
+		}
+		out.print(new String(Base64.encode(error.getBytes())));
+		out.println("');\">"); //$NON-NLS-1$
+		out.println("</body>"); //$NON-NLS-1$
+		out.println("</html>"); //$NON-NLS-1$
+	}
+	
 	private void handleGet(HttpServletRequest req, HttpServletResponse resp, Boolean login) throws ServletException, IOException, OAuthException {
 		traceRequest(req);
 		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
@@ -72,11 +115,23 @@ public class ManageOAuthServlet extends OrionServlet {
 		return oauthParams;
 	}
 
-	public void handleGetAndLink(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, OAuthException {
-		handleGet(req, resp, false);
+	public void handleGetAndLink(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		try{
+			handleGet(req, resp, false);
+		} catch (OAuthException e) {
+			writeOAuthError(e.getMessage(), req, resp);
+		}
 	}
 
 	public void handleGetAndLogin(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, OAuthException {
 		handleGet(req, resp, true);
+	}
+	
+	@Override
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
+		if (pathInfo.startsWith("/oauth")){
+			handleGetAndLink(req, resp);
+		}
 	}
 }

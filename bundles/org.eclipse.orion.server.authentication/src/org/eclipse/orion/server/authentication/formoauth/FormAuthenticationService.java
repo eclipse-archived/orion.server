@@ -8,7 +8,7 @@
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.authentication.formopenid;
+package org.eclipse.orion.server.authentication.formoauth;
 
 import java.io.IOException;
 
@@ -27,7 +27,7 @@ import org.osgi.framework.Version;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
-public class FormOpenIdAuthenticationService implements IAuthenticationService {
+public class FormAuthenticationService implements IAuthenticationService {
 
 	public static final String OPENIDS_PROPERTY = "openids"; //$NON-NLS-1$
 
@@ -81,9 +81,9 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 
 	public void setHttpService(HttpService httpService) {
 		try {
-			httpService.registerServlet("/mixlogin/manageopenids", new ManageOpenidsServlet(this), null, null);
-			httpService.registerServlet("/login", new FormOpenIdLoginServlet(this), null, null); //$NON-NLS-1$
-			httpService.registerServlet("/logout", new FormOpenIdLogoutServlet(), null, null); //$NON-NLS-1$
+			httpService.registerServlet("/mixlogin/manageoauth", new ManageOAuthServlet(), null, null);
+			httpService.registerServlet("/login", new FormAuthLoginServlet(this), null, null); //$NON-NLS-1$
+			httpService.registerServlet("/logout", new FormAuthLogoutServlet(), null, null); //$NON-NLS-1$
 		} catch (ServletException e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_AUTHENTICATION_SERVLETS, 1, "An error occured when registering servlets", e));
 		} catch (NamespaceException e) {
@@ -93,7 +93,7 @@ public class FormOpenIdAuthenticationService implements IAuthenticationService {
 
 	public void unsetHttpService(HttpService httpService) {
 		if (httpService != null) {
-			httpService.unregister("/mixlogin/manageopenids"); //$NON-NLS-1$
+			httpService.unregister("/mixlogin/manageoauth"); //$NON-NLS-1$
 			httpService.unregister("/login"); //$NON-NLS-1$
 			httpService.unregister("/logout"); //$NON-NLS-1$
 			httpService = null;

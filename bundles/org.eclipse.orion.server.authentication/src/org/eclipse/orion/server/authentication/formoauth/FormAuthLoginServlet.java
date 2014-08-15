@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.authentication.formopenid;
+package org.eclipse.orion.server.authentication.formoauth;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -18,17 +18,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.authentication.form.FormAuthHelper;
 import org.eclipse.orion.server.authentication.form.FormAuthHelper.LoginResult;
-import org.eclipse.orion.server.authentication.formpersona.*;
-import org.eclipse.orion.server.authentication.oauth.OAuthConsumer;
+import org.eclipse.orion.server.authentication.formpersona.PersonaConstants;
+import org.eclipse.orion.server.authentication.formpersona.PersonaException;
+import org.eclipse.orion.server.authentication.formpersona.PersonaHelper;
 import org.eclipse.orion.server.authentication.oauth.OAuthException;
-import org.eclipse.orion.server.authentication.oauth.OAuthHelper;
-import org.eclipse.orion.server.authentication.oauth.google.GoogleOAuthParams;
-import org.eclipse.orion.server.authentication.openid.*;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -37,13 +32,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;
 
-public class FormOpenIdLoginServlet extends OrionServlet {
+public class FormAuthLoginServlet extends OrionServlet {
 
-	private FormOpenIdAuthenticationService authenticationService;
-	private OpenidConsumer consumer;
+	private FormAuthenticationService authenticationService;
 	private ManageOAuthServlet manageOAuthServlet;
 
-	public FormOpenIdLoginServlet(FormOpenIdAuthenticationService authenticationService) {
+	public FormAuthLoginServlet(FormAuthenticationService authenticationService) {
 		super();
 		this.authenticationService = authenticationService;
 		this.manageOAuthServlet = new ManageOAuthServlet();
@@ -73,8 +67,8 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 					String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
 
 					if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
-						if (req.getParameter(OpenIdHelper.REDIRECT) != null && !req.getParameter(OpenIdHelper.REDIRECT).equals("")) { //$NON-NLS-1$
-							resp.sendRedirect(req.getParameter(OpenIdHelper.REDIRECT));
+						if (req.getParameter("redirect") != null && !req.getParameter("redirect").equals("")) { //$NON-NLS-1$
+							resp.sendRedirect(req.getParameter("redirect"));
 						}
 					} else {
 						resp.setStatus(HttpServletResponse.SC_OK);
@@ -100,29 +94,13 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 			}
 			return;
 		}
-		if (pathInfo.startsWith("/openid")) { //$NON-NLS-1$
-			String openid = req.getParameter(OpenIdHelper.OPENID);
-			if (openid != null) {
-				try {
-					consumer = OpenIdHelper.redirectToOpenIdProvider(req, resp, consumer);
-				} catch (OpenIdException e) {
-					LogHelper.log(new Status(IStatus.ERROR, Activator.PI_AUTHENTICATION_SERVLETS, "An error occurred redirecting to OpenId provider", e));
-					displayError(e.getMessage(), req, resp);
-				}
-				return;
-			}
-
-			String op_return = req.getParameter(OpenIdHelper.OP_RETURN);
-			if (op_return != null) {
-				try {
-					OpenIdHelper.handleOpenIdReturnAndLogin(req, resp, consumer);
-				} catch (OpenIdException e) {
-					displayError(e.getMessage(), req, resp);
-				}
-				return;
+		if (pathInfo.startsWith("/oauth")){
+			try {
+				manageOAuthServlet.handleGetAndLogin(req, resp);
+			} catch (OAuthException e) {
+				displayError(e.getMessage(), req, resp);
 			}
 		}
-
 		if (pathInfo.startsWith("/persona")) { //$NON-NLS-1$
 			String assertion = req.getParameter(PersonaConstants.PARAM_ASSERTION);
 			if (assertion != null) {
@@ -204,17 +182,8 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
-		if (pathInfo.startsWith("/openid") //$NON-NLS-1$
-				&& (req.getParameter(OpenIdHelper.OPENID) != null || req.getParameter(OpenIdHelper.OP_RETURN) != null)) {
+		if (pathInfo.startsWith("/oauth") ) { //$NON-NLS-1$
 			doPost(req, resp);
-			return;
-		}
-		if (pathInfo.startsWith("/oauth")) { //$NON-NLS-1$
-			try {
-				manageOAuthServlet.handleGetAndLogin(req, resp);
-			} catch (OAuthException e) {
-				displayError(e.getMessage(), req, resp);
-			}
 			return;
 		}
 		RequestDispatcher rd = req.getRequestDispatcher("/mixlogin/login"); //$NON-NLS-1$
