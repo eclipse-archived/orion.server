@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.authentication.formopenid;
+package org.eclipse.orion.server.authentication.formoauth;
 
 import java.io.IOException;
 
@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 
-public class FormOpenIdLogoutServlet extends HttpServlet {
+public class FormAuthLogoutServlet extends HttpServlet {
 
 	/**
 	 * 

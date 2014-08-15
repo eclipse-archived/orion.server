@@ -36,7 +36,7 @@ public class GitHubOAuthParams extends OAuthParams {
 		
 	private static final String REDIRECT_URI_LOGIN = "/login/oauth";
 	
-	private static final String REDIRECT_URI_LINK = "/mixlogin/manageopenids/oauth";
+	private static final String REDIRECT_URI_LINK = "/mixlogin/manageoauth/oauth";
 	
 	private static final String RESPONSE_TYPE = "code";
 	

@@ -31,7 +31,7 @@ import org.osgi.service.http.NamespaceException;
 public class BasicAuthenticationService implements IAuthenticationService {
 
 	protected static IOrionCredentialsService userAdmin;
-	public static String PI_BASIC_AUTH = "org.eclipse.orion.server.authentication.formopenid";
+	public static String PI_BASIC_AUTH = "org.eclipse.orion.server.authentication.formoauth";
 	private IOrionUserProfileService userProfileService;
 	private boolean registered;
 

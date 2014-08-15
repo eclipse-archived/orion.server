@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.authentication.oauth.google;
 
 
-import org.apache.oltu.oauth2.client.request.OAuthClientRequest.AuthenticationRequestBuilder;
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
 import org.eclipse.orion.server.authentication.oauth.OAuthConsumer;
 import org.eclipse.orion.server.authentication.oauth.OAuthException;
@@ -32,9 +31,7 @@ public class GoogleOAuthConsumer extends OAuthConsumer {
 	private static final String EMAIL_PARAMETER = "email";
 	private static final String EMAIL_VERIFIED_PARAMETER = "email_verified";
 	private static final String OPEN_ID_PARAMETER = "openid_id";
-	
-	private static final String OPENID_URL = "https://www.googleapis.com/plus/v1/people/me/openIdConnect";
-	
+
 	private String userId;
 	private String provider;
 	private String openid_id;

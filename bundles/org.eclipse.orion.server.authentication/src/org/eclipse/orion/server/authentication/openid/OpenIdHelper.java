@@ -21,7 +21,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.authentication.Activator;
-import org.eclipse.orion.server.authentication.formopenid.OpenIdConstants;
+import org.eclipse.orion.server.authentication.openid.OpenIdConstants;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.events.IEventService;
 import org.eclipse.orion.server.user.profile.*;
