@@ -93,15 +93,15 @@ public class LogJob extends GitJob {
 				// git log --all
 				logCommand.all();
 			}
-			if (messageFilter != null) {
+			if (messageFilter != null && !messageFilter.equals("")) {
 				logCommand.addMessageFilter(messageFilter);
 			}
 
-			if (authorFilter != null) {
+			if (authorFilter != null && !authorFilter.equals("")) {
 				logCommand.addAuthFilter(authorFilter);
 			}
 
-			if (committerFilter != null) {
+			if (committerFilter != null && !committerFilter.equals("")) {
 				logCommand.addCommitterFilter(committerFilter);
 			}
 
