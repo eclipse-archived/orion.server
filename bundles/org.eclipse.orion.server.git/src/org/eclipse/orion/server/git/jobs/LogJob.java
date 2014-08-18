@@ -93,16 +93,21 @@ public class LogJob extends GitJob {
 				// git log --all
 				logCommand.all();
 			}
+			Log log = new Log(cloneLocation, db, null /* collected by the job */, pattern, toRefId, fromRefId);
+
 			if (messageFilter != null && !messageFilter.equals("")) {
-				logCommand.addMessageFilter(messageFilter);
+				log.setMessagePattern(messageFilter);
+				logCommand.setMessageFilter(messageFilter);
 			}
 
 			if (authorFilter != null && !authorFilter.equals("")) {
-				logCommand.addAuthFilter(authorFilter);
+				log.setAuthorPattern(authorFilter);
+				logCommand.setAuthFilter(authorFilter);
 			}
 
 			if (committerFilter != null && !committerFilter.equals("")) {
-				logCommand.addCommitterFilter(committerFilter);
+				log.setCommitterPattern(committerFilter);
+				logCommand.setCommitterFilter(committerFilter);
 			}
 
 			if (page > 0) {
@@ -112,7 +117,6 @@ public class LogJob extends GitJob {
 			if (pattern != null && !pattern.isEmpty()) {
 				logCommand.addPath(pattern);
 			}
-			Log log = new Log(cloneLocation, db, null /* collected by the job */, pattern, toRefId, fromRefId);
 			log.setPaging(page, pageSize);
 
 			Iterable<RevCommit> commits = logCommand.call();
