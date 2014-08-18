@@ -12,6 +12,7 @@ package org.eclipse.orion.server.cf.manifest.v2;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.json.*;
 
 /**
  * Intermediate manifest file representation.
@@ -196,6 +197,67 @@ public class ManifestParseTree {
 		}
 
 		return sb.toString();
+	}
+
+	/**
+	 * Externalization to JSON format.
+	 * @return JSON representation.
+	 * @throws JSONException 
+	 * @throws InvalidAccessException 
+	 */
+	public JSONObject toJSON() throws JSONException, InvalidAccessException {
+
+		JSONObject rep = new JSONObject();
+		for (ManifestParseTree child : getChildren())
+			child.append(rep);
+
+		return rep;
+	}
+
+	/**
+	 * JSON externalization helper.
+	 */
+	protected void append(JSONObject rep) throws JSONException, InvalidAccessException {
+
+		if (isList()) {
+			JSONArray arr = new JSONArray();
+			for (ManifestParseTree child : getChildren())
+				child.append(arr);
+
+			rep.put(getLabel(), arr);
+			return;
+		}
+
+		if (getChildren().size() == 1 && getChildren().get(0).getChildren().size() == 0) {
+			/* format: A: B (mapping) */
+			rep.put(getLabel(), getValue());
+			return;
+		}
+
+		JSONObject obj = new JSONObject();
+		for (ManifestParseTree child : getChildren())
+			child.append(obj);
+
+		rep.put(getLabel(), obj);
+	}
+
+	/**
+	 * JSON externalization helper.
+	 */
+	protected void append(JSONArray rep) throws JSONException, InvalidAccessException {
+
+		if (getChildren().size() == 1 && getChildren().get(0).getChildren().size() == 0) {
+			/* format: - A (note: no mapping) */
+			rep.put(getChildren().get(0).getLabel());
+			return;
+		}
+
+		/* otherwise, we expect an object */
+		JSONObject obj = new JSONObject();
+		for (ManifestParseTree child : getChildren())
+			child.append(obj);
+
+		rep.put(obj);
 	}
 
 	public boolean isRoot() {

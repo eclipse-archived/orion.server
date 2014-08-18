@@ -69,7 +69,7 @@ public class ParseManifestCommand extends AbstractCFCommand {
 		// Note: we are assuming the content path is inside a project folder
 		IPath manifestPath = contentPath.removeFirstSegments(2).append(ManifestConstants.MANIFEST_FILE_NAME);
 		String msg = "Failed to find /" + manifestPath + ". If the manifest is in a different folder, please select the manifest file or folder before deploying.";
-		return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
+		return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
 	}
 
 	@Override
@@ -103,9 +103,14 @@ public class ParseManifestCommand extends AbstractCFCommand {
 			IFileStore projectStore = NewFileServlet.getFileStore(null, project);
 
 			/* parse the manifest */
-			URI targetURI = URIUtil.toURI(target.getUrl());
-			String targetBase = targetURI.getHost().substring(4);
-			ManifestParseTree manifest = ManifestUtils.parse(projectStore, manifestStore, targetBase);
+			ManifestParseTree manifest = null;
+			if (target != null) {
+				URI targetURI = URIUtil.toURI(target.getUrl());
+				String targetBase = targetURI.getHost().substring(4);
+				manifest = ManifestUtils.parse(projectStore, manifestStore, targetBase);
+			} else
+				manifest = ManifestUtils.parse(projectStore, manifestStore);
+
 			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
 
 			/* optional */

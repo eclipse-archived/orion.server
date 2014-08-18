@@ -18,7 +18,7 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.objects.*;
 
 /**
- * A Jazz handler for Orion CF API v 1.0.
+ * A REST handler for Orion CF API v 1.0.
  */
 public class CFHandlerV1 extends ServletResourceHandler<String> {
 
@@ -29,6 +29,7 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<String> orgsHandlerV1;
 	private ServletResourceHandler<String> spacesHandlerV1;
 	private ServletResourceHandler<String> routesHandlerV1;
+	private ServletResourceHandler<String> manifestsHandlerV1;
 
 	public CFHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		targetHandlerV1 = new TargetHandlerV1(statusHandler);
@@ -38,25 +39,11 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 		orgsHandlerV1 = new OrgsHandlerV1(statusHandler);
 		spacesHandlerV1 = new SpacesHandlerV1(statusHandler);
 		routesHandlerV1 = new RoutesHandlerV1(statusHandler);
+		manifestsHandlerV1 = new ManifestsHandlerV1(statusHandler);
 	}
 
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String cFPathInfo) throws ServletException {
-
-		//		String pathString = cFPathInfo;
-		//		String[] infoParts = cFPathInfo.split("\\/", 3); //$NON-NLS-1$
-		//
-		//		if (infoParts.length >= 3) {
-		//			pathString = infoParts[2];
-		//			if (request.getContextPath().length() != 0) {
-		//				IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
-		//				IPath contextPath = new Path(request.getContextPath());
-		//				if (contextPath.isPrefixOf(path)) {
-		//					pathString = path.removeFirstSegments(contextPath.segmentCount()).toString();
-		//				}
-		//			}
-		//		}
-
 		String[] infoParts = cFPathInfo.split("\\/", 3); //$NON-NLS-1$
 
 		String pathString = null;
@@ -85,6 +72,8 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 			return routesHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(Space.RESOURCE)) {
 			return spacesHandlerV1.handleRequest(request, response, pathString);
+		} else if (infoParts[1].equals(Manifest.RESOURCE)) {
+			return manifestsHandlerV1.handleRequest(request, response, pathString);
 		}
 
 		return false;
