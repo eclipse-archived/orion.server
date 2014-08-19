@@ -163,4 +163,6 @@ public class CFProtocolConstants {
 	public static final String V2_KEY_NO_ROUTE = "no-route"; //$NON-NLS-1$
 
 	public static final String V2_KEY_TIMEOUT = "timeout"; //$NON-NLS-1$
+
+	public static final String V2_KEY_NEXT_URL = "next_url"; //$NON-NLS-1$
 }
