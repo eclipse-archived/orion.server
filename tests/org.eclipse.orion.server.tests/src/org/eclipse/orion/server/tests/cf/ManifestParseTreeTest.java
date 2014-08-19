@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.cf;
 
+import static org.junit.Assert.assertTrue;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FilenameFilter;
@@ -30,6 +32,7 @@ import org.eclipse.orion.server.cf.manifest.v2.TokenizerException;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestParser;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestPreprocessor;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestTokenizer;
+import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -38,6 +41,7 @@ import org.junit.Test;
 public class ManifestParseTreeTest {
 
 	private static String CORRECT_MANIFEST_LOCATION = "testData/manifestTest/correct"; //$NON-NLS-1$
+	private static String INCORRECT_MANIFEST_LOCATION = "testData/manifestTest/incorrect"; //$NON-NLS-1$
 
 	private ManifestParseTree parse(InputStream inputStream) throws IOException, TokenizerException, ParserException {
 		Preprocessor preprocessor = new ManifestPreprocessor();
@@ -48,7 +52,7 @@ public class ManifestParseTreeTest {
 		return parser.parse(tokenizer);
 	}
 
-	private JSONObject exportManifest(InputStream inputStream) throws IOException, TokenizerException, ParserException, JSONException, InvalidAccessException {
+	private JSONObject exportManifestJSON(InputStream inputStream) throws IOException, TokenizerException, ParserException, JSONException, InvalidAccessException {
 		return parse(inputStream).toJSON();
 	}
 
@@ -68,7 +72,64 @@ public class ManifestParseTreeTest {
 			InputStream inputStream = new FileInputStream(manifestFile);
 
 			/* export the manifest to JSON - pass if no exceptions occurred */
-			exportManifest(inputStream);
+			exportManifestJSON(inputStream);
+		}
+	}
+
+	@Test
+	public void testToJSONAgainsIncorrectManifests() throws Exception {
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry(INCORRECT_MANIFEST_LOCATION);
+		File manifestSource = new File(FileLocator.toFileURL(entry).getPath());
+
+		File[] manifests = manifestSource.listFiles(new FilenameFilter() {
+
+			public boolean accept(File dir, String name) {
+				return name.toLowerCase().endsWith(".yml"); //$NON-NLS-1$
+			}
+		});
+
+		boolean failure = false;
+		for (File manifestFile : manifests) {
+			failure = false;
+			InputStream inputStream = new FileInputStream(manifestFile);
+
+			/* export the manifest */
+			try {
+				exportManifestJSON(inputStream);
+			} catch (IOException ex) {
+				failure = true;
+			} catch (TokenizerException ex) {
+				failure = true;
+			} catch (ParserException ex) {
+				failure = true;
+			} catch (JSONException ex) {
+				failure = true;
+			} catch (InvalidAccessException ex) {
+				failure = true;
+			}
+
+			assertTrue(failure);
+		}
+	}
+
+	@Test
+	public void testFromJSONAgainsCorrectManifests() throws Exception {
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry(CORRECT_MANIFEST_LOCATION);
+		File manifestSource = new File(FileLocator.toFileURL(entry).getPath());
+
+		File[] manifests = manifestSource.listFiles(new FilenameFilter() {
+
+			public boolean accept(File dir, String name) {
+				return name.toLowerCase().endsWith(".yml"); //$NON-NLS-1$
+			}
+		});
+
+		for (File manifestFile : manifests) {
+			InputStream inputStream = new FileInputStream(manifestFile);
+
+			/* export the manifest to JSON - pass if no exceptions occurred */
+			JSONObject manifestJSON = exportManifestJSON(inputStream);
+			ManifestUtils.parse(manifestJSON).toString();
 		}
 	}
 }

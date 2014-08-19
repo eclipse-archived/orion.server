@@ -158,9 +158,9 @@ public class ManifestParseTree {
 		if (getParent() == this) {
 
 			/* special case: manifest root */
-			sb.append("---" + System.getProperty("line.separator")); //$NON-NLS-1$ //$NON-NLS-2$
+			sb.append("---").append(System.getProperty("line.separator")); //$NON-NLS-1$ //$NON-NLS-2$
 			for (ManifestParseTree child : children)
-				sb.append(child.toString(0) + System.getProperty("line.separator")); //$NON-NLS-1$
+				sb.append(child.toString(0)).append(System.getProperty("line.separator")); //$NON-NLS-1$
 
 			return sb.toString();
 		}
@@ -173,7 +173,7 @@ public class ManifestParseTree {
 		sb.append(getLabel());
 
 		/* print mapping symbol if required */
-		boolean isItemNode = (tokens.size() == 1 && TokenType.ITEM_CONSTANT == tokens.get(0).getType());
+		boolean isItemNode = isItemNode();
 		if (!isItemNode && children.size() > 0)
 			sb.append(":"); //$NON-NLS-1$
 
@@ -186,10 +186,11 @@ public class ManifestParseTree {
 				/* special case: in-line item */
 				sb.append(" "); //$NON-NLS-1$
 				sb.append(child.toString(0));
+
 			} else {
 				sb.append(System.getProperty("line.separator")); //$NON-NLS-1$
 
-				if (!child.isItemNode())
+				if (!child.isItemNode() || getParent().isItemNode())
 					sb.append(child.toString(indentation + 2));
 				else
 					sb.append(child.toString(indentation));
