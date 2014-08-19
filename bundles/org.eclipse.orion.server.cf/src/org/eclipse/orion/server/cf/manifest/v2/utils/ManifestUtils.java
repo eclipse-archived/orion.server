@@ -195,6 +195,18 @@ public class ManifestUtils {
 		return NON_SLUG_PATTERN.matcher(input).replaceAll(""); //$NON-NLS-1$
 	}
 
+	/**
+	 * Parses a manifest from the given JSON representation.
+	 *  Note: no cross-manifest inheritance is allowed.
+	 * @param manifestJSON
+	 * @return
+	 * @throws IllegalArgumentException
+	 * @throws JSONException
+	 * @throws IOException
+	 * @throws TokenizerException
+	 * @throws ParserException
+	 * @throws AnalyzerException
+	 */
 	public static ManifestParseTree parse(JSONObject manifestJSON) throws IllegalArgumentException, JSONException, IOException, TokenizerException, ParserException, AnalyzerException {
 
 		StringBuilder sb = new StringBuilder();
@@ -231,7 +243,7 @@ public class ManifestUtils {
 				append(sb, objVal, indentation + 2, false);
 
 			} else
-				throw new IllegalArgumentException();
+				throw new IllegalArgumentException("Arrays may contain only JSON objects or string literals.");
 		}
 	}
 
@@ -265,7 +277,7 @@ public class ManifestUtils {
 				append(sb, arr, indentation);
 
 			} else
-				throw new IllegalArgumentException();
+				throw new IllegalArgumentException("Objects may contain only JSON objects, arrays or string literals.");
 		}
 	}
 }

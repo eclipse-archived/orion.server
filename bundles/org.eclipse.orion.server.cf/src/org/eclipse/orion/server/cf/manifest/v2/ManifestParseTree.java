@@ -10,8 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.manifest.v2;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.server.core.IOUtilities;
 import org.json.*;
 
 /**
@@ -259,6 +265,28 @@ public class ManifestParseTree {
 			child.append(obj);
 
 		rep.put(obj);
+	}
+
+	/**
+	 * Persists the manifest YAML representation into the given file store.
+	 * @param fileStore File store to persist the manifest. Note: if the given
+	 * file exists, it's contents are going to be overridden.
+	 * @throws CoreException
+	 */
+	public void persist(IFileStore fileStore) throws CoreException {
+
+		PrintStream ps = null;
+		try {
+
+			String representation = toString();
+			OutputStream out = fileStore.openOutputStream(EFS.OVERWRITE, null);
+			ps = new PrintStream(out);
+			ps.print(representation);
+
+		} finally {
+			if (ps != null)
+				IOUtilities.safeClose(ps);
+		}
 	}
 
 	public boolean isRoot() {
