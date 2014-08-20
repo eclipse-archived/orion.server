@@ -268,7 +268,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 						IPath projectPath = GitUtils.pathFromProject(workspace, project);
 						Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 						for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
-							children.put(new Clone().toJSON(entry, baseLocation));
+							children.put(new Clone().toJSON(entry.getKey(), baseLocation, getCloneUrl(entry.getValue())));
 						}
 					}
 				}
@@ -288,7 +288,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				JSONObject result = new JSONObject();
 				JSONArray children = new JSONArray();
 				for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
-					children.put(new Clone().toJSON(entry, baseLocation));
+					children.put(new Clone().toJSON(entry.getKey(), baseLocation, getCloneUrl(entry.getValue())));
 				}
 				result.put(ProtocolConstants.KEY_TYPE, Clone.TYPE);
 				result.put(ProtocolConstants.KEY_CHILDREN, children);
@@ -301,6 +301,22 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		//else the request is malformed
 		String msg = NLS.bind("Invalid clone request: {0}", EncodingUtils.encodeForHTML(path.toString()));
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+	}
+
+	private String getCloneUrl(File gitDir) {
+		Repository db = null;
+		try {
+			db = FileRepositoryBuilder.create(gitDir);
+			StoredConfig config = db.getConfig();
+			return config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL);
+		} catch (IOException e) {
+			// ignore and skip Git URL
+		} finally {
+			if (db != null) {
+				db.close();
+			}
+		}
+		return null;
 	}
 
 	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, String pathString) throws GitAPIException, CoreException, IOException, JSONException, ServletException {
