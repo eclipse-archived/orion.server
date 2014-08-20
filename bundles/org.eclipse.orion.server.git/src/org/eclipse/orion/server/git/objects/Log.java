@@ -58,6 +58,8 @@ public class Log extends GitObject {
 	private List<RevCommit> commits;
 	private String pattern;
 	private String messagePattern;
+	private String authorPattern;
+	private String committerPattern;
 	private Ref toRefId;
 	private Ref fromRefId;
 	private int page;
@@ -89,6 +91,14 @@ public class Log extends GitObject {
 
 	public void setMessagePattern(String messagePattern) {
 		this.messagePattern = messagePattern;
+	}
+
+	public void setAuthorPattern(String authorPattern) {
+		this.authorPattern = authorPattern;
+	}
+
+	public void setCommitterPattern(String committerPattern) {
+		this.committerPattern = committerPattern;
 	}
 
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
@@ -135,39 +145,46 @@ public class Log extends GitObject {
 	@PropertyDescription(name = ProtocolConstants.KEY_PREVIOUS_LOCATION)
 	private URI getPreviousPageLocation() throws URISyntaxException {
 		if (page > 0) {
-			StringBuilder c = new StringBuilder(""); //$NON-NLS-1$
-			if (fromRefId != null)
-				c.append(fromRefId.getName());
-			if (fromRefId != null && toRefId != null)
-				c.append(".."); //$NON-NLS-1$
-			if (toRefId != null)
-				c.append(Repository.shortenRefName(toRefId.getName()));
-			String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
-			if (this.messagePattern != null) {
-				q += "&filter=" + GitUtils.encode(this.messagePattern);
-			}
+			String c = getRefRange();
+			String q = getCommitQuery();
 			if (page > 1) {
-				return BaseToCommitConverter.getCommitLocation(cloneLocation, GitUtils.encode(c.toString()), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page - 1, pageSize)));
+				return BaseToCommitConverter.getCommitLocation(cloneLocation, GitUtils.encode(c), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page - 1, pageSize)));
 			}
 		}
 		return null;
 	}
 
+	private String getRefRange() {
+		StringBuilder c = new StringBuilder(""); //$NON-NLS-1$
+		if (fromRefId != null)
+			c.append(fromRefId.getName());
+		if (fromRefId != null && toRefId != null)
+			c.append(".."); //$NON-NLS-1$
+		if (toRefId != null)
+			c.append(Repository.shortenRefName(toRefId.getName()));
+		return c.toString();
+	}
+
+	private String getCommitQuery() {
+		String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
+		if (this.messagePattern != null) {
+			q += "&filter=" + GitUtils.encode(this.messagePattern); //$NON-NLS-1$
+		}
+		if (this.authorPattern != null) {
+			q += "&author=" + GitUtils.encode(this.authorPattern); //$NON-NLS-1$
+		}
+		if (this.committerPattern != null) {
+			q += "&committer=" + GitUtils.encode(this.committerPattern); //$NON-NLS-1$
+		}
+		return q;
+	}
+
 	@PropertyDescription(name = ProtocolConstants.KEY_NEXT_LOCATION)
 	private URI getNextPageLocation() throws URISyntaxException {
 		if (hasNextPage()) {
-			StringBuilder c = new StringBuilder(""); //$NON-NLS-1$
-			if (fromRefId != null)
-				c.append(fromRefId.getName());
-			if (fromRefId != null && toRefId != null)
-				c.append(".."); //$NON-NLS-1$
-			if (toRefId != null)
-				c.append(Repository.shortenRefName(toRefId.getName()));
-			String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
-			if (this.messagePattern != null) {
-				q += "&filter=" + GitUtils.encode(this.messagePattern);
-			}
-			return BaseToCommitConverter.getCommitLocation(cloneLocation, GitUtils.encode(c.toString()), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page + 1, pageSize)));
+			String c = getRefRange();
+			String q = getCommitQuery();
+			return BaseToCommitConverter.getCommitLocation(cloneLocation, GitUtils.encode(c), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page + 1, pageSize)));
 		}
 		return null;
 	}

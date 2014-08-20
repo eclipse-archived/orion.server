@@ -125,20 +125,31 @@ public class LogCommand extends GitCommand<Iterable<RevCommit>> {
 	 */
 	public Iterable<RevCommit> call() throws GitAPIException, NoHeadException {
 		checkCallable();
+		ArrayList<RevFilter> filters = new ArrayList<RevFilter>();
+
 		if (pathFilters.size() > 0)
 			walk.setTreeFilter(AndTreeFilter.create(PathFilterGroup.create(pathFilters), TreeFilter.ANY_DIFF));
-		if (skip > -1 && maxCount > -1)
-			walk.setRevFilter(AndRevFilter.create(SkipRevFilter.create(skip), MaxCountRevFilter.create(maxCount)));
-		else if (skip > -1)
-			walk.setRevFilter(SkipRevFilter.create(skip));
-		else if (maxCount > -1)
-			walk.setRevFilter(MaxCountRevFilter.create(maxCount));
+
 		if (msgFilter != null)
-			walk.setRevFilter(msgFilter);
+			filters.add(msgFilter);
 		if (authorFilter != null)
-			walk.setRevFilter(authorFilter);
+			filters.add(authorFilter);
 		if (committerFilter != null)
-			walk.setRevFilter(committerFilter);
+			filters.add(committerFilter);
+		if (skip > -1)
+			filters.add(SkipRevFilter.create(skip));
+		if (maxCount > -1)
+			filters.add(MaxCountRevFilter.create(maxCount));
+		RevFilter filter = null;
+		if (filters.size() > 1) {
+			filter = AndRevFilter.create(filters);
+		} else if (filters.size() == 1) {
+			filter = filters.get(0);
+		}
+
+		if (filter != null)
+			walk.setRevFilter(filter);
+
 		if (!startSpecified) {
 			try {
 				ObjectId headId = repo.resolve(Constants.HEAD);
@@ -287,19 +298,19 @@ public class LogCommand extends GitCommand<Iterable<RevCommit>> {
 		return this;
 	}
 
-	public LogCommand addMessageFilter(String filter) {
+	public LogCommand setMessageFilter(String filter) {
 		checkCallable();
 		msgFilter = MessageRevFilter.create(filter);
 		return this;
 	}
 
-	public LogCommand addAuthFilter(String filter) {
+	public LogCommand setAuthFilter(String filter) {
 		checkCallable();
 		authorFilter = AuthorRevFilter.create(filter);
 		return this;
 	}
 
-	public LogCommand addCommitterFilter(String filter) {
+	public LogCommand setCommitterFilter(String filter) {
 		checkCallable();
 		committerFilter = CommitterRevFilter.create(filter);
 		return this;
