@@ -19,8 +19,8 @@ set -e
 
 if [ $# -eq 1 -o $# -eq 2 ]; then
 	buildType=$1
-	if [ -n "$4" ]; then
-		dropFilesLabel=$4
+	if [ -n "$2" ]; then
+		dropFilesLabel=$2
 	fi
 else
 	echo "Usage: $0 [i | s | r | m] [qualifier]"
