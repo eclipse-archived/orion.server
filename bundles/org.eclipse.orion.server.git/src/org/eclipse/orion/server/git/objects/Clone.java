@@ -10,15 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Map.Entry;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -43,8 +40,8 @@ public class Clone {
 	private URI contentLocation;
 	private URIish uriish;
 	private String name;
-	private Repository db;
 	private URI baseLocation;
+	private String cloneUrl;
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
@@ -124,12 +121,6 @@ public class Clone {
 	@PropertyDescription(name = ProtocolConstants.KEY_NAME)
 	public String getName() {
 		return this.name;
-	}
-
-	private Repository getRepository() throws IOException {
-		if (db == null)
-			db = FileRepositoryBuilder.create(new File(new File(getContentLocation()), Constants.DOT_GIT));
-		return db;
 	}
 
 	public void setBaseLocation(URI baseLocation) {
@@ -231,26 +222,18 @@ public class Clone {
 
 	@PropertyDescription(name = GitConstants.KEY_URL)
 	private String getCloneUrl() {
-		try {
-			StoredConfig config = getRepository().getConfig();
-			String remoteUri = config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL);
-			if (remoteUri != null)
-				return remoteUri;
-		} catch (IOException e) {
-			// ignore and skip Git URL
-		}
-		return null;
+		return cloneUrl;
 	}
 
 	private URI createUriWithPath(final IPath path) throws URISyntaxException {
 		return new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), path.toString(), baseLocation.getQuery(), baseLocation.getFragment());
 	}
 
-	public JSONObject toJSON(Entry<IPath, File> entry, URI aBaseLocation) throws IOException, URISyntaxException {
-		id = Activator.LOCATION_FILE_SERVLET + '/' + entry.getKey().toString();
-		name = entry.getKey().lastSegment();
-		db = FileRepositoryBuilder.create(entry.getValue());
-		this.baseLocation = aBaseLocation;
+	public JSONObject toJSON(IPath path, URI baseLocation, String cloneUrl) throws IOException, URISyntaxException {
+		id = Activator.LOCATION_FILE_SERVLET + '/' + path.toString();
+		name = path.lastSegment();
+		this.cloneUrl = cloneUrl;
+		this.baseLocation = baseLocation;
 		return toJSON();
 	}
 }
