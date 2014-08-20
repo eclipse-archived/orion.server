@@ -687,6 +687,39 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	}
 
 	@Test
+	public void testEncodedProjectContentLocation() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName(testUserLogin);
+		userInfo.setFullName(testUserLogin);
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create the project
+		String projectName = "Orion Project";
+		ProjectInfo projectInfo = new ProjectInfo();
+		projectInfo.setFullName(projectName);
+		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+		metaStore.createProject(projectInfo);
+
+		// read the project
+		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo.getFullName());
+		assertNotNull(readProjectInfo);
+		assertEquals(readProjectInfo.getFullName(), projectInfo.getFullName());
+		// ensure content location was written and read back successfully 
+		assertEquals(projectInfo.getContentLocation(), readProjectInfo.getContentLocation());
+	}
+
+	@Test
 	public void testGetDefaultContentLocation() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();

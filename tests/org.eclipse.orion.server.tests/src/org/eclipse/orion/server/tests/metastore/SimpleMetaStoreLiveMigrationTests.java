@@ -71,7 +71,8 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		String projectId = SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectName);
 		jsonObject.put("UniqueId", projectId);
 		jsonObject.put("FullName", projectName);
-		jsonObject.put("ContentLocation", contentLocation.toURI().toString());
+		String encodedContentLocation = SimpleMetaStoreUtil.encodeProjectContentLocation(contentLocation.toURI().toString());
+		jsonObject.put("ContentLocation", encodedContentLocation);
 		JSONObject properties = new JSONObject();
 		jsonObject.put("Properties", properties);
 		return jsonObject;
@@ -259,11 +260,13 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(userId, workspaceName);
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getWorkspaceRoot(), userId);
 		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
-		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
+		File workspaceMetaFolder = SimpleMetaStoreUtil.retrieveMetaFolder(userMetaFolder, encodedWorkspaceName);
+		assertEquals(workspaceMetaFolder.getParent(), userMetaFolder.toString());
 		String projectId = SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectName);
 		File projectFolder = SimpleMetaStoreUtil.retrieveMetaFolder(workspaceMetaFolder, projectId);
 		assertNotNull(projectFolder);
 		assertFalse(projectFolder.exists());
+		assertEquals(projectFolder.getParent(), workspaceMetaFolder.toString());
 		return projectFolder;
 	}
 
@@ -648,7 +651,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		newWorkspaceJSON = createWorkspaceJson(version, testUserId, secondWorkspaceName, secondProjectNames);
 		createWorkspaceMetaData(version, newWorkspaceJSON, testUserId, secondWorkspaceName);
 
-		File defaultContentLocation = getProjectDefaultContentLocation(testUserId, secondProjectNames.get(0), secondProjectNames.get(0));
+		File defaultContentLocation = getProjectDefaultContentLocation(testUserId, secondWorkspaceName, secondProjectNames.get(0));
 		JSONObject newProjectJSON = createProjectJson(version, testUserId, secondWorkspaceName, secondProjectNames.get(0), defaultContentLocation);
 		createProjectMetaData(version, newProjectJSON, testUserId, secondWorkspaceName, secondProjectNames.get(0));
 
@@ -707,8 +710,11 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		assertEquals(projectName, jsonObject.getString("FullName"));
 		assertTrue(jsonObject.has("Properties"));
 		assertTrue(jsonObject.has("ContentLocation"));
-		URI contentLocationFileFromJson = new URI(jsonObject.getString("ContentLocation"));
-		assertEquals("file", contentLocationFileFromJson.getScheme());
+		String contentLocationFromJson = jsonObject.getString("ContentLocation");
+		assertTrue(contentLocationFromJson.startsWith(SimpleMetaStoreUtil.SERVERWORKSPACE));
+		String decodedContentLocationFromJson = SimpleMetaStoreUtil.decodeProjectContentLocation(contentLocationFromJson);
+		URI contentLocationFileFromJson = new URI(decodedContentLocationFromJson);
+		assertEquals(SimpleMetaStoreUtil.FILE_SCHEMA, contentLocationFileFromJson.getScheme());
 		assertEquals(contentLocation.toString(), contentLocationFileFromJson.getPath());
 	}
 

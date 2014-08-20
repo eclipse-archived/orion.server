@@ -21,6 +21,9 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.resources.FileLocker;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -35,9 +38,11 @@ import org.slf4j.LoggerFactory;
  */
 public class SimpleMetaStoreUtil {
 
+	public static final String FILE_SCHEMA = "file";
 	public static final String METAFILE_EXTENSION = ".json";
 	public static String OPERATING_SYSTEM_NAME = System.getProperty("os.name").toLowerCase();
 	public static final String SEPARATOR = "-";
+	public static final String SERVERWORKSPACE = "${SERVERWORKSPACE}";
 	public final static String USER = "user";
 
 	/**
@@ -143,6 +148,28 @@ public class SimpleMetaStoreUtil {
 			}
 		}
 		return createMetaFolder(orgFolder, userName);
+	}
+
+	/**
+	 * Decode the project's content location. The variable ${SERVERWORKSPACE} is replaced with the path of the root 
+	 * location (serverworkspace).
+	 * 
+	 * @return the project's content location.
+	 */
+	public static String decodeProjectContentLocation(String contentLocation) {
+		try {
+			if (!contentLocation.startsWith(SERVERWORKSPACE)) {
+				// does not include the variable so just return the existing contentLocation.
+				return contentLocation;
+			}
+			String root = FILE_SCHEMA.concat(":").concat(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null).toString());
+			String decodedcontentLocation = contentLocation.replace(SERVERWORKSPACE, root);
+			return decodedcontentLocation;
+		} catch (CoreException e) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.error("Meta File Error, Unknown error", e); //$NON-NLS-1$
+			return contentLocation;
+		}
 	}
 
 	/**
@@ -261,8 +288,27 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
+	 * Encode the project's content location. When the project's content location is a URI with a file based schema and
+	 * the project is in the default location, we want to replace the path of the root location (serverworkspace) with a variable
+	 * ${SERVERWORKSPACE}
+	 * @return the project's content location.
+	 */
+	public static String encodeProjectContentLocation(String contentLocation) {
+		if (!contentLocation.startsWith(FILE_SCHEMA)) {
+			// not a file based schema so just return the existing contentLocation.
+			return contentLocation;
+		}
+		String root = OrionConfiguration.getRootLocation().toURI().toString();
+		if (contentLocation.startsWith(root)) {
+			String encodedcontentLocation = SERVERWORKSPACE.concat(contentLocation.substring(root.length()));
+			return encodedcontentLocation;
+		}
+		return contentLocation;
+	}
+
+	/**
 	 * Encode the project id from the project name. In the current implementation, the project id and
-	 * workspace name are the same value. However, on Windows, we replace the bar character in the project name 
+	 * project name are the same value. However, on Windows, we replace the bar character in the project name 
 	 * with three dashes since bar is a reserved character on Windows and cannot be used to save a project to disk. 
 	 * @param projectName The project name.
 	 * @return The project id.
@@ -629,10 +675,10 @@ public class SimpleMetaStoreUtil {
 	 */
 	public static boolean moveMetaFolder(File parent, String oldName, File newParent, String newName) {
 		if (!isMetaFolder(parent, oldName)) {
-			throw new RuntimeException("Meta File Error, folder "+ oldName + " not found in folder " + parent.getAbsolutePath() , null);
+			throw new RuntimeException("Meta File Error, folder " + oldName + " not found in folder " + parent.getAbsolutePath(), null);
 		}
-		if (! newParent.exists() || ! newParent.isDirectory()) {
-			throw new RuntimeException("Meta File Error, folder does not exist " + newParent.getAbsolutePath() , null);
+		if (!newParent.exists() || !newParent.isDirectory()) {
+			throw new RuntimeException("Meta File Error, folder does not exist " + newParent.getAbsolutePath(), null);
 		}
 		File oldFolder = retrieveMetaFolder(parent, oldName);
 		File newFolder = retrieveMetaFolder(newParent, newName);

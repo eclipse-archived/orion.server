@@ -21,7 +21,10 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -202,6 +205,21 @@ public class SimpleMetaStoreUtilTest {
 		// check the filesystem, the folder is really gone now
 		files = Arrays.asList(parent.list());
 		assertFalse(files.contains(name));
+	}
+
+	@Test
+	public void testEncodedProjectContentLocation() throws CoreException {
+		String root = OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null).toURI().toString();
+		String projectPath = "an/anthony/OrionContent/Project";
+		String defaultContentLocation = root.concat(projectPath);
+		assertTrue(defaultContentLocation.startsWith(SimpleMetaStoreUtil.FILE_SCHEMA));
+		assertTrue(defaultContentLocation.contains(projectPath));
+		String encodedContentLocation = SimpleMetaStoreUtil.encodeProjectContentLocation(defaultContentLocation);
+		assertTrue(encodedContentLocation.contains(projectPath));
+		assertTrue(encodedContentLocation.startsWith(SimpleMetaStoreUtil.SERVERWORKSPACE));
+		String decodedContentLocation = SimpleMetaStoreUtil.decodeProjectContentLocation(encodedContentLocation);
+		assertTrue(decodedContentLocation.startsWith(root));
+		assertEquals(decodedContentLocation, defaultContentLocation);
 	}
 
 	@Test

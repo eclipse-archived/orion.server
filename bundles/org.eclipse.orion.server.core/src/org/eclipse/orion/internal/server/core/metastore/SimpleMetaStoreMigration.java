@@ -183,7 +183,8 @@ public class SimpleMetaStoreMigration {
 								String contentLocation = newProjectFolder.toURI().toString();
 								// remove trailing slash from the contentLocation 
 								contentLocation = contentLocation.substring(0, contentLocation.length() - 1);
-								projectJSON.put("ContentLocation", contentLocation);
+								String encodedContentLocation = SimpleMetaStoreUtil.encodeProjectContentLocation(contentLocation);
+								projectJSON.put("ContentLocation", encodedContentLocation);
 								projectJSON.put("WorkspaceId", firstWorkspaceId);
 								SimpleMetaStoreUtil.updateMetaFile(userMetaFolder, projectName, projectJSON);
 								File updatedMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, projectName);
