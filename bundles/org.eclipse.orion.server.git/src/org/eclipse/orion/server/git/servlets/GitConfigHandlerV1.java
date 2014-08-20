@@ -87,19 +87,27 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
 			if (gitDir == null)
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No repository found under {0}", p.removeFirstSegments(1)), null));
-			Repository db = FileRepositoryBuilder.create(gitDir);
-			URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.CONFIG);
-			ConfigOption configOption = new ConfigOption(cloneLocation, db);
-			OrionServlet.writeJSONResponse(request, response, configOption.toJSON(/* all */), JsonURIUnqualificationStrategy.ALL_NO_GIT);
-			return true;
+			Repository db = null;
+			try {
+				db = FileRepositoryBuilder.create(gitDir);
+				URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.CONFIG);
+				ConfigOption configOption = new ConfigOption(cloneLocation, db);
+				OrionServlet.writeJSONResponse(request, response, configOption.toJSON(/* all */), JsonURIUnqualificationStrategy.ALL_NO_GIT);
+				return true;
+			} finally {
+				if (db != null) {
+					db.close();
+				}
+			}
 		} else if (p.segment(1).equals(Clone.RESOURCE) && p.segment(2).equals("file")) { //$NON-NLS-1$
 			// expected path /gitapi/config/{key}/clone/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
 			if (gitDir == null)
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No repository found under {0}", p.removeFirstSegments(2)), null));
-			Repository db = FileRepositoryBuilder.create(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.CONFIG_OPTION);
+			Repository db = null;
 			try {
+				db = FileRepositoryBuilder.create(gitDir);
 				ConfigOption configOption = new ConfigOption(cloneLocation, db, p.segment(0));
 				if (!configOption.exists())
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "There is no config entry with key provided", null));
@@ -107,6 +115,10 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 				return true;
 			} catch (IllegalArgumentException e) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), e));
+			} finally {
+				if (db != null) {
+					db.close();
+				}
 			}
 		}
 		return false;
@@ -119,7 +131,6 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
 			if (gitDir == null)
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No repository found under {0}", p.removeFirstSegments(1)), null));
-			Repository db = FileRepositoryBuilder.create(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.CONFIG);
 			JSONObject toPost = OrionServlet.readJSONRequest(request);
 			String key = toPost.optString(GitConstants.KEY_CONFIG_ENTRY_KEY, null);
@@ -128,7 +139,9 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			String value = toPost.optString(GitConstants.KEY_CONFIG_ENTRY_VALUE, null);
 			if (value == null || value.isEmpty())
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Config entry value must be provided", null));
+			Repository db = null;
 			try {
+				db = FileRepositoryBuilder.create(gitDir);
 				ConfigOption configOption = new ConfigOption(cloneLocation, db, key);
 				boolean present = configOption.exists();
 				if (present)
@@ -142,6 +155,10 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 				return true;
 			} catch (IllegalArgumentException e) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), e));
+			} finally {
+				if (db != null) {
+					db.close();
+				}
 			}
 		}
 		return false;
@@ -154,9 +171,10 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
 			if (gitDir == null)
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No repository found under {0}", p.removeFirstSegments(2)), null));
-			Repository db = FileRepositoryBuilder.create(gitDir);
+			Repository db = null;
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.CONFIG_OPTION);
 			try {
+				db = FileRepositoryBuilder.create(gitDir);
 				ConfigOption configOption = new ConfigOption(cloneLocation, db, p.segment(0));
 
 				JSONObject toPut = OrionServlet.readJSONRequest(request);
@@ -178,6 +196,10 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 				return true;
 			} catch (IllegalArgumentException e) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), e));
+			} finally {
+				if (db != null) {
+					db.close();
+				}
 			}
 		}
 		return false;
@@ -190,9 +212,10 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
 			if (gitDir == null)
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("No repository found under {0}", p.removeFirstSegments(2)), null));
-			Repository db = FileRepositoryBuilder.create(gitDir);
+			Repository db = null;
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.CONFIG_OPTION);
 			try {
+				db = FileRepositoryBuilder.create(gitDir);
 				ConfigOption configOption = new ConfigOption(cloneLocation, db, GitUtils.decode(p.segment(0)));
 				if (configOption.exists()) {
 					delete(configOption);
@@ -203,6 +226,10 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 				return true;
 			} catch (IllegalArgumentException e) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), e));
+			} finally {
+				if (db != null) {
+					db.close();
+				}
 			}
 		}
 		return false;

@@ -76,51 +76,50 @@ public class FetchJob extends GitJob {
 
 	private IStatus doFetch(IProgressMonitor monitor) throws IOException, CoreException, URISyntaxException, GitAPIException {
 		ProgressMonitor gitMonitor = new EclipseGitProgressTransformer(monitor);
-		Repository db = getRepository();
+		Repository db = null;
+		try {
+			db = getRepository();
+			Git git = new Git(db);
+			FetchCommand fc = git.fetch();
+			fc.setProgressMonitor(gitMonitor);
 
-		Git git = new Git(db);
-		FetchCommand fc = git.fetch();
-		fc.setProgressMonitor(gitMonitor);
-
-		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
-		credentials.setUri(remoteConfig.getURIs().get(0));
-		if (this.cookie != null) {
-			fc.setTransportConfigCallback(new TransportConfigCallback() {
-				@Override
-				public void configure(Transport t) {
-					if (t instanceof TransportHttp && cookie != null) {
-						HashMap<String, String> map = new HashMap<String, String>();
-						map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
-						//Temp. until JGit fix
-						try {
-							if (!InitSetAdditionalHeaders) {
-								InitSetAdditionalHeaders = true;
-								SetAdditionalHeadersM = TransportHttp.class.getMethod("setAdditionalHeaders", Map.class);
+			RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
+			credentials.setUri(remoteConfig.getURIs().get(0));
+			if (this.cookie != null) {
+				fc.setTransportConfigCallback(new TransportConfigCallback() {
+					@Override
+					public void configure(Transport t) {
+						if (t instanceof TransportHttp && cookie != null) {
+							HashMap<String, String> map = new HashMap<String, String>();
+							map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
+							//Temp. until JGit fix
+							try {
+								if (!InitSetAdditionalHeaders) {
+									InitSetAdditionalHeaders = true;
+									SetAdditionalHeadersM = TransportHttp.class.getMethod("setAdditionalHeaders", Map.class);
+								}
+								if (SetAdditionalHeadersM != null) {
+									SetAdditionalHeadersM.invoke(t, map);
+								}
+							} catch (SecurityException e) {
+							} catch (NoSuchMethodException e) {
+							} catch (IllegalArgumentException e) {
+							} catch (IllegalAccessException e) {
+							} catch (InvocationTargetException e) {
 							}
-							if (SetAdditionalHeadersM != null) {
-								SetAdditionalHeadersM.invoke(t, map);
-							}
-						} catch (SecurityException e) {
-						} catch (NoSuchMethodException e) {
-						} catch (IllegalArgumentException e) {
-						} catch (IllegalAccessException e) {
-						} catch (InvocationTargetException e) {
 						}
 					}
-				}
-			});
-		}
-		fc.setCredentialsProvider(credentials);
-		fc.setRemote(remote);
-		if (branch != null) {
-			// refs/heads/{branch}:refs/remotes/{remote}/{branch}
-			RefSpec spec = new RefSpec(Constants.R_HEADS + branch + ":" + Constants.R_REMOTES + remote + "/" + branch); //$NON-NLS-1$ //$NON-NLS-2$
-			spec = spec.setForceUpdate(force);
-			fc.setRefSpecs(spec);
-		}
-		FetchResult fetchResult;
-		try {
-			fetchResult = fc.call();
+				});
+			}
+			fc.setCredentialsProvider(credentials);
+			fc.setRemote(remote);
+			if (branch != null) {
+				// refs/heads/{branch}:refs/remotes/{remote}/{branch}
+				RefSpec spec = new RefSpec(Constants.R_HEADS + branch + ":" + Constants.R_REMOTES + remote + "/" + branch); //$NON-NLS-1$ //$NON-NLS-2$
+				spec = spec.setForceUpdate(force);
+				fc.setRefSpecs(spec);
+			}
+			FetchResult fetchResult = fc.call();
 			if (monitor.isCanceled()) {
 				return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
 			}
@@ -128,10 +127,12 @@ public class FetchJob extends GitJob {
 			if (monitor.isCanceled()) {
 				return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
 			}
+			return handleFetchResult(fetchResult);
 		} finally {
-			db.close();
+			if (db != null) {
+				db.close();
+			}
 		}
-		return handleFetchResult(fetchResult);
 	}
 
 	static IStatus handleFetchResult(FetchResult fetchResult) {

@@ -78,6 +78,7 @@ public class CloneJob extends GitJob {
 
 	private IStatus doClone(IProgressMonitor monitor) {
 		EclipseGitProgressTransformer gitMonitor = new EclipseGitProgressTransformer(monitor);
+		Repository repo = null;
 		try {
 			File cloneFolder = new File(clone.getContentLocation().getPath());
 			if (!cloneFolder.exists()) {
@@ -123,9 +124,8 @@ public class CloneJob extends GitJob {
 			}
 			// Configure the clone, see Bug 337820
 			GitCloneHandlerV1.doConfigureClone(git, user, gitUserName, gitUserMail);
-			Repository repo = git.getRepository();
+			repo = git.getRepository();
 			GitJobUtils.packRefs(repo, gitMonitor);
-			repo.close();
 			if (monitor.isCanceled()) {
 				return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
 			}
@@ -170,6 +170,10 @@ public class CloneJob extends GitJob {
 			return getJGitInternalExceptionStatus(e, "Error cloning git repository");
 		} catch (Exception e) {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error cloning git repository", e);
+		} finally {
+			if (repo != null) {
+				repo.close();
+			}
 		}
 		JSONObject jsonData = new JSONObject();
 		try {

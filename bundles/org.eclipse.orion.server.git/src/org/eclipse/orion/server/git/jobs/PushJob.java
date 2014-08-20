@@ -65,13 +65,13 @@ public class PushJob extends GitJob {
 		ProgressMonitor gitMonitor = new EclipseGitProgressTransformer(monitor);
 		// /git/remote/{remote}/{branch}/file/{path}
 		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(2));
-		Repository db = FileRepositoryBuilder.create(gitDir);
-		Git git = new Git(db);
-
 		// this set will contain only OK status or UP_TO_DATE status
 		Set<RemoteRefUpdate.Status> statusSet = new HashSet<RemoteRefUpdate.Status>();
-
+		Repository db = null;
 		try {
+			db = FileRepositoryBuilder.create(gitDir);
+			Git git = new Git(db);
+
 			PushCommand pushCommand = git.push();
 			pushCommand.setProgressMonitor(gitMonitor);
 			pushCommand.setTransportConfigCallback(new TransportConfigCallback() {
@@ -131,8 +131,9 @@ public class PushJob extends GitJob {
 				// TODO: return results for all updated branches once push is available for remote, see bug 352202
 			}
 		} finally {
-			// close the git repository
-			db.close();
+			if (db != null) {
+				db.close();
+			}
 		}
 		if (statusSet.contains(RemoteRefUpdate.Status.OK))
 			// if there is OK status in the set -> something was updated
