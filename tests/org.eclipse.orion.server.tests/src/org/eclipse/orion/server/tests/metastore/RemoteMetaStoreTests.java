@@ -49,6 +49,15 @@ import com.meterware.httpunit.WebResponse;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RemoteMetaStoreTests {
 
+	/**
+	 * The historical versions of Orion metadata, with orion.conf settings in parentheses:
+	 * Orion 3.0 (orion.core.metastore=legacy)
+	 * Orion 4.0 (orion.core.metastore=simple)
+	 * Orion 6.0 (orion.core.metastore=simple2)
+	 * Orion 7.0 (only one version supported so no longer an orion.conf setting.)
+	 */
+	protected static int orionMetastoreVersion = 7;
+
 	protected static String orionTestName = null;
 
 	/**
@@ -351,6 +360,9 @@ public class RemoteMetaStoreTests {
 	 * @return
 	 */
 	protected String getWorkspaceId(String login, String workspaceName) {
+		if (RemoteMetaStoreTests.orionMetastoreVersion == 3) {
+			return login;
+		}
 		return login.concat("-").concat(workspaceName.replace(" ", "").replace("#", ""));
 	}
 
