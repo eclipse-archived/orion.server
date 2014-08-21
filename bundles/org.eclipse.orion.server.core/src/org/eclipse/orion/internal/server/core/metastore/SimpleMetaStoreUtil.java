@@ -21,8 +21,6 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.resources.FileLocker;
 import org.json.JSONException;
@@ -157,19 +155,13 @@ public class SimpleMetaStoreUtil {
 	 * @return the project's content location.
 	 */
 	public static String decodeProjectContentLocation(String contentLocation) {
-		try {
-			if (!contentLocation.startsWith(SERVERWORKSPACE)) {
-				// does not include the variable so just return the existing contentLocation.
-				return contentLocation;
-			}
-			String root = FILE_SCHEMA.concat(":").concat(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null).toString());
-			String decodedcontentLocation = contentLocation.replace(SERVERWORKSPACE, root);
-			return decodedcontentLocation;
-		} catch (CoreException e) {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.error("Meta File Error, Unknown error", e); //$NON-NLS-1$
+		if (!contentLocation.startsWith(SERVERWORKSPACE)) {
+			// does not include the variable so just return the existing contentLocation.
 			return contentLocation;
 		}
+		String root = OrionConfiguration.getRootLocation().toURI().toString();
+		String decodedcontentLocation = contentLocation.replace(SERVERWORKSPACE, root);
+		return decodedcontentLocation;
 	}
 
 	/**
