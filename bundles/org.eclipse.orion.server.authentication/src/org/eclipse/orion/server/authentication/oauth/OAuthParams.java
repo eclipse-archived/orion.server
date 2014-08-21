@@ -81,30 +81,4 @@ public abstract class OAuthParams {
 	public String getState(){
 		return state;
 	}
-
-	protected JSONObject readCredentialFile() throws OAuthException{
-		try {
-			JSONObject json = new JSONObject(getFileContents());
-			return json;
-		} catch (JSONException e) {
-			throw new OAuthException("Error getting oauth credentials");
-		} catch (IOException e) {
-			throw new OAuthException("Error getting oauth credentials");
-		}
-	}
-
-	private String getFileContents() throws IOException {
-		StringBuilder sb = new StringBuilder();
-		InputStream is = Activator.getBundleContext().getBundle().getEntry(CREDENTIAL_FILE).openStream();
-		BufferedReader br = new BufferedReader(new InputStreamReader(is));
-		try {
-			String line = ""; //$NON-NLS-1$
-			while ((line = br.readLine()) != null) {
-				sb.append(line).append('\n');
-			}
-		} finally {
-			br.close();
-		}
-		return sb.toString();
-	}
 }
