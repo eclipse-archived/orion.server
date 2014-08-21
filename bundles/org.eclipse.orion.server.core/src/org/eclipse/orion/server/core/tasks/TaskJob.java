@@ -84,7 +84,21 @@ public abstract class TaskJob extends Job implements ITaskCanceller {
 		}
 	}
 
-	protected abstract IStatus performJob();
+	@Deprecated
+	protected IStatus performJob() {
+		return Status.CANCEL_STATUS;
+	}
+	
+	/**
+	 * Perform a task with a progress monitor.  This method should be
+	 * overridden, not extended.
+	 * 
+	 * @param monitor The main progress monitor for the job.
+	 * @return the appropriate IStatus.
+	 */
+	protected IStatus performJob(IProgressMonitor monitor) {
+		return performJob();
+	}
 
 	private synchronized void setTaskResult(IStatus result) {
 		if(!task.isRunning()){
@@ -101,7 +115,7 @@ public abstract class TaskJob extends Job implements ITaskCanceller {
 	@Override
 	protected IStatus run(IProgressMonitor progressMonitor) {
 		try {
-			realResult = performJob();
+			realResult = performJob(progressMonitor);
 			if (task == null) {
 				return Status.OK_STATUS; // see bug 353190;;
 			}
