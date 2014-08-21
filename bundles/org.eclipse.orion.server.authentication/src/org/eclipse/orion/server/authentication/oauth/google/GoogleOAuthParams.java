@@ -23,6 +23,7 @@ import org.eclipse.orion.server.authentication.oauth.OAuthConsumer;
 import org.eclipse.orion.server.authentication.oauth.OAuthException;
 import org.eclipse.orion.server.authentication.oauth.OAuthParams;
 import org.eclipse.orion.server.authentication.oauth.OAuthTokenResponse;
+import org.eclipse.orion.server.core.PreferenceHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -50,6 +51,10 @@ public class GoogleOAuthParams extends OAuthParams {
 
 	private static final GrantType GRANT_TYPE = GrantType.AUTHORIZATION_CODE;
 
+	private static final String CLIENT_KEY = "orion.oauth.google.client";
+
+	private static final String CLIENT_SECRET = "orion.oauth.google.secret";
+
 	private static final Class<? extends OAuthAccessTokenResponse> TOKEN_RESPONSE_CLASS = OAuthTokenResponse.class;
 
 	private String client_key = null;
@@ -65,14 +70,14 @@ public class GoogleOAuthParams extends OAuthParams {
 
 	public String getClientKey() throws OAuthException {
 		if(client_key == null) {
-			setCredentials();
+			client_key = PreferenceHelper.getString(CLIENT_KEY);
 		}
 		return client_key;
 	}
 
 	public String getClientSecret() throws OAuthException {
 		if(client_secret == null) {
-			setCredentials();
+			client_secret = PreferenceHelper.getString(CLIENT_SECRET);
 		}
 		return client_secret;
 	}
@@ -99,18 +104,6 @@ public class GoogleOAuthParams extends OAuthParams {
 
 	public OAuthConsumer getNewOAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse) throws OAuthException {
 		return new GoogleOAuthConsumer(oauthAccessTokenResponse);
-	}
-
-
-	private void setCredentials() throws OAuthException{
-		JSONObject json = readCredentialFile();
-		try { 
-			JSONObject googleCredentials = json.getJSONObject(GOOGLE);
-			client_key = googleCredentials.getString(CLIENT_KEY);
-			client_secret = googleCredentials.getString(CLIENT_SECRET);
-		} catch (JSONException e) {
-			throw new OAuthException("Error getting oauth credentials");
-		}
 	}
 
 	public void addAdditionsParams(AuthenticationRequestBuilder requestBuiler) throws OAuthException {
