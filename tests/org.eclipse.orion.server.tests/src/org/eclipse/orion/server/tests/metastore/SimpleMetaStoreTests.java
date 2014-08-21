@@ -61,6 +61,230 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	}
 
 	@Test
+	public void testArchiveEmptyOrganizationalFolder() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName(testUserLogin);
+		userInfo.setFullName(testUserLogin);
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create an empty organizational folder
+		IFileStore rootLocation = OrionConfiguration.getRootLocation();
+		String orgFolderName = "zz";
+		IFileStore orgFolder = rootLocation.getChild(orgFolderName);
+		assertFalse(orgFolder.fetchInfo().exists());
+		orgFolder.mkdir(EFS.NONE, null);
+		assertTrue(orgFolder.fetchInfo().exists());
+		assertTrue(orgFolder.fetchInfo().isDirectory());
+
+		// read all the users which will trigger the archive
+		List<String> users = metaStore.readAllUsers();
+		assertNotNull(users);
+
+		// verify the invalid metadata folder has moved to the archive
+		IFileStore archiveFolder = rootLocation.getChild(SimpleMetaStoreUtil.ARCHIVE);
+		assertTrue(archiveFolder.fetchInfo().exists());
+		assertTrue(archiveFolder.fetchInfo().isDirectory());
+		IFileStore archivedOrgFolder = archiveFolder.getChild(orgFolderName);
+		assertTrue(archivedOrgFolder.fetchInfo().exists());
+		assertTrue(archivedOrgFolder.fetchInfo().isDirectory());
+		assertFalse(orgFolder.fetchInfo().exists());
+	}
+
+	@Test
+	public void testArchiveInvalidMetaDataFileInOrganizationalFolder() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName(testUserLogin);
+		userInfo.setFullName(testUserLogin);
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create a invalid metadata file
+		IFileStore rootLocation = OrionConfiguration.getRootLocation();
+		String orgFolderName = "te";
+		IFileStore orgFolder = rootLocation.getChild(orgFolderName);
+		assertTrue(orgFolder.fetchInfo().exists());
+		assertTrue(orgFolder.fetchInfo().isDirectory());
+		String invalid = "delete.html";
+		IFileStore invalidFileInOrg = orgFolder.getChild(invalid);
+		try {
+			OutputStream outputStream = invalidFileInOrg.openOutputStream(EFS.NONE, null);
+			outputStream.write("<!doctype html>".getBytes());
+			outputStream.close();
+		} catch (IOException e) {
+			fail("Count not create a test file in the Orion Project:" + e.getLocalizedMessage());
+		}
+		assertTrue(invalidFileInOrg.fetchInfo().exists());
+
+		// read all the users which will trigger the archive
+		List<String> users = metaStore.readAllUsers();
+		assertNotNull(users);
+
+		// verify the invalid metadata file has moved to the archive
+		IFileStore archiveFolder = rootLocation.getChild(SimpleMetaStoreUtil.ARCHIVE);
+		assertTrue(archiveFolder.fetchInfo().exists());
+		assertTrue(archiveFolder.fetchInfo().isDirectory());
+		IFileStore archiveOrgFolder = archiveFolder.getChild(orgFolderName);
+		assertTrue(archiveOrgFolder.fetchInfo().exists());
+		assertTrue(archiveOrgFolder.fetchInfo().isDirectory());
+		IFileStore archivedFile = archiveOrgFolder.getChild(invalid);
+		assertTrue(archivedFile.fetchInfo().exists());
+		assertFalse(invalidFileInOrg.fetchInfo().exists());
+	}
+
+	@Test
+	public void testArchiveInvalidMetaDataFileInWorkspaceRoot() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName(testUserLogin);
+		userInfo.setFullName(testUserLogin);
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create a invalid metadata file
+		IFileStore rootLocation = OrionConfiguration.getRootLocation();
+		String invalid = "delete.html";
+		IFileStore invalidFileAtRoot = rootLocation.getChild(invalid);
+		try {
+			OutputStream outputStream = invalidFileAtRoot.openOutputStream(EFS.NONE, null);
+			outputStream.write("<!doctype html>".getBytes());
+			outputStream.close();
+		} catch (IOException e) {
+			fail("Count not create a test file in the Orion Project:" + e.getLocalizedMessage());
+		}
+		assertTrue(invalidFileAtRoot.fetchInfo().exists());
+
+		// read all the users which will trigger the archive
+		List<String> users = metaStore.readAllUsers();
+		assertNotNull(users);
+
+		// verify the invalid metadata file has moved to the archive
+		IFileStore archiveFolder = rootLocation.getChild(SimpleMetaStoreUtil.ARCHIVE);
+		assertTrue(archiveFolder.fetchInfo().exists());
+		assertTrue(archiveFolder.fetchInfo().isDirectory());
+		IFileStore archivedFile = archiveFolder.getChild(invalid);
+		assertTrue(archivedFile.fetchInfo().exists());
+		assertFalse(invalidFileAtRoot.fetchInfo().exists());
+	}
+
+	@Test
+	public void testArchiveInvalidMetaDataFolderInOrganizationalFolder() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName(testUserLogin);
+		userInfo.setFullName(testUserLogin);
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create a invalid metadata folder
+		IFileStore rootLocation = OrionConfiguration.getRootLocation();
+		String orgFolderName = "te";
+		IFileStore orgFolder = rootLocation.getChild(orgFolderName);
+		assertTrue(orgFolder.fetchInfo().exists());
+		assertTrue(orgFolder.fetchInfo().isDirectory());
+		String invalid = "delete.me";
+		IFileStore invalidFolderInOrg = orgFolder.getChild(invalid);
+		assertFalse(invalidFolderInOrg.fetchInfo().exists());
+		invalidFolderInOrg.mkdir(EFS.NONE, null);
+		assertTrue(invalidFolderInOrg.fetchInfo().exists());
+		assertTrue(invalidFolderInOrg.fetchInfo().isDirectory());
+
+		// read all the users which will trigger the archive
+		List<String> users = metaStore.readAllUsers();
+		assertNotNull(users);
+
+		// verify the invalid metadata folder has moved to the archive
+		IFileStore archiveFolder = rootLocation.getChild(SimpleMetaStoreUtil.ARCHIVE);
+		assertTrue(archiveFolder.fetchInfo().exists());
+		assertTrue(archiveFolder.fetchInfo().isDirectory());
+		IFileStore archiveOrgFolder = archiveFolder.getChild(orgFolderName);
+		assertTrue(archiveOrgFolder.fetchInfo().exists());
+		assertTrue(archiveOrgFolder.fetchInfo().isDirectory());
+		IFileStore archivedFolder = archiveOrgFolder.getChild(invalid);
+		assertTrue(archivedFolder.fetchInfo().exists());
+		assertTrue(archivedFolder.fetchInfo().isDirectory());
+		assertFalse(invalidFolderInOrg.fetchInfo().exists());
+	}
+
+	@Test
+	public void testArchiveInvalidMetaDataFolderInWorkspaceRoot() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName(testUserLogin);
+		userInfo.setFullName(testUserLogin);
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create a invalid metadata folder
+		IFileStore rootLocation = OrionConfiguration.getRootLocation();
+		String invalid = "delete.me";
+		IFileStore invalidFolderAtRoot = rootLocation.getChild(invalid);
+		assertFalse(invalidFolderAtRoot.fetchInfo().exists());
+		invalidFolderAtRoot.mkdir(EFS.NONE, null);
+		assertTrue(invalidFolderAtRoot.fetchInfo().exists());
+		assertTrue(invalidFolderAtRoot.fetchInfo().isDirectory());
+
+		// read all the users which will trigger the archive
+		List<String> users = metaStore.readAllUsers();
+		assertNotNull(users);
+
+		// verify the invalid metadata folder has moved to the archive
+		IFileStore archiveFolder = rootLocation.getChild(SimpleMetaStoreUtil.ARCHIVE);
+		assertTrue(archiveFolder.fetchInfo().exists());
+		assertTrue(archiveFolder.fetchInfo().isDirectory());
+		IFileStore archivedFolder = archiveFolder.getChild(invalid);
+		assertTrue(archivedFolder.fetchInfo().exists());
+		assertFalse(invalidFolderAtRoot.fetchInfo().exists());
+	}
+
+	@Test
 	public void testCreateProject() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();

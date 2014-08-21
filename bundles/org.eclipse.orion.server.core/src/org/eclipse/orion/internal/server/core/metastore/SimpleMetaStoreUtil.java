@@ -37,6 +37,10 @@ import org.slf4j.LoggerFactory;
 public class SimpleMetaStoreUtil {
 
 	/**
+	 * The folder where files are invalid metadata is moved rather than deleting outright. 
+	 */
+	public static final String ARCHIVE = ".archive";
+	/**
 	 * The file scheme name of a URI
 	 */
 	public static final String FILE_SCHEMA = "file";
@@ -65,6 +69,36 @@ public class SimpleMetaStoreUtil {
 	 * The metadata for a user is stored in a user.json file.
 	 */
 	public final static String USER = "user";
+
+	/**
+	 * Archive the provided file to clean the metadata storage of invalid metadata. This is an alternative to
+	 * the warning "root contains invalid metadata", see Bug 437962
+	 * @param parent the parent folder that will contain the archive.
+	 * @param file the invalid metadata.
+	 */
+	protected static void archive(File parent, File file) {
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+		if (!isMetaFolder(parent, ARCHIVE)) {
+			if (!SimpleMetaStoreUtil.createMetaFolder(parent, ARCHIVE)) {
+				logger.info("SimpleMetaStore.archive: could not create archive folder at: " + parent.toString() + File.separator + ARCHIVE);
+				return;
+			}
+		}
+		String parentPath = parent.toString();
+		File archive = SimpleMetaStoreUtil.retrieveMetaFolder(parent, ARCHIVE);
+		String filePath = file.toString().substring(parentPath.length());
+		File archivedMetaFile = new File(archive, filePath);
+		File archivedMetaFileParentFolder = archivedMetaFile.getParentFile();
+		if (!archivedMetaFileParentFolder.exists()) {
+			archivedMetaFileParentFolder.mkdirs();
+		}
+		file.renameTo(archivedMetaFile);
+		if (archivedMetaFile.isDirectory()) {
+			logger.info("Meta File Error, root contains invalid metadata: folder " + file.toString() + " archived to " + archivedMetaFile.toString()); //$NON-NLS-1$
+		} else {
+			logger.info("Meta File Error, root contains invalid metadata: file " + file.toString() + " archived to " + archivedMetaFile.toString()); //$NON-NLS-1$
+		}
+	}
 
 	/**
 	 * Create a new MetaFile with the provided name under the provided parent folder. 
@@ -452,41 +486,40 @@ public class SimpleMetaStoreUtil {
 	 * @return list of user folders.
 	 */
 	public static List<String> listMetaUserFolders(File parent) {
-		//the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		//the user-tree layout organizes folders user: serverworkspace/an/anthony
 		List<String> userMetaFolders = new ArrayList<String>();
 		for (File file : parent.listFiles()) {
 			if (file.getName().equals(".metadata")) {
 				// skip the eclipse workspace metadata folder
 				continue;
-			} else if (file.isFile() && file.getName().endsWith(METAFILE_EXTENSION)) {
-				// skip the meta file
+			} else if (file.getName().equals(ARCHIVE)) {
+				// skip the archive folder
 				continue;
-			} else if (file.isDirectory()) {
-				// org folder directory, so go into for users
-				for (File userFolder : file.listFiles()) {
-					if (isMetaUserFolder(parent, userFolder.getName())) {
-						// user folder directory
-						userMetaFolders.add(userFolder.getName());
-						continue;
-					}
-					if (userFolder.isDirectory()) {
-						Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-						if (logger.isDebugEnabled()) {
-							logger.debug("Meta File Error, root contains invalid metadata: folder " + file.toString() + File.separator + userFolder.getName()); //$NON-NLS-1$
-						}
-					} else {
-						Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-						if (logger.isDebugEnabled()) {
-							logger.debug("Meta File Error, root contains invalid metadata: file " + file.toString() + File.separator + userFolder.getName()); //$NON-NLS-1$
+			} else if (file.isFile() && file.getName().endsWith(METAFILE_EXTENSION) && file.getName().startsWith(SimpleMetaStore.ROOT)) {
+				// skip the root meta file (metastore.json)
+				continue;
+			} else if (file.isDirectory() && file.getName().length() == 2) {
+				// organizational folder directory, folder an in serverworkspace/an/anthony
+				File orgFolder = file;
+				if (file.list().length == 0) {
+					// organizational folder directory is empty, archive it.
+					archive(parent, orgFolder);
+				} else {
+					for (File userFolder : orgFolder.listFiles()) {
+						if (isMetaUserFolder(parent, userFolder.getName())) {
+							// user folder directory, folder anthony in serverworkspace/an/anthony
+							userMetaFolders.add(userFolder.getName());
+							continue;
+						} else {
+							// archive the invalid metadata
+							archive(parent, userFolder);
 						}
 					}
 				}
 				continue;
 			}
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			if (logger.isDebugEnabled()) {
-				logger.debug("Meta File Error, root contains invalid metadata: file " + file.toString()); //$NON-NLS-1$
-			}
+			// archive the invalid metadata
+			archive(parent, file);
 		}
 		return userMetaFolders;
 	}
