@@ -395,13 +395,14 @@ public class SimpleMetaStore implements IMetaStore {
 
 	/**
 	 * Get the Orion version of the simple metadata storage.
+	 * @param rootLocation the folder containing the root metadata file.
 	 * 
 	 * @return the Orion version.
 	 */
-	public int getOrionVersion(File testRootLocation) {
+	public int getOrionVersion(File rootLocation) {
 		// Verify we have a valid MetaStore
 		int version = ORION_VERSION_MISSING;
-		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(testRootLocation, SimpleMetaStore.ROOT);
+		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(rootLocation, SimpleMetaStore.ROOT);
 		try {
 			if (jsonObject != null && jsonObject.has(SimpleMetaStore.ORION_VERSION)) {
 				version = jsonObject.getInt(SimpleMetaStore.ORION_VERSION);
@@ -412,6 +413,10 @@ public class SimpleMetaStore implements IMetaStore {
 		return version;
 	}
 
+	/**
+	 * Get the folder at the root of the Orion metadata filesystem.
+	 * @return the root location.
+	 */
 	protected File getRootLocation() {
 		return rootLocation;
 	}

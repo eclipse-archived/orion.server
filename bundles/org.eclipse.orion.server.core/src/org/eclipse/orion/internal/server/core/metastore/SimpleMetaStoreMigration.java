@@ -95,6 +95,11 @@ public class SimpleMetaStoreMigration {
 	//		logger.info("Completed simple storage migration."); //$NON-NLS-1$
 	//	}
 
+	/**
+	 * Perform the migration for the provided user folder.
+	 * @param userMetaFolder The users metadata folder.
+	 * @throws JSONException
+	 */
 	public void doMigration(File userMetaFolder) throws JSONException {
 		logger.info("Migration: Migrating user " + userMetaFolder.getName() + " to the latest (version " + SimpleMetaStore.VERSION + ")");
 		int oldVersion = updateOrionVersion(userMetaFolder, SimpleMetaStore.USER);
@@ -129,6 +134,12 @@ public class SimpleMetaStoreMigration {
 		}
 	}
 
+	/**
+	 * Determine if migration for the provided metadata is required.
+	 * @param jsonObject the Orion metadata in JSON format.
+	 * @return true if migration is required.
+	 * @throws JSONException
+	 */
 	public boolean isMigrationRequired(JSONObject jsonObject) throws JSONException {
 		if (!jsonObject.has(SimpleMetaStore.ORION_VERSION)) {
 			return true;

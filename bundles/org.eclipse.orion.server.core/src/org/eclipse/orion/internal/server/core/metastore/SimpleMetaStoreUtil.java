@@ -36,11 +36,34 @@ import org.slf4j.LoggerFactory;
  */
 public class SimpleMetaStoreUtil {
 
+	/**
+	 * The file scheme name of a URI
+	 */
 	public static final String FILE_SCHEMA = "file";
+
+	/**
+	 * All Orion metadata is saved in a file in JSON format with this file extension.
+	 */
 	public static final String METAFILE_EXTENSION = ".json";
+
+	/**
+	 * The JVM system property for the operating system
+	 */
 	public static String OPERATING_SYSTEM_NAME = System.getProperty("os.name").toLowerCase();
+
+	/**
+	 * The separator used to encode the workspace id.
+	 */
 	public static final String SEPARATOR = "-";
+
+	/**
+	 * The string used to encode the serverworkspace path in a project contentLocation, see Bug 436578
+	 */
 	public static final String SERVERWORKSPACE = "${SERVERWORKSPACE}";
+
+	/**
+	 * The metadata for a user is stored in a user.json file.
+	 */
 	public final static String USER = "user";
 
 	/**
@@ -151,7 +174,7 @@ public class SimpleMetaStoreUtil {
 	/**
 	 * Decode the project's content location. The variable ${SERVERWORKSPACE} is replaced with the path of the root 
 	 * location (serverworkspace).
-	 * 
+	 * @param contentLocation the decoded content location.
 	 * @return the project's content location.
 	 */
 	public static String decodeProjectContentLocation(String contentLocation) {
@@ -236,6 +259,7 @@ public class SimpleMetaStoreUtil {
 	 * an exception when the folder is not empty, just return false. 
 	 * @param parent The parent folder.
 	 * @param name The name of the folder
+	 * @param exceptionWhenNotEmpty throw a RuntimeException when the provided folder is not empty.
 	 * @return true if the deletion was successful.
 	 */
 	public static boolean deleteMetaFolder(File parent, String name, boolean exceptionWhenNotEmpty) {
@@ -283,6 +307,7 @@ public class SimpleMetaStoreUtil {
 	 * Encode the project's content location. When the project's content location is a URI with a file based schema and
 	 * the project is in the default location, we want to replace the path of the root location (serverworkspace) with a variable
 	 * ${SERVERWORKSPACE}
+	 * @param contentLocation the content location.
 	 * @return the project's content location.
 	 */
 	public static String encodeProjectContentLocation(String contentLocation) {
@@ -444,9 +469,16 @@ public class SimpleMetaStoreUtil {
 						userMetaFolders.add(userFolder.getName());
 						continue;
 					}
-					Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-					if (logger.isDebugEnabled()) {
-						logger.debug("Meta File Error, root contains invalid metadata: folder " + file.toString() + File.separator + userFolder.getName()); //$NON-NLS-1$
+					if (userFolder.isDirectory()) {
+						Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+						if (logger.isDebugEnabled()) {
+							logger.debug("Meta File Error, root contains invalid metadata: folder " + file.toString() + File.separator + userFolder.getName()); //$NON-NLS-1$
+						}
+					} else {
+						Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+						if (logger.isDebugEnabled()) {
+							logger.debug("Meta File Error, root contains invalid metadata: file " + file.toString() + File.separator + userFolder.getName()); //$NON-NLS-1$
+						}
 					}
 				}
 				continue;
@@ -622,7 +654,7 @@ public class SimpleMetaStoreUtil {
 	 * @param parent The parent folder.
 	 * @param name The name of the MetaFile
 	 * @param jsonObject The JSON containing the data to update in the MetaFile.
-	 * @return
+	 * @return true if the update was successful.
 	 */
 	public static boolean updateMetaFile(File parent, String name, JSONObject jsonObject) {
 		try {
@@ -662,6 +694,7 @@ public class SimpleMetaStoreUtil {
 	 * Move the MetaFolder in the provided parent folder to a new parent folder 
 	 * @param parent The parent folder.
 	 * @param oldName The old name of the MetaFolder
+	 * @param newParent The new name of parent folder
 	 * @param newName The new name of the MetaFolder
 	 * @return true if the move was successful.
 	 */
