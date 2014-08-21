@@ -196,7 +196,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					if (contentLocation != null) {
 
 						/* check for non-manifest deployment */
-						if (manifestJSON == null) {
+						if (manifestJSON != null) {
 
 							ParseManifestJSONCommand parseManifestJSONCommand = new ParseManifestJSONCommand(manifestJSON, userId, contentLocation);
 							status = parseManifestJSONCommand.doIt();
