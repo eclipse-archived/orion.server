@@ -12,6 +12,7 @@ package org.eclipse.orion.server.git.servlets;
 
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.*;
 import java.util.regex.Pattern;
 import javax.servlet.ServletException;
@@ -26,8 +27,11 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.PatchApplyException;
 import org.eclipse.jgit.api.errors.PatchFormatException;
+import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import org.eclipse.jgit.dircache.DirCacheIterator;
 import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.*;
 import org.eclipse.jgit.treewalk.filter.*;
@@ -36,6 +40,7 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
+import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Diff;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
@@ -79,10 +84,104 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 			}
 			if ("diff".equals(parts)) //$NON-NLS-1$
 				return handleGetDiff(request, response, db, gitSegment, pattern, response.getOutputStream());
+			if ("diffs".equals(parts)) //$NON-NLS-1$
+				return handleGetDiffs(request, response, db, gitSegment, pattern);
 			return false; // unknown part
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured while getting a diff.", e));
 		}
+	}
+
+	private boolean handleGetDiffs(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern) throws Exception {
+		JSONArray diffs = new JSONArray();
+
+		final TreeWalk tw = new TreeWalk(db);
+		final RevWalk rw = new RevWalk(db);
+
+		String[] commits = scope.split("\\.\\."); //$NON-NLS-1$
+		if (commits.length != 2) {
+			String msg = NLS.bind("Failed to generate diff for {0}", scope);
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+		}
+
+		RevCommit revCommit = rw.parseCommit(db.resolve(commits[0]));
+		RevCommit revCommit1 = rw.parseCommit(db.resolve(commits[1]));
+		tw.reset(revCommit1.getTree(), revCommit.getTree());
+		tw.setRecursive(true);
+
+		TreeFilter filter = null;
+		if (pattern != null && !pattern.isEmpty()) {
+			filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(pattern)), TreeFilter.ANY_DIFF);
+		}
+
+		if (filter != null)
+			tw.setFilter(filter);
+		else
+			tw.setFilter(TreeFilter.ANY_DIFF);
+
+		URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.DIFF);
+
+		List<DiffEntry> l = DiffEntry.scan(tw);
+		for (DiffEntry entr : l) {
+			JSONObject diff = new JSONObject();
+			diff.put(ProtocolConstants.KEY_TYPE, org.eclipse.orion.server.git.objects.Diff.TYPE);
+			diff.put(GitConstants.KEY_COMMIT_DIFF_NEWPATH, entr.getNewPath());
+			diff.put(GitConstants.KEY_COMMIT_DIFF_OLDPATH, entr.getOldPath());
+			diff.put(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE, entr.getChangeType().toString());
+
+			// add diff location for the commit
+			String path = entr.getChangeType() != ChangeType.DELETE ? entr.getNewPath() : entr.getOldPath();
+			diff.put(GitConstants.KEY_DIFF, createDiffLocation(cloneLocation, revCommit.getName(), revCommit1.getName(), path));
+			diff.put(ProtocolConstants.KEY_CONTENT_LOCATION, createContentLocation(cloneLocation, entr, path));
+
+			diffs.put(diff);
+		}
+		tw.release();
+		rw.release();
+
+		JSONObject result = new JSONObject();
+		result.put(ProtocolConstants.KEY_TYPE, org.eclipse.orion.server.git.objects.Diff.TYPE);
+		result.put(ProtocolConstants.KEY_CHILDREN, diffs);
+
+		OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
+
+		return true;
+	}
+
+	protected URI createDiffLocation(URI cloneLocation, String toRefId, String fromRefId, String path) throws URISyntaxException {
+		IPath diffPath = new Path(GitServlet.GIT_URI).append(Diff.RESOURCE);
+
+		//diff range format is [fromRef..]toRef
+		String diffRange = ""; //$NON-NLS-1$
+		if (fromRefId != null)
+			diffRange = fromRefId + ".."; //$NON-NLS-1$
+		diffRange += toRefId;
+		diffPath = diffPath.append(diffRange);
+
+		//clone location is of the form /gitapi/clone/file/{workspaceId}/{projectName}[/{path}]
+		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
+		if (path == null) {
+			diffPath = diffPath.append(clonePath);
+		} else {
+			IPath projectRoot = clonePath.uptoSegment(3);
+			diffPath = diffPath.append(projectRoot).append(path);
+		}
+
+		return new URI(cloneLocation.getScheme(), cloneLocation.getAuthority(), diffPath.toString(), null, null);
+	}
+
+	protected URI createContentLocation(URI cloneLocation, final DiffEntry entr, String path) throws URISyntaxException {
+		//remove /gitapi/clone from the start of path
+		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
+		IPath result;
+		if (path == null) {
+			result = clonePath;
+		} else {
+			//need to start from the project root
+			//project path is of the form /file/{workspaceId}/{projectName}
+			result = clonePath.uptoSegment(3).append(path);
+		}
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute().toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
 	private boolean handleGetDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out) throws Exception {
