@@ -31,7 +31,6 @@ import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import org.eclipse.jgit.dircache.DirCacheIterator;
 import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.*;
 import org.eclipse.jgit.treewalk.filter.*;
@@ -93,35 +92,14 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 	}
 
 	private boolean handleGetDiffs(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern) throws Exception {
+		DiffCommand command = getDiff(request, response, db, scope, pattern, new ByteArrayOutputStream());
+		if (command == null)
+			return true;
+
+		List<DiffEntry> l = command.call();
 		JSONArray diffs = new JSONArray();
-
-		final TreeWalk tw = new TreeWalk(db);
-		final RevWalk rw = new RevWalk(db);
-
-		String[] commits = scope.split("\\.\\."); //$NON-NLS-1$
-		if (commits.length != 2) {
-			String msg = NLS.bind("Failed to generate diff for {0}", scope);
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
-		}
-
-		RevCommit revCommit = rw.parseCommit(db.resolve(commits[0]));
-		RevCommit revCommit1 = rw.parseCommit(db.resolve(commits[1]));
-		tw.reset(revCommit1.getTree(), revCommit.getTree());
-		tw.setRecursive(true);
-
-		TreeFilter filter = null;
-		if (pattern != null && !pattern.isEmpty()) {
-			filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(pattern)), TreeFilter.ANY_DIFF);
-		}
-
-		if (filter != null)
-			tw.setFilter(filter);
-		else
-			tw.setFilter(TreeFilter.ANY_DIFF);
-
-		URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.DIFF);
-
-		List<DiffEntry> l = DiffEntry.scan(tw);
+		URI diffLocation = getURI(request);
+		URI cloneLocation = BaseToCloneConverter.getCloneLocation(diffLocation, BaseToCloneConverter.DIFF);
 		for (DiffEntry entr : l) {
 			JSONObject diff = new JSONObject();
 			diff.put(ProtocolConstants.KEY_TYPE, org.eclipse.orion.server.git.objects.Diff.TYPE);
@@ -131,13 +109,11 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 
 			// add diff location for the commit
 			String path = entr.getChangeType() != ChangeType.DELETE ? entr.getNewPath() : entr.getOldPath();
-			diff.put(GitConstants.KEY_DIFF, createDiffLocation(cloneLocation, revCommit.getName(), revCommit1.getName(), path));
+			diff.put(GitConstants.KEY_DIFF, createDiffLocation(diffLocation, path));
 			diff.put(ProtocolConstants.KEY_CONTENT_LOCATION, createContentLocation(cloneLocation, entr, path));
 
 			diffs.put(diff);
 		}
-		tw.release();
-		rw.release();
 
 		JSONObject result = new JSONObject();
 		result.put(ProtocolConstants.KEY_TYPE, org.eclipse.orion.server.git.objects.Diff.TYPE);
@@ -148,29 +124,15 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 		return true;
 	}
 
-	protected URI createDiffLocation(URI cloneLocation, String toRefId, String fromRefId, String path) throws URISyntaxException {
-		IPath diffPath = new Path(GitServlet.GIT_URI).append(Diff.RESOURCE);
-
-		//diff range format is [fromRef..]toRef
-		String diffRange = ""; //$NON-NLS-1$
-		if (fromRefId != null)
-			diffRange = fromRefId + ".."; //$NON-NLS-1$
-		diffRange += toRefId;
-		diffPath = diffPath.append(diffRange);
-
-		//clone location is of the form /gitapi/clone/file/{workspaceId}/{projectName}[/{path}]
-		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
-		if (path == null) {
-			diffPath = diffPath.append(clonePath);
-		} else {
-			IPath projectRoot = clonePath.uptoSegment(3);
-			diffPath = diffPath.append(projectRoot).append(path);
-		}
-
-		return new URI(cloneLocation.getScheme(), cloneLocation.getAuthority(), diffPath.toString(), null, null);
+	private URI createDiffLocation(URI diffLocation, String path) throws URISyntaxException {
+		if (path == null)
+			return diffLocation;
+		IPath diffPath = new Path(diffLocation.getPath());
+		diffPath = diffPath.append(path);
+		return new URI(diffLocation.getScheme(), diffLocation.getAuthority(), diffPath.toString(), null, null);
 	}
 
-	protected URI createContentLocation(URI cloneLocation, final DiffEntry entr, String path) throws URISyntaxException {
+	private URI createContentLocation(URI cloneLocation, final DiffEntry entr, String path) throws URISyntaxException {
 		//remove /gitapi/clone from the start of path
 		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
 		IPath result;
@@ -185,6 +147,13 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 	}
 
 	private boolean handleGetDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out) throws Exception {
+		DiffCommand command = getDiff(request, response, db, scope, pattern, out);
+		if (command != null)
+			command.call();
+		return true;
+	}
+
+	private DiffCommand getDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out) throws Exception {
 		Git git = new Git(db);
 		DiffCommand diff = git.diff();
 		diff.setOutputStream(new BufferedOutputStream(out));
@@ -194,7 +163,8 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 			String[] commits = scope.split("\\.\\."); //$NON-NLS-1$
 			if (commits.length != 2) {
 				String msg = NLS.bind("Failed to generate diff for {0}", scope);
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+				return null;
 			}
 			oldTree = getTreeIterator(db, commits[0]);
 			newTree = getTreeIterator(db, commits[1]);
@@ -202,7 +172,8 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 			ObjectId head = db.resolve(Constants.HEAD + "^{tree}"); //$NON-NLS-1$
 			if (head == null) {
 				String msg = NLS.bind("Failed to generate diff for {0}, no HEAD", scope);
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+				return null;
 			}
 			CanonicalTreeParser p = new CanonicalTreeParser();
 			ObjectReader reader = db.newObjectReader();
@@ -247,8 +218,7 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 
 		diff.setOldTree(oldTree);
 		diff.setNewTree(newTree);
-		diff.call();
-		return true;
+		return diff;
 	}
 
 	private boolean handleMultiPartGet(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern) throws Exception {
