@@ -112,6 +112,15 @@ public class ManifestParser implements Parser {
 						/* accept empty mappings for list items */
 						if (!currentParent.isItemNode())
 							throw new ParserException(ManifestConstants.ILLEGAL_MAPPING_TOKEN, nextToken);
+
+						if (nextToken != null && nextToken.getLineNumber() == currentToken.getLineNumber()) {
+
+							/* there are token mappings */
+							node.getTokens().add(nextToken);
+
+							while ((nextToken = getNextToken(tokenizer)) != null && nextToken.getLineNumber() == currentToken.getLineNumber())
+								node.getTokens().add(nextToken);
+						}
 					}
 
 					currentParent = node;
