@@ -466,7 +466,9 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 					if (workspaceInfo.getProjectNames().size() > 0) {
 						for (String projectName : workspaceInfo.getProjectNames()) {
 							ProjectInfo projectInfo = metastore.readProject(workspaceId, projectName);
-							WorkspaceResourceHandler.removeProject(userId, workspaceInfo, projectInfo);
+							if (projectInfo != null) {
+								WorkspaceResourceHandler.removeProject(userId, workspaceInfo, projectInfo);
+							}
 						}
 					}
 				}
