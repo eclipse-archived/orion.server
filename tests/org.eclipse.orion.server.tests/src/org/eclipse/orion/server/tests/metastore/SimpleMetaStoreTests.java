@@ -501,6 +501,60 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	}
 
 	@Test
+	public void testCreateProjectWithDuplicateProjectName() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName(testUserLogin);
+		userInfo.setFullName(testUserLogin);
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create the first project
+		String projectName = "Project";
+		ProjectInfo projectInfo1 = new ProjectInfo();
+		projectInfo1.setFullName(projectName);
+		projectInfo1.setWorkspaceId(workspaceInfo.getUniqueId());
+		IFileStore projectFolder = metaStore.getDefaultContentLocation(projectInfo1);
+		assertFalse(projectFolder.fetchInfo().exists());
+		projectInfo1.setContentLocation(projectFolder.toURI());
+		metaStore.createProject(projectInfo1);
+		assertTrue(projectFolder.fetchInfo().exists());
+
+		// read the workspace
+		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(workspaceInfo.getUniqueId());
+		assertNotNull(readWorkspaceInfo);
+		assertEquals(readWorkspaceInfo.getFullName(), workspaceInfo.getFullName());
+		assertEquals(1, readWorkspaceInfo.getProjectNames().size());
+		assertTrue(readWorkspaceInfo.getProjectNames().contains(projectInfo1.getFullName()));
+		assertTrue(readWorkspaceInfo.getProjectNames().contains(projectName));
+
+		// create the first again project
+		ProjectInfo projectInfo2 = new ProjectInfo();
+		projectInfo2.setFullName(projectName);
+		projectInfo2.setWorkspaceId(workspaceInfo.getUniqueId());
+		IFileStore projectFolder2 = metaStore.getDefaultContentLocation(projectInfo2);
+		projectInfo2.setContentLocation(projectFolder2.toURI());
+		try {
+			metaStore.createProject(projectInfo1);
+		} catch (RuntimeException e) {
+			// we expect to get a runtime exception here
+			String message = e.getMessage();
+			assertTrue(message.contains("already exists"));
+			return;
+		}
+		fail("We should have received a failure trying to create the project again");
+	}
+
+	@Test
 	public void testCreateProjectWithEmojiChactersInName() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = getMetaStore();
