@@ -188,6 +188,28 @@ public class ManifestParserTest {
 		assertEquals("valueD", applications.get(3).get("D").get("nativeD").getValue()); //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$
 	}
 
+	@Test
+	public void testServicesWithSpacesManifest() throws Exception {
+		String manifestName = "servicesWithSpaces.yml"; //$NON-NLS-1$
+
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry(MANIFEST_LOCATION);
+		File manifestFile = new File(FileLocator.toFileURL(entry).getPath().concat(manifestName));
+
+		InputStream inputStream = new FileInputStream(manifestFile);
+		ManifestParseTree manifest = parse(inputStream);
+
+		ManifestParseTree application = manifest.get("applications").get(0); //$NON-NLS-1$
+		ManifestParseTree services = application.get("services"); //$NON-NLS-1$
+
+		assertEquals(2, services.getChildren().size());
+
+		String service = services.get(0).getValue();
+		assertEquals("Redis Cloud-fo service", service); //$NON-NLS-1$
+
+		service = services.get(1).getValue();
+		assertEquals("Redis-two", service); //$NON-NLS-1$
+	}
+
 	private ManifestParseTree parse(InputStream inputStream) throws IOException, TokenizerException, ParserException {
 		Preprocessor preprocessor = new ManifestPreprocessor();
 		List<InputLine> contents = preprocessor.process(inputStream);
