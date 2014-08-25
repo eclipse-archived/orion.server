@@ -39,7 +39,31 @@ import org.junit.runners.Suite.SuiteClasses;
  * Runs all automated server tests.
  */
 @RunWith(Suite.class)
-@SuiteClasses({SearchTest.class, TransferTest.class, Base64Test.class, CoreFilesTest.class, AdvancedFilesTest.class, PreferenceTest.class, BasicUsersTest.class, WorkspaceServiceTest.class, AllSiteTests.class, AllGitTests.class, AllTaskTests.class, OrionCredentialsServiceTest.class, OrionUserProfileServiceTest.class, MetaStoreTest.class, ProjectInfoTests.class, SimpleMetaStoreTests.class, SimpleMetaStoreLiveMigrationTests.class, SimpleMetaStoreUtilTest.class, UserInfoTests.class, WorkspaceInfoTests.class, SimpleUserPasswordUtilTests.class, SimpleMetaStoreConcurrencyTests.class, AllCFTests.class})
+@SuiteClasses({ //
+SearchTest.class, //
+		AdvancedFilesTest.class, //
+		AllCFTests.class,//
+		AllGitTests.class, //
+		AllSiteTests.class, //
+		AllTaskTests.class, //
+		Base64Test.class, //
+		BasicUsersTest.class, //
+		CoreFilesTest.class, //
+		MetaStoreTest.class, //
+		OrionCredentialsServiceTest.class, //
+		OrionUserProfileServiceTest.class, //
+		PreferenceTest.class, //
+		ProjectInfoTests.class, //
+		SimpleMetaStoreConcurrencyTests.class, //
+		SimpleMetaStoreLiveMigrationTests.class, //
+		SimpleMetaStoreTests.class, //
+		SimpleMetaStoreUtilTest.class, //
+		SimpleUserPasswordUtilTests.class, //
+		TransferTest.class, //
+		UserInfoTests.class, //
+		WorkspaceInfoTests.class, //
+		WorkspaceServiceTest.class //
+})
 public class AllServerTests {
 	//goofy junit4, no class body needed
 }
