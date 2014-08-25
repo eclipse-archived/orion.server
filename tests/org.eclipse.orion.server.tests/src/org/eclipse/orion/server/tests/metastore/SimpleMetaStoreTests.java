@@ -359,6 +359,74 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		}
 	}
 
+	@Test
+	public void testCreateProjectNamedUser() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName(testUserLogin);
+		userInfo.setFullName(testUserLogin);
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create the project with the illegal name
+		String projectName = workspaceInfo.getUniqueId();
+		ProjectInfo projectInfo = new ProjectInfo();
+		projectInfo.setFullName(projectName);
+		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+		try {
+			metaStore.createProject(projectInfo);
+		} catch (RuntimeException e) {
+			// we expect to get a runtime exception here
+			String message = e.getMessage();
+			assertTrue(message.contains("already exists"));
+			return;
+		}
+		fail("Should have received an exception creating a project named " + workspaceInfo.getUniqueId());
+	}
+
+	@Test
+	public void testCreateProjectNamedUserDashOrionContent() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName(testUserLogin);
+		userInfo.setFullName(testUserLogin);
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create the project with the illegal name
+		String projectName = SimpleMetaStore.USER;
+		ProjectInfo projectInfo = new ProjectInfo();
+		projectInfo.setFullName(projectName);
+		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+		try {
+			metaStore.createProject(projectInfo);
+		} catch (RuntimeException e) {
+			// we expect to get a runtime exception here
+			String message = e.getMessage();
+			assertTrue(message.contains("already exists"));
+			return;
+		}
+		fail("Should have received an exception creating a project named " + projectName);
+	}
+
 	/**
 	 * you are allowed to create a project named workspace with the latest SimpleMetaStore 
 	 * @throws CoreException
