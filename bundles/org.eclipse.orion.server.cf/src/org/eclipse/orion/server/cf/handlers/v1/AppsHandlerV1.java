@@ -16,6 +16,7 @@ import java.net.URLDecoder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -23,6 +24,7 @@ import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
+import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.objects.*;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -44,7 +46,6 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 
 	@Override
 	protected App buildResource(HttpServletRequest request, String path) throws CoreException {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -163,6 +164,10 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 		final String appName = jsonData.optString(CFProtocolConstants.KEY_NAME, null);
 		final String contentLocation = ServletResourceHandler.toOrionLocation(request, jsonData.optString(CFProtocolConstants.KEY_CONTENT_LOCATION, null));
 
+		/* non-manifest deployments using a .json representation */
+		final JSONObject manifestJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_MANIFEST);
+		final boolean persistManifest = jsonData.optBoolean(CFProtocolConstants.KEY_PERSIST, false);
+
 		/* default application startup is one minute */
 		int userTimeout = jsonData.optInt(CFProtocolConstants.KEY_TIMEOUT, 60);
 		final int timeout = (userTimeout > 0) ? userTimeout : 0;
@@ -171,30 +176,60 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 		final boolean force = jsonData.optBoolean(CFProtocolConstants.KEY_FORCE, true);
 
 		return new CFJob(request, false) {
+
 			@Override
 			protected IStatus performJob() {
 				try {
-					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
+
+					ComputeTargetCommand computeTarget = new ComputeTargetCommand(userId, targetJSON);
 					IStatus status = computeTarget.doIt();
 					if (!status.isOK())
 						return status;
+
 					Target target = computeTarget.getTarget();
 
 					/* parse the application manifest */
 					String manifestAppName = null;
-					ParseManifestCommand parseManifestCommand = null;
-					if (contentLocation != null) {
-						parseManifestCommand = new ParseManifestCommand(target, this.userId, contentLocation);
-						status = parseManifestCommand.doIt();
-						if (!status.isOK())
-							return status;
+					ManifestParseTree manifest = null;
+					IFileStore appStore = null;
 
-						/* get the manifest name */
-						ManifestParseTree manifest = parseManifestCommand.getManifest();
-						if (manifest != null) {
-							ManifestParseTree applications = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS);
-							if (applications.getChildren().size() > 0)
-								manifestAppName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
+					if (contentLocation != null) {
+
+						/* check for non-manifest deployment */
+						if (manifestJSON != null) {
+
+							ParseManifestJSONCommand parseManifestJSONCommand = new ParseManifestJSONCommand(manifestJSON, userId, contentLocation);
+							status = parseManifestJSONCommand.doIt();
+							if (!status.isOK())
+								return status;
+
+							/* get the manifest name */
+							manifest = parseManifestJSONCommand.getManifest();
+							appStore = parseManifestJSONCommand.getAppStore();
+
+							if (manifest != null) {
+								ManifestParseTree applications = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS);
+								if (applications.getChildren().size() > 0)
+									manifestAppName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
+							}
+
+						} else {
+
+							ParseManifestCommand parseManifestCommand = new ParseManifestCommand(target, userId, contentLocation);
+							status = parseManifestCommand.doIt();
+							if (!status.isOK())
+								return status;
+
+							/* get the manifest name */
+							manifest = parseManifestCommand.getManifest();
+							appStore = parseManifestCommand.getAppStore();
+
+							if (manifest != null) {
+								ManifestParseTree applications = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS);
+								if (applications.getChildren().size() > 0)
+									manifestAppName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
+							}
+
 						}
 					}
 
@@ -211,7 +246,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 							return status;
 						return new StopAppCommand(target, app).doIt();
 					} else {
-						if (parseManifestCommand == null) {
+						if (manifest == null) {
 							String msg = NLS.bind("Failed to handle request for {0}", pathString); //$NON-NLS-1$
 							status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, null);
 							logger.error(msg);
@@ -230,9 +265,9 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					}
 
 					app.setName(appName != null ? appName : manifestAppName);
-					app.setManifest(parseManifestCommand.getManifest());
+					app.setManifest(manifest);
 
-					status = new PushAppCommand(target, app, parseManifestCommand.getAppStore(), force).doIt();
+					status = new PushAppCommand(target, app, appStore, force).doIt();
 					if (!status.isOK())
 						return status;
 
@@ -240,12 +275,18 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					getAppCommand = new GetAppCommand(target, app.getName());
 					getAppCommand.doIt();
 					app = getAppCommand.getApp();
-					app.setManifest(parseManifestCommand.getManifest());
+					app.setManifest(manifest);
 
 					if (restart)
 						new RestartAppCommand(target, app).doIt();
 					else
 						new StartAppCommand(target, app).doIt();
+
+					if (persistManifest && manifestJSON != null) {
+						/* non-manifest deployment - persist at contentLocation/manifest.yml */
+						IFileStore persistLocation = appStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
+						manifest.persist(persistLocation);
+					}
 
 					return status;
 				} catch (Exception e) {
