@@ -78,7 +78,10 @@ public class ManifestUtils {
 		if (!manifestFileInfo.exists() || manifestFileInfo.isDirectory())
 			throw new IOException(ManifestConstants.MISSING_OR_INVALID_MANIFEST);
 
-		if (manifestFileInfo.getLength() == EFS.NONE || manifestFileInfo.getLength() > ManifestConstants.MANIFEST_SIZE_LIMIT)
+		if (manifestFileInfo.getLength() == EFS.NONE)
+			throw new IOException(ManifestConstants.EMPTY_MANIFEST);
+
+		if (manifestFileInfo.getLength() > ManifestConstants.MANIFEST_SIZE_LIMIT)
 			throw new IOException(ManifestConstants.MANIFEST_FILE_SIZE_EXCEEDED);
 
 		InputStream inputStream = manifestFileStore.openInputStream(EFS.NONE, null);

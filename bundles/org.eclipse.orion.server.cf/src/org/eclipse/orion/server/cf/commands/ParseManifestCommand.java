@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.commands;
 
+import java.io.IOException;
 import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.IFileStore;
@@ -149,6 +150,8 @@ public class ParseManifestCommand extends AbstractCFCommand {
 		} catch (AnalyzerException e) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		} catch (InvalidAccessException e) {
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
+		} catch (IOException e) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$

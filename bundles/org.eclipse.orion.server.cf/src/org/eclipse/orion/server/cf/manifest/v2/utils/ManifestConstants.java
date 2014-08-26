@@ -24,6 +24,8 @@ public class ManifestConstants {
 
 	public static String MANIFEST_FILE_SIZE_EXCEEDED = "Refused to read the manifest. Exceeded maximum file size limit.";
 
+	public static String EMPTY_MANIFEST = "Empty manifest.";
+
 	/* manifest inheritance errors */
 	public static String FORBIDDEN_ACCESS_ERROR = "Forbidden access to parent manifest {0}.";
 
