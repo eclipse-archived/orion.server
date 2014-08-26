@@ -39,9 +39,7 @@ import org.junit.runners.Suite.SuiteClasses;
  * Runs all automated server tests.
  */
 @RunWith(Suite.class)
-@SuiteClasses({ //
-SearchTest.class, //
-		AdvancedFilesTest.class, //
+@SuiteClasses({AdvancedFilesTest.class, //
 		AllCFTests.class,//
 		AllGitTests.class, //
 		AllSiteTests.class, //
@@ -54,6 +52,7 @@ SearchTest.class, //
 		OrionUserProfileServiceTest.class, //
 		PreferenceTest.class, //
 		ProjectInfoTests.class, //
+		SearchTest.class, //
 		SimpleMetaStoreConcurrencyTests.class, //
 		SimpleMetaStoreLiveMigrationTests.class, //
 		SimpleMetaStoreTests.class, //
