@@ -250,35 +250,37 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 	public Collection<User> getUsers() {
 		Collection<User> users = new ArrayList<User>();
 		for (String childName : root.childrenNames()) {
-			IOrionUserProfileNode userProfileNode = root.getUserProfileNode(childName);
-			try {
-				User user = new User(childName, userProfileNode.get(UserConstants.KEY_LOGIN, childName), userProfileNode.get(UserConstants.KEY_NAME, ""), userProfileNode.get(UserConstants.KEY_PASSWORD, null) == null ? null : "" /* don't expose the password */); //$NON-NLS-1$ //$NON-NLS-2$
-				user.setEmail(userProfileNode.get(UserConstants.KEY_EMAIL, "")); //$NON-NLS-1$
-				if (!user.getEmail().equals("")) {
-					// update the email cache
-					emailCache.put(user.getEmail(), childName);
-				}
-				String blocked = userProfileNode.get(UserConstants.KEY_BLOCKED, "false");
-				if (blocked.equals("true")) {
-					user.setBlocked(true);
-				}
-				if (userProfileNode.get(UserConstants.KEY_EMAIL_CONFIRMATION, null) != null)
-					user.setConfirmationId(userProfileNode.get(UserConstants.KEY_EMAIL_CONFIRMATION, null));
-				String[] keys = userProfileNode.getUserProfileNode(USER_PROPERTIES).keys();
-				if (keys.length > 0) {
-					for (int i = 0; i < keys.length; i++) {
-						String key = keys[i];
-						String value = userProfileNode.getUserProfileNode(USER_PROPERTIES).get(key, "");
-						user.addProperty(key, value);
-						if (key.equals("openid")) {
-							// update the openid cache
-							openidCache.put(value, childName);
+			if (root.userProfileNodeExists(childName)) {
+				IOrionUserProfileNode userProfileNode = root.getUserProfileNode(childName);
+				try {
+					User user = new User(childName, userProfileNode.get(UserConstants.KEY_LOGIN, childName), userProfileNode.get(UserConstants.KEY_NAME, ""), userProfileNode.get(UserConstants.KEY_PASSWORD, null) == null ? null : "" /* don't expose the password */); //$NON-NLS-1$ //$NON-NLS-2$
+					user.setEmail(userProfileNode.get(UserConstants.KEY_EMAIL, "")); //$NON-NLS-1$
+					if (!user.getEmail().equals("")) {
+						// update the email cache
+						emailCache.put(user.getEmail(), childName);
+					}
+					String blocked = userProfileNode.get(UserConstants.KEY_BLOCKED, "false");
+					if (blocked.equals("true")) {
+						user.setBlocked(true);
+					}
+					if (userProfileNode.get(UserConstants.KEY_EMAIL_CONFIRMATION, null) != null)
+						user.setConfirmationId(userProfileNode.get(UserConstants.KEY_EMAIL_CONFIRMATION, null));
+					String[] keys = userProfileNode.getUserProfileNode(USER_PROPERTIES).keys();
+					if (keys.length > 0) {
+						for (int i = 0; i < keys.length; i++) {
+							String key = keys[i];
+							String value = userProfileNode.getUserProfileNode(USER_PROPERTIES).get(key, "");
+							user.addProperty(key, value);
+							if (key.equals("openid")) {
+								// update the openid cache
+								openidCache.put(value, childName);
+							}
 						}
 					}
+					users.add(user);
+				} catch (CoreException e) {
+					LogHelper.log(e);
 				}
-				users.add(user);
-			} catch (CoreException e) {
-				LogHelper.log(e);
 			}
 		}
 		Collections.sort((ArrayList<User>) users, new UserComparator());

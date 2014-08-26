@@ -60,8 +60,8 @@ public class SimpleUserProfileNode implements IOrionUserProfileNode {
 			}
 			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, USER);
 			if (jsonObject == null) {
-				// user.json is somehow empty for this userId
-				throw new RuntimeException("SimpleUserProfileNode.init: user.json is blank for user " + userId);
+				// user.json is somehow empty or corrupt for this userId
+				return;
 			}
 			userJSONObject = jsonObject;
 			if (userJSONObject.has(USER_PROPERTIES)) {
@@ -125,24 +125,26 @@ public class SimpleUserProfileNode implements IOrionUserProfileNode {
 	}
 
 	public String get(String key, String defaultValue) throws CoreException {
-		try {
-			if (key.equals(UserConstants.KEY_NAME)) {
-				if (userJSONObject.has("FullName")) {
-					return userJSONObject.getString("FullName");
+		if (userJSONObject != null) {
+			try {
+				if (key.equals(UserConstants.KEY_NAME)) {
+					if (userJSONObject.has("FullName")) {
+						return userJSONObject.getString("FullName");
+					}
+				} else if (key.equals(UserConstants.KEY_UID)) {
+					if (userJSONObject.has("UniqueId")) {
+						return userJSONObject.getString("UniqueId");
+					}
+				} else if (key.equals(UserConstants.KEY_LOGIN)) {
+					if (userJSONObject.has("UserName")) {
+						return userJSONObject.getString("UserName");
+					}
+				} else if (userJSONObject.has(key)) {
+					return userJSONObject.getString(key);
 				}
-			} else if (key.equals(UserConstants.KEY_UID)) {
-				if (userJSONObject.has("UniqueId")) {
-					return userJSONObject.getString("UniqueId");
-				}
-			} else if (key.equals(UserConstants.KEY_LOGIN)) {
-				if (userJSONObject.has("UserName")) {
-					return userJSONObject.getString("UserName");
-				}
-			} else if (userJSONObject.has(key)) {
-				return userJSONObject.getString(key);
+			} catch (JSONException e) {
+				LogHelper.log(e);
 			}
-		} catch (JSONException e) {
-			LogHelper.log(e);
 		}
 		return defaultValue;
 	}
