@@ -38,7 +38,7 @@ public class ManifestPreprocessor implements Preprocessor {
 				++currentLine;
 
 				line = processLine(line);
-				if (line.isEmpty())
+				if (line.isEmpty() || line.trim().isEmpty())
 					continue;
 
 				InputLine inputLine = new InputLine(line, currentLine);
