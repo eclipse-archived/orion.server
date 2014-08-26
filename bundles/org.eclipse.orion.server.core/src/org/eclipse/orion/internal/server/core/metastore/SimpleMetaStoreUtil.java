@@ -73,19 +73,19 @@ public class SimpleMetaStoreUtil {
 	/**
 	 * Archive the provided file to clean the metadata storage of invalid metadata. This is an alternative to
 	 * the warning "root contains invalid metadata", see Bug 437962
-	 * @param parent the parent folder that will contain the archive.
+	 * @param root the root folder that will contain the archive.
 	 * @param file the invalid metadata.
 	 */
-	protected static void archive(File parent, File file) {
+	protected static void archive(File root, File file) {
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-		if (!isMetaFolder(parent, ARCHIVE)) {
-			if (!SimpleMetaStoreUtil.createMetaFolder(parent, ARCHIVE)) {
-				logger.info("SimpleMetaStore.archive: could not create archive folder at: " + parent.toString() + File.separator + ARCHIVE);
+		if (!isMetaFolder(root, ARCHIVE)) {
+			if (!SimpleMetaStoreUtil.createMetaFolder(root, ARCHIVE)) {
+				logger.error("SimpleMetaStore.archive: could not create archive folder at: " + root.toString() + File.separator + ARCHIVE);
 				return;
 			}
 		}
-		String parentPath = parent.toString();
-		File archive = SimpleMetaStoreUtil.retrieveMetaFolder(parent, ARCHIVE);
+		String parentPath = root.toString();
+		File archive = SimpleMetaStoreUtil.retrieveMetaFolder(root, ARCHIVE);
 		String filePath = file.toString().substring(parentPath.length());
 		File archivedMetaFile = new File(archive, filePath);
 		File archivedMetaFileParentFolder = archivedMetaFile.getParentFile();
@@ -94,9 +94,9 @@ public class SimpleMetaStoreUtil {
 		}
 		file.renameTo(archivedMetaFile);
 		if (archivedMetaFile.isDirectory()) {
-			logger.info("Meta File Error, root contains invalid metadata: folder " + file.toString() + " archived to " + archivedMetaFile.toString()); //$NON-NLS-1$
+			logger.error("Meta File Error, root contains invalid metadata: folder " + file.toString() + " archived to " + archivedMetaFile.toString()); //$NON-NLS-1$
 		} else {
-			logger.info("Meta File Error, root contains invalid metadata: file " + file.toString() + " archived to " + archivedMetaFile.toString()); //$NON-NLS-1$
+			logger.error("Meta File Error, root contains invalid metadata: file " + file.toString() + " archived to " + archivedMetaFile.toString()); //$NON-NLS-1$
 		}
 	}
 
@@ -741,6 +741,29 @@ public class SimpleMetaStoreUtil {
 		File oldFolder = retrieveMetaFolder(parent, oldName);
 		File newFolder = retrieveMetaFolder(newParent, newName);
 		return oldFolder.renameTo(newFolder);
+	}
+
+	/**
+	 * Move the MetaFile in the provided parent folder to a new parent folder 
+	 * @param parent The parent folder.
+	 * @param oldName The old name of the MetaFile
+	 * @param newParent The new name of parent folder
+	 * @param newName The new name of the MetaFile
+	 * @return true if the move was successful.
+	 */
+	public static boolean moveMetaFile(File parent, String oldName, File newParent, String newName) {
+		if (!isMetaFile(parent, oldName)) {
+			throw new RuntimeException("Meta File Error, file " + oldName + " not found in folder " + parent.toString(), null);
+		}
+		if (!newParent.exists() || !newParent.isDirectory()) {
+			throw new RuntimeException("Meta File Error, folder does not exist " + newParent.toString(), null);
+		}
+		if (isMetaFile(newParent, newName)) {
+			throw new RuntimeException("Meta File Error, cannot move, file " + newName + " already exists in folder " + newParent.toString(), null);
+		}
+		File oldMetaFile = retrieveMetaFile(parent, oldName);
+		File newMetaFile = retrieveMetaFile(newParent, newName);
+		return oldMetaFile.renameTo(newMetaFile);
 	}
 
 }

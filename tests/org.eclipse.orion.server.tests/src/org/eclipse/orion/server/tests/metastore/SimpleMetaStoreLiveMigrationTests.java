@@ -17,9 +17,13 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -105,7 +109,8 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 			assertTrue(SimpleMetaStoreUtil.createMetaFile(userMetaFolder, projectId, newProjectJSON));
 			projectMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, projectId);
 		}
-		assertTrue("Could not create file " + projectMetaFile.toString(), projectMetaFile.exists() && projectMetaFile.isFile());
+		assertTrue(projectMetaFile.exists());
+		assertTrue(projectMetaFile.isFile());
 
 		// Update the JUnit base variables
 		testProjectBaseLocation = "/" + workspaceId + '/' + projectName;
@@ -197,11 +202,13 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	protected void createUserMetaData(JSONObject newUserJSON, String userId) throws CoreException {
 		SimpleMetaStoreUtil.createMetaUserFolder(getWorkspaceRoot(), userId);
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getWorkspaceRoot(), userId);
-		assertTrue("Could not create directory " + userMetaFolder.toString(), userMetaFolder.exists() && userMetaFolder.isDirectory());
+		assertTrue(userMetaFolder.exists());
+		assertTrue(userMetaFolder.isDirectory());
 		assertFalse(SimpleMetaStoreUtil.isMetaFile(userMetaFolder, SimpleMetaStore.USER));
 		SimpleMetaStoreUtil.createMetaFile(userMetaFolder, SimpleMetaStore.USER, newUserJSON);
 		File userMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, SimpleMetaStore.USER);
-		assertTrue("Could not create file " + userMetaFile.toString(), userMetaFile.exists() && userMetaFile.isFile());
+		assertTrue(userMetaFile.exists());
+		assertTrue(userMetaFile.isFile());
 	}
 
 	/**
@@ -253,7 +260,8 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 			workspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, workspaceId);
 			assertNotNull(workspaceMetaFile);
 		}
-		assertTrue("Could not create file " + workspaceMetaFile.toString(), workspaceMetaFile.exists() && workspaceMetaFile.isFile());
+		assertTrue(workspaceMetaFile.exists());
+		assertTrue(workspaceMetaFile.isFile());
 	}
 
 	protected File getProjectDefaultContentLocation(String userId, String workspaceName, String projectName) throws CoreException {
@@ -274,6 +282,131 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	public void setUp() throws Exception {
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
+	}
+
+	/**
+	 * Verify that files in the users directory that are invalid metadata are archived
+	 * @param version The SimpleMetaStore version 
+	 * @throws Exception
+	 */
+	protected void testArchiveInvalidMetaDataFile(int version) throws Exception {
+		testUserId = testName.getMethodName();
+		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		List<String> workspaceIds = new ArrayList<String>();
+		workspaceIds.add(workspaceId);
+
+		// create metadata on disk
+		testUserId = testName.getMethodName();
+		JSONObject newUserJSON = createUserJson(version, testUserId, workspaceIds);
+		createUserMetaData(newUserJSON, testUserId);
+		JSONObject newWorkspaceJSON = createWorkspaceJson(version, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, EMPTY_LIST);
+		createWorkspaceMetaData(version, newWorkspaceJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+
+		// create invalid metadata on disk
+		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getWorkspaceRoot(), testUserId);
+		String invalid = "delete.html";
+		File invalidFileInUserHome = new File(userMetaFolder, invalid);
+		try {
+			FileOutputStream fileOutputStream = new FileOutputStream(invalidFileInUserHome);
+			Charset utf8 = Charset.forName("UTF-8");
+			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
+			outputStreamWriter.write("<!doctype html>\n");
+			outputStreamWriter.flush();
+			outputStreamWriter.close();
+			fileOutputStream.close();
+		} catch (IOException e) {
+			fail("Count not create a test file in the Orion Project:" + e.getLocalizedMessage());
+		}
+		assertTrue(invalidFileInUserHome.exists());
+		assertTrue(invalidFileInUserHome.isFile());
+		String archivedFilePath = invalidFileInUserHome.toString().substring(getWorkspaceRoot().toString().length());
+
+		// verify web requests
+		verifyWorkspaceRequest(workspaceIds);
+
+		// verify metadata on disk
+		verifyUserMetaData(testUserId, workspaceIds);
+		verifyWorkspaceMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, EMPTY_LIST);
+
+		// verify the invalid metadata file has moved to the archive
+		File archiveFolder = new File(getWorkspaceRoot(), SimpleMetaStoreUtil.ARCHIVE);
+		assertTrue(archiveFolder.exists());
+		assertTrue(archiveFolder.isDirectory());
+		File archivedFile = new File(archiveFolder, archivedFilePath);
+		assertTrue(archivedFile.exists());
+		assertTrue(archivedFile.isFile());
+		assertFalse(invalidFileInUserHome.exists());
+	}
+
+	/**
+	 * Archive invalid metadata file test for SimpleMetaStore version 4 format.
+	 * @throws Exception
+	 */
+	@Test
+	public void testArchiveInvalidMetaDataFileVersionFour() throws Exception {
+		testArchiveInvalidMetaDataFile(SimpleMetaStoreMigration.VERSION4);
+	}
+
+	/**
+	 * Archive invalid metadata file test for SimpleMetaStore version 6 format.
+	 * @throws Exception
+	 */
+	@Test
+	public void testArchiveInvalidMetaDataFileVersionSix() throws Exception {
+		testArchiveInvalidMetaDataFile(SimpleMetaStoreMigration.VERSION6);
+	}
+
+	/**
+	 * Verify that files in the users directory that are invalid metadata are archived
+	 * @param version The SimpleMetaStore version 
+	 * @throws Exception
+	 */
+	protected void testArchiveInvalidMetaDataFolder(int version) throws Exception {
+		testUserId = testName.getMethodName();
+		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		List<String> workspaceIds = new ArrayList<String>();
+		workspaceIds.add(workspaceId);
+
+		// create metadata on disk
+		testUserId = testName.getMethodName();
+		JSONObject newUserJSON = createUserJson(version, testUserId, workspaceIds);
+		createUserMetaData(newUserJSON, testUserId);
+		JSONObject newWorkspaceJSON = createWorkspaceJson(version, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, EMPTY_LIST);
+		createWorkspaceMetaData(version, newWorkspaceJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+
+		// create invalid metadata folder on disk
+		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getWorkspaceRoot(), testUserId);
+		String invalid = "delete.me";
+		File invalidFolderInUserHome = new File(userMetaFolder, invalid);
+		invalidFolderInUserHome.mkdirs();
+		assertTrue(invalidFolderInUserHome.exists());
+		assertTrue(invalidFolderInUserHome.isDirectory());
+		String archivedFilePath = invalidFolderInUserHome.toString().substring(getWorkspaceRoot().toString().length());
+
+		// verify web requests
+		verifyWorkspaceRequest(workspaceIds);
+
+		// verify metadata on disk
+		verifyUserMetaData(testUserId, workspaceIds);
+		verifyWorkspaceMetaData(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, EMPTY_LIST);
+
+		// verify the invalid metadata folder has moved to the archive
+		File archiveFolder = new File(getWorkspaceRoot(), SimpleMetaStoreUtil.ARCHIVE);
+		assertTrue(archiveFolder.exists());
+		assertTrue(archiveFolder.isDirectory());
+		File archivedFile = new File(archiveFolder, archivedFilePath);
+		assertTrue(archivedFile.exists());
+		assertTrue(archivedFile.isDirectory());
+		assertFalse(invalidFolderInUserHome.exists());
+	}
+
+	/**
+	 * Archive invalid metadata folder test for SimpleMetaStore version 4 format.
+	 * @throws Exception
+	 */
+	@Test
+	public void testArchiveInvalidMetaDataFolderVersionFour() throws Exception {
+		testArchiveInvalidMetaDataFolder(SimpleMetaStoreMigration.VERSION4);
 	}
 
 	/**
@@ -334,6 +467,25 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		// create metadata on disk
 		testUserId = testName.getMethodName();
 		JSONObject newUserJSON = createUserJson(version, testUserId, EMPTY_LIST);
+		createUserMetaData(newUserJSON, testUserId);
+
+		// verify web requests
+		verifyWorkspaceRequest(EMPTY_LIST);
+
+		// verify metadata on disk
+		verifyUserMetaData(testUserId, EMPTY_LIST);
+	}
+
+	/**
+	 * A user with no workspaces and does not have a version. This should never occur but test to reproduce corruption.
+	 * @throws Exception
+	 */
+	@Test
+	public void testUserWithNoWorkspacesNoVersion() throws Exception {
+		// create metadata on disk
+		testUserId = testName.getMethodName();
+		JSONObject newUserJSON = createUserJson(SimpleMetaStore.VERSION, testUserId, EMPTY_LIST);
+		newUserJSON.remove(SimpleMetaStore.ORION_VERSION);
 		createUserMetaData(newUserJSON, testUserId);
 
 		// verify web requests

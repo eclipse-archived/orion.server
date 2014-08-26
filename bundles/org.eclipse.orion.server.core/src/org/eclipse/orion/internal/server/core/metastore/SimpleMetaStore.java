@@ -247,12 +247,6 @@ public class SimpleMetaStore implements IMetaStore {
 		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 		// It is possible to have two workspaces with the same name, so append an integer if this is a duplicate name.
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userInfo.getUniqueId());
-		int suffix = 0;
-		while (SimpleMetaStoreUtil.isMetaFolder(userMetaFolder, encodedWorkspaceName)) {
-			suffix++;
-			workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(workspaceInfo.getUserId(), workspaceInfo.getFullName() + suffix);
-			encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
-		}
 		workspaceInfo.setUniqueId(workspaceId);
 		JSONObject jsonObject = new JSONObject();
 		try {
@@ -391,26 +385,6 @@ public class SimpleMetaStore implements IMetaStore {
 			lockMap.put(userId, lock);
 		}
 		return lockMap.get(userId);
-	}
-
-	/**
-	 * Get the Orion version of the simple metadata storage.
-	 * @param rootLocation the folder containing the root metadata file.
-	 * 
-	 * @return the Orion version.
-	 */
-	public int getOrionVersion(File rootLocation) {
-		// Verify we have a valid MetaStore
-		int version = ORION_VERSION_MISSING;
-		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(rootLocation, SimpleMetaStore.ROOT);
-		try {
-			if (jsonObject != null && jsonObject.has(SimpleMetaStore.ORION_VERSION)) {
-				version = jsonObject.getInt(SimpleMetaStore.ORION_VERSION);
-			}
-		} catch (JSONException e) {
-			throw new RuntimeException("SimpleMetaStore.initializeMetaStore: could not read MetaStore.");
-		}
-		return version;
 	}
 
 	/**
@@ -605,7 +579,7 @@ public class SimpleMetaStore implements IMetaStore {
 					SimpleMetaStoreMigration migration = new SimpleMetaStoreMigration();
 					if (migration.isMigrationRequired(jsonObject)) {
 						// Migration to the latest version is required for this user
-						migration.doMigration(userMetaFolder);
+						migration.doMigration(getRootLocation(), userMetaFolder);
 						jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
 
 					}

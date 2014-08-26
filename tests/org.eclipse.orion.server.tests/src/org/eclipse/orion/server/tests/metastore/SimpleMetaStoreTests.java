@@ -45,25 +45,10 @@ import org.junit.Test;
  */
 public class SimpleMetaStoreTests extends AbstractServerTest {
 
-	public IMetaStore getMetaStore() {
-		// use the currently configured metastore if it is an SimpleMetaStore 
-		IMetaStore metaStore = null;
-		try {
-			metaStore = OrionConfiguration.getMetaStore();
-		} catch (NullPointerException e) {
-			// expected when the workbench is not running
-		}
-		if (metaStore instanceof SimpleMetaStore) {
-			return metaStore;
-		}
-		fail("Orion Server is not running with a Simple Metadata Storage.");
-		return null;
-	}
-
 	@Test
 	public void testArchiveEmptyOrganizationalFolder() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -104,7 +89,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testArchiveInvalidMetaDataFileInOrganizationalFolder() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -153,9 +138,9 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	}
 
 	@Test
-	public void testArchiveInvalidMetaDataFileInWorkspaceRoot() throws CoreException {
+	public void testArchiveInvalidMetaDataFileInServerWorkspaceRoot() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -199,7 +184,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testArchiveInvalidMetaDataFolderInOrganizationalFolder() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -245,9 +230,9 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	}
 
 	@Test
-	public void testArchiveInvalidMetaDataFolderInWorkspaceRoot() throws CoreException {
+	public void testArchiveInvalidMetaDataFolderInServerWorkspaceRoot() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -287,7 +272,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateProject() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -324,7 +309,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateProjectNamedOrionContent() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -362,7 +347,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateProjectNamedUser() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -396,7 +381,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateProjectNamedUserDashOrionContent() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -434,7 +419,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateProjectNamedWorkspace() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -511,7 +496,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateProjectWithAnInvalidWorkspaceId() {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the project, do not specify a valid workspace id
 		String projectName = "Orion Project";
@@ -535,7 +520,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateProjectWithBarInName() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -571,7 +556,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateProjectWithDuplicateProjectName() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -625,7 +610,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateProjectWithEmojiChactersInName() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -665,7 +650,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateProjectWithNoWorkspaceId() {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the project, do not specify a workspace id
 		String projectName = "Orion Project";
@@ -688,7 +673,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateProjectWithURLAsName() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -729,7 +714,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateSecondWorkspace() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -762,7 +747,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateTwoWorkspacesWithSameName() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -801,7 +786,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateUser() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -830,7 +815,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateUserWithNoUserName() {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user and do not provide a userId
 		UserInfo userInfo = new UserInfo();
@@ -847,7 +832,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateWorkspace() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -866,7 +851,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateWorkspaceWithAnInvalidUserId() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the workspace without specifying an existing userid.
 		// the user with id '77' is created at the readUser() API.
@@ -880,7 +865,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateWorkspaceWithNoUserId() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -904,7 +889,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testCreateWorkspaceWithNoWorkspaceName() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -927,7 +912,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testDeleteProject() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -980,7 +965,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testDeleteUser() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -999,7 +984,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testDeleteWorkspace() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1035,7 +1020,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testEncodedProjectContentLocation() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1068,7 +1053,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testGetDefaultContentLocation() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1091,7 +1076,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		metaStore.createProject(projectInfo);
 
 		// get the default content location
-		IFileStore defaultContentLocation = getMetaStore().getDefaultContentLocation(projectInfo);
+		IFileStore defaultContentLocation = metaStore.getDefaultContentLocation(projectInfo);
 		String location = defaultContentLocation.toLocalFile(EFS.NONE, null).toString();
 
 		IFileStore root = OrionConfiguration.getRootLocation();
@@ -1104,7 +1089,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testGetUserHome() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1113,7 +1098,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		metaStore.createUser(userInfo);
 
 		// get the user home
-		IFileStore userHome = getMetaStore().getUserHome(userInfo.getUniqueId());
+		IFileStore userHome = metaStore.getUserHome(userInfo.getUniqueId());
 		String location = userHome.toLocalFile(EFS.NONE, null).toString();
 
 		IFileStore root = OrionConfiguration.getRootLocation();
@@ -1124,9 +1109,26 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	}
 
 	@Test
+	public void testGetUserHomeWithNullArgument() {
+		// create the MetaStore
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
+
+		// get the root location
+		IFileStore rootLocation = OrionConfiguration.getRootLocation();
+
+		// get the root location using the old API
+		IFileStore root = metaStore.getUserHome(null);
+
+		// ensure valid
+		assertNotNull(rootLocation);
+		assertNotNull(root);
+		assertEquals(rootLocation, root);
+	}
+
+	@Test
 	public void testGetWorkspaceContentLocation() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1142,7 +1144,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		metaStore.createWorkspace(workspaceInfo);
 
 		// get the workspace content location
-		IFileStore workspaceHome = getMetaStore().getWorkspaceContentLocation(workspaceInfo.getUniqueId());
+		IFileStore workspaceHome = metaStore.getWorkspaceContentLocation(workspaceInfo.getUniqueId());
 		String location = workspaceHome.toLocalFile(EFS.NONE, null).toString();
 
 		IFileStore root = OrionConfiguration.getRootLocation();
@@ -1155,7 +1157,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testMoveProject() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1182,7 +1184,8 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		if (!projectFolder.fetchInfo().exists()) {
 			projectFolder.mkdir(EFS.NONE, null);
 		}
-		assertTrue(projectFolder.fetchInfo().exists() && projectFolder.fetchInfo().isDirectory());
+		assertTrue(projectFolder.fetchInfo().exists());
+		assertTrue(projectFolder.fetchInfo().isDirectory());
 		String fileName = "file.html";
 		IFileStore file = projectFolder.getChild(fileName);
 		try {
@@ -1228,7 +1231,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testMoveProjectLinked() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1300,7 +1303,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testMoveProjectWithBarInProjectName() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1343,7 +1346,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testMoveUser() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1408,7 +1411,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testReadAllUsers() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo1 = new UserInfo();
@@ -1550,7 +1553,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testReadProject() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1606,7 +1609,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testReadProjectThatDoesNotExist() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1629,7 +1632,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testReadProjectWithWorkspaceThatDoesNotExist() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1649,7 +1652,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testReadUser() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1666,7 +1669,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testReadUserThatDoesNotExist() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// read the user, it will be created
 		UserInfo userInfo = metaStore.readUser(testUserLogin);
@@ -1678,7 +1681,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testReadWorkspace() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1717,7 +1720,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testReadWorkspaceSpecifyNullWorkspaceId() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// read the workspace that does not exist
 		WorkspaceInfo readWorkspaceInfo = metaStore.readWorkspace(null);
@@ -1727,7 +1730,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testReadWorkspaceThatDoesNotExist() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1750,7 +1753,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testUpdateProject() throws URISyntaxException, CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1795,7 +1798,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testUpdateUser() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
@@ -1827,7 +1830,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	@Test
 	public void testUpdateWorkspace() throws CoreException {
 		// create the MetaStore
-		IMetaStore metaStore = getMetaStore();
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
 		// create the user
 		UserInfo userInfo = new UserInfo();
