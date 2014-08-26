@@ -10,8 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.manifest.v2;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.json.*;
 
 /**
  * Intermediate manifest file representation.
@@ -157,9 +164,9 @@ public class ManifestParseTree {
 		if (getParent() == this) {
 
 			/* special case: manifest root */
-			sb.append("---" + System.getProperty("line.separator")); //$NON-NLS-1$ //$NON-NLS-2$
+			sb.append("---").append(System.getProperty("line.separator")); //$NON-NLS-1$ //$NON-NLS-2$
 			for (ManifestParseTree child : children)
-				sb.append(child.toString(0) + System.getProperty("line.separator")); //$NON-NLS-1$
+				sb.append(child.toString(0)).append(System.getProperty("line.separator")); //$NON-NLS-1$
 
 			return sb.toString();
 		}
@@ -172,7 +179,7 @@ public class ManifestParseTree {
 		sb.append(getLabel());
 
 		/* print mapping symbol if required */
-		boolean isItemNode = (tokens.size() == 1 && TokenType.ITEM_CONSTANT == tokens.get(0).getType());
+		boolean isItemNode = isItemNode();
 		if (!isItemNode && children.size() > 0)
 			sb.append(":"); //$NON-NLS-1$
 
@@ -185,10 +192,11 @@ public class ManifestParseTree {
 				/* special case: in-line item */
 				sb.append(" "); //$NON-NLS-1$
 				sb.append(child.toString(0));
+
 			} else {
 				sb.append(System.getProperty("line.separator")); //$NON-NLS-1$
 
-				if (!child.isItemNode())
+				if (!child.isItemNode() || getParent().isItemNode())
 					sb.append(child.toString(indentation + 2));
 				else
 					sb.append(child.toString(indentation));
@@ -196,6 +204,89 @@ public class ManifestParseTree {
 		}
 
 		return sb.toString();
+	}
+
+	/**
+	 * Externalization to JSON format.
+	 * @return JSON representation.
+	 * @throws JSONException 
+	 * @throws InvalidAccessException 
+	 */
+	public JSONObject toJSON() throws JSONException, InvalidAccessException {
+
+		JSONObject rep = new JSONObject();
+		for (ManifestParseTree child : getChildren())
+			child.append(rep);
+
+		return rep;
+	}
+
+	/**
+	 * JSON externalization helper.
+	 */
+	protected void append(JSONObject rep) throws JSONException, InvalidAccessException {
+
+		if (isList()) {
+			JSONArray arr = new JSONArray();
+			for (ManifestParseTree child : getChildren())
+				child.append(arr);
+
+			rep.put(getLabel(), arr);
+			return;
+		}
+
+		if (getChildren().size() == 1 && getChildren().get(0).getChildren().size() == 0) {
+			/* format: A: B (mapping) */
+			rep.put(getLabel(), getValue());
+			return;
+		}
+
+		JSONObject obj = new JSONObject();
+		for (ManifestParseTree child : getChildren())
+			child.append(obj);
+
+		rep.put(getLabel(), obj);
+	}
+
+	/**
+	 * JSON externalization helper.
+	 */
+	protected void append(JSONArray rep) throws JSONException, InvalidAccessException {
+
+		if (getChildren().size() == 1 && getChildren().get(0).getChildren().size() == 0) {
+			/* format: - A (note: no mapping) */
+			rep.put(getChildren().get(0).getLabel());
+			return;
+		}
+
+		/* otherwise, we expect an object */
+		JSONObject obj = new JSONObject();
+		for (ManifestParseTree child : getChildren())
+			child.append(obj);
+
+		rep.put(obj);
+	}
+
+	/**
+	 * Persists the manifest YAML representation into the given file store.
+	 * @param fileStore File store to persist the manifest. Note: if the given
+	 * file exists, it's contents are going to be overridden.
+	 * @throws CoreException
+	 */
+	public void persist(IFileStore fileStore) throws CoreException {
+
+		PrintStream ps = null;
+		try {
+
+			String representation = toString();
+			OutputStream out = fileStore.openOutputStream(EFS.OVERWRITE, null);
+			ps = new PrintStream(out);
+			ps.print(representation);
+
+		} finally {
+			if (ps != null)
+				IOUtilities.safeClose(ps);
+		}
 	}
 
 	public boolean isRoot() {

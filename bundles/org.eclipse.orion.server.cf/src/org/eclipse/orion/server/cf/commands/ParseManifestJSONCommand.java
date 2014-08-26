@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.commands;
 
-import java.io.IOException;
-import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
@@ -19,32 +17,23 @@ import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.v2.*;
-import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
-import org.eclipse.orion.server.cf.objects.Target;
-import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ParseManifestCommand extends AbstractCFCommand {
+public class ParseManifestJSONCommand implements ICFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
-	private String userId;
+	private JSONObject manifestJSON;
+	private ManifestParseTree manifest;
+
+	private IFileStore appStore;
 	private String contentLocation;
 	private String commandName;
-
-	private ManifestParseTree manifest;
-	private IFileStore appStore;
-
-	public ParseManifestCommand(Target target, String userId, String contentLocation) {
-		super(target);
-		this.userId = userId;
-		this.contentLocation = contentLocation;
-		this.commandName = NLS.bind("Parse application manifest: {0}", contentLocation);
-	}
+	private String userId;
 
 	public ManifestParseTree getManifest() {
 		return manifest;
@@ -52,6 +41,13 @@ public class ParseManifestCommand extends AbstractCFCommand {
 
 	public IFileStore getAppStore() {
 		return appStore;
+	}
+
+	public ParseManifestJSONCommand(JSONObject manifestJSON, String userId, String contentLocation) {
+		this.manifestJSON = manifestJSON;
+		this.userId = userId;
+		this.contentLocation = contentLocation;
+		this.commandName = "Parse manifest JSON representation";
 	}
 
 	/* checks whether the given path may be access by the user */
@@ -66,15 +62,13 @@ public class ParseManifestCommand extends AbstractCFCommand {
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 	}
 
-	private ServerStatus cannotFindManifest(IPath contentPath) {
-		// Note: we are assuming the content path is inside a project folder
-		IPath manifestPath = contentPath.removeFirstSegments(2).append(ManifestConstants.MANIFEST_FILE_NAME);
-		String msg = "Failed to find /" + manifestPath + ". If the manifest is in a different folder, please select the manifest file or folder before deploying.";
-		return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
-	}
-
 	@Override
-	protected ServerStatus _doIt() {
+	public IStatus doIt() {
+
+		if (manifestJSON == null)
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, //
+					"Missing manifest JSON representation", null);
+
 		try {
 
 			/* get the contentLocation file store */
@@ -89,60 +83,33 @@ public class ParseManifestCommand extends AbstractCFCommand {
 				contentPath = contentPath.removeLastSegments(1);
 			}
 
-			if (fileStore == null) {
-				return cannotFindManifest(contentPath);
-			}
-
-			/* lookup the manifest description */
-			IFileStore manifestStore = fileStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
-			if (!manifestStore.fetchInfo().exists()) {
-				return cannotFindManifest(contentPath);
-			}
-
-			/* parse within the project sandbox */
-			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(contentPath.segment(0), contentPath.segment(1));
-			IFileStore projectStore = NewFileServlet.getFileStore(null, project);
-
 			/* parse the manifest */
-			ManifestParseTree manifest = null;
-			if (target != null) {
-				URI targetURI = URIUtil.toURI(target.getUrl());
-				String targetBase = targetURI.getHost().substring(4);
-				manifest = ManifestUtils.parse(projectStore, manifestStore, targetBase);
-			} else
-				manifest = ManifestUtils.parse(projectStore, manifestStore);
-
-			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
+			manifest = ManifestUtils.parse(manifestJSON);
 
 			/* optional */
+			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
 			ManifestParseTree pathNode = app.getOpt(CFProtocolConstants.V2_KEY_PATH);
 			String path = (pathNode != null) ? pathNode.getValue() : ""; //$NON-NLS-1$
 
 			if (path.isEmpty())
 				path = "."; //$NON-NLS-1$
 
-			try {
+			IPath appStorePath = contentPath.append(path);
+			accessStatus = canAccess(appStorePath);
+			if (!accessStatus.isOK())
+				return accessStatus;
 
-				IPath appStorePath = contentPath.append(path);
-				accessStatus = canAccess(appStorePath);
-				if (!accessStatus.isOK())
-					return accessStatus;
+			appStore = NewFileServlet.getFileStore(null, appStorePath);
 
-				this.appStore = NewFileServlet.getFileStore(null, appStorePath);
-
-				if (appStore == null) {
-					String msg = NLS.bind("Failed to find application content due to incorrect path parameter: {0}", appStorePath);
-					return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
-				}
-
-				this.manifest = manifest;
-
-			} catch (Exception ex) {
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Failed to locate application contents as specified in the manifest.", null);
+			if (appStore == null) {
+				String msg = NLS.bind("Failed to find application content due to incorrect path parameter: {0}", appStorePath);
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 			}
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 
+		} catch (IllegalArgumentException e) {
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		} catch (TokenizerException e) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		} catch (ParserException e) {
@@ -150,8 +117,6 @@ public class ParseManifestCommand extends AbstractCFCommand {
 		} catch (AnalyzerException e) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		} catch (InvalidAccessException e) {
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
-		} catch (IOException e) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
