@@ -41,6 +41,8 @@ public abstract class OAuthParams {
 
 	protected static final String CLIENT_SECRET = "client_secret";
 
+	protected static final String REDIRECT = "redirect";
+
 	public abstract OAuthProviderType getProviderType();
 
 	public abstract String getClientKey() throws OAuthException;
@@ -62,9 +64,10 @@ public abstract class OAuthParams {
 	protected final boolean login;
 	protected final URL currentURL;
 	private final String state;
+	private final String redirect;
 
-
-	public OAuthParams(HttpServletRequest req, boolean login) throws OAuthException{
+	public OAuthParams(HttpServletRequest req, boolean login) throws OAuthException {
+		redirect = req.getParameter(REDIRECT);
 		this.login = login;
 		state = UUID.randomUUID().toString();
 		try {
@@ -76,6 +79,10 @@ public abstract class OAuthParams {
 
 	public void addAdditionsParams(AuthenticationRequestBuilder requestBuiler) throws OAuthException {
 		return;
+	}
+
+	protected String getRedirect() {
+		return redirect;
 	}
 
 	public String getState(){

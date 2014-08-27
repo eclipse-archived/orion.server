@@ -38,8 +38,8 @@ public class GoogleOAuthConsumer extends OAuthConsumer {
 	private String email;
 	private boolean email_verified;
 	
-	public GoogleOAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse) throws OAuthException {
-		super(oauthAccessTokenResponse);
+	public GoogleOAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse, String redirect) throws OAuthException {
+		super(oauthAccessTokenResponse, redirect);
 		try {
 			JSONObject json = new JSONObject(oauthAccessTokenResponse.getBody());
 			String jwt = json.getString(TOKEN_PARAMETER);

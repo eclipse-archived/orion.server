@@ -103,7 +103,7 @@ public class GoogleOAuthParams extends OAuthParams {
 	}
 
 	public OAuthConsumer getNewOAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse) throws OAuthException {
-		return new GoogleOAuthConsumer(oauthAccessTokenResponse);
+		return new GoogleOAuthConsumer(oauthAccessTokenResponse, getRedirect());
 	}
 
 	public void addAdditionsParams(AuthenticationRequestBuilder requestBuiler) throws OAuthException {

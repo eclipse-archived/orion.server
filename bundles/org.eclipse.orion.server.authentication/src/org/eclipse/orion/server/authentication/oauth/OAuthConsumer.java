@@ -28,13 +28,19 @@ import org.apache.oltu.oauth2.common.token.OAuthToken;
  *
  */
 public abstract class OAuthConsumer implements OAuthToken {
-	
+
 	protected OAuthToken accessToken;
-	
-	public OAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse){
+	private final String redirect;
+
+	public OAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse, String redirect) {
+		this.redirect = redirect;
 		accessToken = oauthAccessTokenResponse.getOAuthToken();
 	}
-	
+
+	public String getRedirect() {
+		return redirect;
+	}
+
 	public String getAccessToken() {
 		return accessToken.getAccessToken();
 	}
@@ -50,7 +56,7 @@ public abstract class OAuthConsumer implements OAuthToken {
 	public String getScope() {
 		return accessToken.getScope();
 	}
-	
+
 	/**
 	 * Makes an authenticated HTTP Get call the the provided url.
 	 * @param url The url to call.
@@ -62,8 +68,8 @@ public abstract class OAuthConsumer implements OAuthToken {
 		OAuthClientRequest request;
 		try {
 			request = new OAuthBearerClientRequest(url)
-				.setAccessToken(getAccessToken())
-				.buildQueryMessage();
+			.setAccessToken(getAccessToken())
+			.buildQueryMessage();
 		} catch (OAuthSystemException e1) {
 			throw new OAuthException("An error occured while authenticating the user");
 		}
@@ -77,15 +83,15 @@ public abstract class OAuthConsumer implements OAuthToken {
 		}
 		return response.getBody();
 	}
-	
+
 	public abstract String getIdentifier();
-	
+
 	public abstract String getEmail();
-	
+
 	public abstract String getUsername();
-	
+
 	public abstract boolean isEmailVerifiecd();
-	
+
 	public String getOpenidIdentifier(){
 		return null;
 	}
