@@ -165,6 +165,7 @@ public class TransferTest extends FileSystemTest {
 		//create content to export
 		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
 		createDirectory(directoryPath);
+		createDirectory(directoryPath + "/empty");
 		String fileContents = "This is the file contents";
 		createFile(directoryPath + "/file.txt", fileContents);
 
@@ -173,6 +174,7 @@ public class TransferTest extends FileSystemTest {
 		WebResponse response = webConversation.getResponse(export);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		boolean found = false;
+		boolean emptyDirFound = false;
 		ZipInputStream in = new ZipInputStream(response.getInputStream());
 		ZipEntry entry;
 		while ((entry = in.getNextEntry()) != null) {
@@ -181,9 +183,11 @@ public class TransferTest extends FileSystemTest {
 				ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 				IOUtilities.pipe(in, bytes, false, false);
 				assertEquals(fileContents, new String(bytes.toByteArray()));
+			} else if (entry.getName().equals("empty/") && entry.isDirectory()) {
+				emptyDirFound = true;
 			}
 		}
-		assertTrue(found);
+		assertTrue(found && emptyDirFound);
 	}
 
 	/**
