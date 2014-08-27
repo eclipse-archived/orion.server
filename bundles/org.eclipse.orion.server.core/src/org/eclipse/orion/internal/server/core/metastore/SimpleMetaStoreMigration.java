@@ -194,26 +194,25 @@ public class SimpleMetaStoreMigration {
 			return;
 		}
 		SimpleMetaStoreUtil.moveMetaFile(folder, projectName, userMetaFolder, projectName);
-		logger.info("Migration: Old project MetaData file " + oldProjectMetaFile.toString() + " has been moved to " + newProjectMetaFile.toString());
+		logger.info("Migration: Old project metadata file " + oldProjectMetaFile.toString() + " has been moved to " + newProjectMetaFile.toString());
 	}
 
-	private String moveWorkspaceJsonFile(File folder) throws JSONException {
+	private void moveWorkspaceJsonFile(File folder) throws JSONException {
 		File parent = folder.getParentFile();
 		File oldWorkspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(folder, SimpleMetaStore.WORKSPACE);
-		JSONObject workspaceMetaData = SimpleMetaStoreUtil.readMetaFile(folder, SimpleMetaStore.WORKSPACE);
-		if (!workspaceMetaData.has("UniqueId")) {
+		JSONObject workspaceJSON = SimpleMetaStoreUtil.readMetaFile(folder, SimpleMetaStore.WORKSPACE);
+		if (!workspaceJSON.has("UniqueId")) {
 			logger.error("Migration: Workspace metadata is missing UniqueId " + oldWorkspaceMetaFile.toString()); //$NON-NLS-1$
-			return null;
+			return;
 		}
-		String workspaceId = workspaceMetaData.getString("UniqueId");
+		String workspaceId = workspaceJSON.getString("UniqueId");
 		File newWorkspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(parent, workspaceId);
 		if (newWorkspaceMetaFile.exists()) {
 			logger.error("Migration: Duplicate workspace metadata file at " + newWorkspaceMetaFile.toString()); //$NON-NLS-1$
-			return null;
+			return;
 		}
 		SimpleMetaStoreUtil.moveMetaFile(folder, SimpleMetaStore.WORKSPACE, parent, workspaceId);
-		logger.info("Migration: Old workspace MetaData file " + oldWorkspaceMetaFile.toString() + " has been moved to " + newWorkspaceMetaFile.toString());
-		return workspaceId;
+		logger.info("Migration: Old workspace metadata file " + oldWorkspaceMetaFile.toString() + " has been moved to " + newWorkspaceMetaFile.toString());
 	}
 
 	/**
@@ -233,7 +232,7 @@ public class SimpleMetaStoreMigration {
 		SimpleMetaStoreUtil.updateMetaFile(parent, name, jsonObject);
 		File metaFile = SimpleMetaStoreUtil.retrieveMetaFile(parent, name);
 		String oldVersionStr = (oldVersion == -1) ? "UNKNOWN" : Integer.toString(oldVersion);
-		logger.info("Migration: Updated Orion version from version " + oldVersionStr + " to version " + SimpleMetaStore.VERSION + " in MetaData file: " + metaFile.toString());
+		logger.info("Migration: Updated Orion version from version " + oldVersionStr + " to version " + SimpleMetaStore.VERSION + " in metadata file: " + metaFile.toString());
 	}
 
 	/**
@@ -311,13 +310,8 @@ public class SimpleMetaStoreMigration {
 			SimpleMetaStoreUtil.archive(rootLocation, workspaceMetaFolder);
 			return;
 		}
-		updateOrionVersion(workspaceMetaFolder, SimpleMetaStore.WORKSPACE);
-		String workspaceId = moveWorkspaceJsonFile(workspaceMetaFolder);
-		if (workspaceId == null) {
-			return;
-		}
-		File workspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(workspaceMetaFolder.getParentFile(), workspaceId);
-		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(workspaceMetaFolder.getParentFile(), workspaceId);
+		File workspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(workspaceMetaFolder, SimpleMetaStore.WORKSPACE);
+		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(workspaceMetaFolder, SimpleMetaStore.WORKSPACE);
 		if (!jsonObject.has("ProjectNames")) {
 			logger.error("Migration: Workspace metadata is missing ProjectNames " + workspaceMetaFile.toString()); //$NON-NLS-1$
 			return;
@@ -352,6 +346,8 @@ public class SimpleMetaStoreMigration {
 				}
 			}
 		}
+		updateOrionVersion(workspaceMetaFolder, SimpleMetaStore.WORKSPACE);
+		moveWorkspaceJsonFile(workspaceMetaFolder);
 	}
 
 	/**
@@ -368,7 +364,7 @@ public class SimpleMetaStoreMigration {
 			jsonObject.put("ContentLocation", encodedContentLocation);
 			SimpleMetaStoreUtil.updateMetaFile(parent, name, jsonObject);
 			File metaFile = SimpleMetaStoreUtil.retrieveMetaFile(parent, name);
-			logger.info("Migration: Updated the ContentLocation in MetaData file: " + metaFile.toString());
+			logger.info("Migration: Updated the ContentLocation in metadata file: " + metaFile.toString());
 		}
 	}
 }

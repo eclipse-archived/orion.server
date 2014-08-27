@@ -410,6 +410,70 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	}
 
 	/**
+	 * Verify nothing is modified in the case that the project metadata file is corrupt.
+	 * @throws Exception
+	 */
+	@Test
+	public void testProjectMetadataCorruption() throws Exception {
+		int version = SimpleMetaStoreMigration.VERSION4;
+		testUserId = testName.getMethodName();
+		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
+		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(testUserId, workspaceName);
+		List<String> workspaceIds = new ArrayList<String>();
+		workspaceIds.add(workspaceId);
+		List<String> projectNames = new ArrayList<String>();
+		projectNames.add(testName.getMethodName().concat("Project"));
+
+		// create metadata on disk
+		JSONObject newUserJSON = createUserJson(version, testUserId, workspaceIds);
+		createUserMetaData(newUserJSON, testUserId);
+		JSONObject newWorkspaceJSON = createWorkspaceJson(version, testUserId, workspaceName, projectNames);
+		createWorkspaceMetaData(version, newWorkspaceJSON, testUserId, workspaceName);
+		File defaultContentLocation = getProjectDefaultContentLocation(testUserId, workspaceName, projectNames.get(0));
+		JSONObject newProjectJSON = createProjectJson(version, testUserId, workspaceName, projectNames.get(0), defaultContentLocation);
+		createProjectMetaData(version, newProjectJSON, testUserId, workspaceName, projectNames.get(0));
+
+		// corrupt the workspace metadata on disk
+		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getWorkspaceRoot(), testUserId);
+		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
+		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
+		String projectId = SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectNames.get(0));
+		File corruptedProjectJSON = SimpleMetaStoreUtil.retrieveMetaFile(workspaceMetaFolder, projectId);
+		try {
+			FileOutputStream fileOutputStream = new FileOutputStream(corruptedProjectJSON);
+			Charset utf8 = Charset.forName("UTF-8");
+			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
+			outputStreamWriter.write("<!doctype html>\n");
+			outputStreamWriter.flush();
+			outputStreamWriter.close();
+			fileOutputStream.close();
+		} catch (IOException e) {
+			fail("Count not create a test file in the Orion Project:" + e.getLocalizedMessage());
+		}
+		assertTrue(corruptedProjectJSON.exists());
+		assertTrue(corruptedProjectJSON.isFile());
+
+		// verify the web request has failed
+		WebRequest request = new GetMethodWebRequest(SERVER_LOCATION + "/workspace");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		setAuthentication(request);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, response.getResponseCode());
+
+		// verify the user metadata on disk was not modified
+		assertTrue(SimpleMetaStoreUtil.isMetaFile(userMetaFolder, SimpleMetaStore.USER));
+		JSONObject userJSON = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
+		assertTrue(userJSON.has(SimpleMetaStore.ORION_VERSION));
+		assertEquals("OrionVersion is incorrect", SimpleMetaStoreMigration.VERSION4, userJSON.getInt(SimpleMetaStore.ORION_VERSION));
+
+		// verify the workspace metadata on disk was not moved or modified
+		assertTrue(SimpleMetaStoreUtil.isMetaFile(workspaceMetaFolder, SimpleMetaStore.WORKSPACE));
+		JSONObject workspaceJson = SimpleMetaStoreUtil.readMetaFile(workspaceMetaFolder, SimpleMetaStore.WORKSPACE);
+		assertTrue(workspaceJson.has(SimpleMetaStore.ORION_VERSION));
+		assertEquals("OrionVersion is incorrect", SimpleMetaStoreMigration.VERSION4, workspaceJson.getInt(SimpleMetaStore.ORION_VERSION));
+	}
+
+	/**
 	 * A user named growth8 with one workspace with a non standard name and two projects in SimpleMetaStore version 4 format.
 	 * Matches a user on an internal server.
 	 * @throws Exception
