@@ -270,43 +270,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	}
 
 	@Test
-	public void testCreateProject() throws CoreException {
-		// create the MetaStore
-		IMetaStore metaStore = OrionConfiguration.getMetaStore();
-
-		// create the user
-		UserInfo userInfo = new UserInfo();
-		userInfo.setUserName(testUserLogin);
-		userInfo.setFullName(testUserLogin);
-		metaStore.createUser(userInfo);
-
-		// create the workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
-		workspaceInfo.setFullName(workspaceName);
-		workspaceInfo.setUserId(userInfo.getUniqueId());
-		metaStore.createWorkspace(workspaceInfo);
-
-		// create the project
-		String projectName = "Orion Project";
-		ProjectInfo projectInfo = new ProjectInfo();
-		projectInfo.setFullName(projectName);
-		try {
-			projectInfo.setContentLocation(new URI("file:/home/anthony/orion/project"));
-		} catch (URISyntaxException e) {
-			// should not get an exception here, simple URI
-		}
-		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
-		metaStore.createProject(projectInfo);
-
-		IFileStore defaultLocation = metaStore.getDefaultContentLocation(projectInfo);
-		// Test that the project is linked
-		assertFalse(defaultLocation == projectInfo.getProjectStore());
-		// Test that no content folder is created
-		assertFalse(defaultLocation.fetchInfo().exists());
-	}
-
-	@Test
 	public void testCreateProjectNamedOrionContent() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = OrionConfiguration.getMetaStore();
@@ -745,6 +708,91 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	}
 
 	@Test
+	public void testCreateSimpleProject() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName(testUserLogin);
+		userInfo.setFullName(testUserLogin);
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create the project
+		String projectName = "Orion Project";
+		ProjectInfo projectInfo = new ProjectInfo();
+		projectInfo.setFullName(projectName);
+		try {
+			projectInfo.setContentLocation(new URI("file:/home/anthony/orion/project"));
+		} catch (URISyntaxException e) {
+			// should not get an exception here, simple URI
+		}
+		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+		metaStore.createProject(projectInfo);
+
+		IFileStore defaultLocation = metaStore.getDefaultContentLocation(projectInfo);
+		// Test that the project is linked
+		assertFalse(defaultLocation == projectInfo.getProjectStore());
+		// Test that no content folder is created
+		assertFalse(defaultLocation.fetchInfo().exists());
+	}
+
+	@Test
+	public void testCreateSimpleUser() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName(testUserLogin);
+		userInfo.setFullName(testUserLogin);
+		metaStore.createUser(userInfo);
+
+		// read the user back again
+		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
+		assertNotNull(readUserInfo);
+		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
+		assertEquals(readUserInfo.getUserName(), userInfo.getUserName());
+
+		// make sure the user is in the list of all users
+		List<String> allUsers = metaStore.readAllUsers();
+		assertTrue(allUsers.contains(userInfo.getUniqueId()));
+
+		// delete the user
+		metaStore.deleteUser(userInfo.getUniqueId());
+
+		// make sure the user is not the list of all users
+		allUsers = metaStore.readAllUsers();
+		assertFalse(allUsers.contains(userInfo.getUniqueId()));
+	}
+
+	@Test
+	public void testCreateSimpleWorkspace() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName(testUserLogin);
+		userInfo.setFullName(testUserLogin);
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+	}
+
+	@Test
 	public void testCreateTwoWorkspacesWithSameName() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = OrionConfiguration.getMetaStore();
@@ -784,35 +832,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	}
 
 	@Test
-	public void testCreateUser() throws CoreException {
-		// create the MetaStore
-		IMetaStore metaStore = OrionConfiguration.getMetaStore();
-
-		// create the user
-		UserInfo userInfo = new UserInfo();
-		userInfo.setUserName(testUserLogin);
-		userInfo.setFullName(testUserLogin);
-		metaStore.createUser(userInfo);
-
-		// read the user back again
-		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
-		assertNotNull(readUserInfo);
-		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(readUserInfo.getUserName(), userInfo.getUserName());
-
-		// make sure the user is in the list of all users
-		List<String> allUsers = metaStore.readAllUsers();
-		assertTrue(allUsers.contains(userInfo.getUniqueId()));
-
-		// delete the user
-		metaStore.deleteUser(userInfo.getUniqueId());
-
-		// make sure the user is not the list of all users
-		allUsers = metaStore.readAllUsers();
-		assertFalse(allUsers.contains(userInfo.getUniqueId()));
-	}
-
-	@Test
 	public void testCreateUserWithNoUserName() {
 		// create the MetaStore
 		IMetaStore metaStore = OrionConfiguration.getMetaStore();
@@ -827,25 +846,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 			String message = e.getMessage();
 			assertTrue(message.contains("could not create user"));
 		}
-	}
-
-	@Test
-	public void testCreateWorkspace() throws CoreException {
-		// create the MetaStore
-		IMetaStore metaStore = OrionConfiguration.getMetaStore();
-
-		// create the user
-		UserInfo userInfo = new UserInfo();
-		userInfo.setUserName(testUserLogin);
-		userInfo.setFullName(testUserLogin);
-		metaStore.createUser(userInfo);
-
-		// create the workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
-		workspaceInfo.setFullName(workspaceName);
-		workspaceInfo.setUserId(userInfo.getUniqueId());
-		metaStore.createWorkspace(workspaceInfo);
 	}
 
 	@Test
@@ -910,7 +910,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	}
 
 	@Test
-	public void testDeleteProject() throws CoreException {
+	public void testDeleteSimpleProject() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
@@ -963,7 +963,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	}
 
 	@Test
-	public void testDeleteUser() throws CoreException {
+	public void testDeleteSimpleUser() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
@@ -982,7 +982,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	}
 
 	@Test
-	public void testDeleteWorkspace() throws CoreException {
+	public void testDeleteSimpleWorkspace() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
@@ -1155,80 +1155,6 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	}
 
 	@Test
-	public void testMoveProject() throws CoreException {
-		// create the MetaStore
-		IMetaStore metaStore = OrionConfiguration.getMetaStore();
-
-		// create the user
-		UserInfo userInfo = new UserInfo();
-		userInfo.setUserName(testUserLogin);
-		userInfo.setFullName(testUserLogin);
-		metaStore.createUser(userInfo);
-
-		// create the workspace
-		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
-		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
-		workspaceInfo.setFullName(workspaceName);
-		workspaceInfo.setUserId(userInfo.getUniqueId());
-		metaStore.createWorkspace(workspaceInfo);
-
-		// create the project
-		String projectName = "Orion Project";
-		ProjectInfo projectInfo = new ProjectInfo();
-		projectInfo.setFullName(projectName);
-		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
-		metaStore.createProject(projectInfo);
-
-		// create a project directory and file
-		IFileStore projectFolder = metaStore.getDefaultContentLocation(projectInfo);
-		if (!projectFolder.fetchInfo().exists()) {
-			projectFolder.mkdir(EFS.NONE, null);
-		}
-		assertTrue(projectFolder.fetchInfo().exists());
-		assertTrue(projectFolder.fetchInfo().isDirectory());
-		String fileName = "file.html";
-		IFileStore file = projectFolder.getChild(fileName);
-		try {
-			OutputStream outputStream = file.openOutputStream(EFS.NONE, null);
-			outputStream.write("<!doctype html>".getBytes());
-			outputStream.close();
-		} catch (IOException e) {
-			fail("Count not create a test file in the Orion Project:" + e.getLocalizedMessage());
-		}
-		assertTrue("the file in the project folder should exist.", file.fetchInfo().exists());
-
-		// update the project with the content location
-		projectInfo.setContentLocation(projectFolder.toLocalFile(EFS.NONE, null).toURI());
-		metaStore.updateProject(projectInfo);
-
-		// move the project by renaming the project by changing the projectName
-		String movedProjectName = "Moved Orion Project";
-		projectInfo.setFullName(movedProjectName);
-
-		// update the project
-		metaStore.updateProject(projectInfo);
-
-		// read the project back again
-		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo.getFullName());
-		assertNotNull(readProjectInfo);
-		assertTrue(readProjectInfo.getFullName().equals(movedProjectName));
-
-		// verify the local project has moved
-		IFileStore workspaceFolder = metaStore.getWorkspaceContentLocation(workspaceInfo.getUniqueId());
-		projectFolder = workspaceFolder.getChild(projectName);
-		assertFalse("the original project folder should not exist.", projectFolder.fetchInfo().exists());
-		projectFolder = workspaceFolder.getChild(movedProjectName);
-		assertTrue("the new project folder should exist.", projectFolder.fetchInfo().exists() && projectFolder.fetchInfo().isDirectory());
-		file = projectFolder.getChild(fileName);
-		assertTrue("the file in the project folder should exist.", file.fetchInfo().exists());
-		assertEquals("The ContentLocation should have been updated.", projectFolder.toLocalFile(EFS.NONE, null).toURI(), projectInfo.getContentLocation());
-
-		// delete the project contents
-		file.delete(EFS.NONE, null);
-		assertFalse("the file in the project folder should not exist.", file.fetchInfo().exists());
-	}
-
-	@Test
 	public void testMoveProjectLinked() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = OrionConfiguration.getMetaStore();
@@ -1341,6 +1267,80 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo.getFullName());
 		assertNotNull(readProjectInfo);
 		assertTrue(readProjectInfo.getFullName().equals(movedProjectName));
+	}
+
+	@Test
+	public void testMoveSimpleProject() throws CoreException {
+		// create the MetaStore
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
+
+		// create the user
+		UserInfo userInfo = new UserInfo();
+		userInfo.setUserName(testUserLogin);
+		userInfo.setFullName(testUserLogin);
+		metaStore.createUser(userInfo);
+
+		// create the workspace
+		String workspaceName = SimpleMetaStore.DEFAULT_WORKSPACE_NAME;
+		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
+		workspaceInfo.setFullName(workspaceName);
+		workspaceInfo.setUserId(userInfo.getUniqueId());
+		metaStore.createWorkspace(workspaceInfo);
+
+		// create the project
+		String projectName = "Orion Project";
+		ProjectInfo projectInfo = new ProjectInfo();
+		projectInfo.setFullName(projectName);
+		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+		metaStore.createProject(projectInfo);
+
+		// create a project directory and file
+		IFileStore projectFolder = metaStore.getDefaultContentLocation(projectInfo);
+		if (!projectFolder.fetchInfo().exists()) {
+			projectFolder.mkdir(EFS.NONE, null);
+		}
+		assertTrue(projectFolder.fetchInfo().exists());
+		assertTrue(projectFolder.fetchInfo().isDirectory());
+		String fileName = "file.html";
+		IFileStore file = projectFolder.getChild(fileName);
+		try {
+			OutputStream outputStream = file.openOutputStream(EFS.NONE, null);
+			outputStream.write("<!doctype html>".getBytes());
+			outputStream.close();
+		} catch (IOException e) {
+			fail("Count not create a test file in the Orion Project:" + e.getLocalizedMessage());
+		}
+		assertTrue("the file in the project folder should exist.", file.fetchInfo().exists());
+
+		// update the project with the content location
+		projectInfo.setContentLocation(projectFolder.toLocalFile(EFS.NONE, null).toURI());
+		metaStore.updateProject(projectInfo);
+
+		// move the project by renaming the project by changing the projectName
+		String movedProjectName = "Moved Orion Project";
+		projectInfo.setFullName(movedProjectName);
+
+		// update the project
+		metaStore.updateProject(projectInfo);
+
+		// read the project back again
+		ProjectInfo readProjectInfo = metaStore.readProject(workspaceInfo.getUniqueId(), projectInfo.getFullName());
+		assertNotNull(readProjectInfo);
+		assertTrue(readProjectInfo.getFullName().equals(movedProjectName));
+
+		// verify the local project has moved
+		IFileStore workspaceFolder = metaStore.getWorkspaceContentLocation(workspaceInfo.getUniqueId());
+		projectFolder = workspaceFolder.getChild(projectName);
+		assertFalse("the original project folder should not exist.", projectFolder.fetchInfo().exists());
+		projectFolder = workspaceFolder.getChild(movedProjectName);
+		assertTrue("the new project folder should exist.", projectFolder.fetchInfo().exists() && projectFolder.fetchInfo().isDirectory());
+		file = projectFolder.getChild(fileName);
+		assertTrue("the file in the project folder should exist.", file.fetchInfo().exists());
+		assertEquals("The ContentLocation should have been updated.", projectFolder.toLocalFile(EFS.NONE, null).toURI(), projectInfo.getContentLocation());
+
+		// delete the project contents
+		file.delete(EFS.NONE, null);
+		assertFalse("the file in the project folder should not exist.", file.fetchInfo().exists());
 	}
 
 	@Test
