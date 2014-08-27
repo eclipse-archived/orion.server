@@ -110,7 +110,8 @@ public class SimpleMetaStoreUtil {
 	public static boolean createMetaFile(File parent, String name, JSONObject jsonObject) {
 		try {
 			if (isMetaFile(parent, name)) {
-				throw new RuntimeException("Meta File Error, already exists, use update");
+				File savedFile = retrieveMetaFile(parent, name);
+				throw new RuntimeException("Meta File Error, file " + savedFile.toString() + " already exists, use update");
 			}
 			if (!parent.exists()) {
 				throw new RuntimeException("Meta File Error, parent folder does not exist");
@@ -124,8 +125,8 @@ public class SimpleMetaStoreUtil {
 				locker.lock();
 			} catch (IOException e) {
 				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-				logger.warn("Meta File Error, cannot create file under " + parent.toString() + ": invalid file name: " + name); //$NON-NLS-1$
-				return false;
+				logger.error("Meta File Error, file IO error, could not lock the file", e); //$NON-NLS-1$
+				throw new RuntimeException("Meta File Error, file IO error, could not lock the file", e);
 			}
 			try {
 				FileOutputStream fileOutputStream = new FileOutputStream(newFile);
