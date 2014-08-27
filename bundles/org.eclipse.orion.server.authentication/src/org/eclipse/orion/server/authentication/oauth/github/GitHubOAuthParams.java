@@ -98,6 +98,6 @@ public class GitHubOAuthParams extends OAuthParams {
 	}
 
 	public OAuthConsumer getNewOAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse) throws OAuthException {
-		return new GitHubOAuthConsumer(oauthAccessTokenResponse);
+		return new GitHubOAuthConsumer(oauthAccessTokenResponse, getRedirect());
 	}
 }
