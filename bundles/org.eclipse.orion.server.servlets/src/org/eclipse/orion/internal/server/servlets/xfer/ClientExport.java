@@ -63,6 +63,10 @@ public class ClientExport {
 	private void write(IFileStore source, IPath path, ZipOutputStream zout) throws IOException, CoreException {
 		IFileInfo info = source.fetchInfo(EFS.NONE, null);
 		if (info.isDirectory()) {
+			if (!path.isEmpty()) {
+				ZipEntry entry = new ZipEntry(path.toString() + "/"); //$NON-NLS-1$
+				zout.putNextEntry(entry);
+			}
 			for (IFileStore child : source.childStores(EFS.NONE, null)) {
 				if (!excludedFiles.contains(child.getName())) {
 					write(child, path.append(child.getName()), zout);
