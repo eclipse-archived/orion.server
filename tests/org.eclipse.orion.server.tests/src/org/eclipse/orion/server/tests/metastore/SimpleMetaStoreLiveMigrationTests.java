@@ -1045,8 +1045,9 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		String contentLocationFromJson = jsonObject.getString("ContentLocation");
 		assertTrue(contentLocationFromJson.startsWith(SimpleMetaStoreUtil.SERVERWORKSPACE));
 		String decodedContentLocationFromJson = SimpleMetaStoreUtil.decodeProjectContentLocation(contentLocationFromJson);
-		URI contentLocationFileFromJson = new URI(decodedContentLocationFromJson);
-		assertEquals(SimpleMetaStoreUtil.FILE_SCHEMA, contentLocationFileFromJson.getScheme());
+		URI contentLocationURIFromJson = new URI(decodedContentLocationFromJson);
+		assertEquals(SimpleMetaStoreUtil.FILE_SCHEMA, contentLocationURIFromJson.getScheme());
+		File contentLocationFileFromJson = new File(contentLocationURIFromJson);
 		assertEquals(contentLocation.toString(), contentLocationFileFromJson.getPath());
 	}
 
