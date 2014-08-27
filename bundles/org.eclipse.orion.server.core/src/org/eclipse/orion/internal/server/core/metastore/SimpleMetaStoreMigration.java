@@ -244,11 +244,13 @@ public class SimpleMetaStoreMigration {
 	 */
 	private int readOrionVersion(File parent, String name) throws JSONException {
 		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(parent, name);
-		int oldVersion = -1;
-		if (jsonObject.has(SimpleMetaStore.ORION_VERSION)) {
-			oldVersion = jsonObject.getInt(SimpleMetaStore.ORION_VERSION);
+		if (jsonObject == null) {
+			throw new RuntimeException("Meta File Error, cannot read JSON file", null);
 		}
-		return oldVersion;
+		if (jsonObject.has(SimpleMetaStore.ORION_VERSION)) {
+			return jsonObject.getInt(SimpleMetaStore.ORION_VERSION);
+		}
+		return -1;
 	}
 
 	/**
@@ -339,6 +341,9 @@ public class SimpleMetaStoreMigration {
 					String name = next.getName().substring(0, next.getName().length() - SimpleMetaStoreUtil.METAFILE_EXTENSION.length());
 					if (projectNameList.contains(name)) {
 						// Update the project metadata
+						if (readOrionVersion(workspaceMetaFolder, name) == -1) {
+							return;
+						}
 						updateOrionVersion(workspaceMetaFolder, name);
 						updateProjectContentLocation(workspaceMetaFolder, name);
 						moveProjectJsonFile(workspaceMetaFolder, name);
