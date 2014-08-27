@@ -41,8 +41,8 @@ public class GitHubOAuthConsumer extends OAuthConsumer{
 	private String url;
 	private boolean email_verified;
 	
-	public GitHubOAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse) throws OAuthException {
-		super(oauthAccessTokenResponse);
+	public GitHubOAuthConsumer(OAuthAccessTokenResponse oauthAccessTokenResponse, String redirect) throws OAuthException {
+		super(oauthAccessTokenResponse, redirect);
 		getGitHubProfile();
 		getGitHubEmail();
 	}

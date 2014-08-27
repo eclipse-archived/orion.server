@@ -50,7 +50,6 @@ import org.osgi.framework.ServiceReference;
 public class OAuthHelper {
 
 	public static final String OAUTH = "oauth"; //$NON-NLS-1$
-	public static final String REDIRECT = "redirect"; //$NON-NLS-1$
 	public static final String REDIRECT_TYPE = "redirect_type"; //$NON-NLS-1$
 	static final String OAUTH_IDENTIFIER = "oauth_identifier"; //$NON-NLS-1$
 	static final String OAUTH_DISC = "oauth-disc"; //$NON-NLS-1$
@@ -146,16 +145,17 @@ public class OAuthHelper {
 	 * @throws IOException Throw if there is a problem sending the redirect.
 	 */
 	public static void handleLogin(HttpServletRequest req, HttpServletResponse resp, OAuthConsumer oauthConsumer) throws OAuthException, IOException {
-		String redirect = req.getParameter(REDIRECT);
 		if(oauthConsumer == null || OAuthUtils.isEmpty(oauthConsumer.getIdentifier())) {
 			throw new OAuthException("There is no Orion account associated with this Id. Please register or contact your system administrator for assistance.");
 		}
+		String redirect = oauthConsumer.getRedirect();
 		User user = getUser(oauthConsumer);
 		if (user == null) {
 			String url = "/mixloginstatic/LoginWindow.html";
 			url += "?oauth=create&email=" + oauthConsumer.getEmail();
 			url += "&username=" + oauthConsumer.getUsername();
 			url += "&identifier=" + oauthConsumer.getIdentifier();
+			url += "&redirect=" + redirect;
 			resp.sendRedirect(url);
 			return;
 		}
