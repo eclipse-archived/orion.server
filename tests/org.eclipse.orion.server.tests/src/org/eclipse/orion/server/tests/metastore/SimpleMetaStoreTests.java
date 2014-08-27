@@ -363,7 +363,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		metaStore.createWorkspace(workspaceInfo);
 
 		// create the project with the illegal name
-		String projectName = workspaceInfo.getUniqueId();
+		String projectName = SimpleMetaStore.USER;
 		ProjectInfo projectInfo = new ProjectInfo();
 		projectInfo.setFullName(projectName);
 		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
@@ -397,7 +397,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		metaStore.createWorkspace(workspaceInfo);
 
 		// create the project with the illegal name
-		String projectName = SimpleMetaStore.USER;
+		String projectName = workspaceInfo.getUniqueId();
 		ProjectInfo projectInfo = new ProjectInfo();
 		projectInfo.setFullName(projectName);
 		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
