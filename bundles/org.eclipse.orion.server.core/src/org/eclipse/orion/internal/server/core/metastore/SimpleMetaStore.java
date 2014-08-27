@@ -579,9 +579,15 @@ public class SimpleMetaStore implements IMetaStore {
 					SimpleMetaStoreMigration migration = new SimpleMetaStoreMigration();
 					if (migration.isMigrationRequired(jsonObject)) {
 						// Migration to the latest version is required for this user
-						migration.doMigration(getRootLocation(), userMetaFolder);
+						lock.readLock().unlock();
+						lock.writeLock().lock();
+						try {
+							migration.doMigration(getRootLocation(), userMetaFolder);
+							lock.readLock().lock();
+						} finally {
+							lock.writeLock().unlock();
+						}
 						jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
-
 					}
 					userInfo.setUniqueId(jsonObject.getString("UniqueId"));
 					userInfo.setUserName(jsonObject.getString("UserName"));
