@@ -49,7 +49,7 @@ public class SimpleMetaStoreMigration {
 	public void doMigration(File rootLocation, File userMetaFolder) throws JSONException {
 		String userId = userMetaFolder.getName();
 		logger.info("Migration: Start migrating user " + userId + " to the latest (version " + SimpleMetaStore.VERSION + ")");
-		int oldVersion = updateOrionVersion(userMetaFolder, SimpleMetaStore.USER);
+		int oldVersion = readOrionVersion(userMetaFolder, SimpleMetaStore.USER);
 		File userMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, SimpleMetaStore.USER);
 		File[] files = userMetaFolder.listFiles();
 		int directoryCount = 0;
@@ -83,6 +83,7 @@ public class SimpleMetaStoreMigration {
 		if ((oldVersion == VERSION4 || oldVersion == VERSION6) && directoryCount > 1) {
 			mergeMultipleWorkspaces(directoryCount, userMetaFolder);
 		}
+		updateOrionVersion(userMetaFolder, SimpleMetaStore.USER);
 		logger.info("Migration: Finished migrating user " + userId);
 	}
 
@@ -222,7 +223,7 @@ public class SimpleMetaStoreMigration {
 	 * @return The previous version that was in the metadata file.
 	 * @throws JSONException 
 	 */
-	private int updateOrionVersion(File parent, String name) throws JSONException {
+	private void updateOrionVersion(File parent, String name) throws JSONException {
 		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(parent, name);
 		int oldVersion = -1;
 		if (jsonObject.has(SimpleMetaStore.ORION_VERSION)) {
@@ -233,6 +234,21 @@ public class SimpleMetaStoreMigration {
 		File metaFile = SimpleMetaStoreUtil.retrieveMetaFile(parent, name);
 		String oldVersionStr = (oldVersion == -1) ? "UNKNOWN" : Integer.toString(oldVersion);
 		logger.info("Migration: Updated Orion version from version " + oldVersionStr + " to version " + SimpleMetaStore.VERSION + " in MetaData file: " + metaFile.toString());
+	}
+
+	/**
+	 * Update the Orion version in the provided file and folder.
+	 * @param parent The parent folder containing the metadata (JSON) file.
+	 * @param name The name of the file without the ".json" extension.
+	 * @return The previous version that was in the metadata file.
+	 * @throws JSONException 
+	 */
+	private int readOrionVersion(File parent, String name) throws JSONException {
+		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(parent, name);
+		int oldVersion = -1;
+		if (jsonObject.has(SimpleMetaStore.ORION_VERSION)) {
+			oldVersion = jsonObject.getInt(SimpleMetaStore.ORION_VERSION);
+		}
 		return oldVersion;
 	}
 
