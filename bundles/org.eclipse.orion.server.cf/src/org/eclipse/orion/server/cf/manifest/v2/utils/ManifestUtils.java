@@ -253,6 +253,9 @@ public class ManifestUtils {
 	private static void append(StringBuilder sb, JSONObject obj, int indentation, boolean indentFirst) throws JSONException {
 
 		String[] names = JSONObject.getNames(obj);
+		if (names == null) {
+			return;
+		}
 		for (int i = 0; i < names.length; ++i) {
 
 			String prop = names[i];
