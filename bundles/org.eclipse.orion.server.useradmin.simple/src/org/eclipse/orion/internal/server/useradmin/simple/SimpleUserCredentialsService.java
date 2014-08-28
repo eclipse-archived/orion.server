@@ -232,7 +232,7 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 				profileProperties.put(property, value, false);
 				if (property.equals("openid")) {
 					newOpenid = value;
-				}else if(profileProperties.equals(OAUTH_KEY)){
+				} else if (property.equals(OAUTH_KEY)) {
 					newOAuth = value;
 				}
 			}
