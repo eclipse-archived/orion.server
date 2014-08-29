@@ -34,6 +34,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.*;
 import org.eclipse.jgit.treewalk.filter.*;
+import org.eclipse.jgit.util.io.NullOutputStream;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.IOUtilities;
@@ -92,7 +93,7 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 	}
 
 	private boolean handleGetDiffs(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern) throws Exception {
-		DiffCommand command = getDiff(request, response, db, scope, pattern, new ByteArrayOutputStream());
+		DiffCommand command = getDiff(request, response, db, scope, pattern, NullOutputStream.INSTANCE);
 		if (command == null)
 			return true;
 
@@ -147,7 +148,7 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 	}
 
 	private boolean handleGetDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out) throws Exception {
-		DiffCommand command = getDiff(request, response, db, scope, pattern, out);
+		DiffCommand command = getDiff(request, response, db, scope, pattern, new BufferedOutputStream(out));
 		if (command != null)
 			command.call();
 		return true;
@@ -156,7 +157,7 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 	private DiffCommand getDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out) throws Exception {
 		Git git = new Git(db);
 		DiffCommand diff = git.diff();
-		diff.setOutputStream(new BufferedOutputStream(out));
+		diff.setOutputStream(out);
 		AbstractTreeIterator oldTree;
 		AbstractTreeIterator newTree = new FileTreeIterator(db);
 		if (scope.contains("..")) { //$NON-NLS-1$
