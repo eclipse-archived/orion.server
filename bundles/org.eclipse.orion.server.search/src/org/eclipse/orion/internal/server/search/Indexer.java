@@ -10,49 +10,26 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.Format;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-
-import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
-import org.apache.solr.client.solrj.SolrServerException;
+import java.util.*;
+import org.apache.solr.client.solrj.*;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.common.params.CommonParams;
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileInfo;
-import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.SubMonitor;
+import org.eclipse.core.filesystem.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.metastore.IMetaStore;
-import org.eclipse.orion.server.core.metastore.ProjectInfo;
-import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.core.metastore.*;
 import org.eclipse.orion.server.core.resources.FileLocker;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
@@ -74,6 +51,11 @@ public class Indexer extends Job {
 	private static final long IDLE_DELAY = 300000;//five minutes
 
 	private static final long MAX_SEARCH_SIZE = 300000;//don't index files larger than 300,000 bytes
+	/**
+	 * Threshold indicating when a user is considered inactive and not worth indexing.
+	 */
+	private static final long INACTIVE_USER_THRESHOLD = 1000L * 60L * 60L * 24L * 7L;//seven days
+
 	//private static final List<String> IGNORED_FILE_TYPES = Arrays.asList("png", "jpg", "jpeg", "gif", "bmp", "mpg", "mp4", "wmf", "pdf", "tiff", "class", "so", "zip", "jar", "tar", "tgz");
 	private final List<String> INDEXED_FILE_TYPES;
 	private final SolrServer server;
@@ -154,11 +136,10 @@ public class Indexer extends Job {
 	/**
 	 * Runs an indexer pass over a user. Returns the number of documents indexed.
 	 */
-	private int indexUser(String userId, IProgressMonitor monitor, List<SolrInputDocument> documents) {
+	private int indexUser(UserInfo user, IProgressMonitor monitor, List<SolrInputDocument> documents) {
 		int indexed = 0;
 		try {
 			final IMetaStore store = OrionConfiguration.getMetaStore();
-			UserInfo user = store.readUser(userId);
 			List<String> workspaceIds = user.getWorkspaceIds();
 			SubMonitor progress = SubMonitor.convert(monitor, workspaceIds.size());
 			for (String workspaceId : workspaceIds) {
@@ -344,31 +325,35 @@ public class Indexer extends Job {
 		} catch (IllegalStateException e) {
 			//bundle providing metastore might not have started yet
 			if (logger.isInfoEnabled())
-				logger.info("Search indexer waiting for metadata service");
+				logger.info("Search indexer waiting for metadata service"); //$NON-NLS-1$
 			schedule(5000);
 			return Status.OK_STATUS;
 		}
 		if (metaStore == null) {
-			logger.error("Search indexer cannot find a metastore service");
+			logger.error("Search indexer cannot find a metastore service"); //$NON-NLS-1$
 			return Status.OK_STATUS;
 		}
 		long start = System.currentTimeMillis();
 		FileLocker lock = new FileLocker(lockFile);
-		int indexed = 0;
+		int indexed = 0, userCount = 0, activeUserCount = 0;
 		try {
 			if (!lock.tryLock()) {
 				if (logger.isInfoEnabled()) {
-					logger.info("Search indexer: another process is currently indexing");
+					logger.info("Search indexer: another process is currently indexing"); //$NON-NLS-1$
 				}
 				schedule(IDLE_DELAY);
 				return Status.OK_STATUS;
 			}
 			List<String> userIds = metaStore.readAllUsers();
+			userCount = userIds.size();
 			SubMonitor progress = SubMonitor.convert(monitor, userIds.size());
 			List<SolrInputDocument> documents = new ArrayList<SolrInputDocument>();
 			indexed = 0;
 			for (String userId : userIds) {
-				indexed += indexUser(userId, progress.newChild(1), documents);
+				UserInfo userInfo = metaStore.readUser(userId);
+				if (isActiveUser(userInfo))
+					activeUserCount++;
+				indexed += indexUser(userInfo, progress.newChild(1), documents);
 			}
 		} catch (CoreException e) {
 			handleIndexingFailure(e, null);
@@ -384,8 +369,10 @@ public class Indexer extends Job {
 			}
 		}
 		long duration = System.currentTimeMillis() - start;
-		if (logger.isInfoEnabled())
-			logger.info("Indexed " + indexed + " documents in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		if (logger.isInfoEnabled()) {
+			String activity = " (" + activeUserCount + '/' + userCount + " users active)"; //$NON-NLS-1$ //$NON-NLS-2$
+			logger.info("Indexed " + indexed + " documents in " + duration + "ms" + activity); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		}
 		//reschedule the indexing - throttle so the job never runs more than 10% of the time
 		long delay = Math.max(DEFAULT_DELAY, duration * 10);
 		//never wait longer than max idle delay
@@ -396,9 +383,25 @@ public class Indexer extends Job {
 			long time = System.currentTimeMillis();
 			Date date = new Date(time + delay);
 			Format format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-			logger.info("Scheduling indexing to start again at " + format.format(date).toString()); //$NON-NLS-1$//$NON-NLS-2$
+			logger.info("Scheduling indexing to start again at " + format.format(date).toString()); //$NON-NLS-1$
 		}
 		schedule(delay);
 		return Status.OK_STATUS;
+	}
+
+	/**
+	 * Returns whether the given user has logged in recently. This method conservatively <code>true</code>
+	 * if there is any failure determining whether the user is active (user is assumed active until proven otherwise).
+	 */
+	private boolean isActiveUser(UserInfo userInfo) {
+		String prop = userInfo.getProperty("lastlogintimestamp"); //$NON-NLS-1$
+		if (prop == null)
+			return true;
+		try {
+			long lastLogin = Long.parseLong(prop);
+			return (System.currentTimeMillis() - lastLogin < INACTIVE_USER_THRESHOLD);
+		} catch (NumberFormatException e) {
+			return true;
+		}
 	}
 }
