@@ -309,9 +309,9 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 						}
 					}
 					users.add(user);
-				} catch (CoreException e) {
-					LogHelper.log(e);
 				}
+			} catch (CoreException e) {
+				LogHelper.log(e);
 			}
 		}
 		Collections.sort((ArrayList<User>) users, new UserComparator());
