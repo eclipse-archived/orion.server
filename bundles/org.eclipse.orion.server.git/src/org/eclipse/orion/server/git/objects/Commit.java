@@ -218,45 +218,55 @@ public class Commit extends GitObject {
 	protected JSONArray getDiffs() throws JSONException, URISyntaxException, MissingObjectException, IncorrectObjectTypeException, IOException {
 		JSONArray diffs = new JSONArray();
 
-		final TreeWalk tw = new TreeWalk(db);
-		final RevWalk rw = new RevWalk(db);
-		tw.setRecursive(true);
-		List<DiffEntry> l = null;
-		String fromName = null;
-		if (revCommit.getParentCount() > 0) {
-			RevCommit parent = parseCommit(revCommit.getParent(0));
-			tw.reset(parent.getTree(), revCommit.getTree());
-			if (filter != null)
-				tw.setFilter(filter);
-			else
-				tw.setFilter(TreeFilter.ANY_DIFF);
+		TreeWalk tw = null;
+		try {
+			tw = new TreeWalk(db);
+			tw.setRecursive(true);
+			List<DiffEntry> l = null;
+			String fromName = null;
+			if (revCommit.getParentCount() > 0) {
+				RevCommit parent = parseCommit(revCommit.getParent(0));
+				tw.reset(parent.getTree(), revCommit.getTree());
+				if (filter != null)
+					tw.setFilter(filter);
+				else
+					tw.setFilter(TreeFilter.ANY_DIFF);
 
-			l = DiffEntry.scan(tw);
-			fromName = revCommit.getParent(0).getName();
-		} else {
-			DiffFormatter diffFormat = new DiffFormatter(NullOutputStream.INSTANCE);
-			diffFormat.setRepository(db);
-			if (filter != null)
-				diffFormat.setPathFilter(filter);
-			l = diffFormat.scan(new EmptyTreeIterator(), new CanonicalTreeParser(null, rw.getObjectReader(), revCommit.getTree()));
+				l = DiffEntry.scan(tw);
+				fromName = revCommit.getParent(0).getName();
+			} else {
+				RevWalk rw = null;
+				DiffFormatter diffFormat = null;
+				try {
+					rw = new RevWalk(db);
+					diffFormat = new DiffFormatter(NullOutputStream.INSTANCE);
+					diffFormat.setRepository(db);
+					if (filter != null)
+						diffFormat.setPathFilter(filter);
+					l = diffFormat.scan(new EmptyTreeIterator(), new CanonicalTreeParser(null, rw.getObjectReader(), revCommit.getTree()));
+				} finally {
+					diffFormat.release();
+					rw.release();
+				}
+			}
+			for (DiffEntry entr : l) {
+				JSONObject diff = new JSONObject();
+				diff.put(ProtocolConstants.KEY_TYPE, org.eclipse.orion.server.git.objects.Diff.TYPE);
+				diff.put(GitConstants.KEY_COMMIT_DIFF_NEWPATH, entr.getNewPath());
+				diff.put(GitConstants.KEY_COMMIT_DIFF_OLDPATH, entr.getOldPath());
+				diff.put(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE, entr.getChangeType().toString());
+
+				// add diff location for the commit
+				String path = entr.getChangeType() != ChangeType.DELETE ? entr.getNewPath() : entr.getOldPath();
+				diff.put(GitConstants.KEY_DIFF, createDiffLocation(revCommit.getName(), fromName, path));
+				diff.put(ProtocolConstants.KEY_CONTENT_LOCATION, createContentLocation(entr, path));
+				diff.put(GitConstants.KEY_TREE, createTreeLocation(path));
+
+				diffs.put(diff);
+			}
+		} finally {
+			tw.release();
 		}
-		for (DiffEntry entr : l) {
-			JSONObject diff = new JSONObject();
-			diff.put(ProtocolConstants.KEY_TYPE, org.eclipse.orion.server.git.objects.Diff.TYPE);
-			diff.put(GitConstants.KEY_COMMIT_DIFF_NEWPATH, entr.getNewPath());
-			diff.put(GitConstants.KEY_COMMIT_DIFF_OLDPATH, entr.getOldPath());
-			diff.put(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE, entr.getChangeType().toString());
-
-			// add diff location for the commit
-			String path = entr.getChangeType() != ChangeType.DELETE ? entr.getNewPath() : entr.getOldPath();
-			diff.put(GitConstants.KEY_DIFF, createDiffLocation(revCommit.getName(), fromName, path));
-			diff.put(ProtocolConstants.KEY_CONTENT_LOCATION, createContentLocation(entr, path));
-			diff.put(GitConstants.KEY_TREE, createTreeLocation(path));
-
-			diffs.put(diff);
-		}
-		tw.release();
-
 		return diffs;
 	}
 
