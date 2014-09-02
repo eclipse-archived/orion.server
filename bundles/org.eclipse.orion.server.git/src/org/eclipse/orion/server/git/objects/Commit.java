@@ -17,15 +17,16 @@ import java.util.*;
 import java.util.Map.Entry;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.*;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.treewalk.*;
 import org.eclipse.jgit.treewalk.filter.*;
+import org.eclipse.jgit.util.io.NullOutputStream;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
@@ -43,7 +44,7 @@ public class Commit extends GitObject {
 	public static final String RESOURCE = "commit"; //$NON-NLS-1$
 	public static final String TYPE = "Commit"; //$NON-NLS-1$
 
-	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
+	protected static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
 		Property[] defaultProperties = new Property[] { //
 		new Property(ProtocolConstants.KEY_LOCATION), // super
@@ -61,20 +62,21 @@ public class Commit extends GitObject {
 				new Property(GitConstants.KEY_TAGS), //
 				new Property(GitConstants.KEY_BRANCHES), //
 				new Property(ProtocolConstants.KEY_PARENTS), //
+				new Property(GitConstants.KEY_TREE), //
 				new Property(GitConstants.KEY_COMMIT_DIFFS)};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
-	private RevCommit revCommit;
-	private String pattern;
-	private TreeFilter filter;
+	protected RevCommit revCommit;
+	protected String pattern;
+	protected TreeFilter filter;
 	/**
 	 * Whether this is a commit at the root of the repository, or only a
 	 * particular path (git commit -o {path}).
 	 */
-	private boolean isRoot = true;
-	private Map<ObjectId, JSONArray> commitToBranchMap;
-	private Map<ObjectId, Map<String, Ref>> commitToTagMap;
+	protected boolean isRoot = true;
+	protected Map<ObjectId, JSONArray> commitToBranchMap;
+	protected Map<ObjectId, Map<String, Ref>> commitToTagMap;
 
 	public Commit(URI cloneLocation, Repository db, RevCommit revCommit, String pattern) {
 		super(cloneLocation, db);
@@ -127,7 +129,7 @@ public class Commit extends GitObject {
 	}
 
 	@PropertyDescription(name = ProtocolConstants.KEY_CONTENT_LOCATION)
-	private URI getContentLocation() throws URISyntaxException {
+	protected URI getContentLocation() throws URISyntaxException {
 		if (!isRoot) // linking to body makes only sense for files
 			return BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery("parts=body")); //$NON-NLS-1$		
 		return null; // in the eventuality of null, the property won't be added
@@ -135,113 +137,125 @@ public class Commit extends GitObject {
 
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_DIFF)
-	private URI getDiffLocation() throws URISyntaxException {
+	protected URI getDiffLocation() throws URISyntaxException {
 		return createDiffLocation(revCommit.getName(), null, pattern);
 	}
 
+	@PropertyDescription(name = GitConstants.KEY_TREE)
+	private URI getTreeLocation() throws URISyntaxException {
+		return createTreeLocation(null);
+	}
+
 	@PropertyDescription(name = ProtocolConstants.KEY_NAME)
-	private String getName() {
+	protected String getName() {
 		return revCommit.getName();
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_AUTHOR_NAME)
-	private String getAuthorName() {
+	protected String getAuthorName() {
 		PersonIdent author = revCommit.getAuthorIdent();
 		return author.getName();
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_AUTHOR_EMAIL)
-	private String getAuthorEmail() {
+	protected String getAuthorEmail() {
 		PersonIdent author = revCommit.getAuthorIdent();
 		return author.getEmailAddress();
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_AUTHOR_IMAGE)
-	private String getAuthorImage() {
+	protected String getAuthorImage() {
 		PersonIdent author = revCommit.getAuthorIdent();
 		return UserUtilities.getImageLink(author.getEmailAddress()); // can be null
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_COMMITTER_NAME)
-	private String getCommitterName() {
+	protected String getCommitterName() {
 		PersonIdent committer = revCommit.getCommitterIdent();
 		return committer.getName();
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_COMMITTER_EMAIL)
-	private String getCommitterEmail() {
+	protected String getCommitterEmail() {
 		PersonIdent committer = revCommit.getCommitterIdent();
 		return committer.getEmailAddress();
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_COMMIT_TIME)
-	private long getCommitTime() {
+	protected long getCommitTime() {
 		return ((long) revCommit.getCommitTime()) * 1000 /* time in milliseconds */;
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_COMMIT_MESSAGE)
-	private String getCommitMessiage() {
+	protected String getCommitMessiage() {
 		return revCommit.getFullMessage();
 	}
 
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_TAGS)
-	private JSONArray getTags() throws MissingObjectException, JSONException, URISyntaxException, CoreException, IOException, GitAPIException {
+	protected JSONArray getTags() throws MissingObjectException, JSONException, URISyntaxException, CoreException, IOException, GitAPIException {
 		return toJSON(getTagsForCommit());
 	}
 
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_BRANCHES)
-	private JSONArray getBranches() throws JSONException, GitAPIException, URISyntaxException, IOException, CoreException {
+	protected JSONArray getBranches() throws JSONException, GitAPIException, URISyntaxException, IOException, CoreException {
 		return getCommitToBranchMap().get(revCommit.getId());
 	}
 
 	// TODO: expandable?
 	@PropertyDescription(name = ProtocolConstants.KEY_PARENTS)
-	private JSONArray getParents() throws JSONException, URISyntaxException, IOException, CoreException {
+	protected JSONArray getParents() throws JSONException, URISyntaxException, IOException, CoreException {
 		return parentsToJSON(revCommit.getParents());
 	}
 
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_COMMIT_DIFFS)
-	private JSONArray getDiffs() throws JSONException, URISyntaxException, MissingObjectException, IncorrectObjectTypeException, IOException {
-		if (revCommit.getParentCount() > 0) {
-			JSONArray diffs = new JSONArray();
+	protected JSONArray getDiffs() throws JSONException, URISyntaxException, MissingObjectException, IncorrectObjectTypeException, IOException {
+		JSONArray diffs = new JSONArray();
 
-			final TreeWalk tw = new TreeWalk(db);
-			final RevWalk rw = new RevWalk(db);
+		final TreeWalk tw = new TreeWalk(db);
+		final RevWalk rw = new RevWalk(db);
+		tw.setRecursive(true);
+		List<DiffEntry> l = null;
+		String fromName = null;
+		if (revCommit.getParentCount() > 0) {
 			RevCommit parent = rw.parseCommit(revCommit.getParent(0));
 			tw.reset(parent.getTree(), revCommit.getTree());
-			tw.setRecursive(true);
-
 			if (filter != null)
 				tw.setFilter(filter);
 			else
 				tw.setFilter(TreeFilter.ANY_DIFF);
 
-			List<DiffEntry> l = DiffEntry.scan(tw);
-			for (DiffEntry entr : l) {
-				JSONObject diff = new JSONObject();
-				diff.put(ProtocolConstants.KEY_TYPE, org.eclipse.orion.server.git.objects.Diff.TYPE);
-				diff.put(GitConstants.KEY_COMMIT_DIFF_NEWPATH, entr.getNewPath());
-				diff.put(GitConstants.KEY_COMMIT_DIFF_OLDPATH, entr.getOldPath());
-				diff.put(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE, entr.getChangeType().toString());
-
-				// add diff location for the commit
-				String path = entr.getChangeType() != ChangeType.DELETE ? entr.getNewPath() : entr.getOldPath();
-				diff.put(GitConstants.KEY_DIFF, createDiffLocation(revCommit.getName(), revCommit.getParent(0).getName(), path));
-				diff.put(ProtocolConstants.KEY_CONTENT_LOCATION, createContentLocation(entr, path));
-
-				diffs.put(diff);
-			}
-			tw.release();
-
-			return diffs;
+			l = DiffEntry.scan(tw);
+			fromName = revCommit.getParent(0).getName();
+		} else {
+			DiffFormatter diffFormat = new DiffFormatter(NullOutputStream.INSTANCE);
+			diffFormat.setRepository(db);
+			if (filter != null)
+				diffFormat.setPathFilter(filter);
+			l = diffFormat.scan(new EmptyTreeIterator(), new CanonicalTreeParser(null, rw.getObjectReader(), revCommit.getTree()));
 		}
-		return null;
+		for (DiffEntry entr : l) {
+			JSONObject diff = new JSONObject();
+			diff.put(ProtocolConstants.KEY_TYPE, org.eclipse.orion.server.git.objects.Diff.TYPE);
+			diff.put(GitConstants.KEY_COMMIT_DIFF_NEWPATH, entr.getNewPath());
+			diff.put(GitConstants.KEY_COMMIT_DIFF_OLDPATH, entr.getOldPath());
+			diff.put(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE, entr.getChangeType().toString());
+
+			// add diff location for the commit
+			String path = entr.getChangeType() != ChangeType.DELETE ? entr.getNewPath() : entr.getOldPath();
+			diff.put(GitConstants.KEY_DIFF, createDiffLocation(revCommit.getName(), fromName, path));
+			diff.put(ProtocolConstants.KEY_CONTENT_LOCATION, createContentLocation(entr, path));
+
+			diffs.put(diff);
+		}
+		tw.release();
+
+		return diffs;
 	}
 
-	private JSONArray toJSON(Map<String, Ref> revTags) throws JSONException, URISyntaxException, CoreException, IOException {
+	protected JSONArray toJSON(Map<String, Ref> revTags) throws JSONException, URISyntaxException, CoreException, IOException {
 		JSONArray children = new JSONArray();
 		for (Entry<String, Ref> revTag : revTags.entrySet()) {
 			Tag tag = new Tag(cloneLocation, db, revTag.getValue());
@@ -255,14 +269,14 @@ public class Commit extends GitObject {
 		return BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2);
 	}
 
-	private Map<String, Ref> getTagsForCommit() throws MissingObjectException, IOException, GitAPIException, JSONException, URISyntaxException, CoreException {
+	protected Map<String, Ref> getTagsForCommit() throws MissingObjectException, IOException, GitAPIException, JSONException, URISyntaxException, CoreException {
 		Map<String, Ref> tags = getCommitToTagMap().get(revCommit.getId());
 		if (tags == null)
 			tags = new HashMap<String, Ref>();
 		return tags;
 	}
 
-	private URI createDiffLocation(String toRefId, String fromRefId, String path) throws URISyntaxException {
+	protected URI createDiffLocation(String toRefId, String fromRefId, String path) throws URISyntaxException {
 		IPath diffPath = new Path(GitServlet.GIT_URI).append(Diff.RESOURCE);
 
 		//diff range format is [fromRef..]toRef
@@ -288,7 +302,18 @@ public class Commit extends GitObject {
 		return new URI(cloneLocation.getScheme(), cloneLocation.getAuthority(), diffPath.toString(), null, null);
 	}
 
-	private URI createContentLocation(final DiffEntry entr, String path) throws URISyntaxException {
+	protected URI createTreeLocation(String path) throws URISyntaxException {
+		//remove /gitapi/clone from the start of path
+		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
+
+		IPath result = new Path(GitServlet.GIT_URI).append(Tree.RESOURCE).append(clonePath).append(this.getName());
+		if (path != null) {
+			result.append(path);
+		}
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute().toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
+	}
+
+	protected URI createContentLocation(final DiffEntry entr, String path) throws URISyntaxException {
 		//remove /gitapi/clone from the start of path
 		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
 		IPath result;
@@ -304,7 +329,7 @@ public class Commit extends GitObject {
 		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute().toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
-	private JSONArray parentsToJSON(RevCommit[] revCommits) throws JSONException, IOException, URISyntaxException {
+	protected JSONArray parentsToJSON(RevCommit[] revCommits) throws JSONException, IOException, URISyntaxException {
 		JSONArray parents = new JSONArray();
 		for (RevCommit revCommit : revCommits) {
 			JSONObject parent = new JSONObject();

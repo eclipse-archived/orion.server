@@ -47,6 +47,7 @@ public class ListBranchesJob extends GitJob {
 	private int pageNo;
 	private int pageSize;
 	private String baseLocation;
+	private String nameFilter;
 
 	/**
 	 * Creates job with given page range and adding <code>commitsSize</code> commits to every branch.
@@ -57,8 +58,9 @@ public class ListBranchesJob extends GitJob {
 	 * @param pageNo
 	 * @param pageSize use negative to indicate that all commits need to be returned
 	 * @param baseLocation URI used as a base for generating next and previous page links. Should not contain any parameters.
+	 * @param nameFilter used to filter branches by name
 	 */
-	public ListBranchesJob(String userRunningTask, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize, String baseLocation) {
+	public ListBranchesJob(String userRunningTask, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize, String baseLocation, String nameFilter) {
 		super(userRunningTask, false);
 		this.path = repositoryPath;
 		this.cloneLocation = cloneLocation;
@@ -66,6 +68,7 @@ public class ListBranchesJob extends GitJob {
 		this.pageNo = pageNo;
 		this.pageSize = pageSize;
 		this.baseLocation = baseLocation;
+		this.nameFilter = nameFilter;
 		setFinalMessage("Branches list generated");
 	}
 
@@ -76,7 +79,7 @@ public class ListBranchesJob extends GitJob {
 	 * @param cloneLocation
 	 */
 	public ListBranchesJob(String userRunningTask, IPath repositoryPath, URI cloneLocation) {
-		this(userRunningTask, repositoryPath, cloneLocation, 0, 0, -1, null);
+		this(userRunningTask, repositoryPath, cloneLocation, 0, 0, -1, null, null);
 	}
 
 	/**
@@ -87,7 +90,7 @@ public class ListBranchesJob extends GitJob {
 	 * @param commitsSize
 	 */
 	public ListBranchesJob(String userRunningTask, IPath repositoryPath, URI cloneLocation, int commitsSize) {
-		this(userRunningTask, repositoryPath, cloneLocation, commitsSize, 0, -1, null);
+		this(userRunningTask, repositoryPath, cloneLocation, commitsSize, 0, -1, null, null);
 	}
 
 	private ObjectId getCommitObjectId(Repository db, ObjectId oid) throws MissingObjectException, IncorrectObjectTypeException, IOException {
@@ -109,7 +112,14 @@ public class ListBranchesJob extends GitJob {
 			List<Ref> branchRefs = git.branchList().call();
 			List<Branch> branches = new ArrayList<Branch>(branchRefs.size());
 			for (Ref ref : branchRefs) {
-				branches.add(new Branch(cloneLocation, db, ref));
+				if (nameFilter != null && !nameFilter.equals("")) {
+					String shortName = Repository.shortenRefName(ref.getName());
+					if (shortName.contains(nameFilter)) {
+						branches.add(new Branch(cloneLocation, db, ref));
+					}
+				} else {
+					branches.add(new Branch(cloneLocation, db, ref));
+				}
 			}
 			Collections.sort(branches, Branch.COMPARATOR);
 			JSONObject result = new JSONObject();
@@ -119,6 +129,9 @@ public class ListBranchesJob extends GitJob {
 			lastBranch = lastBranch > branches.size() - 1 ? branches.size() - 1 : lastBranch;
 			if (pageNo > 1 && baseLocation != null) {
 				String prev = baseLocation + "?page=" + (pageNo - 1) + "&pageSize=" + pageSize;
+				if (nameFilter != null && !nameFilter.equals("")) {
+					prev += "&filter=" + GitUtils.encode(nameFilter);
+				}
 				if (commitsSize > 0) {
 					prev += "&" + GitConstants.KEY_TAG_COMMITS + "=" + commitsSize;
 				}
@@ -126,6 +139,9 @@ public class ListBranchesJob extends GitJob {
 			}
 			if (lastBranch < branches.size() - 1) {
 				String next = baseLocation + "?page=" + (pageNo + 1) + "&pageSize=" + pageSize;
+				if (nameFilter != null && !nameFilter.equals("")) {
+					next += "&filter=" + GitUtils.encode(nameFilter);
+				}
 				if (commitsSize > 0) {
 					next += "&" + GitConstants.KEY_TAG_COMMITS + "=" + commitsSize;
 				}

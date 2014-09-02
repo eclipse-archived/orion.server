@@ -14,6 +14,11 @@ package org.eclipse.orion.server.core;
  * Public constants available to clients of the orion server core API.
  */
 public class ServerConstants {
+	
+	/**
+	 * The name of configuration property specifying if access logs in NCSA format should be enabled on the Jetty server (see Bug 429063)
+	 */
+	public static final String CONFIG_ACCESS_LOGS_ENABLED = "orion.jetty.access.logs.enable"; //$NON-NLS-1$
 
 	/**
 	 * The system property name for the secure storage master password.
@@ -141,6 +146,21 @@ public class ServerConstants {
 	 * hierarchy by the user who created it.
 	 */
 	public static final String CONFIG_FILE_LAYOUT_USERTREE = "usertree"; //$NON-NLS-1$
+
+	/**
+	 * The name of the configuration property specifying the root location to use for all 
+	 * Orion content.  Must be an absolute path on the server file system.
+	 */
+	public static final String CONFIG_FILE_USER_CONTENT = "orion.file.content.location"; //$NON-NLS-1$
+
+	/**
+	 * The name of the configuration property specifying that process file locking
+	 * should be used.  Helps with multiple Orion servers running against the same
+	 * user content or search indices.  Values are <code>true</code> or <code>false</code>.
+	 * Default is <code>false</code>.
+	 */
+	public static final String CONFIG_FILE_CONTENT_LOCKING = "orion.file.content.locking"; //$NON-NLS-1$
+
 	/**
 	 * The name of configuration property specifying the SMTP host for sending mail
 	 */
@@ -152,37 +172,29 @@ public class ServerConstants {
 	public static final String CONFIG_MAIL_SMTP_STARTTLS = "mail.smtp.starttls.enable"; //$NON-NLS-1$
 
 	/**
-	 * The name of configuration property specifying which meta store should be enabled
-	 */
-	public static final String CONFIG_META_STORE = "orion.core.metastore"; //$NON-NLS-1$
-
-	/**
-	 * The name of configuration property specifying the legacy meta store
-	 */
-	public static final String CONFIG_META_STORE_LEGACY = "legacy"; //$NON-NLS-1$
-
-	/**
-	 * The name of configuration property specifying the simple meta store
-	 */
-	public static final String CONFIG_META_STORE_SIMPLE = "simple"; //$NON-NLS-1$
-
-	/**
-	 * The name of configuration property specifying the second version of the simple meta store
-	 */
-	public static final String CONFIG_META_STORE_SIMPLE_V2 = "simple2"; //$NON-NLS-1$
-
-	/**
 	 * name of configuration property for the disk usage calculation support.
 	 * When this property is set to true, the disk usage calculation support is enabled.
 	 */
 	public static final String CONFIG_DISK_USAGE_ENABLED = "orion.file.diskUsageEnabled"; //$NON-NLS-1$
 
 	/**
+	 * The name of the configuration property specifying the root location to use for 
+	 * Orion search indices.  Must be an absolute path on the server file system.
+	 */
+	public static final String CONFIG_SEARCH_INDEX_LOCATION = "orion.search.index.location"; //$NON-NLS-1$
+	
+	/**
 	 * The name of a configuration property specifying the virtual hosts to use for
 	 * test sites launched by this server. The property value is a comma-separated 
 	 * list of host names.
 	 */
 	public static final String CONFIG_SITE_VIRTUAL_HOSTS = "orion.site.virtualHosts"; //$NON-NLS-1$
+	
+	/**
+	 * The name of a configuration property specifying the context path to use
+	 *  for the server (e.g. /code).
+	 */
+	public static final String CONFIG_CONTEXT_PATH = "orion.context.path";
 
 	/**
 	 * The bundle ID of the server core. 

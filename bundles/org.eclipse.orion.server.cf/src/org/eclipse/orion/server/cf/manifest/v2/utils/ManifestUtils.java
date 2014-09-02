@@ -10,16 +10,20 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.manifest.v2.utils;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.manifest.v2.*;
 import org.eclipse.osgi.util.NLS;
+import org.json.*;
 
 public class ManifestUtils {
+
+	private static final Pattern NON_SLUG_PATTERN = Pattern.compile("[^\\w-]"); //$NON-NLS-1$
+	private static final Pattern WHITESPACE_PATTERN = Pattern.compile("[\\s]"); //$NON-NLS-1$
 
 	public static final String[] RESERVED_PROPERTIES = {//
 	"env", // //$NON-NLS-1$
@@ -39,17 +43,7 @@ public class ManifestUtils {
 	/**
 	 * Inner helper method parsing single manifests with additional semantic analysis.
 	 */
-	private static ManifestParseTree parseManifest(IFileStore manifestFileStore, String targetBase) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException {
-
-		/* basic sanity checks */
-		IFileInfo manifestFileInfo = manifestFileStore.fetchInfo();
-		if (!manifestFileInfo.exists() || manifestFileInfo.isDirectory())
-			throw new IOException(ManifestConstants.MISSING_OR_INVALID_MANIFEST);
-
-		if (manifestFileInfo.getLength() == EFS.NONE || manifestFileInfo.getLength() > ManifestConstants.MANIFEST_SIZE_LIMIT)
-			throw new IOException(ManifestConstants.MANIFEST_FILE_SIZE_EXCEEDED);
-
-		InputStream inputStream = manifestFileStore.openInputStream(EFS.NONE, null);
+	protected static ManifestParseTree parseManifest(InputStream inputStream, String targetBase) throws IOException, TokenizerException, ParserException, AnalyzerException {
 
 		/* run preprocessor */
 		ManifestPreprocessor preprocessor = new ManifestPreprocessor();
@@ -72,6 +66,26 @@ public class ManifestUtils {
 		ApplicationSanizator applicationAnalyzer = new ApplicationSanizator();
 		applicationAnalyzer.apply(parseTree);
 		return parseTree;
+	}
+
+	/**
+	 * Inner helper method parsing single manifests with additional semantic analysis.
+	 */
+	protected static ManifestParseTree parseManifest(IFileStore manifestFileStore, String targetBase) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException {
+
+		/* basic sanity checks */
+		IFileInfo manifestFileInfo = manifestFileStore.fetchInfo();
+		if (!manifestFileInfo.exists() || manifestFileInfo.isDirectory())
+			throw new IOException(ManifestConstants.MISSING_OR_INVALID_MANIFEST);
+
+		if (manifestFileInfo.getLength() == EFS.NONE)
+			throw new IOException(ManifestConstants.EMPTY_MANIFEST);
+
+		if (manifestFileInfo.getLength() > ManifestConstants.MANIFEST_SIZE_LIMIT)
+			throw new IOException(ManifestConstants.MANIFEST_FILE_SIZE_EXCEEDED);
+
+		InputStream inputStream = manifestFileStore.openInputStream(EFS.NONE, null);
+		return parseManifest(inputStream, targetBase);
 	}
 
 	/**
@@ -172,5 +186,104 @@ public class ManifestUtils {
 
 		/* return default memory value, i.e. 1024 MB */
 		return 1024;
+	}
+
+	/**
+	 * Slugifies the given input to be reusable as URL pattern.
+	 * @param input Input to be slugified.
+	 * @return Slugified input
+	 */
+	public static String slugify(String input) {
+		input = WHITESPACE_PATTERN.matcher(input).replaceAll("-"); //$NON-NLS-1$
+		return NON_SLUG_PATTERN.matcher(input).replaceAll(""); //$NON-NLS-1$
+	}
+
+	/**
+	 * Parses a manifest from the given JSON representation.
+	 *  Note: no cross-manifest inheritance is allowed.
+	 * @param manifestJSON
+	 * @return
+	 * @throws IllegalArgumentException
+	 * @throws JSONException
+	 * @throws IOException
+	 * @throws TokenizerException
+	 * @throws ParserException
+	 * @throws AnalyzerException
+	 */
+	public static ManifestParseTree parse(JSONObject manifestJSON) throws IllegalArgumentException, JSONException, IOException, TokenizerException, ParserException, AnalyzerException {
+
+		StringBuilder sb = new StringBuilder();
+		sb.append("---").append(System.getProperty("line.separator")); //$NON-NLS-1$ //$NON-NLS-2$
+		append(sb, manifestJSON, 0, false);
+
+		String manifestYAML = sb.toString();
+		InputStream inputStream = new ByteArrayInputStream(manifestYAML.getBytes("UTF-8")); //$NON-NLS-1$
+		return parseManifest(inputStream, null);
+	}
+
+	private static void appendIndentation(StringBuilder sb, int indentation) {
+
+		/* print indentation */
+		for (int i = 0; i < indentation; ++i)
+			sb.append(" "); //$NON-NLS-1$
+	}
+
+	private static void append(StringBuilder sb, JSONArray arr, int indentation) throws JSONException {
+
+		for (int i = 0; i < arr.length(); ++i) {
+			appendIndentation(sb, indentation);
+			sb.append("-").append(" "); //$NON-NLS-1$ //$NON-NLS-2$
+
+			Object val = arr.get(i);
+			if (val instanceof String) {
+
+				sb.append((String) val);
+				sb.append(System.getProperty("line.separator")); //$NON-NLS-1$
+
+			} else if (val instanceof JSONObject) {
+
+				JSONObject objVal = (JSONObject) val;
+				append(sb, objVal, indentation + 2, false);
+
+			} else
+				throw new IllegalArgumentException("Arrays may contain only JSON objects or string literals.");
+		}
+	}
+
+	private static void append(StringBuilder sb, JSONObject obj, int indentation, boolean indentFirst) throws JSONException {
+
+		String[] names = JSONObject.getNames(obj);
+		if (names == null) {
+			return;
+		}
+		for (int i = 0; i < names.length; ++i) {
+
+			String prop = names[i];
+			if (i != 0 || indentFirst)
+				appendIndentation(sb, indentation);
+
+			sb.append(prop).append(":"); //$NON-NLS-1$
+
+			Object val = obj.get(prop);
+			if (val instanceof String) {
+
+				sb.append(" ").append((String) val); //$NON-NLS-1$
+				sb.append(System.getProperty("line.separator")); //$NON-NLS-1$
+
+			} else if (val instanceof JSONObject) {
+
+				JSONObject objVal = (JSONObject) val;
+				sb.append(System.getProperty("line.separator")); //$NON-NLS-1$
+				append(sb, objVal, indentation + 2, true);
+
+			} else if (val instanceof JSONArray) {
+
+				JSONArray arr = (JSONArray) val;
+				sb.append(System.getProperty("line.separator")); //$NON-NLS-1$
+				append(sb, arr, indentation);
+
+			} else
+				throw new IllegalArgumentException("Objects may contain only JSON objects, arrays or string literals.");
+		}
 	}
 }

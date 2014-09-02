@@ -308,10 +308,10 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 							oauthCache.put(value, childName);
 						}
 					}
+					users.add(user);
+				} catch (CoreException e) {
+					LogHelper.log(e);
 				}
-				users.add(user);
-			} catch (CoreException e) {
-				LogHelper.log(e);
 			}
 		}
 		Collections.sort((ArrayList<User>) users, new UserComparator());

@@ -51,11 +51,12 @@ public class InitJob extends GitJob {
 	}
 
 	public IStatus performJob() {
+		Repository repository = null;
 		try {
 			InitCommand command = new InitCommand();
 			File directory = new File(clone.getContentLocation());
 			command.setDirectory(directory);
-			Repository repository = command.call().getRepository();
+			repository = command.call().getRepository();
 			Git git = new Git(repository);
 
 			// configure the repo
@@ -71,6 +72,10 @@ public class InitJob extends GitJob {
 			return getJGitInternalExceptionStatus(e, "Error initializing git repository");
 		} catch (Exception e) {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error initializing git repository", e);
+		} finally {
+			if (repository != null) {
+				repository.close();
+			}
 		}
 		JSONObject jsonData = new JSONObject();
 		try {

@@ -23,6 +23,7 @@ import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -57,6 +58,7 @@ public class Tag extends GitObject {
 				new Property(GitConstants.KEY_CLONE), // super
 				new Property(ProtocolConstants.KEY_NAME), //
 				new Property(GitConstants.KEY_COMMIT), //
+				new Property(GitConstants.KEY_TREE), //
 				new Property(ProtocolConstants.KEY_LOCAL_TIMESTAMP), //
 				new Property(GitConstants.KEY_TAG_TYPE), //
 				new Property(ProtocolConstants.KEY_FULL_NAME)};
@@ -140,6 +142,22 @@ public class Tag extends GitObject {
 			commitLocation = new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), p.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 		}
 		return commitLocation;
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_TREE)
+	private URI getTreeLocation() throws URISyntaxException {
+		return createTreeLocation(null);
+	}
+
+	private URI createTreeLocation(String path) throws URISyntaxException {
+		//remove /gitapi/clone from the start of path
+		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
+
+		IPath result = new Path(GitServlet.GIT_URI).append(Tree.RESOURCE).append(clonePath).append(GitUtils.encode(this.getName()));
+		if (path != null) {
+			result.append(path);
+		}
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute().toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
 	@PropertyDescription(name = ProtocolConstants.KEY_LOCAL_TIMESTAMP)

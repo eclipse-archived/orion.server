@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.commands;
 
+import java.io.IOException;
 import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.IFileStore;
@@ -69,7 +70,7 @@ public class ParseManifestCommand extends AbstractCFCommand {
 		// Note: we are assuming the content path is inside a project folder
 		IPath manifestPath = contentPath.removeFirstSegments(2).append(ManifestConstants.MANIFEST_FILE_NAME);
 		String msg = "Failed to find /" + manifestPath + ". If the manifest is in a different folder, please select the manifest file or folder before deploying.";
-		return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
+		return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
 	}
 
 	@Override
@@ -103,9 +104,14 @@ public class ParseManifestCommand extends AbstractCFCommand {
 			IFileStore projectStore = NewFileServlet.getFileStore(null, project);
 
 			/* parse the manifest */
-			URI targetURI = URIUtil.toURI(target.getUrl());
-			String targetBase = targetURI.getHost().substring(4);
-			ManifestParseTree manifest = ManifestUtils.parse(projectStore, manifestStore, targetBase);
+			ManifestParseTree manifest = null;
+			if (target != null) {
+				URI targetURI = URIUtil.toURI(target.getUrl());
+				String targetBase = targetURI.getHost().substring(4);
+				manifest = ManifestUtils.parse(projectStore, manifestStore, targetBase);
+			} else
+				manifest = ManifestUtils.parse(projectStore, manifestStore);
+
 			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
 
 			/* optional */
@@ -144,6 +150,8 @@ public class ParseManifestCommand extends AbstractCFCommand {
 		} catch (AnalyzerException e) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		} catch (InvalidAccessException e) {
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
+		} catch (IOException e) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$

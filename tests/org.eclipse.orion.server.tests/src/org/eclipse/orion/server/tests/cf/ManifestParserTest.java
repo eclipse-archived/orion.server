@@ -62,6 +62,7 @@ public class ManifestParserTest {
 
 			/* export the manifest and parse the output */
 			String exported = exportManifest(inputStream);
+
 			inputStream = new ByteArrayInputStream(exported.getBytes());
 			String exportedOutput = exportManifest(inputStream);
 			assertEquals(exported, exportedOutput);
@@ -185,6 +186,28 @@ public class ManifestParserTest {
 		assertEquals("overriddenB", applications.get(3).get("B").getValue()); //$NON-NLS-1$//$NON-NLS-2$
 		assertEquals("overriddenC", applications.get(3).get("C").getValue()); //$NON-NLS-1$//$NON-NLS-2$
 		assertEquals("valueD", applications.get(3).get("D").get("nativeD").getValue()); //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$
+	}
+
+	@Test
+	public void testServicesWithSpacesManifest() throws Exception {
+		String manifestName = "servicesWithSpaces.yml"; //$NON-NLS-1$
+
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry(MANIFEST_LOCATION);
+		File manifestFile = new File(FileLocator.toFileURL(entry).getPath().concat(manifestName));
+
+		InputStream inputStream = new FileInputStream(manifestFile);
+		ManifestParseTree manifest = parse(inputStream);
+
+		ManifestParseTree application = manifest.get("applications").get(0); //$NON-NLS-1$
+		ManifestParseTree services = application.get("services"); //$NON-NLS-1$
+
+		assertEquals(2, services.getChildren().size());
+
+		String service = services.get(0).getValue();
+		assertEquals("Redis Cloud-fo service", service); //$NON-NLS-1$
+
+		service = services.get(1).getValue();
+		assertEquals("Redis-two", service); //$NON-NLS-1$
 	}
 
 	private ManifestParseTree parse(InputStream inputStream) throws IOException, TokenizerException, ParserException {

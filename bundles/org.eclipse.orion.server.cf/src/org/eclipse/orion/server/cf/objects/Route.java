@@ -12,13 +12,14 @@ package org.eclipse.orion.server.cf.objects;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 
 @ResourceDescription(type = Route.TYPE)
 public class Route extends CFObject {
@@ -31,12 +32,14 @@ public class Route extends CFObject {
 		Property[] defaultProperties = new Property[] { //
 		new Property(CFProtocolConstants.KEY_GUID), //
 				new Property(CFProtocolConstants.KEY_HOST), //
-				new Property(CFProtocolConstants.KEY_DOMAIN_NAME) //
+				new Property(CFProtocolConstants.KEY_DOMAIN_NAME), //
+				new Property(CFProtocolConstants.KEY_APPS) //
 		};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
 	private JSONObject routeJSON;
+	private List<App2> apps;
 
 	public Route setCFJSON(JSONObject routeJSON) {
 		this.routeJSON = routeJSON;
@@ -74,6 +77,26 @@ public class Route extends CFObject {
 	public String getGuid() {
 		try {
 			return routeJSON.getJSONObject("metadata").getString("guid");
+		} catch (JSONException e) {
+			return null;
+		}
+	}
+
+	@PropertyDescription(name = CFProtocolConstants.KEY_APPS)
+	private JSONArray getAppsJSON() {
+		try {
+			JSONArray ret = new JSONArray();
+			if (apps == null) {
+				apps = new ArrayList<App2>();
+				JSONArray appsJSON = routeJSON.getJSONObject("entity").getJSONArray("apps");
+
+				for (int i = 0; i < appsJSON.length(); i++) {
+					App2 app = new App2().setCFJSON(appsJSON.getJSONObject(i));
+					apps.add(app);
+					ret.put(app.toJSON());
+				}
+			}
+			return ret;
 		} catch (JSONException e) {
 			return null;
 		}

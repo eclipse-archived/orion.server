@@ -32,7 +32,6 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.EncodingUtils;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.MetadataInfo;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
@@ -130,12 +129,10 @@ public class NewFileServlet extends OrionServlet {
 			if (path.segmentCount() == 0) {
 				return null;
 			} else if (path.segmentCount() == 1) {
-				if (!OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_LEGACY)) {
-					// Bug 415700: handle path format /workspaceId, only supported by SimpleMetaStore 
-					WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
-					if (workspace != null) {
-						return getFileStore(request, workspace);
-					}
+				// Bug 415700: handle path format /workspaceId 
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+				if (workspace != null) {
+					return getFileStore(request, workspace);
 				}
 				return null;
 			}
@@ -144,8 +141,8 @@ public class NewFileServlet extends OrionServlet {
 			if (project != null) {
 				return getFileStore(request, project).getFileStore(path.removeFirstSegments(2));
 			}
-			// Bug 415700: handle path format /workspaceId/[file] only supported by SimpleMetaStore 
-			if (path.segmentCount() == 2 && !OrionConfiguration.getMetaStorePreference().equals(ServerConstants.CONFIG_META_STORE_LEGACY)) {
+			// Bug 415700: handle path format /workspaceId/[file] 
+			if (path.segmentCount() == 2) {
 				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
 				if (workspace != null) {
 					return getFileStore(request, workspace).getChild(path.segment(1));

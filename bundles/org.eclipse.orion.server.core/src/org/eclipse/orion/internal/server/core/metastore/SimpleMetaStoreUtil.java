@@ -21,6 +21,8 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.resources.FileLocker;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -34,10 +36,69 @@ import org.slf4j.LoggerFactory;
  */
 public class SimpleMetaStoreUtil {
 
+	/**
+	 * The folder where files are invalid metadata is moved rather than deleting outright. 
+	 */
+	public static final String ARCHIVE = ".archive";
+	/**
+	 * The file scheme name of a URI
+	 */
+	public static final String FILE_SCHEMA = "file";
+
+	/**
+	 * All Orion metadata is saved in a file in JSON format with this file extension.
+	 */
 	public static final String METAFILE_EXTENSION = ".json";
+
+	/**
+	 * The JVM system property for the operating system
+	 */
 	public static String OPERATING_SYSTEM_NAME = System.getProperty("os.name").toLowerCase();
+
+	/**
+	 * The separator used to encode the workspace id.
+	 */
 	public static final String SEPARATOR = "-";
+
+	/**
+	 * The string used to encode the serverworkspace path in a project contentLocation, see Bug 436578
+	 */
+	public static final String SERVERWORKSPACE = "${SERVERWORKSPACE}";
+
+	/**
+	 * The metadata for a user is stored in a user.json file.
+	 */
 	public final static String USER = "user";
+
+	/**
+	 * Archive the provided file to clean the metadata storage of invalid metadata. This is an alternative to
+	 * the warning "root contains invalid metadata", see Bug 437962
+	 * @param root the root folder that will contain the archive.
+	 * @param file the invalid metadata.
+	 */
+	protected static void archive(File root, File file) {
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+		if (!isMetaFolder(root, ARCHIVE)) {
+			if (!SimpleMetaStoreUtil.createMetaFolder(root, ARCHIVE)) {
+				logger.error("SimpleMetaStore.archive: could not create archive folder at: " + root.toString() + File.separator + ARCHIVE);
+				return;
+			}
+		}
+		String parentPath = root.toString();
+		File archive = SimpleMetaStoreUtil.retrieveMetaFolder(root, ARCHIVE);
+		String filePath = file.toString().substring(parentPath.length());
+		File archivedMetaFile = new File(archive, filePath);
+		File archivedMetaFileParentFolder = archivedMetaFile.getParentFile();
+		if (!archivedMetaFileParentFolder.exists()) {
+			archivedMetaFileParentFolder.mkdirs();
+		}
+		file.renameTo(archivedMetaFile);
+		if (archivedMetaFile.isDirectory()) {
+			logger.error("Meta File Error, root contains invalid metadata: folder " + file.toString() + " archived to " + archivedMetaFile.toString()); //$NON-NLS-1$
+		} else {
+			logger.error("Meta File Error, root contains invalid metadata: file " + file.toString() + " archived to " + archivedMetaFile.toString()); //$NON-NLS-1$
+		}
+	}
 
 	/**
 	 * Create a new MetaFile with the provided name under the provided parent folder. 
@@ -49,7 +110,8 @@ public class SimpleMetaStoreUtil {
 	public static boolean createMetaFile(File parent, String name, JSONObject jsonObject) {
 		try {
 			if (isMetaFile(parent, name)) {
-				throw new RuntimeException("Meta File Error, already exists, use update");
+				File savedFile = retrieveMetaFile(parent, name);
+				throw new RuntimeException("Meta File Error, file " + savedFile.toString() + " already exists, use update");
 			}
 			if (!parent.exists()) {
 				throw new RuntimeException("Meta File Error, parent folder does not exist");
@@ -58,21 +120,37 @@ public class SimpleMetaStoreUtil {
 				throw new RuntimeException("Meta File Error, parent is not a folder");
 			}
 			File newFile = retrieveMetaFile(parent, name);
-			FileOutputStream fileOutputStream = new FileOutputStream(newFile);
-			Charset utf8 = Charset.forName("UTF-8");
-			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
-			outputStreamWriter.write(jsonObject.toString(4));
-			outputStreamWriter.write("\n");
-			outputStreamWriter.flush();
-			outputStreamWriter.close();
-			fileOutputStream.close();
+			FileLocker locker = new FileLocker(newFile);
+			try {
+				locker.lock();
+			} catch (IOException e) {
+				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+				logger.error("Meta File Error, file IO error, could not lock the file", e); //$NON-NLS-1$
+				throw new RuntimeException("Meta File Error, file IO error, could not lock the file", e);
+			}
+			try {
+				FileOutputStream fileOutputStream = new FileOutputStream(newFile);
+				Charset utf8 = Charset.forName("UTF-8");
+				OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
+				outputStreamWriter.write(jsonObject.toString(4));
+				outputStreamWriter.write("\n");
+				outputStreamWriter.flush();
+				outputStreamWriter.close();
+				fileOutputStream.close();
+			} finally {
+				locker.release();
+			}
 		} catch (FileNotFoundException e) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.warn("Meta File Error, cannot create file under " + parent.toString() + ": invalid file name: " + name); //$NON-NLS-1$
+			logger.error("Meta File Error, cannot create file under " + parent.toString() + ": invalid file name: " + name); //$NON-NLS-1$
 			return false;
 		} catch (IOException e) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.error("Meta File Error, file IO error", e); //$NON-NLS-1$
 			throw new RuntimeException("Meta File Error, file IO error", e);
 		} catch (JSONException e) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.error("Meta File Error, cannot create JSON file " + parent.toString() + File.separator + name + METAFILE_EXTENSION + " from disk, reason: " + e.getLocalizedMessage()); //$NON-NLS-1$
 			throw new RuntimeException("Meta File Error, JSON error", e);
 		}
 		return true;
@@ -129,6 +207,22 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
+	 * Decode the project's content location. The variable ${SERVERWORKSPACE} is replaced with the path of the root 
+	 * location (serverworkspace).
+	 * @param contentLocation the decoded content location.
+	 * @return the project's content location.
+	 */
+	public static String decodeProjectContentLocation(String contentLocation) {
+		if (!contentLocation.startsWith(SERVERWORKSPACE)) {
+			// does not include the variable so just return the existing contentLocation.
+			return contentLocation;
+		}
+		String root = OrionConfiguration.getRootLocation().toURI().toString();
+		String decodedcontentLocation = contentLocation.replace(SERVERWORKSPACE, root);
+		return decodedcontentLocation;
+	}
+
+	/**
 	 * Decode the project name from the project id. In the current implementation, the project id and
 	 * workspace name are the same value. However, on Windows, we replace the bar character in the project name 
 	 * with three dashes since bar is a reserved character on Windows and cannot be used to save a project to disk. 
@@ -181,8 +275,16 @@ public class SimpleMetaStoreUtil {
 			throw new RuntimeException("Meta File Error, cannot delete, does not exist.");
 		}
 		File savedFile = retrieveMetaFile(parent, name);
-		if (!savedFile.delete()) {
-			throw new RuntimeException("Meta File Error, cannot delete file.");
+		FileLocker locker = new FileLocker(savedFile);
+		try {
+			locker.lock();
+			if (!savedFile.delete()) {
+				throw new RuntimeException("Meta File Error, cannot delete file.");
+			}
+		} catch (IOException e) {
+			throw new RuntimeException("Meta File Error, cannot delete file.", e);
+		} finally {
+			locker.release();
 		}
 		return true;
 	}
@@ -192,6 +294,7 @@ public class SimpleMetaStoreUtil {
 	 * an exception when the folder is not empty, just return false. 
 	 * @param parent The parent folder.
 	 * @param name The name of the folder
+	 * @param exceptionWhenNotEmpty throw a RuntimeException when the provided folder is not empty.
 	 * @return true if the deletion was successful.
 	 */
 	public static boolean deleteMetaFolder(File parent, String name, boolean exceptionWhenNotEmpty) {
@@ -236,8 +339,28 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
+	 * Encode the project's content location. When the project's content location is a URI with a file based schema and
+	 * the project is in the default location, we want to replace the path of the root location (serverworkspace) with a variable
+	 * ${SERVERWORKSPACE}
+	 * @param contentLocation the content location.
+	 * @return the project's content location.
+	 */
+	public static String encodeProjectContentLocation(String contentLocation) {
+		if (!contentLocation.startsWith(FILE_SCHEMA)) {
+			// not a file based schema so just return the existing contentLocation.
+			return contentLocation;
+		}
+		String root = OrionConfiguration.getRootLocation().toURI().toString();
+		if (contentLocation.startsWith(root)) {
+			String encodedcontentLocation = SERVERWORKSPACE.concat(contentLocation.substring(root.length()));
+			return encodedcontentLocation;
+		}
+		return contentLocation;
+	}
+
+	/**
 	 * Encode the project id from the project name. In the current implementation, the project id and
-	 * workspace name are the same value. However, on Windows, we replace the bar character in the project name 
+	 * project name are the same value. However, on Windows, we replace the bar character in the project name 
 	 * with three dashes since bar is a reserved character on Windows and cannot be used to save a project to disk. 
 	 * @param projectName The project name.
 	 * @return The project id.
@@ -364,34 +487,40 @@ public class SimpleMetaStoreUtil {
 	 * @return list of user folders.
 	 */
 	public static List<String> listMetaUserFolders(File parent) {
-		//the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		//the user-tree layout organizes folders user: serverworkspace/an/anthony
 		List<String> userMetaFolders = new ArrayList<String>();
 		for (File file : parent.listFiles()) {
 			if (file.getName().equals(".metadata")) {
 				// skip the eclipse workspace metadata folder
 				continue;
-			} else if (file.isFile() && file.getName().endsWith(METAFILE_EXTENSION)) {
-				// skip the meta file
+			} else if (file.getName().equals(ARCHIVE)) {
+				// skip the archive folder
 				continue;
-			} else if (file.isDirectory()) {
-				// org folder directory, so go into for users
-				for (File userFolder : file.listFiles()) {
-					if (isMetaUserFolder(parent, userFolder.getName())) {
-						// user folder directory
-						userMetaFolders.add(userFolder.getName());
-						continue;
-					}
-					Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-					if (logger.isDebugEnabled()) {
-						logger.debug("Meta File Error, root contains invalid metadata: folder " + file.toString() + File.separator + userFolder.getName()); //$NON-NLS-1$
+			} else if (file.isFile() && file.getName().endsWith(METAFILE_EXTENSION) && file.getName().startsWith(SimpleMetaStore.ROOT)) {
+				// skip the root meta file (metastore.json)
+				continue;
+			} else if (file.isDirectory() && file.getName().length() == 2) {
+				// organizational folder directory, folder an in serverworkspace/an/anthony
+				File orgFolder = file;
+				if (file.list().length == 0) {
+					// organizational folder directory is empty, archive it.
+					archive(parent, orgFolder);
+				} else {
+					for (File userFolder : orgFolder.listFiles()) {
+						if (isMetaUserFolder(parent, userFolder.getName())) {
+							// user folder directory, folder anthony in serverworkspace/an/anthony
+							userMetaFolders.add(userFolder.getName());
+							continue;
+						} else {
+							// archive the invalid metadata
+							archive(parent, userFolder);
+						}
 					}
 				}
 				continue;
 			}
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			if (logger.isDebugEnabled()) {
-				logger.debug("Meta File Error, root contains invalid metadata: file " + file.toString()); //$NON-NLS-1$
-			}
+			// archive the invalid metadata
+			archive(parent, file);
 		}
 		return userMetaFolders;
 	}
@@ -409,6 +538,7 @@ public class SimpleMetaStoreUtil {
 		}
 		File oldFile = retrieveMetaFile(parent, oldName);
 		File newFile = retrieveMetaFile(parent, newName);
+		// don't lock because behaviour is unclear
 		return oldFile.renameTo(newFile);
 	}
 
@@ -425,6 +555,7 @@ public class SimpleMetaStoreUtil {
 		}
 		File oldFolder = retrieveMetaFolder(parent, oldName);
 		File newFolder = retrieveMetaFolder(parent, newName);
+		// don't lock because behaviour is unclear
 		return oldFolder.renameTo(newFolder);
 	}
 
@@ -478,17 +609,25 @@ public class SimpleMetaStoreUtil {
 				return null;
 			}
 			File savedFile = retrieveMetaFile(parent, name);
-			FileInputStream fileInputStream = new FileInputStream(savedFile);
 			char[] chars = new char[(int) savedFile.length()];
-			Charset utf8 = Charset.forName("UTF-8");
-			InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, utf8);
-			inputStreamReader.read(chars);
-			inputStreamReader.close();
-			fileInputStream.close();
+			FileLocker locker = new FileLocker(savedFile);
+			locker.lock();
+			try {
+				FileInputStream fileInputStream = new FileInputStream(savedFile);
+				Charset utf8 = Charset.forName("UTF-8");
+				InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, utf8);
+				inputStreamReader.read(chars);
+				inputStreamReader.close();
+				fileInputStream.close();
+			} finally {
+				locker.release();
+			}
 			jsonObject = new JSONObject(new String(chars));
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException("Meta File Error, file not found", e);
 		} catch (IOException e) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.error("Meta File Error, file IO error", e); //$NON-NLS-1$
 			throw new RuntimeException("Meta File Error, file IO error", e);
 		} catch (JSONException e) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
@@ -549,7 +688,7 @@ public class SimpleMetaStoreUtil {
 	 * @param parent The parent folder.
 	 * @param name The name of the MetaFile
 	 * @param jsonObject The JSON containing the data to update in the MetaFile.
-	 * @return
+	 * @return true if the update was successful.
 	 */
 	public static boolean updateMetaFile(File parent, String name, JSONObject jsonObject) {
 		try {
@@ -557,22 +696,75 @@ public class SimpleMetaStoreUtil {
 				throw new RuntimeException("Meta File Error, cannot update, does not exist.");
 			}
 			File savedFile = retrieveMetaFile(parent, name);
-			FileOutputStream fileOutputStream = new FileOutputStream(savedFile);
-			Charset utf8 = Charset.forName("UTF-8");
-			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
-			outputStreamWriter.write(jsonObject.toString(4));
-			outputStreamWriter.write("\n");
-			outputStreamWriter.flush();
-			outputStreamWriter.close();
-			fileOutputStream.close();
+			FileLocker locker = new FileLocker(savedFile);
+			locker.lock();
+			try {
+				FileOutputStream fileOutputStream = new FileOutputStream(savedFile);
+				Charset utf8 = Charset.forName("UTF-8");
+				OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
+				outputStreamWriter.write(jsonObject.toString(4));
+				outputStreamWriter.write("\n");
+				outputStreamWriter.flush();
+				outputStreamWriter.close();
+				fileOutputStream.close();
+			} finally {
+				locker.release();
+			}
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException("Meta File Error, file not found", e);
 		} catch (IOException e) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.error("Meta File Error, file IO error", e); //$NON-NLS-1$
 			throw new RuntimeException("Meta File Error, file IO error", e);
 		} catch (JSONException e) {
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.error("Meta File Error, cannot update JSON file " + parent.toString() + File.separator + name + METAFILE_EXTENSION + " from disk, reason: " + e.getLocalizedMessage()); //$NON-NLS-1$
 			throw new RuntimeException("Meta File Error, JSON error", e);
 		}
 		return true;
+	}
+
+	/**
+	 * Move the MetaFolder in the provided parent folder to a new parent folder 
+	 * @param parent The parent folder.
+	 * @param oldName The old name of the MetaFolder
+	 * @param newParent The new name of parent folder
+	 * @param newName The new name of the MetaFolder
+	 * @return true if the move was successful.
+	 */
+	public static boolean moveMetaFolder(File parent, String oldName, File newParent, String newName) {
+		if (!isMetaFolder(parent, oldName)) {
+			throw new RuntimeException("Meta File Error, folder " + oldName + " not found in folder " + parent.getAbsolutePath(), null);
+		}
+		if (!newParent.exists() || !newParent.isDirectory()) {
+			throw new RuntimeException("Meta File Error, folder does not exist " + newParent.getAbsolutePath(), null);
+		}
+		File oldFolder = retrieveMetaFolder(parent, oldName);
+		File newFolder = retrieveMetaFolder(newParent, newName);
+		return oldFolder.renameTo(newFolder);
+	}
+
+	/**
+	 * Move the MetaFile in the provided parent folder to a new parent folder 
+	 * @param parent The parent folder.
+	 * @param oldName The old name of the MetaFile
+	 * @param newParent The new name of parent folder
+	 * @param newName The new name of the MetaFile
+	 * @return true if the move was successful.
+	 */
+	public static boolean moveMetaFile(File parent, String oldName, File newParent, String newName) {
+		if (!isMetaFile(parent, oldName)) {
+			throw new RuntimeException("Meta File Error, file " + oldName + " not found in folder " + parent.toString(), null);
+		}
+		if (!newParent.exists() || !newParent.isDirectory()) {
+			throw new RuntimeException("Meta File Error, folder does not exist " + newParent.toString(), null);
+		}
+		if (isMetaFile(newParent, newName)) {
+			throw new RuntimeException("Meta File Error, cannot move, file " + newName + " already exists in folder " + newParent.toString(), null);
+		}
+		File oldMetaFile = retrieveMetaFile(parent, oldName);
+		File newMetaFile = retrieveMetaFile(newParent, newName);
+		return oldMetaFile.renameTo(newMetaFile);
 	}
 
 }

@@ -23,6 +23,7 @@ import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.*;
@@ -57,63 +58,73 @@ public class PullJob extends GitJob {
 		this.cookie = (Cookie) cookie;
 	}
 
-	private IStatus doPull() throws IOException, GitAPIException, CoreException {
-		Repository db = FileRepositoryBuilder.create(GitUtils.getGitDir(path));
-
-		Git git = new Git(db);
-		PullCommand pc = git.pull();
-		pc.setCredentialsProvider(credentials);
-		pc.setTransportConfigCallback(new TransportConfigCallback() {
-			@Override
-			public void configure(Transport t) {
-				credentials.setUri(t.getURI());
-				if (t instanceof TransportHttp && cookie != null) {
-					HashMap<String, String> map = new HashMap<String, String>();
-					map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
-					//Temp. until JGit fix
-					try {
-						if (!InitSetAdditionalHeaders) {
-							InitSetAdditionalHeaders = true;
-							SetAdditionalHeadersM = TransportHttp.class.getMethod("setAdditionalHeaders", Map.class);
+	private IStatus doPull(IProgressMonitor monitor) throws IOException, GitAPIException, CoreException {
+		ProgressMonitor gitMonitor = new EclipseGitProgressTransformer(monitor);
+		Repository db = null;
+		try {
+			db = FileRepositoryBuilder.create(GitUtils.getGitDir(path));
+			Git git = new Git(db);
+			PullCommand pc = git.pull();
+			pc.setProgressMonitor(gitMonitor);
+			pc.setCredentialsProvider(credentials);
+			pc.setTransportConfigCallback(new TransportConfigCallback() {
+				@Override
+				public void configure(Transport t) {
+					credentials.setUri(t.getURI());
+					if (t instanceof TransportHttp && cookie != null) {
+						HashMap<String, String> map = new HashMap<String, String>();
+						map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
+						//Temp. until JGit fix
+						try {
+							if (!InitSetAdditionalHeaders) {
+								InitSetAdditionalHeaders = true;
+								SetAdditionalHeadersM = TransportHttp.class.getMethod("setAdditionalHeaders", Map.class);
+							}
+							if (SetAdditionalHeadersM != null) {
+								SetAdditionalHeadersM.invoke(t, map);
+							}
+						} catch (SecurityException e) {
+						} catch (NoSuchMethodException e) {
+						} catch (IllegalArgumentException e) {
+						} catch (IllegalAccessException e) {
+						} catch (InvocationTargetException e) {
 						}
-						if (SetAdditionalHeadersM != null) {
-							SetAdditionalHeadersM.invoke(t, map);
-						}
-					} catch (SecurityException e) {
-					} catch (NoSuchMethodException e) {
-					} catch (IllegalArgumentException e) {
-					} catch (IllegalAccessException e) {
-					} catch (InvocationTargetException e) {
 					}
 				}
+			});
+			PullResult pullResult = pc.call();
+
+			if (monitor.isCanceled()) {
+				return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
 			}
-		});
-		PullResult pullResult = pc.call();
-		// close the git repository
-		db.close();
 
-		// handle result
-		if (pullResult.isSuccessful()) {
-			return Status.OK_STATUS;
+			// handle result
+			if (pullResult.isSuccessful()) {
+				return Status.OK_STATUS;
+			}
+			FetchResult fetchResult = pullResult.getFetchResult();
+
+			IStatus fetchStatus = FetchJob.handleFetchResult(fetchResult);
+			if (!fetchStatus.isOK()) {
+				return fetchStatus;
+			}
+
+			MergeStatus mergeStatus = pullResult.getMergeResult().getMergeStatus();
+			if (!mergeStatus.isSuccessful())
+				return new Status(IStatus.ERROR, GitActivator.PI_GIT, mergeStatus.name());
+		} finally {
+			if (db != null) {
+				db.close();
+			}
 		}
-		FetchResult fetchResult = pullResult.getFetchResult();
-
-		IStatus fetchStatus = FetchJob.handleFetchResult(fetchResult);
-		if (!fetchStatus.isOK()) {
-			return fetchStatus;
-		}
-
-		MergeStatus mergeStatus = pullResult.getMergeResult().getMergeStatus();
-		if (!mergeStatus.isSuccessful())
-			return new Status(IStatus.ERROR, GitActivator.PI_GIT, mergeStatus.name());
 		return Status.OK_STATUS;
 	}
 
 	@Override
-	protected IStatus performJob() {
+	protected IStatus performJob(IProgressMonitor monitor) {
 		IStatus result = Status.OK_STATUS;
 		try {
-			result = doPull();
+			result = doPull(monitor);
 		} catch (IOException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Pulling error", e);
 		} catch (CoreException e) {

@@ -54,6 +54,8 @@ public class CFProtocolConstants {
 
 	public static final String KEY_APP = "App"; //$NON-NLS-1$
 
+	public static final String KEY_APPS = "Apps"; //$NON-NLS-1$
+
 	public static final String KEY_CONTENT_LOCATION = "ContentLocation"; //$NON-NLS-1$
 
 	public static final String KEY_FORCE = "Force"; //$NON-NLS-1$
@@ -66,7 +68,13 @@ public class CFProtocolConstants {
 
 	public static final String KEY_ROUTE = "Route"; //$NON-NLS-1$
 
+	public static final String KEY_ROUTES = "Routes"; //$NON-NLS-1$
+
 	public static final String KEY_ORPHANED = "Orphaned"; //$NON-NLS-1$
+
+	public static final String KEY_MANIFEST = "Manifest"; //$NON-NLS-1$
+
+	public static final String KEY_PERSIST = "Persist"; //$NON-NLS-1$
 
 	// CF REST API protocol constants
 
@@ -155,4 +163,6 @@ public class CFProtocolConstants {
 	public static final String V2_KEY_NO_ROUTE = "no-route"; //$NON-NLS-1$
 
 	public static final String V2_KEY_TIMEOUT = "timeout"; //$NON-NLS-1$
+
+	public static final String V2_KEY_NEXT_URL = "next_url"; //$NON-NLS-1$
 }

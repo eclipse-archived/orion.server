@@ -44,6 +44,7 @@ public class RemoteDetailsJob extends GitJob {
 	private int pageSize;
 	private String baseLocation;
 	private String configName;
+	private String nameFilter;
 
 	/**
 	 * Creates job with given page range and adding <code>commitsSize</code> commits to every branch.
@@ -55,7 +56,7 @@ public class RemoteDetailsJob extends GitJob {
 	 * @param pageSize use negative to indicate that all commits need to be returned
 	 * @param baseLocation URI used as a base for generating next and previous page links. Should not contain any parameters.
 	 */
-	public RemoteDetailsJob(String userRunningTask, String configName, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize, String baseLocation) {
+	public RemoteDetailsJob(String userRunningTask, String configName, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize, String baseLocation, String filter) {
 		super(userRunningTask, false);
 		this.path = repositoryPath;
 		this.cloneLocation = cloneLocation;
@@ -64,6 +65,7 @@ public class RemoteDetailsJob extends GitJob {
 		this.pageSize = pageSize;
 		this.baseLocation = baseLocation;
 		this.configName = configName;
+		this.nameFilter = filter;
 	}
 
 	/**
@@ -73,7 +75,7 @@ public class RemoteDetailsJob extends GitJob {
 	 * @param cloneLocation
 	 */
 	public RemoteDetailsJob(String userRunningTask, String configName, IPath repositoryPath, URI cloneLocation) {
-		this(userRunningTask, configName, repositoryPath, cloneLocation, 0, 0, -1, null);
+		this(userRunningTask, configName, repositoryPath, cloneLocation, 0, 0, -1, null, "");
 	}
 
 	/**
@@ -82,9 +84,10 @@ public class RemoteDetailsJob extends GitJob {
 	 * @param repositoryPath
 	 * @param cloneLocation
 	 * @param commitsSize
+	 * @param filterParm 
 	 */
-	public RemoteDetailsJob(String userRunningTask, String configName, IPath repositoryPath, URI cloneLocation, int commitsSize) {
-		this(userRunningTask, configName, repositoryPath, cloneLocation, commitsSize, 0, -1, null);
+	public RemoteDetailsJob(String userRunningTask, String configName, IPath repositoryPath, URI cloneLocation, int commitsSize, String filterParm) {
+		this(userRunningTask, configName, repositoryPath, cloneLocation, commitsSize, 0, -1, null, filterParm);
 	}
 
 	private ObjectId getCommitObjectId(Repository db, ObjectId oid) throws MissingObjectException, IncorrectObjectTypeException, IOException {
@@ -97,7 +100,7 @@ public class RemoteDetailsJob extends GitJob {
 	}
 
 	@Override
-	protected IStatus performJob() {
+	protected IStatus performJob(IProgressMonitor monitor) {
 		Repository db = null;
 		try {
 			File gitDir = GitUtils.getGitDir(path);
@@ -112,7 +115,18 @@ public class RemoteDetailsJob extends GitJob {
 						return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 					}
 					JSONArray children = result.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+					JSONArray filteredChildren = new JSONArray();
 					if (children.length() == 0 || (commitsSize == 0 && pageSize < 0)) {
+						if (nameFilter != null && !nameFilter.equals("")) {
+							for (int i = 0; i < children.length(); i++) {
+								JSONObject test = (JSONObject) children.get(i);
+								String name = (String) test.get("Name");
+								if (name.contains(nameFilter)) {
+									filteredChildren.put(test);
+								}
+							}
+							result.put(ProtocolConstants.KEY_CHILDREN, filteredChildren);
+						}
 						return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 					}
 
@@ -136,6 +150,9 @@ public class RemoteDetailsJob extends GitJob {
 
 					JSONArray newChildren = new JSONArray();
 					for (int i = firstChild; i <= lastChild; i++) {
+						if (monitor.isCanceled()) {
+							return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
+						}
 						JSONObject branch = children.getJSONObject(i);
 						if (commitsSize == 0) {
 							newChildren.put(branch);
@@ -178,5 +195,4 @@ public class RemoteDetailsJob extends GitJob {
 			}
 		}
 	}
-
 }

@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
@@ -51,6 +53,7 @@ import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.core.resources.FileLocker;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,14 +74,21 @@ public class Indexer extends Job {
 	private static final long IDLE_DELAY = 300000;//five minutes
 
 	private static final long MAX_SEARCH_SIZE = 300000;//don't index files larger than 300,000 bytes
+	/**
+	 * Threshold indicating when a user is considered inactive and not worth indexing.
+	 */
+	private static final long INACTIVE_USER_THRESHOLD = 1000L * 60L * 60L * 24L * 7L;//seven days
+
 	//private static final List<String> IGNORED_FILE_TYPES = Arrays.asList("png", "jpg", "jpeg", "gif", "bmp", "mpg", "mp4", "wmf", "pdf", "tiff", "class", "so", "zip", "jar", "tar", "tgz");
 	private final List<String> INDEXED_FILE_TYPES;
 	private final SolrServer server;
 	Logger logger;
+	private File lockFile;
 
-	public Indexer(SolrServer server) {
+	public Indexer(SolrServer server, File indexRoot) {
 		super("Indexing"); //$NON-NLS-1$
 		this.server = server;
+		this.lockFile = new File(indexRoot, "lock.txt");
 		setSystem(true);
 		INDEXED_FILE_TYPES = Arrays.asList("css", "js", "html", "txt", "xml", "java", "properties", "php", "htm", "project", "conf", "pl", "sh", "text", "xhtml", "mf", "manifest", "md", "yaml", "yml", "go");
 		Collections.sort(INDEXED_FILE_TYPES);
@@ -149,11 +159,10 @@ public class Indexer extends Job {
 	/**
 	 * Runs an indexer pass over a user. Returns the number of documents indexed.
 	 */
-	private int indexUser(String userId, IProgressMonitor monitor, List<SolrInputDocument> documents) {
+	private int indexUser(UserInfo user, IProgressMonitor monitor, List<SolrInputDocument> documents) {
 		int indexed = 0;
 		try {
 			final IMetaStore store = OrionConfiguration.getMetaStore();
-			UserInfo user = store.readUser(userId);
 			List<String> workspaceIds = user.getWorkspaceIds();
 			SubMonitor progress = SubMonitor.convert(monitor, workspaceIds.size());
 			for (String workspaceId : workspaceIds) {
@@ -339,30 +348,54 @@ public class Indexer extends Job {
 		} catch (IllegalStateException e) {
 			//bundle providing metastore might not have started yet
 			if (logger.isInfoEnabled())
-				logger.info("Search indexer waiting for metadata service");
+				logger.info("Search indexer waiting for metadata service"); //$NON-NLS-1$
 			schedule(5000);
 			return Status.OK_STATUS;
 		}
 		if (metaStore == null) {
-			logger.error("Search indexer cannot find a metastore service");
+			logger.error("Search indexer cannot find a metastore service"); //$NON-NLS-1$
 			return Status.OK_STATUS;
 		}
 		long start = System.currentTimeMillis();
-		int indexed = 0;
+		FileLocker lock = new FileLocker(lockFile);
+		int indexed = 0, userCount = 0, activeUserCount = 0;
 		try {
+			if (!lock.tryLock()) {
+				if (logger.isInfoEnabled()) {
+					logger.info("Search indexer: another process is currently indexing"); //$NON-NLS-1$
+				}
+				schedule(IDLE_DELAY);
+				return Status.OK_STATUS;
+			}
 			List<String> userIds = metaStore.readAllUsers();
+			userCount = userIds.size();
 			SubMonitor progress = SubMonitor.convert(monitor, userIds.size());
 			List<SolrInputDocument> documents = new ArrayList<SolrInputDocument>();
 			indexed = 0;
 			for (String userId : userIds) {
-				indexed += indexUser(userId, progress.newChild(1), documents);
+				UserInfo userInfo = metaStore.readUser(userId);
+				if (isActiveUser(userInfo))
+					activeUserCount++;
+				indexed += indexUser(userInfo, progress.newChild(1), documents);
 			}
 		} catch (CoreException e) {
 			handleIndexingFailure(e, null);
+		} catch (FileNotFoundException e) {
+			// We shouldn't get here
+			handleIndexingFailure(e, null);
+		} catch (IOException e) {
+			// We shouldn't get here
+			handleIndexingFailure(e, null);
+		} finally {
+			if (lock.isValid()) {
+				lock.release();
+			}
 		}
 		long duration = System.currentTimeMillis() - start;
-		if (logger.isInfoEnabled())
-			logger.info("Indexed " + indexed + " documents in " + duration + "ms"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		if (logger.isInfoEnabled()) {
+			String activity = " (" + activeUserCount + '/' + userCount + " users active)"; //$NON-NLS-1$ //$NON-NLS-2$
+			logger.info("Indexed " + indexed + " documents in " + duration + "ms" + activity); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		}
 		//reschedule the indexing - throttle so the job never runs more than 10% of the time
 		long delay = Math.max(DEFAULT_DELAY, duration * 10);
 		//never wait longer than max idle delay
@@ -373,9 +406,25 @@ public class Indexer extends Job {
 			long time = System.currentTimeMillis();
 			Date date = new Date(time + delay);
 			Format format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-			logger.info("Scheduling indexing to start again at " + format.format(date).toString()); //$NON-NLS-1$//$NON-NLS-2$
+			logger.info("Scheduling indexing to start again at " + format.format(date).toString()); //$NON-NLS-1$
 		}
 		schedule(delay);
 		return Status.OK_STATUS;
+	}
+
+	/**
+	 * Returns whether the given user has logged in recently. This method conservatively <code>true</code>
+	 * if there is any failure determining whether the user is active (user is assumed active until proven otherwise).
+	 */
+	private boolean isActiveUser(UserInfo userInfo) {
+		String prop = userInfo.getProperty("lastlogintimestamp"); //$NON-NLS-1$
+		if (prop == null)
+			return true;
+		try {
+			long lastLogin = Long.parseLong(prop);
+			return (System.currentTimeMillis() - lastLogin < INACTIVE_USER_THRESHOLD);
+		} catch (NumberFormatException e) {
+			return true;
+		}
 	}
 }

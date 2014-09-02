@@ -26,7 +26,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BindRouteCommand extends AbstractRevertableCFCommand {
+public class BindRouteCommand extends AbstractCFApplicationCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
@@ -73,12 +73,12 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 			status.add(jobStatus);
 
 			if (!jobStatus.isOK())
-				return revert(status);
+				return status;
 
 			List<Domain> domains = getDomainsCommand.getDomains();
 			if (domains == null || domains.size() == 0) {
 				status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Failed to find available domains in target", null));
-				return revert(status);
+				return status;
 			}
 
 			if (!appDomain.isEmpty()) {
@@ -95,7 +95,7 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 				if (domain == null) {
 					String msg = NLS.bind("Failed to find domain {0} in target", appDomain);
 					status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
-					return revert(status);
+					return status;
 				}
 			} else {
 				/* client has not requested a specific domain, get the first available */
@@ -104,7 +104,7 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 
 			/* find out whether the declared host can be reused */
 			String routeGUID = null;
-			FindRouteCommand findRouteCommand = new FindRouteCommand(target, application, domain.getGuid());
+			FindRouteCommand findRouteCommand = new FindRouteCommand(target, getApplication(), domain.getGuid());
 			jobStatus = (ServerStatus) findRouteCommand.doIt(); /* FIXME: unsafe type cast */
 			status.add(jobStatus);
 
@@ -114,7 +114,7 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 				routeGUID = route.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
 
 				/* attach route to application */
-				AttachRouteCommand attachRoute = new AttachRouteCommand(target, application, routeGUID);
+				AttachRouteCommand attachRoute = new AttachRouteCommand(target, getApplication(), routeGUID);
 				jobStatus = (ServerStatus) attachRoute.doIt(); /* FIXME: unsafe type cast */
 				status.add(jobStatus);
 
@@ -128,24 +128,24 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 			}
 
 			/* create a new route */
-			CreateRouteCommand createRoute = new CreateRouteCommand(target, domain, application);
+			CreateRouteCommand createRoute = new CreateRouteCommand(target, domain, getApplication());
 			jobStatus = (ServerStatus) createRoute.doIt(); /* FIXME: unsafe type cast */
 			status.add(jobStatus);
 
 			if (!jobStatus.isOK())
-				return revert(status);
+				return status;
 
 			/* extract route guid */
 			route = jobStatus.getJsonData();
 			routeGUID = route.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
 
 			/* attach route to application */
-			AttachRouteCommand attachRoute = new AttachRouteCommand(target, application, routeGUID);
+			AttachRouteCommand attachRoute = new AttachRouteCommand(target, getApplication(), routeGUID);
 			jobStatus = (ServerStatus) attachRoute.doIt(); /* FIXME: unsafe type cast */
 			status.add(jobStatus);
 
 			if (!jobStatus.isOK())
-				return revert(status);
+				return status;
 
 			return status;
 
@@ -153,7 +153,7 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
 			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-			return revert(status);
+			return status;
 		}
 	}
 
@@ -161,7 +161,7 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 	protected IStatus validateParams() {
 		try {
 			/* read deploy parameters */
-			ManifestParseTree manifest = application.getManifest();
+			ManifestParseTree manifest = getApplication().getManifest();
 			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
 
 			/* optional */
@@ -174,7 +174,7 @@ public class BindRouteCommand extends AbstractRevertableCFCommand {
 			return Status.OK_STATUS;
 
 		} catch (InvalidAccessException e) {
-			return revert(new MultiServerStatus(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null)));
+			return new MultiServerStatus(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null));
 		}
 	}
 }

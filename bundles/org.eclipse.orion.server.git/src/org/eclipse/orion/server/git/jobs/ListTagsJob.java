@@ -47,6 +47,7 @@ public class ListTagsJob extends GitJob {
 	private int pageNo;
 	private int pageSize;
 	private String baseLocation;
+	private String nameFilter;
 
 	/**
 	 * Creates job with given page range and adding <code>commitsSize</code> commits to every tag.
@@ -57,8 +58,9 @@ public class ListTagsJob extends GitJob {
 	 * @param pageNo
 	 * @param pageSize use negative to indicate that all commits need to be returned
 	 * @param baseLocation URI used as a base for generating next and previous page links. Should not contain any parameters.
+	 * @param nameFilter used to filter tags by name
 	 */
-	public ListTagsJob(String userRunningTask, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize, String baseLocation) {
+	public ListTagsJob(String userRunningTask, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize, String baseLocation, String nameFilter) {
 		super(userRunningTask, false);
 		this.path = repositoryPath;
 		this.cloneLocation = cloneLocation;
@@ -66,6 +68,7 @@ public class ListTagsJob extends GitJob {
 		this.pageNo = pageNo;
 		this.pageSize = pageSize;
 		this.baseLocation = baseLocation;
+		this.nameFilter = nameFilter;
 		setFinalMessage("Generating tags list completed");
 	}
 
@@ -76,8 +79,8 @@ public class ListTagsJob extends GitJob {
 	 * @param cloneLocation
 	 * @param commitsSize
 	 */
-	public ListTagsJob(String userRunningTask, IPath repositoryPath, URI cloneLocation, int commitsSize) {
-		this(userRunningTask, repositoryPath, cloneLocation, commitsSize, 1, -1, null);
+	public ListTagsJob(String userRunningTask, IPath repositoryPath, URI cloneLocation, int commitsSize, String filter) {
+		this(userRunningTask, repositoryPath, cloneLocation, commitsSize, 1, -1, null, filter);
 	}
 
 	/**
@@ -87,7 +90,7 @@ public class ListTagsJob extends GitJob {
 	 * @param cloneLocation
 	 */
 	public ListTagsJob(String userRunningTask, IPath repositoryPath, URI cloneLocation) {
-		this(userRunningTask, repositoryPath, cloneLocation, 0);
+		this(userRunningTask, repositoryPath, cloneLocation, 0, null);
 	}
 
 	private ObjectId getCommitObjectId(Repository db, ObjectId oid) throws MissingObjectException, IncorrectObjectTypeException, IOException {
@@ -111,8 +114,16 @@ public class ListTagsJob extends GitJob {
 			JSONObject result = new JSONObject();
 			List<Tag> tags = new ArrayList<Tag>();
 			for (Ref ref : refs) {
-				Tag tag = new Tag(cloneLocation, db, ref);
-				tags.add(tag);
+				if (nameFilter != null && !nameFilter.equals("")) {
+					String shortName = Repository.shortenRefName(ref.getName());
+					if (shortName.contains(nameFilter)) {
+						Tag tag = new Tag(cloneLocation, db, ref);
+						tags.add(tag);
+					}
+				} else {
+					Tag tag = new Tag(cloneLocation, db, ref);
+					tags.add(tag);
+				}
 			}
 			Collections.sort(tags, Tag.COMPARATOR);
 			JSONArray children = new JSONArray();
@@ -121,6 +132,9 @@ public class ListTagsJob extends GitJob {
 			lastTag = lastTag > tags.size() - 1 ? tags.size() - 1 : lastTag;
 			if (pageNo > 1 && baseLocation != null) {
 				String prev = baseLocation + "?page=" + (pageNo - 1) + "&pageSize=" + pageSize;
+				if (nameFilter != null && !nameFilter.equals("")) {
+					prev += "&filter=" + GitUtils.encode(nameFilter);
+				}
 				if (commitsSize > 0) {
 					prev += "&" + GitConstants.KEY_TAG_COMMITS + "=" + commitsSize;
 				}
@@ -128,6 +142,9 @@ public class ListTagsJob extends GitJob {
 			}
 			if (lastTag < tags.size() - 1) {
 				String next = baseLocation + "?page=" + (pageNo + 1) + "&pageSize=" + pageSize;
+				if (nameFilter != null && !nameFilter.equals("")) {
+					next += "&filter=" + GitUtils.encode(nameFilter);
+				}
 				if (commitsSize > 0) {
 					next += "&" + GitConstants.KEY_TAG_COMMITS + "=" + commitsSize;
 				}

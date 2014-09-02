@@ -29,7 +29,7 @@ import org.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BindServicesCommand extends AbstractRevertableCFCommand {
+public class BindServicesCommand extends AbstractCFApplicationCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
@@ -51,7 +51,7 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 			/* bind services */
 			URI targetURI = URIUtil.toURI(target.getUrl());
 
-			ManifestParseTree manifest = application.getManifest();
+			ManifestParseTree manifest = getApplication().getManifest();
 			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
 
 			if (app.has(CFProtocolConstants.V2_KEY_SERVICES)) {
@@ -66,7 +66,7 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 				ServerStatus jobStatus = HttpUtil.executeMethod(getServicesMethod);
 				status.add(jobStatus);
 				if (!jobStatus.isOK())
-					return revert(status);
+					return status;
 
 				JSONObject resp = jobStatus.getJsonData();
 				JSONArray servicesJSON = resp.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
@@ -99,7 +99,7 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 						jobStatus = HttpUtil.executeMethod(getServiceMethod);
 						status.add(jobStatus);
 						if (!jobStatus.isOK())
-							return revert(status);
+							return status;
 
 						resp = jobStatus.getJsonData();
 						String serviceInstanceGUID = null;
@@ -131,7 +131,7 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 								String[] bindings = {serviceName, serviceType.getValue(), plan.getValue()};
 								String msg = NLS.bind("Could not find service instance {0} nor service {1} with plan {2} in target.", bindings);
 								status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
-								return revert(status);
+								return status;
 							}
 
 							/* create service instance */
@@ -150,7 +150,7 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 							jobStatus = HttpUtil.executeMethod(createServiceMethod);
 							status.add(jobStatus);
 							if (!jobStatus.isOK())
-								return revert(status);
+								return status;
 
 							resp = jobStatus.getJsonData();
 							serviceInstanceGUID = resp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_GUID);
@@ -163,7 +163,7 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 
 						/* set request body */
 						JSONObject bindServiceRequest = new JSONObject();
-						bindServiceRequest.put(CFProtocolConstants.V2_KEY_APP_GUID, application.getGuid());
+						bindServiceRequest.put(CFProtocolConstants.V2_KEY_APP_GUID, getApplication().getGuid());
 						bindServiceRequest.put(CFProtocolConstants.V2_KEY_SERVICE_INSTANCE_GUID, serviceInstanceGUID);
 						bindServiceMethod.setRequestEntity(new StringRequestEntity(bindServiceRequest.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -171,7 +171,7 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 						jobStatus = HttpUtil.executeMethod(bindServiceMethod);
 						status.add(jobStatus);
 						if (!jobStatus.isOK())
-							return revert(status);
+							return status;
 					}
 				}
 
@@ -194,7 +194,7 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 						jobStatus = HttpUtil.executeMethod(getServiceMethod);
 						status.add(jobStatus);
 						if (!jobStatus.isOK())
-							return revert(status);
+							return status;
 
 						resp = jobStatus.getJsonData();
 						String serviceInstanceGUID = null;
@@ -211,7 +211,7 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 
 						if (serviceInstanceGUID == null) {
 							status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Service instance " + nameService + " can not be found in target space", null));
-							return revert(status);
+							return status;
 						}
 
 						/* bind service to the application */
@@ -221,15 +221,22 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 
 						/* set request body */
 						JSONObject bindServiceRequest = new JSONObject();
-						bindServiceRequest.put(CFProtocolConstants.V2_KEY_APP_GUID, application.getGuid());
+						bindServiceRequest.put(CFProtocolConstants.V2_KEY_APP_GUID, getApplication().getGuid());
 						bindServiceRequest.put(CFProtocolConstants.V2_KEY_SERVICE_INSTANCE_GUID, serviceInstanceGUID);
 						bindServiceMethod.setRequestEntity(new StringRequestEntity(bindServiceRequest.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
 
 						/* send request */
 						jobStatus = HttpUtil.executeMethod(bindServiceMethod);
-						status.add(jobStatus);
-						if (!jobStatus.isOK())
-							return revert(status);
+
+						if (!jobStatus.isOK()) {
+
+							/* the binding might be already present - detect it by checking the error code type */
+							if (!jobStatus.getJsonData().has("error_code") || !"CF-ServiceBindingAppServiceTaken".equals(jobStatus.getJsonData().getString("error_code"))) { //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+								status.add(jobStatus);
+								return status;
+							}
+						} else
+							status.add(jobStatus);
 					}
 				}
 			}
@@ -238,12 +245,12 @@ public class BindServicesCommand extends AbstractRevertableCFCommand {
 
 		} catch (InvalidAccessException e) {
 			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null));
-			return revert(status);
+			return status;
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
 			status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-			return revert(status);
+			return status;
 		}
 	}
 

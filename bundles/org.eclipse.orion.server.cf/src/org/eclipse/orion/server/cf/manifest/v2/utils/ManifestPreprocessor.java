@@ -38,7 +38,7 @@ public class ManifestPreprocessor implements Preprocessor {
 				++currentLine;
 
 				line = processLine(line);
-				if (line.isEmpty())
+				if (line.isEmpty() || line.trim().isEmpty())
 					continue;
 
 				InputLine inputLine = new InputLine(line, currentLine);
@@ -59,6 +59,6 @@ public class ManifestPreprocessor implements Preprocessor {
 		String tmp = (hashIdx != -1) ? inputLine.substring(0, hashIdx) : inputLine;
 
 		/* ignore the opening manifest token '---' */
-		return (!tmp.equals("---")) ? tmp : ""; //$NON-NLS-1$ //$NON-NLS-2$
+		return (!tmp.trim().equals("---")) ? tmp : ""; //$NON-NLS-1$ //$NON-NLS-2$
 	}
 }

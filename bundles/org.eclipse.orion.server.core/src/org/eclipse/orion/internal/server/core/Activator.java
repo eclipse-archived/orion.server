@@ -17,19 +17,29 @@ import java.util.Collection;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.IPreferencesService;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV1;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreV2;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.core.tasks.TaskService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.osgi.framework.log.FrameworkLog;
 import org.eclipse.osgi.service.datalocation.Location;
-import org.osgi.framework.*;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +50,6 @@ import org.slf4j.LoggerFactory;
 public class Activator implements BundleActivator {
 
 	static volatile BundleContext bundleContext;
-	private static final String PROP_USER_AREA = "org.eclipse.orion.server.core.userArea"; //$NON-NLS-1$
 
 	private static Activator singleton;
 	private	ServiceTracker<FrameworkLog, FrameworkLog> logTracker;
@@ -150,23 +159,10 @@ public class Activator implements BundleActivator {
 	}
 
 	private void initializeMetaStore() {
-		String pref = OrionConfiguration.getMetaStorePreference();
-		if (ServerConstants.CONFIG_META_STORE_SIMPLE_V2.equals(pref)) {
-			try {
-				metastore =  new SimpleMetaStoreV2(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null));
-			} catch (CoreException e) {
-				throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
-			}
-		} else if (ServerConstants.CONFIG_META_STORE_SIMPLE.equals(pref)) {
-			try {
-				metastore = new SimpleMetaStoreV1(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null));
-			} catch (CoreException e) {
-				throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
-			}
-		} else {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.error("Preference orion.core.metastore was not supplied and legacy files exist, see https://wiki.eclipse.org/Orion/Metadata_migration to migrate to the current version");
-			return;
+		try {
+			metastore =  new SimpleMetaStore(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null));
+		} catch (CoreException e) {
+			throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
 		}
 		bundleContext.registerService(IMetaStore.class, metastore, null);
 	}
@@ -211,7 +207,7 @@ public class Activator implements BundleActivator {
 	}
 
 	/**
-	 * Returns the root file system location for the workspace.
+	 * Returns the root file system location the OSGi instance area.
 	 */
 	public IPath getPlatformLocation() {
 		BundleContext context = Activator.getDefault().getContext();
@@ -240,7 +236,7 @@ public class Activator implements BundleActivator {
 	}
 
 	private void initializeFileSystem() {
-		IPath location = getPlatformLocation();
+		IPath location = getFileSystemLocation();
 		if (location == null)
 			throw new RuntimeException("Unable to compute base file system location"); //$NON-NLS-1$
 
@@ -251,11 +247,19 @@ public class Activator implements BundleActivator {
 		} catch (CoreException e) {
 			throw new RuntimeException("Instance location is read only: " + rootStore, e); //$NON-NLS-1$
 		}
+	}
+	
+	private IPath getFileSystemLocation() {
+		// Make sure the registry is started so the preferences work correctly.
+		// Lots of bundles access the file system location, and some of them start early
+		// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=439716#c10
+		ensureBundleStarted("org.eclipse.equinox.registry");
+		String locationPref = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_USER_CONTENT);
 
-		//initialize user area if not specified
-		if (System.getProperty(PROP_USER_AREA) == null) {
-			System.setProperty(PROP_USER_AREA, rootStore.getFileStore(new Path(".metadata/.plugins/org.eclipse.orion.server.core/userArea")).toString()); //$NON-NLS-1$
+		if (locationPref != null) {
+			return new Path(locationPref);
 		}
+		return getPlatformLocation();
 	}
 
 	private void stopTaskService() {
@@ -271,5 +275,29 @@ public class Activator implements BundleActivator {
 	 */
 	public URI getRootLocationURI() {
 		return rootStoreURI;
+	}
+	
+	private void ensureBundleStarted(String symbolicName) {
+		Bundle bundle = getBundle(symbolicName);
+		if (bundle != null) {
+			if (bundle.getState() == Bundle.RESOLVED || bundle.getState() == Bundle.STARTING) {
+				try {
+					bundle.start(Bundle.START_TRANSIENT);
+				} catch (BundleException e) {
+					Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.core"); //$NON-NLS-1$
+					logger.error("Could not start bundle " + symbolicName, e);
+					
+				}
+			}
+		}
+	}
+
+	private Bundle getBundle(String symbolicName) {
+		for (Bundle bundle : getContext().getBundles()) {
+			if (symbolicName.equals(bundle.getSymbolicName())) {
+				return bundle;
+			}
+		}
+		return null;
 	}
 }

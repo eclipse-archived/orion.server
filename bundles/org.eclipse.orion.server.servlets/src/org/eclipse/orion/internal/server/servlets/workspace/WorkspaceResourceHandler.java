@@ -607,7 +607,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Project name cannot be empty", null));
 			return false;
 		}
-		if (name.contains("/") || name.equals("workspace") || name.endsWith(".json")) { //$NON-NLS-1$
+		if (name.contains("/") || name.equals("workspace") || name.endsWith(".json") || name.equals("user") || name.contains("OrionContent")) { //$NON-NLS-1$
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid project name: {0}", name), null));
 			return false;
 		}

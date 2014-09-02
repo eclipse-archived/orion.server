@@ -31,7 +31,9 @@ import org.apache.solr.core.SolrCore;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
@@ -39,6 +41,8 @@ import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.IWebResourceDecorator;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.BundleActivator;
@@ -67,6 +71,7 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	private SolrServer server;
 	private SolrCore solrCore;
 	private CoreContainer solrContainer;
+	private File baseDir;
 
 	static BundleContext getContext() {
 		return context;
@@ -103,8 +108,17 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	 */
 	private void createServer() {
 		try {
-			File rootFile = OrionConfiguration.getPlatformLocation().toFile();
-			File baseDir = new File(rootFile, ".metadata/.plugins/" + PI_SEARCH); //$NON-NLS-1$
+			String prop = PreferenceHelper.getString(ServerConstants.CONFIG_SEARCH_INDEX_LOCATION);
+			if (prop != null) {
+				IPath rootPath = new Path(prop);
+				File rootFile = rootPath.toFile();
+				baseDir = new File(rootFile, PI_SEARCH + "/v" + CURRENT_INDEX_GENERATION); //$NON-NLS-1$
+			} else {
+				IPath rootPath = OrionConfiguration.getPlatformLocation();
+				File rootFile = rootPath.toFile();
+				baseDir = new File(rootFile, ".metadata/.plugins/" + PI_SEARCH + "/v" + CURRENT_INDEX_GENERATION); //$NON-NLS-1$
+			}
+
 			// discard all server data if the index generation has changed
 			if (readIndexGeneration(baseDir) != CURRENT_INDEX_GENERATION) {
 				delete(baseDir);
@@ -205,10 +219,10 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 		SearchActivator.context = bundleContext;
 		createServer();
 		if (server != null) {
-			indexer = new Indexer(server);
+			indexer = new Indexer(server, baseDir);
 			indexer.schedule();
 
-			purgeJob = new IndexPurgeJob(server);
+			purgeJob = new IndexPurgeJob(server, baseDir);
 			purgeJob.schedule();
 		}
 		searchDecoratorRegistration = context.registerService(IWebResourceDecorator.class, this, null);

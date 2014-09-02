@@ -22,8 +22,7 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.*;
-import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.orion.server.git.*;
@@ -62,67 +61,80 @@ public class PushJob extends GitJob {
 		this.cookie = (Cookie) cookie;
 	}
 
-	private IStatus doPush() throws IOException, CoreException, URISyntaxException, GitAPIException {
+	private IStatus doPush(IProgressMonitor monitor) throws IOException, CoreException, URISyntaxException, GitAPIException {
+		ProgressMonitor gitMonitor = new EclipseGitProgressTransformer(monitor);
 		// /git/remote/{remote}/{branch}/file/{path}
 		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(2));
-		Repository db = FileRepositoryBuilder.create(gitDir);
-		Git git = new Git(db);
-
-		PushCommand pushCommand = git.push();
-		pushCommand.setTransportConfigCallback(new TransportConfigCallback() {
-			@Override
-			public void configure(Transport t) {
-				credentials.setUri(t.getURI());
-				if (t instanceof TransportHttp && cookie != null) {
-					HashMap<String, String> map = new HashMap<String, String>();
-					map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
-					//Temp. until JGit fix
-					try {
-						if (!InitSetAdditionalHeaders) {
-							InitSetAdditionalHeaders = true;
-							SetAdditionalHeadersM = TransportHttp.class.getMethod("setAdditionalHeaders", Map.class);
-						}
-						if (SetAdditionalHeadersM != null) {
-							SetAdditionalHeadersM.invoke(t, map);
-						}
-					} catch (SecurityException e) {
-					} catch (NoSuchMethodException e) {
-					} catch (IllegalArgumentException e) {
-					} catch (IllegalAccessException e) {
-					} catch (InvocationTargetException e) {
-					}
-				}
-			}
-		});
-		RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
-		credentials.setUri(remoteConfig.getURIs().get(0));
-		pushCommand.setCredentialsProvider(credentials);
-
-		boolean pushToGerrit = branch.startsWith("refs/for") && GitUtils.isGerrit(git.getRepository().getConfig());
-		RefSpec spec = new RefSpec(srcRef + ':' + (pushToGerrit ? "" : Constants.R_HEADS) + branch);
-		pushCommand.setRemote(remote).setRefSpecs(spec);
-		if (tags)
-			pushCommand.setPushTags();
-		pushCommand.setForce(force);
-		Iterable<PushResult> resultIterable = pushCommand.call();
-		PushResult pushResult = resultIterable.iterator().next();
 		// this set will contain only OK status or UP_TO_DATE status
 		Set<RemoteRefUpdate.Status> statusSet = new HashSet<RemoteRefUpdate.Status>();
-		for (final RemoteRefUpdate rru : pushResult.getRemoteUpdates()) {
-			final String rm = rru.getRemoteName();
-			// check status only for branch given in the URL or tags
-			if (branch.equals(Repository.shortenRefName(rm)) || rm.startsWith(Constants.R_TAGS)) {
-				RemoteRefUpdate.Status status = rru.getStatus();
-				// any status different from UP_TO_DATE and OK should generate warning
-				if (status != RemoteRefUpdate.Status.OK && status != RemoteRefUpdate.Status.UP_TO_DATE)
-					return new Status(IStatus.WARNING, GitActivator.PI_GIT, status.name(), new Throwable(rru.getMessage()));
-				// add OK or UP_TO_DATE status to the set
-				statusSet.add(status);
+		Repository db = null;
+		try {
+			db = FileRepositoryBuilder.create(gitDir);
+			Git git = new Git(db);
+
+			PushCommand pushCommand = git.push();
+			pushCommand.setProgressMonitor(gitMonitor);
+			pushCommand.setTransportConfigCallback(new TransportConfigCallback() {
+				@Override
+				public void configure(Transport t) {
+					credentials.setUri(t.getURI());
+					if (t instanceof TransportHttp && cookie != null) {
+						HashMap<String, String> map = new HashMap<String, String>();
+						map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
+						//Temp. until JGit fix
+						try {
+							if (!InitSetAdditionalHeaders) {
+								InitSetAdditionalHeaders = true;
+								SetAdditionalHeadersM = TransportHttp.class.getMethod("setAdditionalHeaders", Map.class);
+							}
+							if (SetAdditionalHeadersM != null) {
+								SetAdditionalHeadersM.invoke(t, map);
+							}
+						} catch (SecurityException e) {
+						} catch (NoSuchMethodException e) {
+						} catch (IllegalArgumentException e) {
+						} catch (IllegalAccessException e) {
+						} catch (InvocationTargetException e) {
+						}
+					}
+				}
+			});
+			RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
+			credentials.setUri(remoteConfig.getURIs().get(0));
+			pushCommand.setCredentialsProvider(credentials);
+
+			boolean pushToGerrit = branch.startsWith("refs/for") && GitUtils.isGerrit(git.getRepository().getConfig());
+			RefSpec spec = new RefSpec(srcRef + ':' + (pushToGerrit ? "" : Constants.R_HEADS) + branch);
+			pushCommand.setRemote(remote).setRefSpecs(spec);
+			if (tags)
+				pushCommand.setPushTags();
+			pushCommand.setForce(force);
+			Iterable<PushResult> resultIterable = pushCommand.call();
+			if (monitor.isCanceled()) {
+				return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
 			}
-			// TODO: return results for all updated branches once push is available for remote, see bug 352202
+			PushResult pushResult = resultIterable.iterator().next();
+			for (final RemoteRefUpdate rru : pushResult.getRemoteUpdates()) {
+				if (monitor.isCanceled()) {
+					return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
+				}
+				final String rm = rru.getRemoteName();
+				// check status only for branch given in the URL or tags
+				if (branch.equals(Repository.shortenRefName(rm)) || rm.startsWith(Constants.R_TAGS)) {
+					RemoteRefUpdate.Status status = rru.getStatus();
+					// any status different from UP_TO_DATE and OK should generate warning
+					if (status != RemoteRefUpdate.Status.OK && status != RemoteRefUpdate.Status.UP_TO_DATE)
+						return new Status(IStatus.WARNING, GitActivator.PI_GIT, status.name(), new Throwable(rru.getMessage()));
+					// add OK or UP_TO_DATE status to the set
+					statusSet.add(status);
+				}
+				// TODO: return results for all updated branches once push is available for remote, see bug 352202
+			}
+		} finally {
+			if (db != null) {
+				db.close();
+			}
 		}
-		// close the git repository
-		db.close();
 		if (statusSet.contains(RemoteRefUpdate.Status.OK))
 			// if there is OK status in the set -> something was updated
 			return Status.OK_STATUS;
@@ -132,10 +144,10 @@ public class PushJob extends GitJob {
 	}
 
 	@Override
-	protected IStatus performJob() {
+	protected IStatus performJob(IProgressMonitor monitor) {
 		IStatus result = Status.OK_STATUS;
 		try {
-			result = doPush();
+			result = doPush(monitor);
 		} catch (IOException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e);
 		} catch (CoreException e) {

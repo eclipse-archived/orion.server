@@ -268,6 +268,7 @@
 		<module>bundles/org.eclipse.orion.server.git</module>
 		<module>bundles/org.eclipse.orion.server.cf</module>
 		<module>bundles/org.eclipse.orion.server.docker</module>
+		<module>bundles/org.eclipse.orion.server.jettycustomizer</module>
 		<module>bundles/org.eclipse.orion.server.logs</module>
 		<module>bundles/org.eclipse.orion.server.hosting</module>
 		<module>bundles/org.eclipse.orion.server.search</module>
@@ -275,7 +276,6 @@
 		<module>bundles/org.eclipse.orion.server.configurator</module>
 		<module>bundles/org.eclipse.orion.server.logback.config</module>
 		<module>bundles/org.eclipse.orion.server.ui</module>
-		<module>bundles/org.eclipse.orion.server.user.securestorage</module>
 		<module>bundles/org.eclipse.orion.server.user.ldap</module>
 		<module>bundles/org.eclipse.orion.server.gerritfs</module>
 		<module>bundles/org.eclipse.orion.server.events</module>
