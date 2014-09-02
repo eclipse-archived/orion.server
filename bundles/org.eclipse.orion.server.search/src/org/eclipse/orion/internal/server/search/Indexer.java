@@ -163,11 +163,6 @@ public class Indexer extends Job {
 		int indexed = 0;
 		try {
 			final IMetaStore store = OrionConfiguration.getMetaStore();
-			UserInfo user = store.readUser(userId);
-			if (user == null) {
-				// user is somehow corrupt for this userId, return 0 and skip user.
-				return indexed;
-			}
 			List<String> workspaceIds = user.getWorkspaceIds();
 			SubMonitor progress = SubMonitor.convert(monitor, workspaceIds.size());
 			for (String workspaceId : workspaceIds) {
