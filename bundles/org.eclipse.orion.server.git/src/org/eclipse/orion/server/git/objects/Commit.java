@@ -82,6 +82,9 @@ public class Commit extends GitObject {
 	public Commit(URI cloneLocation, Repository db, RevCommit revCommit, String pattern) {
 		super(cloneLocation, db);
 		this.revCommit = revCommit;
+		if (revCommit.getParentCount() == 0) {
+			this.revCommit = parseCommit(revCommit);
+		}
 		this.pattern = pattern;
 		if (pattern != null && !pattern.isEmpty()) {
 			filter = AndTreeFilter.create(PathFilterGroup.createFromStrings(Collections.singleton(pattern)), TreeFilter.ANY_DIFF);
@@ -221,7 +224,7 @@ public class Commit extends GitObject {
 		List<DiffEntry> l = null;
 		String fromName = null;
 		if (revCommit.getParentCount() > 0) {
-			RevCommit parent = rw.parseCommit(revCommit.getParent(0));
+			RevCommit parent = parseCommit(revCommit.getParent(0));
 			tw.reset(parent.getTree(), revCommit.getTree());
 			if (filter != null)
 				tw.setFilter(filter);
@@ -340,5 +343,17 @@ public class Commit extends GitObject {
 			parents.put(parent);
 		}
 		return parents;
+	}
+
+	private RevCommit parseCommit(RevCommit revCommit) {
+		RevWalk rw = null;
+		try {
+			rw = new RevWalk(db);
+			return rw.parseCommit(revCommit);
+		} catch (IOException e) {
+			return revCommit;
+		} finally {
+			rw.release();
+		}
 	}
 }
