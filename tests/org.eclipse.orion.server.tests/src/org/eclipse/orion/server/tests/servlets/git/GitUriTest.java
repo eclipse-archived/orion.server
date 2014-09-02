@@ -95,7 +95,7 @@ public class GitUriTest extends GitTest {
 	@Test
 	public void testGitUrisForEmptyDir() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		File emptyDir = AllGitTests.getRandomLocation().toFile();
+		File emptyDir = createTempDir().toFile();
 		emptyDir.mkdir();
 		ServletTestingSupport.allowedPrefixes = emptyDir.toString();
 
@@ -124,7 +124,7 @@ public class GitUriTest extends GitTest {
 	public void testGitUrisForFile() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		File dir = AllGitTests.getRandomLocation().toFile();
+		File dir = createTempDir().toFile();
 		dir.mkdir();
 		File file = new File(dir, "test.txt");
 		file.createNewFile();

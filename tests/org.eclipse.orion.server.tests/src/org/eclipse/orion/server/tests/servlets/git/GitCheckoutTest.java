@@ -538,7 +538,7 @@ public class GitCheckoutTest extends GitTest {
 			getRemote(remotesLocation, 1, 0, Constants.DEFAULT_REMOTE_NAME);
 
 			// create secondary repository
-			IPath randomLocation = AllGitTests.getRandomLocation();
+			IPath randomLocation = createTempDir();
 			randomLocation = randomLocation.addTrailingSeparator().append(Constants.DOT_GIT);
 			File dotGitDir = randomLocation.toFile().getCanonicalFile();
 			Repository db2 = FileRepositoryBuilder.create(dotGitDir);
