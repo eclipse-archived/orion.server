@@ -17,15 +17,16 @@ import java.util.*;
 import java.util.Map.Entry;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.diff.DiffEntry;
+import org.eclipse.jgit.diff.*;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.treewalk.*;
 import org.eclipse.jgit.treewalk.filter.*;
+import org.eclipse.jgit.util.io.NullOutputStream;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
@@ -211,40 +212,47 @@ public class Commit extends GitObject {
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_COMMIT_DIFFS)
 	protected JSONArray getDiffs() throws JSONException, URISyntaxException, MissingObjectException, IncorrectObjectTypeException, IOException {
-		if (revCommit.getParentCount() > 0) {
-			JSONArray diffs = new JSONArray();
+		JSONArray diffs = new JSONArray();
 
-			final TreeWalk tw = new TreeWalk(db);
-			final RevWalk rw = new RevWalk(db);
+		final TreeWalk tw = new TreeWalk(db);
+		final RevWalk rw = new RevWalk(db);
+		tw.setRecursive(true);
+		List<DiffEntry> l = null;
+		String fromName = null;
+		if (revCommit.getParentCount() > 0) {
 			RevCommit parent = rw.parseCommit(revCommit.getParent(0));
 			tw.reset(parent.getTree(), revCommit.getTree());
-			tw.setRecursive(true);
-
 			if (filter != null)
 				tw.setFilter(filter);
 			else
 				tw.setFilter(TreeFilter.ANY_DIFF);
 
-			List<DiffEntry> l = DiffEntry.scan(tw);
-			for (DiffEntry entr : l) {
-				JSONObject diff = new JSONObject();
-				diff.put(ProtocolConstants.KEY_TYPE, org.eclipse.orion.server.git.objects.Diff.TYPE);
-				diff.put(GitConstants.KEY_COMMIT_DIFF_NEWPATH, entr.getNewPath());
-				diff.put(GitConstants.KEY_COMMIT_DIFF_OLDPATH, entr.getOldPath());
-				diff.put(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE, entr.getChangeType().toString());
-
-				// add diff location for the commit
-				String path = entr.getChangeType() != ChangeType.DELETE ? entr.getNewPath() : entr.getOldPath();
-				diff.put(GitConstants.KEY_DIFF, createDiffLocation(revCommit.getName(), revCommit.getParent(0).getName(), path));
-				diff.put(ProtocolConstants.KEY_CONTENT_LOCATION, createContentLocation(entr, path));
-
-				diffs.put(diff);
-			}
-			tw.release();
-
-			return diffs;
+			l = DiffEntry.scan(tw);
+			fromName = revCommit.getParent(0).getName();
+		} else {
+			DiffFormatter diffFormat = new DiffFormatter(NullOutputStream.INSTANCE);
+			diffFormat.setRepository(db);
+			if (filter != null)
+				diffFormat.setPathFilter(filter);
+			l = diffFormat.scan(new EmptyTreeIterator(), new CanonicalTreeParser(null, rw.getObjectReader(), revCommit.getTree()));
 		}
-		return null;
+		for (DiffEntry entr : l) {
+			JSONObject diff = new JSONObject();
+			diff.put(ProtocolConstants.KEY_TYPE, org.eclipse.orion.server.git.objects.Diff.TYPE);
+			diff.put(GitConstants.KEY_COMMIT_DIFF_NEWPATH, entr.getNewPath());
+			diff.put(GitConstants.KEY_COMMIT_DIFF_OLDPATH, entr.getOldPath());
+			diff.put(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE, entr.getChangeType().toString());
+
+			// add diff location for the commit
+			String path = entr.getChangeType() != ChangeType.DELETE ? entr.getNewPath() : entr.getOldPath();
+			diff.put(GitConstants.KEY_DIFF, createDiffLocation(revCommit.getName(), fromName, path));
+			diff.put(ProtocolConstants.KEY_CONTENT_LOCATION, createContentLocation(entr, path));
+
+			diffs.put(diff);
+		}
+		tw.release();
+
+		return diffs;
 	}
 
 	protected JSONArray toJSON(Map<String, Ref> revTags) throws JSONException, URISyntaxException, CoreException, IOException {
@@ -298,7 +306,7 @@ public class Commit extends GitObject {
 		//remove /gitapi/clone from the start of path
 		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
 
-		IPath result = new Path(GitServlet.GIT_URI).append(Tree.RESOURCE).append(this.getName()).append(clonePath);
+		IPath result = new Path(GitServlet.GIT_URI).append(Tree.RESOURCE).append(clonePath).append(this.getName());
 		if (path != null) {
 			result.append(path);
 		}

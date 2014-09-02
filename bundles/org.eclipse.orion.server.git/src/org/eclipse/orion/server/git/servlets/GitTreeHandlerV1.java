@@ -14,11 +14,13 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.List;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.*;
@@ -26,8 +28,9 @@ import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.core.IOUtilities;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.metastore.*;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.*;
 
@@ -37,7 +40,7 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 		super(statusHandler);
 	}
 
-	private JSONObject listEntry(String name, long timeStamp, boolean isDir, long length, URI location, boolean appendName) {
+	private JSONObject listEntry(String name, long timeStamp, boolean isDir, long length, URI location, String appendName) {
 		JSONObject jsonObject = new JSONObject();
 		try {
 			jsonObject.put(ProtocolConstants.KEY_NAME, name);
@@ -45,13 +48,15 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 			jsonObject.put(ProtocolConstants.KEY_DIRECTORY, isDir);
 			jsonObject.put(ProtocolConstants.KEY_LENGTH, length);
 			if (location != null) {
-				if (isDir && !location.getPath().endsWith("/")) {
-					location = URIUtil.append(location, "");
+				if (isDir && !location.getPath().endsWith("/")) { //$NON-NLS-1$
+					location = URIUtil.append(location, ""); //$NON-NLS-1$
 				}
-				if (appendName) {
-					location = URIUtil.append(location, name);
+				if (appendName != null) {
+					if (!appendName.startsWith("/") && !location.getPath().endsWith("/")) //$NON-NLS-1$  //$NON-NLS-2$
+						appendName = "/" + appendName; //$NON-NLS-1$
+					location = new URI(location.getScheme(), location.getAuthority(), location.getPath() + appendName, null, location.getFragment());
 					if (isDir) {
-						location = URIUtil.append(location, "");
+						location = URIUtil.append(location, ""); //$NON-NLS-1$
 					}
 				}
 				jsonObject.put(ProtocolConstants.KEY_LOCATION, location);
@@ -64,14 +69,65 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 				}
 			}
 			JSONObject attributes = new JSONObject();
-			attributes.put("ReadOnly", true);
+			attributes.put("ReadOnly", true); //$NON-NLS-1$
 			jsonObject.put(ProtocolConstants.KEY_ATTRIBUTES, attributes);
 
 		} catch (JSONException e) {
+		} catch (URISyntaxException e) {
 			//cannot happen because the key is non-null and the values are strings
 			throw new RuntimeException(e);
 		}
 		return jsonObject;
+	}
+
+	private boolean isAccessAllowed(String userName, ProjectInfo webProject) {
+		try {
+			UserInfo user = OrionConfiguration.getMetaStore().readUser(userName);
+			for (String workspaceId : user.getWorkspaceIds()) {
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
+				if (workspace != null && workspace.getProjectNames().contains(webProject.getFullName()))
+					return true;
+			}
+		} catch (Exception e) {
+			// fall through and deny access
+			LogHelper.log(e);
+		}
+		return false;
+	}
+
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
+		String userId = request.getRemoteUser();
+		if (path.length() == 0) {
+			if (userId == null) {
+				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, "User name not specified", null));
+				return false;
+			}
+			try {
+				UserInfo user = OrionConfiguration.getMetaStore().readUser(userId);
+				List<String> workspaces = user.getWorkspaceIds();
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaces.get(0));
+				URI baseLocation = getURI(request);
+				if (workspace != null) {
+					JSONArray children = new JSONArray();
+					for (String projectName : workspace.getProjectNames()) {
+						ProjectInfo project = OrionConfiguration.getMetaStore().readProject(workspace.getUniqueId(), projectName);
+						if (isAccessAllowed(user.getUserName(), project)) {
+							IPath projectPath = GitUtils.pathFromProject(workspace, project);
+							JSONObject repo = listEntry(projectName, 0, true, 0, baseLocation, projectPath.toPortableString());
+							children.put(repo);
+						}
+					}
+					JSONObject result = listEntry("/", 0, true, 0, baseLocation, null);
+					result.put(ProtocolConstants.KEY_CHILDREN, children);
+					OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
+					return true;
+				}
+			} catch (Exception e) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occurred while obtaining workspace data.", e));
+			}
+			return true;
+		}
+		return super.handleRequest(request, response, path);
 	}
 
 	@Override
@@ -85,66 +141,83 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 		String meta = request.getParameter("parts"); //$NON-NLS-1$
 		RevWalk walk = null;
 		TreeWalk treeWalk = null;
+		IPath filterPath = new Path(pattern);
 		try {
-			if (gitSegment == null) {
-				throw new Exception("Missing ref in git segment");
-			} else {
-				ObjectId head = repo.resolve(gitSegment);
-				if (head == null) {
-					throw new Exception("Missing ref in git segment");
+			if (filterPath.segmentCount() == 0) {
+				JSONArray children = new JSONArray();
+				URI baseLocation = getURI(request);
+				List<Ref> call = new Git(repo).branchList().setListMode(ListMode.ALL).call();
+				for (Ref ref : call) {
+					String branchName = Repository.shortenRefName(ref.getName());
+					JSONObject branch = listEntry(branchName, 0, true, 0, baseLocation, GitUtils.encode(branchName));
+					children.put(branch);
 				}
-				walk = new RevWalk(repo);
-				// add try catch to catch failures
-				Git git = new Git(repo);
-				git.getRepository().getDirectory();
+				JSONObject result = listEntry(filePath.segment(0), 0, true, 0, baseLocation, null);
+				result.put(ProtocolConstants.KEY_CHILDREN, children);
+				OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
+				return true;
+			}
 
-				RevCommit commit = walk.parseCommit(head);
-				RevTree tree = commit.getTree();
-				treeWalk = new TreeWalk(repo);
-				treeWalk.addTree(tree);
-				treeWalk.setRecursive(false);
-				if (!pattern.equals("")) {
-					PathFilter pathFilter = PathFilter.create(pattern);
-					treeWalk.setFilter(pathFilter);
-				}
-				JSONArray contents = new JSONArray();
-				JSONObject result = null;
-				ArrayList<JSONObject> parents = new ArrayList<JSONObject>();
-				parents.add(listEntry(filePath.lastSegment(), 0, true, 0, ServletResourceHandler.getURI(request), false));
-				while (treeWalk.next()) {
-					if (treeWalk.isSubtree()) {
-						if (treeWalk.getPathLength() > pattern.length()) {
-							contents.put(listEntry(treeWalk.getNameString(), 0, true, 0, ServletResourceHandler.getURI(request), true));
-						}
-						if (treeWalk.getPathLength() <= pattern.length()) {
-							parents.add(0, listEntry(treeWalk.getNameString(), 0, true, 0, ServletResourceHandler.getURI(request), false));
-							treeWalk.enterSubtree();
+			gitSegment = GitUtils.decode(filterPath.segment(0));
+			filterPath = filterPath.removeFirstSegments(1);
+			pattern = filterPath.toPortableString();
+			ObjectId head = repo.resolve(gitSegment);
+			if (head == null) {
+				throw new Exception("Missing ref in git segment");
+			}
+			walk = new RevWalk(repo);
+			// add try catch to catch failures
+			Git git = new Git(repo);
+			git.getRepository().getDirectory();
+
+			RevCommit commit = walk.parseCommit(head);
+			RevTree tree = commit.getTree();
+			treeWalk = new TreeWalk(repo);
+			treeWalk.addTree(tree);
+			treeWalk.setRecursive(false);
+			if (!pattern.equals("")) {
+				PathFilter pathFilter = PathFilter.create(pattern);
+				treeWalk.setFilter(pathFilter);
+			}
+			JSONArray contents = new JSONArray();
+			JSONObject result = null;
+			ArrayList<JSONObject> parents = new ArrayList<JSONObject>();
+			parents.add(listEntry(GitUtils.decode(filePath.lastSegment()), 0, true, 0, ServletResourceHandler.getURI(request), null));
+			while (treeWalk.next()) {
+				if (treeWalk.isSubtree()) {
+					if (treeWalk.getPathLength() > pattern.length()) {
+						String name = treeWalk.getNameString();
+						contents.put(listEntry(name, 0, true, 0, ServletResourceHandler.getURI(request), name));
+					}
+					if (treeWalk.getPathLength() <= pattern.length()) {
+						parents.add(0, listEntry(treeWalk.getNameString(), 0, true, 0, ServletResourceHandler.getURI(request), null));
+						treeWalk.enterSubtree();
+					}
+				} else {
+					ObjectId objId = treeWalk.getObjectId(0);
+					ObjectLoader loader = repo.open(objId);
+					long size = loader.getSize();
+					if (treeWalk.getPathLength() == pattern.length()) {
+						if ("meta".equals(meta)) {
+							result = listEntry(treeWalk.getNameString(), 0, false, 0, ServletResourceHandler.getURI(request), null);
+						} else {
+							return getFileContents(request, response, gitSegment, pattern, repo);
 						}
 					} else {
-						ObjectId objId = treeWalk.getObjectId(0);
-						ObjectLoader loader = repo.open(objId);
-						long size = loader.getSize();
-						if (treeWalk.getPathLength() == pattern.length()) {
-							if ("meta".equals(meta)) {
-								result = listEntry(treeWalk.getNameString(), 0, false, 0, ServletResourceHandler.getURI(request), false);
-							} else {
-								return getFileContents(request, response, gitSegment, pattern, repo);
-							}
-						} else {
-							contents.put(listEntry(treeWalk.getNameString(), 0, false, size, ServletResourceHandler.getURI(request), true));
-						}
+						String name = treeWalk.getNameString();
+						contents.put(listEntry(name, 0, false, size, ServletResourceHandler.getURI(request), name));
 					}
 				}
-				if (result == null) {
-					result = parents.remove(0);
-					result.put("Children", contents);
-					result.put("Parents", new JSONArray(parents));
-				}
-				response.setContentType("application/json");
-				response.setHeader("Cache-Control", "no-cache");
-				response.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
-				OrionServlet.writeJSONResponse(request, response, result);
 			}
+			if (result == null) {
+				result = parents.remove(0);
+				result.put("Children", contents);
+				result.put("Parents", new JSONArray(parents));
+			}
+			response.setContentType("application/json");
+			response.setHeader("Cache-Control", "no-cache");
+			response.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
+			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when requesting commit info.", e));

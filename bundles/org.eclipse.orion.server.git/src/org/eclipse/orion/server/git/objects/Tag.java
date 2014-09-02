@@ -153,7 +153,7 @@ public class Tag extends GitObject {
 		//remove /gitapi/clone from the start of path
 		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
 
-		IPath result = new Path(GitServlet.GIT_URI).append(Tree.RESOURCE).append(GitUtils.encode(this.getName())).append(clonePath);
+		IPath result = new Path(GitServlet.GIT_URI).append(Tree.RESOURCE).append(clonePath).append(GitUtils.encode(this.getName()));
 		if (path != null) {
 			result.append(path);
 		}

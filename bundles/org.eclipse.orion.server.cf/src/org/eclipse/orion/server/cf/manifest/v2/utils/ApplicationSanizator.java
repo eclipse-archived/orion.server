@@ -41,6 +41,23 @@ public class ApplicationSanizator implements Analyzer {
 
 				String applicationName = application.get("name").getValue(); //$NON-NLS-1$
 
+				checkEmptyProperties(applicationName, application);
+
+				ManifestParseTree buildpack = application.getOpt("buildpack"); //$NON-NLS-1$
+				checkBuildpack(applicationName, buildpack);
+
+				ManifestParseTree command = application.getOpt("command"); //$NON-NLS-1$
+				checkCommand(applicationName, command);
+
+				ManifestParseTree domain = application.getOpt("domain"); //$NON-NLS-1$
+				checkDomain(applicationName, domain);
+
+				ManifestParseTree host = application.getOpt("host"); //$NON-NLS-1$
+				checkHost(applicationName, host);
+
+				ManifestParseTree path = application.getOpt("path"); //$NON-NLS-1$
+				checkPath(applicationName, path);
+
 				ManifestParseTree memory = application.getOpt("memory"); //$NON-NLS-1$
 				checkMemory(applicationName, memory);
 
@@ -52,6 +69,9 @@ public class ApplicationSanizator implements Analyzer {
 
 				ManifestParseTree noRoute = application.getOpt("no-route"); //$NON-NLS-1$
 				checkNoRoute(applicationName, noRoute);
+
+				ManifestParseTree services = application.getOpt("services"); //$NON-NLS-1$
+				checkServices(applicationName, services);
 			}
 		} catch (InvalidAccessException ex) {
 			/* invalid manifest structure, fail */
@@ -59,9 +79,80 @@ public class ApplicationSanizator implements Analyzer {
 		}
 	}
 
+	private boolean isStringProperty(ManifestParseTree node) {
+		if (node.getChildren().size() != 1)
+			return false;
+
+		if (node.isList())
+			return false;
+
+		ManifestParseTree valueNode = node.getChildren().get(0);
+		if (valueNode.getChildren().size() != 0)
+			return false;
+
+		return true;
+	}
+
+	private void checkEmptyProperties(String applicationName, ManifestParseTree application) throws AnalyzerException {
+		for (ManifestParseTree property : application.getChildren())
+			if (property.getChildren().isEmpty())
+				throw new AnalyzerException(NLS.bind("Empty property \"{0}\" in application \"{1}\".", property.getLabel(), applicationName));
+	}
+
+	private void checkServices(String applicationName, ManifestParseTree services) throws AnalyzerException {
+		if (services == null)
+			return;
+
+		if (isStringProperty(services))
+			throw new AnalyzerException(NLS.bind("Invalid services declaration for application \"{0}\". Expected a list of service names.", applicationName));
+	}
+
+	private void checkBuildpack(String applicationName, ManifestParseTree buildpack) throws AnalyzerException {
+		if (buildpack == null)
+			return;
+
+		if (!isStringProperty(buildpack))
+			throw new AnalyzerException(NLS.bind("Invalid \"buildpack\" value for application \"{0}\". Expected a string literal.", applicationName));
+	}
+
+	private void checkCommand(String applicationName, ManifestParseTree command) throws AnalyzerException {
+		if (command == null)
+			return;
+
+		if (!isStringProperty(command))
+			throw new AnalyzerException(NLS.bind("Invalid \"command\" value for application \"{0}\". Expected a string literal.", applicationName));
+	}
+
+	private void checkDomain(String applicationName, ManifestParseTree domain) throws AnalyzerException {
+		if (domain == null)
+			return;
+
+		if (!isStringProperty(domain))
+			throw new AnalyzerException(NLS.bind("Invalid \"domain\" value for application \"{0}\". Expected a string literal.", applicationName));
+	}
+
+	private void checkHost(String applicationName, ManifestParseTree host) throws AnalyzerException {
+		if (host == null)
+			return;
+
+		if (!isStringProperty(host))
+			throw new AnalyzerException(NLS.bind("Invalid \"host\" value for application \"{0}\". Expected a string literal.", applicationName));
+	}
+
+	private void checkPath(String applicationName, ManifestParseTree path) throws AnalyzerException {
+		if (path == null)
+			return;
+
+		if (!isStringProperty(path))
+			throw new AnalyzerException(NLS.bind("Invalid \"path\" value for application \"{0}\". Expected a path string.", applicationName));
+	}
+
 	private void checkMemory(String applicationName, ManifestParseTree memory) throws AnalyzerException, InvalidAccessException {
 		if (memory == null)
 			return;
+
+		if (!isStringProperty(memory))
+			throw new AnalyzerException(NLS.bind("Invalid \"memory\" value for application \"{0}\". Expected a memory limit.", applicationName));
 
 		String memoryValue = memory.getValue();
 		Matcher matcher = memoryPattern.matcher(memoryValue);
@@ -73,6 +164,9 @@ public class ApplicationSanizator implements Analyzer {
 		if (instances == null)
 			return;
 
+		if (!isStringProperty(instances))
+			throw new AnalyzerException(NLS.bind("Invalid \"instances\" value for application \"{0}\". Expected a non-negative integer value.", applicationName));
+
 		String instancesValue = instances.getValue();
 		Matcher matcher = nonNegativePattern.matcher(instancesValue);
 		if (!matcher.matches())
@@ -83,6 +177,9 @@ public class ApplicationSanizator implements Analyzer {
 		if (timeout == null)
 			return;
 
+		if (!isStringProperty(timeout))
+			throw new AnalyzerException(NLS.bind("Invalid \"timeout\" value for application \"{0}\". Expected a non-negative integer value.", applicationName));
+
 		String timeoutValue = timeout.getValue();
 		Matcher matcher = nonNegativePattern.matcher(timeoutValue);
 		if (!matcher.matches())
@@ -92,6 +189,9 @@ public class ApplicationSanizator implements Analyzer {
 	private void checkNoRoute(String applicationName, ManifestParseTree noRoute) throws AnalyzerException, InvalidAccessException {
 		if (noRoute == null)
 			return;
+
+		if (!isStringProperty(noRoute))
+			throw new AnalyzerException(NLS.bind("Invalid \"no-route\" value for application \"{0}\". Expected a string literal \"true\".", applicationName));
 
 		String noRouteValue = noRoute.getValue();
 		if (!"true".equals(noRouteValue)) //$NON-NLS-1$

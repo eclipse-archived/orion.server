@@ -82,19 +82,26 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		if (p.segment(0).equals("file")) { //$NON-NLS-1$
 			// /git/remote/file/{path}
 			File gitDir = GitUtils.getGitDir(p);
-			Repository db = FileRepositoryBuilder.create(gitDir);
-			Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
-			JSONObject result = new JSONObject();
-			JSONArray children = new JSONArray();
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE_LIST);
-			for (String configName : configNames) {
-				Remote remote = new Remote(cloneLocation, db, configName);
-				children.put(remote.toJSON(false));
+			Repository db = null;
+			try {
+				db = FileRepositoryBuilder.create(gitDir);
+				Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
+				JSONObject result = new JSONObject();
+				JSONArray children = new JSONArray();
+				for (String configName : configNames) {
+					Remote remote = new Remote(cloneLocation, db, configName);
+					children.put(remote.toJSON(false));
+				}
+				result.put(ProtocolConstants.KEY_CHILDREN, children);
+				result.put(ProtocolConstants.KEY_TYPE, Remote.TYPE);
+				OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
+				return true;
+			} finally {
+				if (db != null) {
+					db.close();
+				}
 			}
-			result.put(ProtocolConstants.KEY_CHILDREN, children);
-			result.put(ProtocolConstants.KEY_TYPE, Remote.TYPE);
-			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
-			return true;
 		} else if (p.segment(1).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/file/{path}
 			RemoteDetailsJob job;
@@ -113,14 +120,21 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		} else if (p.segment(2).equals("file")) { //$NON-NLS-1$
 			// /git/remote/{remote}/{branch}/file/{path}
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(2));
-			Repository db = FileRepositoryBuilder.create(gitDir);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE_BRANCH);
-			Remote remote = new Remote(cloneLocation, db, p.segment(0));
-			RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, remote, GitUtils.decode(p.segment(1)));
-			if (remoteBranch.exists()) {
-				JSONObject result = remoteBranch.toJSON();
-				OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
-				return true;
+			Repository db = null;
+			try {
+				db = FileRepositoryBuilder.create(gitDir);
+				Remote remote = new Remote(cloneLocation, db, p.segment(0));
+				RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, remote, GitUtils.decode(p.segment(1)));
+				if (remoteBranch.exists()) {
+					JSONObject result = remoteBranch.toJSON();
+					OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
+					return true;
+				}
+			} finally {
+				if (db != null) {
+					db.close();
+				}
 			}
 			JSONObject errorData = new JSONObject();
 			errorData.put(GitConstants.KEY_CLONE, cloneLocation);
@@ -137,12 +151,19 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			String remoteName = p.segment(0);
 
 			File gitDir = GitUtils.getGitDir(p.removeFirstSegments(1));
-			Repository db = FileRepositoryBuilder.create(gitDir);
-			StoredConfig config = db.getConfig();
-			config.unsetSection(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName);
-			config.save();
-			//TODO: handle result
-			return true;
+			Repository db = null;
+			try {
+				db = FileRepositoryBuilder.create(gitDir);
+				StoredConfig config = db.getConfig();
+				config.unsetSection(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName);
+				config.save();
+				//TODO: handle result
+				return true;
+			} finally {
+				if (db != null) {
+					db.close();
+				}
+			}
 		}
 		return false;
 	}
@@ -205,34 +226,41 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		String pushRefSpec = toPut.optString(GitConstants.KEY_REMOTE_PUSH_REF, null);
 
 		File gitDir = GitUtils.getGitDir(p);
-		Repository db = FileRepositoryBuilder.create(gitDir);
-		StoredConfig config = db.getConfig();
-
-		RemoteConfig rc = new RemoteConfig(config, remoteName);
-		rc.addURI(new URIish(remoteURI));
-		// FetchRefSpec is required, but default version can be generated
-		// if it isn't provided
-		if (fetchRefSpec == null || fetchRefSpec.isEmpty()) {
-			fetchRefSpec = String.format("+refs/heads/*:refs/remotes/%s/*", remoteName); //$NON-NLS-1$
-		}
-		rc.addFetchRefSpec(new RefSpec(fetchRefSpec));
-		// pushURI is optional
-		if (remotePushURI != null && !remotePushURI.isEmpty())
-			rc.addPushURI(new URIish(remotePushURI));
-		// PushRefSpec is optional
-		if (pushRefSpec != null && !pushRefSpec.isEmpty())
-			rc.addPushRefSpec(new RefSpec(pushRefSpec));
-
-		rc.update(config);
-		config.save();
-
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE_LIST);
-		Remote remote = new Remote(cloneLocation, db, remoteName);
-		JSONObject result = new JSONObject();
-		result.put(ProtocolConstants.KEY_LOCATION, remote.getLocation());
-		OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
-		response.setStatus(HttpServletResponse.SC_CREATED);
+		Repository db = null;
+		try {
+			db = FileRepositoryBuilder.create(gitDir);
+			StoredConfig config = db.getConfig();
+
+			RemoteConfig rc = new RemoteConfig(config, remoteName);
+			rc.addURI(new URIish(remoteURI));
+			// FetchRefSpec is required, but default version can be generated
+			// if it isn't provided
+			if (fetchRefSpec == null || fetchRefSpec.isEmpty()) {
+				fetchRefSpec = String.format("+refs/heads/*:refs/remotes/%s/*", remoteName); //$NON-NLS-1$
+			}
+			rc.addFetchRefSpec(new RefSpec(fetchRefSpec));
+			// pushURI is optional
+			if (remotePushURI != null && !remotePushURI.isEmpty())
+				rc.addPushURI(new URIish(remotePushURI));
+			// PushRefSpec is optional
+			if (pushRefSpec != null && !pushRefSpec.isEmpty())
+				rc.addPushRefSpec(new RefSpec(pushRefSpec));
+
+			rc.update(config);
+			config.save();
+
+			Remote remote = new Remote(cloneLocation, db, remoteName);
+			JSONObject result = new JSONObject();
+			result.put(ProtocolConstants.KEY_LOCATION, remote.getLocation());
+			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, result.getString(ProtocolConstants.KEY_LOCATION));
+			response.setStatus(HttpServletResponse.SC_CREATED);
+		} finally {
+			if (db != null) {
+				db.close();
+			}
+		}
 		return true;
 	}
 

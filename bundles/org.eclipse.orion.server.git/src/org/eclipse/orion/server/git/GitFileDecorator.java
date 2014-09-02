@@ -79,30 +79,33 @@ public class GitFileDecorator implements IWebResourceDecorator {
 
 			if (!isWorkspace && Method.GET.equals(Method.fromString(request.getMethod()))) {
 				//compute all git properties in advance because it will be same for all children
-				Repository db = repositoryForPath(request, new Path(resource.getPath()));
-				URI cloneLocation = BaseToCloneConverter.getCloneLocation(resource, BaseToCloneConverter.FILE);
-				String branch = db == null ? null : db.getBranch();
-				Remote defaultRemote = db == null ? null : new Remote(cloneLocation, db, Constants.DEFAULT_REMOTE_NAME);
-				RemoteBranch defaultRemoteBranch = db == null ? null : new RemoteBranch(cloneLocation, db, defaultRemote, branch);
-				addGitLinks(request, resource, representation, cloneLocation, db, defaultRemoteBranch, branch);
+				Repository db = null;
+				try {
+					db = repositoryForPath(request, new Path(resource.getPath()));
+					URI cloneLocation = BaseToCloneConverter.getCloneLocation(resource, BaseToCloneConverter.FILE);
+					String branch = db == null ? null : db.getBranch();
+					Remote defaultRemote = db == null ? null : new Remote(cloneLocation, db, Constants.DEFAULT_REMOTE_NAME);
+					RemoteBranch defaultRemoteBranch = db == null ? null : new RemoteBranch(cloneLocation, db, defaultRemote, branch);
+					addGitLinks(request, resource, representation, cloneLocation, db, defaultRemoteBranch, branch);
 
-				JSONArray children = representation.optJSONArray(ProtocolConstants.KEY_CHILDREN);
-				if (children != null) {
-					for (int i = 0; i < children.length(); i++) {
-						JSONObject child = children.getJSONObject(i);
-						String location = child.getString(ProtocolConstants.KEY_LOCATION);
-						if (db != null) {
-							// if parent was a git repository we can reuse information computed above
-							addGitLinks(request, new URI(location), child, cloneLocation, db, defaultRemoteBranch, branch);
-						} else {
-							//maybe the child is the root of a git repository
-							addGitLinks(request, new URI(location), child);
+					JSONArray children = representation.optJSONArray(ProtocolConstants.KEY_CHILDREN);
+					if (children != null) {
+						for (int i = 0; i < children.length(); i++) {
+							JSONObject child = children.getJSONObject(i);
+							String location = child.getString(ProtocolConstants.KEY_LOCATION);
+							if (db != null) {
+								// if parent was a git repository we can reuse information computed above
+								addGitLinks(request, new URI(location), child, cloneLocation, db, defaultRemoteBranch, branch);
+							} else {
+								//maybe the child is the root of a git repository
+								addGitLinks(request, new URI(location), child);
+							}
 						}
 					}
-				}
-				if (db != null) {
-					// close the git repository
-					db.close();
+				} finally {
+					if (db != null) {
+						db.close();
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -112,16 +115,21 @@ public class GitFileDecorator implements IWebResourceDecorator {
 	}
 
 	private void addGitLinks(HttpServletRequest request, URI location, JSONObject representation) throws URISyntaxException, JSONException, CoreException, IOException {
-		Repository db = repositoryForPath(request, new Path(location.getPath()));
-		if (db == null)
-			return;
-		URI cloneLocation = BaseToCloneConverter.getCloneLocation(location, BaseToCloneConverter.FILE);
-		String branch = db.getBranch();
-		Remote defaultRemote = new Remote(cloneLocation, db, Constants.DEFAULT_REMOTE_NAME);
-		RemoteBranch defaultRemoteBranch = new RemoteBranch(cloneLocation, db, defaultRemote, branch);
-		addGitLinks(request, location, representation, cloneLocation, db, defaultRemoteBranch, branch);
-		// close the git repository
-		db.close();
+		Repository db = null;
+		try {
+			db = repositoryForPath(request, new Path(location.getPath()));
+			if (db != null) {
+				URI cloneLocation = BaseToCloneConverter.getCloneLocation(location, BaseToCloneConverter.FILE);
+				String branch = db.getBranch();
+				Remote defaultRemote = new Remote(cloneLocation, db, Constants.DEFAULT_REMOTE_NAME);
+				RemoteBranch defaultRemoteBranch = new RemoteBranch(cloneLocation, db, defaultRemote, branch);
+				addGitLinks(request, location, representation, cloneLocation, db, defaultRemoteBranch, branch);
+			}
+		} finally {
+			if (db != null) {
+				db.close();
+			}
+		}
 	}
 
 	private void addGitLinks(HttpServletRequest request, URI location, JSONObject representation, URI cloneLocation, Repository db, RemoteBranch defaultRemoteBranch, String branchName) throws URISyntaxException, JSONException {
@@ -229,14 +237,19 @@ public class GitFileDecorator implements IWebResourceDecorator {
 			File gitDir = GitUtils.getGitDir(localFile);
 			if (gitDir == null) {
 				gitDir = new File(localFile, Constants.DOT_GIT);
-				Repository repo = FileRepositoryBuilder.create(gitDir);
-				repo.create();
-				//we need to perform an initial commit to workaround JGit bug 339610.
-				Git git = new Git(repo);
-				git.add().addFilepattern(".").call(); //$NON-NLS-1$
-				git.commit().setMessage("Initial commit").call();
-				// close the git repository
-				repo.close();
+				Repository repo = null;
+				try {
+					repo = FileRepositoryBuilder.create(gitDir);
+					repo.create();
+					//we need to perform an initial commit to workaround JGit bug 339610.
+					Git git = new Git(repo);
+					git.add().addFilepattern(".").call(); //$NON-NLS-1$
+					git.commit().setMessage("Initial commit").call();
+				} finally {
+					if (repo != null) {
+						repo.close();
+					}
+				}
 			}
 		} catch (Exception e) {
 			//just log it - this is not the purpose of the file decorator
