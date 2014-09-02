@@ -591,6 +591,9 @@ public class SimpleMetaStore implements IMetaStore {
 					}
 					userInfo.setUniqueId(jsonObject.getString("UniqueId"));
 					userInfo.setUserName(jsonObject.getString("UserName"));
+					if (jsonObject.has("lastlogintimestamp")) {
+						userInfo.setProperty("lastlogintimestamp", jsonObject.getString("lastlogintimestamp"));
+					}
 					if (jsonObject.isNull("FullName")) {
 						userInfo.setFullName("Unnamed User");
 					} else {
