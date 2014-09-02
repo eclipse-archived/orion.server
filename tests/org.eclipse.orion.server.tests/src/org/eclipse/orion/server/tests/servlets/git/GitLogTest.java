@@ -552,6 +552,77 @@ public class GitLogTest extends GitTest {
 	}
 
 	@Test
+	public void testLogNewFile() throws Exception {
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+
+		String projectName = getMethodName().concat("Project");
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+
+		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitHeadUri = gitSection.getString(GitConstants.KEY_HEAD);
+
+		// get project/folder metadata
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		project = new JSONObject(response.getText());
+
+		// create a file, put some content, and stage/commit it
+		String fileName = "added.txt";
+		String fileContent = "New Content";
+		String commitMsg = "commit1";
+		request = getPostFilesRequest(project.getString(ProtocolConstants.KEY_LOCATION), getNewFileJSON(fileName).toString(), fileName);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		JSONObject addedTxt = getChild(project, fileName);
+		String location = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
+		request = getPutFileRequest(location, fileContent);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		addFile(addedTxt);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, commitMsg, false);
+		response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		// get log for file
+		JSONObject log = logObject(addedTxt.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_HEAD));
+
+		// check commit
+		JSONArray commitsArray = log.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertEquals(1, commitsArray.length());
+
+		JSONObject commit = commitsArray.getJSONObject(0);
+		assertEquals(commitMsg, commit.getString(GitConstants.KEY_COMMIT_MESSAGE));
+
+		// assert that there is one diff entry
+		JSONArray diffsArray = commit.getJSONArray(GitConstants.KEY_COMMIT_DIFFS);
+		assertEquals(1, diffsArray.length());
+
+		// check the diff entry
+		JSONObject diff = diffsArray.getJSONObject(0);
+		assertEquals("/dev/null", diff.getString(GitConstants.KEY_COMMIT_DIFF_OLDPATH));
+		assertEquals(fileName, diff.getString(GitConstants.KEY_COMMIT_DIFF_NEWPATH));
+		assertEquals(Diff.TYPE, diff.getString(ProtocolConstants.KEY_TYPE));
+		assertEquals(ChangeType.ADD, ChangeType.valueOf(diff.getString(GitConstants.KEY_COMMIT_DIFF_CHANGETYPE)));
+		String contentLocation = diff.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		assertEquals(fileContent, getFileContent(new JSONObject().put(ProtocolConstants.KEY_LOCATION, contentLocation)));
+
+		// check diff location
+		String diffLocation = diff.getString(GitConstants.KEY_DIFF);
+		String[] parts = GitDiffTest.getDiff(diffLocation);
+		StringBuilder sb = new StringBuilder();
+		sb.append("diff --git a/").append(fileName).append(" b/").append(fileName).append("\n");
+		sb.append("new file mode 100644").append("\n");
+		sb.append("index 0000000..3b35086").append("\n");
+		sb.append("--- /dev/null").append("\n");
+		sb.append("+++ b/").append(fileName).append("\n");
+		sb.append("@@ -0,0 +1 @@").append("\n");
+		sb.append("+").append(fileContent).append("\n");
+		sb.append("\\ No newline at end of file").append("\n");
+		assertEquals(sb.toString(), parts[1]);
+	}
+
+	@Test
 	public void testLogNewBranch() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = workspaceIdFromLocation(workspaceLocation);
