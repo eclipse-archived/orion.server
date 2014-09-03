@@ -58,7 +58,11 @@ public class GoogleOAuthConsumer extends OAuthConsumer {
 		// Header.Claim.Signature
 		String claim = sections[1];
 		int buffer = 4 - (claim.length() % 4);
-		for(int i = 0; i < buffer; i++){
+		// Encoded base64 should never need 3 buffer characters
+		if(buffer == 3)
+			throw new OAuthException("An error occured while authenticating");
+		// Don't add 4 buffer characters
+		for(int i = 0; i < buffer && buffer != 4; i++) {
 			claim += "=";
 		}
 		String decodedClaim = new String(Base64.decode(claim.getBytes()));
