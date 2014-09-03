@@ -72,12 +72,15 @@ public class SimpleMetaStoreUtilTest {
 	}
 
 	@Before
-	public void initializeTempDir() {
-		// get the temporary folder location.
-		String tmpDirName = System.getProperty("java.io.tmpdir");
-		File tmpDir = new File(tmpDirName);
+	public void initializeTempDir() throws CoreException {
+		// get the temporary folder location, do not use /tmp
+		File workspaceRoot = OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null);
+		File tmpDir = new File(workspaceRoot, SimpleMetaStoreUtil.ARCHIVE);
+		if (!tmpDir.exists()) {
+			tmpDir.mkdirs();
+		}
 		if (!tmpDir.exists() || !tmpDir.isDirectory()) {
-			fail("Cannot find the default temporary-file directory: " + tmpDirName);
+			fail("Cannot find the default temporary-file directory: " + tmpDir.toString());
 		}
 
 		// get a temporary folder name

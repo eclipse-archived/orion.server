@@ -30,6 +30,7 @@ import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,6 +58,7 @@ import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
 import org.eclipse.orion.server.core.IOUtilities;
@@ -225,7 +227,7 @@ public abstract class GitTest extends FileSystemTest {
 	}
 
 	protected void createRepository() throws IOException, GitAPIException, CoreException {
-		IPath randomLocation = AllGitTests.getRandomLocation();
+		IPath randomLocation = createTempDir();
 		gitDir = randomLocation.toFile();
 		randomLocation = randomLocation.addTrailingSeparator().append(Constants.DOT_GIT);
 		File dotGitDir = randomLocation.toFile().getCanonicalFile();
@@ -1582,5 +1584,28 @@ public abstract class GitTest extends FileSystemTest {
 		IPath[] clonePathsMixed = new IPath[] {clonePathTop3, clonePathFolder3};
 		IPath[][] clonePaths = new IPath[][] {clonePathsTop, clonePathsFolder, clonePathsMixed};
 		return clonePaths;
+	}
+
+	protected IPath createTempDir() throws CoreException {
+		// get a temporary folder location, do not use /tmp
+		File workspaceRoot = OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null);
+		File tmpDir = new File(workspaceRoot, SimpleMetaStoreUtil.ARCHIVE);
+		if (!tmpDir.exists()) {
+			tmpDir.mkdirs();
+		}
+		if (!tmpDir.exists() || !tmpDir.isDirectory()) {
+			fail("Cannot find the default temporary-file directory: " + tmpDir.toString());
+		}
+
+		// get a temporary folder name
+		SecureRandom random = new SecureRandom();
+		long n = random.nextLong();
+		n = (n == Long.MIN_VALUE) ? 0 : Math.abs(n);
+		String tmpDirStr = Long.toString(n);
+		File tempDir = new File(tmpDir, tmpDirStr);
+		if (!tempDir.mkdir()) {
+			fail("Cannot create a temporary directory at " + tempDir.toString());
+		}
+		return Path.fromOSString(tempDir.toString());
 	}
 }

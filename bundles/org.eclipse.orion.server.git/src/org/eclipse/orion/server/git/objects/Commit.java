@@ -247,6 +247,7 @@ public class Commit extends GitObject {
 			String path = entr.getChangeType() != ChangeType.DELETE ? entr.getNewPath() : entr.getOldPath();
 			diff.put(GitConstants.KEY_DIFF, createDiffLocation(revCommit.getName(), fromName, path));
 			diff.put(ProtocolConstants.KEY_CONTENT_LOCATION, createContentLocation(entr, path));
+			diff.put(GitConstants.KEY_TREE, createTreeLocation(path));
 
 			diffs.put(diff);
 		}
@@ -308,7 +309,7 @@ public class Commit extends GitObject {
 
 		IPath result = new Path(GitServlet.GIT_URI).append(Tree.RESOURCE).append(clonePath).append(this.getName());
 		if (path != null) {
-			result.append(path);
+			result = result.append(path);
 		}
 		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute().toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}

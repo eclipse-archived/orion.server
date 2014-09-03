@@ -117,7 +117,7 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 							children.put(repo);
 						}
 					}
-					JSONObject result = listEntry("/", 0, true, 0, baseLocation, null);
+					JSONObject result = listEntry("/", 0, true, 0, baseLocation, null); //$NON-NLS-1$
 					result.put(ProtocolConstants.KEY_CHILDREN, children);
 					OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 					return true;
@@ -167,30 +167,41 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 			}
 			walk = new RevWalk(repo);
 			// add try catch to catch failures
-			Git git = new Git(repo);
-			git.getRepository().getDirectory();
 
 			RevCommit commit = walk.parseCommit(head);
 			RevTree tree = commit.getTree();
 			treeWalk = new TreeWalk(repo);
 			treeWalk.addTree(tree);
 			treeWalk.setRecursive(false);
-			if (!pattern.equals("")) {
+			if (!pattern.equals("")) { //$NON-NLS-1$
 				PathFilter pathFilter = PathFilter.create(pattern);
 				treeWalk.setFilter(pathFilter);
 			}
 			JSONArray contents = new JSONArray();
 			JSONObject result = null;
 			ArrayList<JSONObject> parents = new ArrayList<JSONObject>();
-			parents.add(listEntry(GitUtils.decode(filePath.lastSegment()), 0, true, 0, ServletResourceHandler.getURI(request), null));
+
+			URI baseLocation = ServletResourceHandler.getURI(request);
+			Path basePath = new Path(baseLocation.getPath());
+			IPath tmp = new Path("/"); //$NON-NLS-1$
+			for (int i = 0; i < 5; i++) {
+				tmp = tmp.append(basePath.segment(i));
+			}
+			URI cloneLocation = new URI(baseLocation.getScheme(), baseLocation.getAuthority(), tmp.toPortableString(), null, baseLocation.getFragment());
+			JSONObject ref = listEntry(gitSegment, 0, true, 0, cloneLocation, GitUtils.encode(gitSegment));
+
+			parents.add(ref);
+			parents.add(listEntry(new Path(cloneLocation.getPath()).lastSegment(), 0, true, 0, cloneLocation, null));
+			URI locationWalk = URIUtil.append(cloneLocation, GitUtils.encode(gitSegment));
 			while (treeWalk.next()) {
 				if (treeWalk.isSubtree()) {
 					if (treeWalk.getPathLength() > pattern.length()) {
 						String name = treeWalk.getNameString();
-						contents.put(listEntry(name, 0, true, 0, ServletResourceHandler.getURI(request), name));
+						contents.put(listEntry(name, 0, true, 0, locationWalk, name));
 					}
 					if (treeWalk.getPathLength() <= pattern.length()) {
-						parents.add(0, listEntry(treeWalk.getNameString(), 0, true, 0, ServletResourceHandler.getURI(request), null));
+						locationWalk = URIUtil.append(locationWalk, treeWalk.getNameString());
+						parents.add(0, listEntry(treeWalk.getNameString(), 0, true, 0, locationWalk, null));
 						treeWalk.enterSubtree();
 					}
 				} else {
@@ -198,25 +209,25 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 					ObjectLoader loader = repo.open(objId);
 					long size = loader.getSize();
 					if (treeWalk.getPathLength() == pattern.length()) {
-						if ("meta".equals(meta)) {
-							result = listEntry(treeWalk.getNameString(), 0, false, 0, ServletResourceHandler.getURI(request), null);
+						if ("meta".equals(meta)) { //$NON-NLS-1$
+							result = listEntry(treeWalk.getNameString(), 0, false, 0, locationWalk, treeWalk.getNameString());
 						} else {
-							return getFileContents(request, response, gitSegment, pattern, repo);
+							return getFileContents(request, response, repo, treeWalk, tree);
 						}
 					} else {
 						String name = treeWalk.getNameString();
-						contents.put(listEntry(name, 0, false, size, ServletResourceHandler.getURI(request), name));
+						contents.put(listEntry(name, 0, false, size, locationWalk, name));
 					}
 				}
 			}
 			if (result == null) {
 				result = parents.remove(0);
-				result.put("Children", contents);
-				result.put("Parents", new JSONArray(parents));
+				result.put("Children", contents); //$NON-NLS-1$
 			}
-			response.setContentType("application/json");
-			response.setHeader("Cache-Control", "no-cache");
-			response.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
+			result.put("Parents", new JSONArray(parents)); //$NON-NLS-1$
+			response.setContentType("application/json"); //$NON-NLS-1$
+			response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$
+			response.setHeader("ETag", "\"" + tree.getId().getName() + "\""); //$NON-NLS-1$
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} catch (Exception e) {
@@ -229,32 +240,14 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 		}
 	}
 
-	private boolean getFileContents(HttpServletRequest request, HttpServletResponse response, String gitSegment, String pattern, Repository repo) {
+	private boolean getFileContents(HttpServletRequest request, HttpServletResponse response, Repository repo, TreeWalk treeWalk, RevTree tree) {
 		ObjectStream stream = null;
-		TreeWalk treeWalk = null;
-		RevWalk walk = null;
 		try {
-			walk = new RevWalk(repo);
-			// add try catch to catch failures
-			Git git = new Git(repo);
-			Ref head = repo.getRef(gitSegment);
-			git.getRepository().getDirectory();
-			RevCommit commit = walk.parseCommit(head.getObjectId());
-			RevTree tree = commit.getTree();
-
-			treeWalk = new TreeWalk(repo);
-			treeWalk.addTree(tree);
-			treeWalk.setRecursive(true);
-			treeWalk.setFilter(PathFilter.create(pattern));
-			if (!treeWalk.next()) {
-				throw new IllegalStateException("No file found");
-			}
-
 			ObjectId objId = treeWalk.getObjectId(0);
 			ObjectLoader loader = repo.open(objId);
-			response.setHeader("Cache-Control", "no-cache");
-			response.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
-			response.setContentType("application/octet-stream");
+			response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$
+			response.setHeader("ETag", "\"" + tree.getId().getName() + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+			response.setContentType("application/octet-stream"); //$NON-NLS-1$
 			stream = loader.openStream();
 			IOUtilities.pipe(stream, response.getOutputStream(), true, false);
 		} catch (MissingObjectException e) {
@@ -265,8 +258,6 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 					stream.close();
 			} catch (IOException e) {
 			}
-			walk.release();
-			treeWalk.release();
 		}
 		return true;
 	}
