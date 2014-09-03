@@ -100,6 +100,12 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 		List<DiffEntry> l = command.call();
 		JSONArray diffs = new JSONArray();
 		URI diffLocation = getURI(request);
+		if (pattern != null) {
+			IPath patternPath = new Path(pattern);
+			IPath diffPath = new Path(diffLocation.getPath());
+			diffPath = diffPath.removeLastSegments(patternPath.segmentCount());
+			diffLocation = new URI(diffLocation.getScheme(), diffLocation.getAuthority(), diffPath.toPortableString(), null, null);
+		}
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(diffLocation, BaseToCloneConverter.DIFF);
 		for (DiffEntry entr : l) {
 			JSONObject diff = new JSONObject();
