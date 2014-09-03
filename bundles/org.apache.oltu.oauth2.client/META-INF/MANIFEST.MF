@@ -1,8 +1,10 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Client
+Bundle-Name: %Bundle-Name
+Bundle-Vendor: %Bundle-Vendor
 Bundle-SymbolicName: org.apache.oltu.oauth2.client
 Bundle-Version: 1.0.0.qualifier
+Bundle-Localization: bundle
 Export-Package: org.apache.oltu.oauth2.client,
  org.apache.oltu.oauth2.client.request,
  org.apache.oltu.oauth2.client.response,

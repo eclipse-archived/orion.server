@@ -260,6 +260,8 @@
 
 	<modules>
 		<module>releng/org.eclipse.orion.target</module>
+		<module>bundles/org.apache.oltu.oauth2.common</module>
+		<module>bundles/org.apache.oltu.oauth2.client</module>
 		<module>bundles/org.eclipse.orion.server.core</module>
 		<module>bundles/org.eclipse.orion.server.servlets</module>
 		<module>bundles/org.eclipse.orion.server.useradmin</module>
