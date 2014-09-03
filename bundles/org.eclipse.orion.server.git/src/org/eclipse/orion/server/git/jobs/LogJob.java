@@ -42,6 +42,7 @@ public class LogJob extends GitJob {
 	private String messageFilter;
 	private String authorFilter;
 	private String committerFilter;
+	private String sha1Filter;
 
 	/**
 	 * Creates job with given page range and adding <code>commitsSize</code> commits to every branch.
@@ -54,9 +55,10 @@ public class LogJob extends GitJob {
 	 * @param messageFilter string used to filter log messages
 	 * @param authorFilter string used to filter author messages
 	 * @param committerFilter string used to filter committer messages
+	 * @param sha1Filter string used to filter commits by sha1
 	 * @param baseLocation URI used as a base for generating next and previous page links. Should not contain any parameters.
 	 */
-	public LogJob(String userRunningTask, IPath filePath, URI cloneLocation, int page, int pageSize, ObjectId toObjectId, ObjectId fromObjectId, Ref toRefId, Ref fromRefId, String refIdsRange, String pattern, String messageFilter, String authorFilter, String committerFilter) {
+	public LogJob(String userRunningTask, IPath filePath, URI cloneLocation, int page, int pageSize, ObjectId toObjectId, ObjectId fromObjectId, Ref toRefId, Ref fromRefId, String refIdsRange, String pattern, String messageFilter, String authorFilter, String committerFilter, String sha1Filter) {
 		super(userRunningTask, false);
 		this.filePath = filePath;
 		this.cloneLocation = cloneLocation;
@@ -71,6 +73,7 @@ public class LogJob extends GitJob {
 		this.messageFilter = messageFilter;
 		this.authorFilter = authorFilter;
 		this.committerFilter = committerFilter;
+		this.sha1Filter = sha1Filter;
 		setFinalMessage("Generating git log completed.");
 	}
 
@@ -95,19 +98,24 @@ public class LogJob extends GitJob {
 			}
 			Log log = new Log(cloneLocation, db, null /* collected by the job */, pattern, toRefId, fromRefId);
 
-			if (messageFilter != null && !messageFilter.equals("")) {
+			if (messageFilter != null && messageFilter.length() > 0) {
 				log.setMessagePattern(messageFilter);
 				logCommand.setMessageFilter(messageFilter);
 			}
 
-			if (authorFilter != null && !authorFilter.equals("")) {
+			if (authorFilter != null && authorFilter.length() > 0) {
 				log.setAuthorPattern(authorFilter);
 				logCommand.setAuthFilter(authorFilter);
 			}
 
-			if (committerFilter != null && !committerFilter.equals("")) {
+			if (committerFilter != null && committerFilter.length() > 0) {
 				log.setCommitterPattern(committerFilter);
 				logCommand.setCommitterFilter(committerFilter);
+			}
+
+			if (sha1Filter != null && sha1Filter.length() > 0) {
+				log.setSHA1Pattern(sha1Filter);
+				logCommand.setSHA1Filter(sha1Filter);
 			}
 
 			if (page > 0) {

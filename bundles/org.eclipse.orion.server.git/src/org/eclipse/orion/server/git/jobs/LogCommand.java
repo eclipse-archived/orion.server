@@ -98,11 +98,13 @@ public class LogCommand extends GitCommand<Iterable<RevCommit>> {
 
 	private int skip = -1;
 
-	private RevFilter msgFilter = null;
+	private RevFilter msgFilter;
 
-	private RevFilter authorFilter = null;
+	private RevFilter authorFilter;
 
-	private RevFilter committerFilter = null;
+	private RevFilter committerFilter;
+
+	private RevFilter sha1Filter;
 
 	/**
 	 * @param repo
@@ -136,6 +138,8 @@ public class LogCommand extends GitCommand<Iterable<RevCommit>> {
 			filters.add(authorFilter);
 		if (committerFilter != null)
 			filters.add(committerFilter);
+		if (sha1Filter != null)
+			filters.add(sha1Filter);
 		if (skip > -1)
 			filters.add(SkipRevFilter.create(skip));
 		if (maxCount > -1)
@@ -313,6 +317,12 @@ public class LogCommand extends GitCommand<Iterable<RevCommit>> {
 	public LogCommand setCommitterFilter(String filter) {
 		checkCallable();
 		committerFilter = CommitterRevFilter.create(filter);
+		return this;
+	}
+
+	public LogCommand setSHA1Filter(String filter) {
+		checkCallable();
+		sha1Filter = SHA1RevFilter.create(filter);
 		return this;
 	}
 

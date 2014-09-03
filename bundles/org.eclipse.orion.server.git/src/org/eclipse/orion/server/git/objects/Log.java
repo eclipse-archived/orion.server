@@ -60,6 +60,7 @@ public class Log extends GitObject {
 	private String messagePattern;
 	private String authorPattern;
 	private String committerPattern;
+	private String sha1Pattern;
 	private Ref toRefId;
 	private Ref fromRefId;
 	private int page;
@@ -99,6 +100,10 @@ public class Log extends GitObject {
 
 	public void setCommitterPattern(String committerPattern) {
 		this.committerPattern = committerPattern;
+	}
+
+	public void setSHA1Pattern(String sha1Pattern) {
+		this.sha1Pattern = sha1Pattern;
 	}
 
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
@@ -175,6 +180,9 @@ public class Log extends GitObject {
 		}
 		if (this.committerPattern != null) {
 			q += "&committer=" + GitUtils.encode(this.committerPattern); //$NON-NLS-1$
+		}
+		if (this.sha1Pattern != null) {
+			q += "&sha1=" + GitUtils.encode(this.sha1Pattern); //$NON-NLS-1$
 		}
 		return q;
 	}

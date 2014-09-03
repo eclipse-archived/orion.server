@@ -175,6 +175,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		String messageFilter = request.getParameter("filter");
 		String authorFilter = request.getParameter("author");
 		String committerFilter = request.getParameter("committer");
+		String sha1Filter = request.getParameter("sha1");
 		ObjectId toObjectId = null;
 		ObjectId fromObjectId = null;
 
@@ -217,7 +218,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		URI baseLocation = getURI(request);
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, refIdsRange == null ? BaseToCloneConverter.COMMIT : BaseToCloneConverter.COMMIT_REFRANGE);
 
-		LogJob job = new LogJob(TaskJobHandler.getUserId(request), filePath, cloneLocation, page, pageSize, toObjectId, fromObjectId, toRefId, fromRefId, refIdsRange, pattern, messageFilter, authorFilter, committerFilter);
+		LogJob job = new LogJob(TaskJobHandler.getUserId(request), filePath, cloneLocation, page, pageSize, toObjectId, fromObjectId, toRefId, fromRefId, refIdsRange, pattern, messageFilter, authorFilter, committerFilter, sha1Filter);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 	}
 
