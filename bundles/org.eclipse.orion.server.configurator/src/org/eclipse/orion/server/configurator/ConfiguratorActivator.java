@@ -92,25 +92,6 @@ public class ConfiguratorActivator implements BundleActivator {
 		return null;
 	}
 
-	Location getInstanceLocation() {
-		if (instanceLocationTracker == null) {
-			Filter filter;
-			try {
-				filter = bundleContext.createFilter(Location.INSTANCE_FILTER);
-			} catch (InvalidSyntaxException e) {
-				LogHelper.log(e);
-				return null;
-			}
-			instanceLocationTracker = new ServiceTracker<Location, Location>(bundleContext, filter, null);
-			instanceLocationTracker.open();
-		}
-		return instanceLocationTracker.getService();
-	}
-
-	String getProperty(String key) {
-		return bundleContext.getProperty(key);
-	}
-
 	String getAuthName() {
 		//lookup order is:
 		// 1: Defined preference called "orion.auth.name"

@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import org.eclipse.orion.server.core.ProtocolConstants;
+
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import java.io.*;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -19,13 +23,10 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
-import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
 

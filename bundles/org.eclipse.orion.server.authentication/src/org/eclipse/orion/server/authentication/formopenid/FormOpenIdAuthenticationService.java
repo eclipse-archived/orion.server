@@ -11,14 +11,16 @@
 package org.eclipse.orion.server.authentication.formopenid;
 
 import java.io.IOException;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.authentication.IAuthenticationService;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;

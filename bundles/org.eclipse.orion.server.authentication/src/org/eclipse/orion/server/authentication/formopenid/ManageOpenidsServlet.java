@@ -23,7 +23,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.authentication.openid.OpenIdException;
 import org.eclipse.orion.server.authentication.openid.OpenIdHelper;
@@ -31,6 +30,7 @@ import org.eclipse.orion.server.authentication.openid.OpendIdProviderDescription
 import org.eclipse.orion.server.authentication.openid.OpenidConsumer;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

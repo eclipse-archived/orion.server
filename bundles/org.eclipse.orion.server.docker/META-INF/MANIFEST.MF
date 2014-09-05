@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: %Bundle-Name
 Bundle-Vendor: %Bundle-Vendor
 Bundle-Localization: bundle
-Bundle-SymbolicName: org.eclipse.orion.server.docker
+Bundle-SymbolicName: org.eclipse.orion.server.docker;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.eclipse.orion.server.docker.Activator
 Require-Bundle: org.eclipse.core.runtime,

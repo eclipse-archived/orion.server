@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.servlets;
 
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import java.io.InputStreamReader;
 import java.net.URLDecoder;
 import javax.servlet.ServletException;
@@ -17,12 +20,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.objects.CFObject;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
 import org.json.JSONTokener;

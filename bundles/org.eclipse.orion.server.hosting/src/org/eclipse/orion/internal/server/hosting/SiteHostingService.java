@@ -16,8 +16,6 @@ import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import org.eclipse.orion.internal.server.servlets.hosting.*;
-import org.eclipse.orion.internal.server.servlets.site.SiteInfo;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 
@@ -156,7 +154,7 @@ public class SiteHostingService implements ISiteHostingService {
 	 * @return The hosted site running at <code>host</code>, or null if <code>host</code>
 	 * is not a running hosted site.
 	 */
-	IHostedSite get(String host) {
+	public IHostedSite get(String host) {
 		// Note this may overlap with a concurrent start()/stop() call that modifies the map
 		return sites.get(host);
 	}

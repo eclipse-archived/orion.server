@@ -18,8 +18,8 @@ import java.util.Set;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONException;
 import org.json.JSONObject;

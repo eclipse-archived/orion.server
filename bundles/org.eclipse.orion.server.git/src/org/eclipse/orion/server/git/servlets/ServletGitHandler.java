@@ -10,12 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import org.eclipse.orion.server.core.ProtocolConstants;
+
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.osgi.service.resolver.VersionRange;
 import org.osgi.framework.Version;
 

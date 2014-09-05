@@ -11,11 +11,13 @@
 package org.eclipse.orion.internal.server.servlets.xfer;
 
 import com.jcraft.jsch.*;
+
 import java.io.*;
 import java.util.*;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.osgi.util.NLS;
 
 /**

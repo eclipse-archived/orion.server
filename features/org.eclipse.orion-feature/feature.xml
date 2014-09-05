@@ -36,4 +36,16 @@
          id="org.eclipse.orion.client.feature"
          version="0.0.0"/>
 
+   <includes
+         id="org.eclipse.orion.server.help.feature"
+         version="0.0.0"/>
+
+   <includes
+         id="org.eclipse.orion.server.hosting.feature"
+         version="0.0.0"/>
+
+   <includes
+         id="org.eclipse.orion.server.jetty.feature"
+         version="0.0.0"/>
+
 </feature>

@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.Vector;
 
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.osgi.util.NLS;
 
 /**

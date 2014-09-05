@@ -5,10 +5,10 @@ import static org.junit.Assert.assertEquals;
 import java.net.URI;
 import java.util.List;
 
+import org.eclipse.orion.internal.server.hosting.IHostedSite;
 import org.eclipse.orion.internal.server.hosting.SiteHostingConfig;
 import org.eclipse.orion.internal.server.hosting.SiteHostingService;
-import org.eclipse.orion.internal.server.servlets.hosting.IHostedSite;
-import org.eclipse.orion.internal.server.servlets.site.SiteInfo;
+import org.eclipse.orion.internal.server.hosting.SiteInfo;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.UserInfo;

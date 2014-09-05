@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+
+import org.eclipse.orion.server.servlets.OrionServlet;
 import java.net.URI;
 import java.util.Collection;
 import javax.servlet.ServletException;
@@ -22,13 +25,11 @@ import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.StashPage;
 import org.eclipse.orion.server.git.objects.StashRef;
-import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
 

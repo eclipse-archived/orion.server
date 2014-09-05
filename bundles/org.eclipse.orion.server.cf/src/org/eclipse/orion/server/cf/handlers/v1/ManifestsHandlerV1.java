@@ -10,10 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.commands.ParseManifestCommand;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;

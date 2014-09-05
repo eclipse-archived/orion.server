@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.jobs;
 
+import org.eclipse.orion.server.core.ProtocolConstants;
+
 import java.io.File;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +22,6 @@ import org.eclipse.jgit.api.InitCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.objects.Clone;

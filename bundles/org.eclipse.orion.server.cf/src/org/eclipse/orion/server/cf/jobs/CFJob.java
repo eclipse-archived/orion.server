@@ -10,11 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.jobs;
 
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
+
 import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpServletRequest;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.core.tasks.TaskJob;
-import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 
 public abstract class CFJob extends TaskJob {
 

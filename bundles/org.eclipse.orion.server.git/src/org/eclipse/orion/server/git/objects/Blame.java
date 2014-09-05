@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
+import org.eclipse.orion.server.core.ProtocolConstants;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -17,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.*;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;

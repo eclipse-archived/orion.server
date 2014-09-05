@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import org.eclipse.orion.server.core.ProtocolConstants;
+
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.servlets.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -26,12 +30,8 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.*;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.metastore.*;
-import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
-import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.*;
 
 public class GitTreeHandlerV1 extends AbstractGitHandler {

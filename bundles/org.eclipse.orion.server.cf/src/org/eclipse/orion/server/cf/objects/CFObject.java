@@ -10,9 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.objects;
 
+import org.eclipse.orion.server.core.ProtocolConstants;
+
 import java.net.URI;
 import java.net.URISyntaxException;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.*;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.json.JSONException;

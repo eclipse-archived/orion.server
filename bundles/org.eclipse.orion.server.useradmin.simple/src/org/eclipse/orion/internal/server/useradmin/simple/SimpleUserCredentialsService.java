@@ -28,6 +28,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.core.metastore.SimpleUserPasswordUtil;
+import org.eclipse.orion.internal.server.servlets.useradmin.UserServlet;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -43,7 +44,6 @@ import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.orion.server.useradmin.WebIdeAuthorization;
-import org.eclipse.orion.server.useradmin.servlets.UserServlet;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.useradmin.Authorization;
 
@@ -110,8 +110,8 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 		// TODO: see bug 335699, the user storage should not configure authorization rules
 		// it should add Admin role, which will be used during authorization process
 		try {
-			AuthorizationService.addUserRight(admin.getUid(), UserServlet.USERS_URI);
-			AuthorizationService.addUserRight(admin.getUid(), UserServlet.USERS_URI + "/*"); //$NON-NLS-1$
+			AuthorizationService.addUserRight(admin.getUid(), User.USERS_URI);
+			AuthorizationService.addUserRight(admin.getUid(), User.USERS_URI + "/*"); //$NON-NLS-1$
 		} catch (CoreException e) {
 			LogHelper.log(e);
 		}

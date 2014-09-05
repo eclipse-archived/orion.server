@@ -10,13 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
+import org.eclipse.orion.server.core.ProtocolConstants;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.*;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.git.GitConstants;

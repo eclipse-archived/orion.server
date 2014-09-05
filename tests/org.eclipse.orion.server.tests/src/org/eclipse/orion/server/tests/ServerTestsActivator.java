@@ -11,8 +11,7 @@
 package org.eclipse.orion.server.tests;
 
 import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.server.configurator.ConfiguratorActivator;
-import org.eclipse.orion.server.configurator.WebApplication;
+import org.eclipse.orion.server.jetty.WebApplication;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -51,7 +50,6 @@ public class ServerTestsActivator implements BundleActivator {
 				//get the webide bundle started via lazy activation.
 				org.eclipse.orion.server.authentication.Activator.getDefault();
 				Activator.getDefault();
-				ConfiguratorActivator.getDefault();
 				org.eclipse.orion.internal.server.useradmin.simple.Activator.getDefault();
 				webapp = new WebApplication();
 				webapp.start(null);

@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: %Bundle-Name
 Bundle-Vendor: %Bundle-Vendor
 Bundle-Localization: bundle
-Bundle-SymbolicName: org.eclipse.orion.server.search
+Bundle-SymbolicName: org.eclipse.orion.server.search;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.eclipse.orion.internal.server.search.SearchActivator
 Bundle-RequiredExecutionEnvironment: J2SE-1.5

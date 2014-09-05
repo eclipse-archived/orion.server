@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import org.eclipse.orion.server.core.ProtocolConstants;
+
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.servlets.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -22,8 +26,6 @@ import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.*;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -31,8 +33,6 @@ import org.eclipse.orion.server.git.*;
 import org.eclipse.orion.server.git.jobs.*;
 import org.eclipse.orion.server.git.objects.Remote;
 import org.eclipse.orion.server.git.objects.RemoteBranch;
-import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
-import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
 

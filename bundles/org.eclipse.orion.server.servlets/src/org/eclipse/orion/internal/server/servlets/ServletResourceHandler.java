@@ -13,14 +13,17 @@ package org.eclipse.orion.internal.server.servlets;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.internal.server.sftpfile.AuthCoreException;
+import org.eclipse.orion.server.core.ProtocolConstants;
 
 /**
  * A servlet resource handler processes an HTTP request for a given resource.

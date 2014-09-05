@@ -34,8 +34,8 @@ import org.apache.solr.request.LocalSolrQueryRequest;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.QueryResponseWriter;
 import org.apache.solr.response.SolrQueryResponse;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 
 /**

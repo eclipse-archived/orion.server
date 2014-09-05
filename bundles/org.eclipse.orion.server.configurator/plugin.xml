@@ -2,24 +2,6 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension
-         id="org.eclipse.orion.application"
-         point="org.eclipse.core.runtime.applications">
-      <application
-            cardinality="1"
-            thread="any"
-            visible="true">
-         <run
-               class="org.eclipse.orion.server.configurator.WebApplication">
-         </run>
-      </application>
-   </extension>
-    <extension id="org.eclipse.orion.product" point="org.eclipse.core.runtime.products"> 
-      <product name="%productName" application="org.eclipse.orion.application" description="%productBlurb"> 
-          <property name="appName" value="Orion"/> 
-          <property name="preferenceCustomization" value="plugin_customization.ini"/>
-      </product> 
-    </extension> 
-   <extension
          point="org.eclipse.equinox.http.registry.servlets">
       <servlet
             alias="/file"
@@ -34,68 +16,12 @@
             class="org.eclipse.orion.server.servlets.PreferencesServlet">
       </servlet>
       <servlet
-            alias="/filesearch"
-            class="org.eclipse.orion.internal.server.search.SearchServlet"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.search">
-      </servlet>
-      <servlet
-            alias="/npm"
-            class="org.eclipse.orion.server.npm.NpmServlet">
-      </servlet>
-      <servlet
-            alias="/users"
-            class="org.eclipse.orion.server.useradmin.servlets.UserServlet">
-      </servlet>
-      <servlet
             alias="/xfer"
             class="org.eclipse.orion.internal.server.servlets.xfer.TransferServlet">
       </servlet>
       <servlet
-            alias="/gitapi"
-            class="org.eclipse.orion.server.git.servlets.GitServlet">
-      </servlet>
-      <servlet
-            alias="/cfapi"
-            class="org.eclipse.orion.server.cf.servlets.CFServlet">
-      </servlet>
-      <servlet
-            alias="/site"
-            class="org.eclipse.orion.internal.server.servlets.site.SiteConfigurationServlet">
-      </servlet>
-      <servlet
-            alias="/hosted"
-            class="org.eclipse.orion.internal.server.hosting.HostedSiteServlet"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.site">
-      </servlet>
-      <servlet
             alias="/task"
             class="org.eclipse.orion.internal.server.servlets.task.TaskServlet">
-      </servlet>
-      <servlet
-            alias="/help"
-            class="org.eclipse.equinox.http.servlet.HttpServiceServlet"
-            httpcontextId="org.eclipse.help.webapp.help"
-            load-on-startup="true">
-         <init-param
-               name="other.info"
-               value="org.eclipse.help">
-         </init-param>
-         <init-param
-               name="server.description"
-               value="Orion Help">
-         </init-param>
-      </servlet>
-      <servlet
-            alias="/logapi"
-            class="org.eclipse.orion.server.logs.servlets.LogServlet">
-      </servlet>
-      <servlet
-            alias="/useremailconfirmation"
-            class="org.eclipse.orion.server.useradmin.servlets.EmailConfirmationServlet">
-      </servlet>
-      <servlet
-            alias="/docker"
-            class="org.eclipse.orion.server.docker.servlets.DockerServlet">
       </servlet>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
@@ -134,8 +60,7 @@
                name="directives"
                value="public, max-age=86400, must-revalidate">
          </init-param>
-      </filter>      
- 
+      </filter>
       <filter
             alias="/"
             class="org.eclipse.orion.server.servlets.CacheFilter">
@@ -161,51 +86,11 @@
          </init-param>
       </filter>
       <filter
-            alias="/"
-            class="org.eclipse.orion.internal.server.hosting.HostedSiteRequestFilter">
-      </filter>
-      <filter
             alias="/prefs"
             class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
       </filter>
       <filter
-            alias="/filesearch"
-            class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
-      </filter>
-      <filter
-            alias="/npm"
-            class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
-      </filter>
-      <filter
-            alias="/gitapi"
-            class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
-      </filter>
-      <filter
-            alias="/cfapi"
-            class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
-      </filter>
-      <filter
-            alias="/logapi"
-            class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
-      </filter>
-      <filter
-            alias="/logapi"
-            class="org.eclipse.orion.server.configurator.servlet.AuthorizedUserFilter">
-      </filter>
-      <filter
-            alias="/users"
-            class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
-            <init-param
-               name="redirect"
-               value="false">
-         </init-param>
-      </filter>
-      <filter
             alias="/workspace"
-            class="org.eclipse.orion.server.configurator.servlet.AuthorizedUserFilter">
-      </filter>
-      <filter
-            alias="/site"
             class="org.eclipse.orion.server.configurator.servlet.AuthorizedUserFilter">
       </filter>
       <filter
@@ -219,10 +104,6 @@
       <filter
             alias="/task"
             class="org.eclipse.orion.server.configurator.servlet.AuthorizedUserFilter">
-      </filter>
-      <filter
-            alias="/docker"
-            class="org.eclipse.orion.server.configurator.servlet.LoggedInUserFilter">
       </filter>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
@@ -253,20 +134,6 @@
                path="/web">
          </resource-mapping>
       </httpcontext>
-      <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.git">
-         <resource-mapping
-               bundle="org.eclipse.orion.client.git"
-               path="/web/git">
-         </resource-mapping>
-      </httpcontext>      
-      <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.git.components">
-         <resource-mapping
-               bundle="org.eclipse.orion.client.git"
-               path="/web/orion/git">
-         </resource-mapping>
-      </httpcontext>      
       <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.editor.components">
          <resource-mapping
@@ -310,13 +177,6 @@
          </resource-mapping>
       </httpcontext>
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.search">
-         <resource-mapping
-               bundle="org.eclipse.orion.server.search"
-               path="/">
-         </resource-mapping>
-      </httpcontext>
-      <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.userprofile">
          <resource-mapping
                bundle="org.eclipse.orion.client.users"
@@ -328,27 +188,6 @@
          <resource-mapping
                bundle="org.eclipse.orion.client.users"
                path="/web/orion/profile">
-         </resource-mapping>
-      </httpcontext>
-      <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.site">
-         <mime-mapping
-               extension="webapp"
-               mime-type="application/x-web-app-manifest+json">
-         </mime-mapping>
-      </httpcontext>
-      <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.cf">
-         <resource-mapping
-               bundle="org.eclipse.orion.client.cf"
-               path="/web/cfui">
-         </resource-mapping>
-      </httpcontext>
-      <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.cf.components">
-         <resource-mapping
-               bundle="org.eclipse.orion.client.cf"
-               path="/web/orion/cfui">
          </resource-mapping>
       </httpcontext>
    </extension>
@@ -389,22 +228,6 @@
       <resource
             alias="/orion/profile"
             httpcontextId="org.eclipse.orion.server.configurator.httpcontext.userprofile.components">
-      </resource>
-      <resource
-            alias="/git"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.git">
-      </resource>
-      <resource
-            alias="/orion/git"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.git.components">
-      </resource>
-      <resource
-            alias="/cfui"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.cf">
-      </resource>
-      <resource
-            alias="/orion/cfui"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.cf.components">
       </resource>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">

@@ -37,6 +37,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
+import org.osgi.framework.Filter;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
@@ -49,15 +50,17 @@ import org.slf4j.LoggerFactory;
  */
 public class Activator implements BundleActivator {
 
-	static volatile BundleContext bundleContext;
+	private static volatile BundleContext bundleContext;
 
 	private static Activator singleton;
 	private	ServiceTracker<FrameworkLog, FrameworkLog> logTracker;
-	ServiceTracker<IPreferencesService, IPreferencesService> prefTracker;
+	private ServiceTracker<IPreferencesService, IPreferencesService> prefTracker;
 	private ServiceRegistration<ITaskService> taskServiceRegistration;
 	private ITaskService taskService;
 	private IMetaStore metastore;
 	private URI rootStoreURI;
+
+	private ServiceTracker<Location, Location> instanceLocationTracker;
 
 	public static Activator getDefault() {
 		return singleton;
@@ -299,5 +302,24 @@ public class Activator implements BundleActivator {
 			}
 		}
 		return null;
+	}
+	
+	Location getInstanceLocation() {
+		if (instanceLocationTracker == null) {
+			Filter filter;
+			try {
+				filter = bundleContext.createFilter(Location.INSTANCE_FILTER);
+			} catch (InvalidSyntaxException e) {
+				LogHelper.log(e);
+				return null;
+			}
+			instanceLocationTracker = new ServiceTracker<Location, Location>(bundleContext, filter, null);
+			instanceLocationTracker.open();
+		}
+		return instanceLocationTracker.getService();
+	}
+
+	String getProperty(String key) {
+		return bundleContext.getProperty(key);
 	}
 }

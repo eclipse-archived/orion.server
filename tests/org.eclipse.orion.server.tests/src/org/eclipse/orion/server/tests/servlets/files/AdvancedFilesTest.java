@@ -26,7 +26,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.IFileStoreModificationListener.ChangeType;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;

@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: %Bundle-Name
+Bundle-Vendor: %Bundle-Vendor
+Bundle-Localization: bundle
+Bundle-SymbolicName: org.eclipse.orion.server.jetty;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: org.eclipse.orion.server.jetty.Activator
+Require-Bundle: org.eclipse.core.runtime
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-ActivationPolicy: lazy
+Import-Package: org.eclipse.equinox.http.jetty,
+ org.eclipse.orion.server.core,
+ org.slf4j;version="1.7.2"
+Export-Package: org.eclipse.orion.server.jetty

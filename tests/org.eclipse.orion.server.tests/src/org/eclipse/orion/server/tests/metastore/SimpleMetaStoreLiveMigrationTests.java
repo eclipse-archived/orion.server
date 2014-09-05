@@ -35,7 +35,7 @@ import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreMigration;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.core.metastore.SimpleUserPasswordUtil;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.json.JSONArray;
 import org.json.JSONException;

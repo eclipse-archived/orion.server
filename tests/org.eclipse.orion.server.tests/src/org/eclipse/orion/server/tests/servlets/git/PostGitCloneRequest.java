@@ -14,8 +14,8 @@ import java.io.UnsupportedEncodingException;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jgit.transport.URIish;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.tests.AbstractServerTest;

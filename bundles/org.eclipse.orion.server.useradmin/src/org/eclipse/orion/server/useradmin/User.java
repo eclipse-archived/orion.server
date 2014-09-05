@@ -15,7 +15,6 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
-import org.eclipse.orion.server.useradmin.servlets.UserServlet;
 import org.osgi.service.useradmin.Role;
 
 public class User implements org.osgi.service.useradmin.User {
@@ -33,6 +32,8 @@ public class User implements org.osgi.service.useradmin.User {
 	public static final String BLOCKED = "blocked";
 	
 	public static final String EMAIL_CONFIRMATION = "email_confirmation";
+	
+	public static final String USERS_URI = "/users";
 
 	private Set<Role> roles = new HashSet<Role>();
 
@@ -149,7 +150,7 @@ public class User implements org.osgi.service.useradmin.User {
 	}
 
 	public String getLocation() {
-		return UserServlet.USERS_URI + '/' + getUid();
+		return USERS_URI + '/' + getUid();
 	}
 	
 	public static String getUniqueEmailConfirmationId(){

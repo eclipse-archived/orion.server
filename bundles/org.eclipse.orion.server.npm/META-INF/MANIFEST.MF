@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: %Bundle-Name
 Bundle-Vendor: %Bundle-Vendor
 Bundle-Localization: bundle
-Bundle-SymbolicName: org.eclipse.orion.server.npm
+Bundle-SymbolicName: org.eclipse.orion.server.npm;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.eclipse.orion.server.npm.Activator
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6

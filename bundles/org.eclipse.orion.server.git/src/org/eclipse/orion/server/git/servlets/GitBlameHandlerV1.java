@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import java.io.IOException;
 import java.net.URI;
 import javax.servlet.ServletException;
@@ -24,12 +28,9 @@ import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.objects.Blame;
-import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
-import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 
 public class GitBlameHandlerV1 extends AbstractGitHandler {

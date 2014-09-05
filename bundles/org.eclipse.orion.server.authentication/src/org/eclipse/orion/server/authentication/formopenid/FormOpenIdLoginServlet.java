@@ -12,10 +12,13 @@ package org.eclipse.orion.server.authentication.formopenid;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.authentication.Activator;
@@ -25,13 +28,12 @@ import org.eclipse.orion.server.authentication.formpersona.*;
 import org.eclipse.orion.server.authentication.openid.*;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64;
-import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;
 
-public class FormOpenIdLoginServlet extends OrionServlet {
+public class FormOpenIdLoginServlet extends HttpServlet {
 
 	private FormOpenIdAuthenticationService authenticationService;
 	private OpenidConsumer consumer;
@@ -46,9 +48,8 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		traceRequest(req);
+		//traceRequest(req);
 		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
 
 		if (pathInfo.startsWith("/form")) { //$NON-NLS-1$
@@ -150,7 +151,7 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 			try {
 				resp.getWriter().print(FormAuthHelper.getUserJson(user, req.getContextPath()));
 			} catch (JSONException e) {
-				handleException(resp, "An error occured when creating JSON object for logged in user", e);
+				/* ignore */
 			}
 			return;
 		}
@@ -195,7 +196,7 @@ public class FormOpenIdLoginServlet extends OrionServlet {
 	}
 
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		traceRequest(req);
+		//traceRequest(req);
 		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
 		if (pathInfo.startsWith("/openid") //$NON-NLS-1$
 				&& (req.getParameter(OpenIdHelper.OPENID) != null || req.getParameter(OpenIdHelper.OP_RETURN) != null)) {
