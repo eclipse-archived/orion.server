@@ -11,7 +11,7 @@ public class Activator implements BundleActivator {
 	/**
 	 * The symbolic id of this bundle.
 	 */
-	public static final String PI_CONFIGURATOR = "org.eclipse.orion.server.jetty.configurator"; //$NON-NLS-1$
+	public static final String PI_JETTY = "org.eclipse.orion.server.jetty"; //$NON-NLS-1$
 	/**
 	 * Service reference property indicating if the authentication service has been configured.
 	 */

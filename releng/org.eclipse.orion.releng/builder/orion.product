@@ -45,7 +45,6 @@
       <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.ds" autoStart="true" startLevel="2" />
       <plugin id="org.eclipse.equinox.simpleconfigurator" autoStart="true" startLevel="1" />
-      <plugin id="org.eclipse.orion.server.configurator" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.orion.server.git" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.orion.server.search" autoStart="true" startLevel="0" />
       <plugin id="org.eclipse.orion.server.servlets" autoStart="true" startLevel="0" />

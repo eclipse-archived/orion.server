@@ -68,13 +68,13 @@ public class WebApplication implements IApplication {
 		}
 
 		if (httpsEnabled) {
-			LogHelper.log(new Status(IStatus.INFO, Activator.PI_CONFIGURATOR, "Https is enabled", null)); //$NON-NLS-1$
+			LogHelper.log(new Status(IStatus.INFO, Activator.PI_JETTY, "Https is enabled", null)); //$NON-NLS-1$
 
 			properties.put(JettyConstants.HTTPS_ENABLED, true);
 			properties.put(JettyConstants.HTTPS_PORT, new Integer(preferences.get(HTTPS_PORT, System.getProperty("org.eclipse.equinox.http.jetty.https.port", "8443")))); //$NON-NLS-1$//$NON-NLS-2$
 			properties.put(JettyConstants.SSL_KEYSTORE, preferences.get(SSL_KEYSTORE, "keystore")); //$NON-NLS-1$
 
-			LogHelper.log(new Status(IStatus.INFO, Activator.PI_CONFIGURATOR, "Keystore absolute path is " + preferences.get(SSL_KEYSTORE, "keystore"))); //$NON-NLS-1$ //$NON-NLS-2$
+			LogHelper.log(new Status(IStatus.INFO, Activator.PI_JETTY, "Keystore absolute path is " + preferences.get(SSL_KEYSTORE, "keystore"))); //$NON-NLS-1$ //$NON-NLS-2$
 
 			properties.put(JettyConstants.SSL_PASSWORD, preferences.get(SSL_PASSWORD, "password")); //$NON-NLS-1$
 			properties.put(JettyConstants.SSL_KEYPASSWORD, preferences.get(SSL_KEYPASSWORD, "password")); //$NON-NLS-1$
