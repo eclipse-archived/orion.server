@@ -203,7 +203,7 @@ public class ServerConstants {
 	/**
 	 * The preference qualifier for server configuration preferences.
 	 */
-	public static final String PREFERENCE_SCOPE = "org.eclipse.orion.server.configurator"; //$NON-NLS-1$
+	public static final String PREFERENCE_SCOPE = "org.eclipse.orion.server.core"; //$NON-NLS-1$
 
 	/**
 	 * The system property name for the location of the server configuration file.
