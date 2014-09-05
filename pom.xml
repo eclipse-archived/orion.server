@@ -270,6 +270,7 @@
 		<module>bundles/org.eclipse.orion.server.docker</module>
 		<module>bundles/org.eclipse.orion.server.help</module>
 		<module>bundles/org.eclipse.orion.server.jetty</module>
+		<module>bundles/org.eclipse.orion.server.jettycustomizer</module>
 		<module>bundles/org.eclipse.orion.server.logs</module>
 		<module>bundles/org.eclipse.orion.server.hosting</module>
 		<module>bundles/org.eclipse.orion.server.search</module>
