@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.jettycustomizer;
+package org.eclipse.orion.server.jetty;
 
 import java.io.File;
 import java.util.Dictionary;

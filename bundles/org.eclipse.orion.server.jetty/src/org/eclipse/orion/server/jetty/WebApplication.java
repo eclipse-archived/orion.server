@@ -64,7 +64,7 @@ public class WebApplication implements IApplication {
 
 		Boolean jettyAccessLogsEnabled = new Boolean(preferences.get(ServerConstants.CONFIG_ACCESS_LOGS_ENABLED, "false"));
 		if (jettyAccessLogsEnabled) {
-			properties.put(JettyConstants.CUSTOMIZER_CLASS, "org.eclipse.orion.server.jettycustomizer.OrionJettyCustomizer");
+			properties.put(JettyConstants.CUSTOMIZER_CLASS, "org.eclipse.orion.server.jetty.OrionJettyCustomizer");
 		}
 
 		if (httpsEnabled) {
