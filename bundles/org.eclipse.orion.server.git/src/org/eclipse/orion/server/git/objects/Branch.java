@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -22,6 +20,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.RemoteConfig;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
@@ -39,6 +38,14 @@ public class Branch extends GitObject {
 	public static final String TYPE = "Branch"; //$NON-NLS-1$
 	public static final Comparator<Branch> COMPARATOR = new Comparator<Branch>() {
 		public int compare(Branch o1, Branch o2) {
+			try {
+				if (o1.isCurrent()) {
+					return -1;
+				} else if (o2.isCurrent()) {
+					return 1;
+				}
+			} catch (IOException e) {
+			}
 			return o1.getTime() < o2.getTime() ? 1 : (o1.getTime() > o2.getTime() ? -1 : o2.getName(true, false).compareTo(o1.getName(true, false)));
 		}
 	};
@@ -77,7 +84,7 @@ public class Branch extends GitObject {
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_BRANCH_CURRENT)
-	private boolean isCurrent() throws IOException {
+	public boolean isCurrent() throws IOException {
 		return getName(false, false).equals(db.getBranch());
 	}
 
