@@ -45,6 +45,7 @@ public class RemoteBranch extends GitObject {
 				new Property(GitConstants.KEY_TREE), //
 				new Property(GitConstants.KEY_HEAD), //
 				new Property(GitConstants.KEY_INDEX), //
+				new Property(GitConstants.KEY_URL), //
 				new Property(GitConstants.KEY_DIFF)};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
@@ -107,6 +108,11 @@ public class RemoteBranch extends GitObject {
 	@PropertyDescription(name = ProtocolConstants.KEY_ID)
 	private String getId() {
 		return ref.getObjectId().name();
+	}
+
+	@PropertyDescription(name = GitConstants.KEY_URL)
+	private String getUrl() {
+		return getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, remote.getName(), "url" /*RemoteConfig.KEY_URL*/); //$NON-NLS-1$
 	}
 
 	private String getName(boolean fullName, boolean encode) {
