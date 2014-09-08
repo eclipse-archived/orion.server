@@ -59,6 +59,16 @@ public class ManifestConstants {
 
 	public static final String NAME = "name"; //$NON-NLS-1$
 
+	public static final String HOST = "host"; //$NON-NLS-1$
+
+	public static final String MEMORY = "memory"; //$NON-NLS-1$
+
+	public static final String PATH = "path"; //$NON-NLS-1$
+
+	public static final String INSTANCES = "instances"; //$NON-NLS-1$
+
+	public static final String COMMAND = "command"; //$NON-NLS-1$
+
 	public static final String INHERIT = "inherit"; //$NON-NLS-1$
 
 	public static final String ENV = "env"; //$NON-NLS-1$

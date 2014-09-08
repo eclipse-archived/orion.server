@@ -30,17 +30,19 @@ public class PushAppCommand extends AbstractCFCommand {
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
-	private String commandName;
 	private App app;
-	private IFileStore appStore;
 	private boolean reset;
+	private IFileStore appStore;
+	private String deploymentPlannerId;
+	private String commandName;
 
-	public PushAppCommand(Target target, App app, IFileStore appStore, boolean reset) {
+	public PushAppCommand(Target target, App app, IFileStore appStore, boolean reset, String deploymentPlannerId) {
 		super(target);
 		this.commandName = "Push application"; //$NON-NLS-1$
 		this.app = app;
 		this.appStore = appStore;
 		this.reset = reset;
+		this.deploymentPlannerId = deploymentPlannerId;
 	}
 
 	@Override
@@ -77,7 +79,7 @@ public class PushAppCommand extends AbstractCFCommand {
 				return status;
 
 			/* upload application contents */
-			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, appStore);
+			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, appStore, deploymentPlannerId);
 			multijobStatus = (ServerStatus) uploadBits.doIt(); /* FIXME: unsafe type cast */
 			status.add(multijobStatus);
 			if (!multijobStatus.isOK())

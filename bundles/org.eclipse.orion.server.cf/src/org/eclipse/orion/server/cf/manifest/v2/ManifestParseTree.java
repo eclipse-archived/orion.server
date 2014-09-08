@@ -50,6 +50,51 @@ public class ManifestParseTree {
 		this.level = level;
 	}
 
+	public ManifestParseTree(ManifestParseTree node) {
+
+		level = node.getLevel();
+		setParent(this);
+
+		/* copy tokens */
+		tokens = new ArrayList<Token>();
+		for (Token token : node.getTokens()) {
+			Token newToken = new Token(token.getContent(), token.getType());
+			newToken.setIndentation(token.getIndentation());
+			newToken.setLineNumber(token.getLineNumber());
+			tokens.add(newToken);
+		}
+
+		/* copy children recursively */
+		children = new ArrayList<ManifestParseTree>();
+		for (ManifestParseTree child : node.getChildren()) {
+			ManifestParseTree newChild = new ManifestParseTree(child);
+			newChild.setParent(this);
+			children.add(newChild);
+		}
+	}
+
+	/**
+	 * Inserts a (key, value) pair to the manifest node.
+	 * @param key
+	 * @param value
+	 */
+	public void put(String key, String value) {
+		ManifestParseTree keyNode = new ManifestParseTree(getLevel());
+
+		Token keyToken = new Token(key, TokenType.LITERAL);
+		keyNode.getTokens().add(keyToken);
+
+		ManifestParseTree valueNode = new ManifestParseTree(getLevel());
+		keyNode.getChildren().add(valueNode);
+		valueNode.setParent(keyNode);
+
+		Token valueToken = new Token(value, TokenType.LITERAL);
+		valueNode.getTokens().add(valueToken);
+
+		getChildren().add(keyNode);
+		keyNode.setParent(this);
+	}
+
 	/**
 	 * @return Token content concatenation.
 	 */

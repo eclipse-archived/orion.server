@@ -20,7 +20,10 @@ import org.apache.commons.httpclient.methods.multipart.*;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.ds.IDeploymentPlanner;
+import org.eclipse.orion.server.cf.ds.IDeploymentService;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.*;
@@ -37,12 +40,14 @@ public class UploadBitsCommand extends AbstractCFApplicationCommand {
 	private String commandName;
 	private IFileStore appStore;
 	private String deployedAppPackageName;
+	private String deployerPlannerId;
 
-	public UploadBitsCommand(Target target, App app, IFileStore appStore) {
+	public UploadBitsCommand(Target target, App app, IFileStore appStore, String deployerPlannerId) {
 		super(target, app);
 
 		String[] bindings = {app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Upload application {0} bits (guid: {1})", bindings);
+		this.deployerPlannerId = deployerPlannerId;
 		this.appStore = appStore;
 	}
 
@@ -56,8 +61,12 @@ public class UploadBitsCommand extends AbstractCFApplicationCommand {
 		MultiServerStatus status = new MultiServerStatus();
 
 		try {
+
 			/* upload project contents */
-			File appPackage = PackageUtils.getApplicationPackage(appStore);
+			IDeploymentService deploymentService = CFActivator.getDefault().getDeploymentService();
+			IDeploymentPlanner deploymentPlanner = deploymentService.getDeploymentPlanner(deployerPlannerId);
+
+			File appPackage = deploymentPlanner.getDeploymentPackage(appStore);
 			deployedAppPackageName = PackageUtils.getApplicationPackageType(appStore);
 
 			if (appPackage == null) {
