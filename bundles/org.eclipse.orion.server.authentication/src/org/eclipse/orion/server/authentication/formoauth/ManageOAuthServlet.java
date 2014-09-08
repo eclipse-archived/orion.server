@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -24,14 +25,13 @@ import org.eclipse.orion.server.authentication.oauth.OAuthParams;
 import org.eclipse.orion.server.authentication.oauth.github.GitHubOAuthParams;
 import org.eclipse.orion.server.authentication.oauth.google.GoogleOAuthParams;
 import org.eclipse.orion.server.core.resources.Base64;
-import org.eclipse.orion.server.servlets.OrionServlet;
 
 /**
  * Methods to handles OAuth requests.
  * @author Aidan Redpath
  *
  */
-public class ManageOAuthServlet extends OrionServlet {
+public class ManageOAuthServlet extends HttpServlet {
 
 	/**
 	 * 
@@ -82,7 +82,6 @@ public class ManageOAuthServlet extends OrionServlet {
 	}
 	
 	private void handleGet(HttpServletRequest req, HttpServletResponse resp, Boolean login) throws ServletException, IOException, OAuthException {
-		traceRequest(req);
 		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
 		if (pathInfo.startsWith("/oauth")) {
 			String oauthParam = req.getParameter(OAuthHelper.OAUTH);

@@ -50,7 +50,7 @@ public class Activator implements BundleActivator {
 	public static final String PI_SERVER_SERVLETS = "org.eclipse.orion.server.servlets"; //$NON-NLS-1$
 	public static final String PROP_USER_AREA = "org.eclipse.orion.server.core.userArea"; //$NON-NLS-1$
 
-	public static final String DEFAULT_AUTHENTICATION_NAME = "FORM+OpenID"; //$NON-NLS-1$
+	public static final String DEFAULT_AUTHENTICATION_NAME = "FORM+OAuth"; //$NON-NLS-1$
 	/**
 	 * Service reference property indicating if the authentication service has been configured.
 	 */
@@ -137,7 +137,7 @@ public class Activator implements BundleActivator {
 		//lookup order is:
 		// 1: Defined preference called "orion.auth.name"
 		// 2: System property called "orion.tests.authtype"
-		// 3: Default to Form+OpenID
+		// 3: Default to Form+OAuth
 		return PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_NAME, System.getProperty("orion.tests.authtype", DEFAULT_AUTHENTICATION_NAME)); //$NON-NLS-1$
 	}
 

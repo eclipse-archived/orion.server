@@ -226,6 +226,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		String name = req.getParameter(ProtocolConstants.KEY_NAME);
 		String email = req.getParameter(UserConstants.KEY_EMAIL);
 		String password = req.getParameter(UserConstants.KEY_PASSWORD);
+		String identifier = req.getParameter("identifier");
 
 		boolean isEmailRequired = Boolean.TRUE.toString().equalsIgnoreCase(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL));
 
@@ -256,6 +257,9 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		User newUser = new User(login, name, password);
+		if (identifier != null) {
+			newUser.addProperty("oauth", identifier);
+		}
 		if (email != null && email.length() > 0) {
 			newUser.setEmail(email);
 		}

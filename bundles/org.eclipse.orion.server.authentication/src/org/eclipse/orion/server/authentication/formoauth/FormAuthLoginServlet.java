@@ -15,6 +15,7 @@ import java.io.PrintWriter;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -26,13 +27,12 @@ import org.eclipse.orion.server.authentication.formpersona.PersonaHelper;
 import org.eclipse.orion.server.authentication.oauth.OAuthException;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64;
-import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.useradmin.UnsupportedUserStoreException;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;
 
-public class FormAuthLoginServlet extends OrionServlet {
+public class FormAuthLoginServlet extends HttpServlet {
 
 	private FormAuthenticationService authenticationService;
 	private ManageOAuthServlet manageOAuthServlet;
@@ -50,7 +50,6 @@ public class FormAuthLoginServlet extends OrionServlet {
 
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		traceRequest(req);
 		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
 
 		if (pathInfo.startsWith("/form")) { //$NON-NLS-1$
@@ -135,7 +134,7 @@ public class FormAuthLoginServlet extends OrionServlet {
 			try {
 				resp.getWriter().print(FormAuthHelper.getUserJson(user, req.getContextPath()));
 			} catch (JSONException e) {
-				handleException(resp, "An error occured when creating JSON object for logged in user", e);
+				//handleException(resp, "An error occured when creating JSON object for logged in user", e, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			}
 			return;
 		}
@@ -180,7 +179,6 @@ public class FormAuthLoginServlet extends OrionServlet {
 	}
 
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		traceRequest(req);
 		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
 		if (pathInfo.startsWith("/oauth") ) { //$NON-NLS-1$
 			doPost(req, resp);
