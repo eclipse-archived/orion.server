@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.equinox.http.registry.servlets">
+      <servlet
+            alias="/help"
+            class="org.eclipse.equinox.http.servlet.HttpServiceServlet"
+            httpcontextId="org.eclipse.help.webapp.help"
+            load-on-startup="true">
+         <init-param
+               name="other.info"
+               value="org.eclipse.help">
+         </init-param>
+         <init-param
+               name="server.description"
+               value="Orion Help">
+         </init-param>
+      </servlet>
+      <serviceSelector
+            filter="(other.info=org.eclipse.orion)">
+      </serviceSelector>
+   </extension>
+
+</plugin>

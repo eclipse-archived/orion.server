@@ -26,6 +26,7 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<String> infoHandlerV1;
 	private ServletResourceHandler<String> appsHandlerV1;
 	private ServletResourceHandler<String> logsHandlerV1;
+	private ServletResourceHandler<String> loggregatorHandlerV1;
 	private ServletResourceHandler<String> orgsHandlerV1;
 	private ServletResourceHandler<String> spacesHandlerV1;
 	private ServletResourceHandler<String> routesHandlerV1;
@@ -42,6 +43,7 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 		routesHandlerV1 = new RoutesHandlerV1(statusHandler);
 		manifestsHandlerV1 = new ManifestsHandlerV1(statusHandler);
 		servicesHandlerV1 = new ServicesHandlerV1(statusHandler);
+		loggregatorHandlerV1 = new LoggregatorHandlerV1(statusHandler);
 	}
 
 	@Override
@@ -78,6 +80,8 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 			return manifestsHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(Service.RESOURCE)) {
 			return servicesHandlerV1.handleRequest(request, response, pathString);
+		} else if (infoParts[1].equals("logz")) {
+			return loggregatorHandlerV1.handleRequest(request, response, pathString);
 		}
 
 		return false;

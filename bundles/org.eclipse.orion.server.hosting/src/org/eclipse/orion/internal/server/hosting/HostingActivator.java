@@ -10,12 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.hosting;
 
-import org.eclipse.orion.server.core.IWebResourceDecorator;
-
 import java.util.Collection;
-import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
-import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.osgi.framework.*;
 
@@ -89,7 +85,7 @@ public class HostingActivator implements BundleActivator {
 		hostedStatusDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new HostedStatusDecorator(), null);
 	}
 
-	SiteHostingService getHostingService() {
+	public SiteHostingService getHostingService() {
 		return siteHostingService;
 	}
 

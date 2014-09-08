@@ -17,7 +17,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.test.performance.Performance;
 import org.eclipse.test.performance.PerformanceMeter;

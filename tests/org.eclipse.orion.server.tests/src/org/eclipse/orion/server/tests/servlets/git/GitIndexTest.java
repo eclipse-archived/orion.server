@@ -15,7 +15,7 @@ import static org.junit.Assert.assertEquals;
 import java.net.HttpURLConnection;
 
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONObject;
 import org.junit.Test;

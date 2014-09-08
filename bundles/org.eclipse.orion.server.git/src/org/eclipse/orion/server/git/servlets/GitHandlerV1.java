@@ -10,10 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.*;

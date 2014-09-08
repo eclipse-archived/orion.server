@@ -10,11 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.commands;
 
+import org.eclipse.orion.server.core.ProtocolConstants;
+
 import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.objects.Service;
 import org.eclipse.orion.server.cf.objects.Target;

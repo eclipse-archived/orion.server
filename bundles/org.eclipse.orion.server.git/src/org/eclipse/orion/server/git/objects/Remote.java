@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
+import org.eclipse.orion.server.core.ProtocolConstants;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -18,7 +20,6 @@ import java.util.Map.Entry;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jgit.lib.*;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
@@ -106,15 +107,24 @@ public class Remote extends GitObject {
 				}
 			}
 		}
-		for (Ref ref : refs) {
-			String remoteBranchName = Repository.shortenRefName(ref.getName());
-			remoteBranchName = remoteBranchName.substring((this.name + "/").length()); //$NON-NLS-1$
-			RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, this, remoteBranchName);
-			children.put(remoteBranch.toJSON());
-			if (newBranch != null && !newBranch.isEmpty() && remoteBranchName.equals(newBranch)) {
-				children = new JSONArray().put(remoteBranch.toJSON());
-				branchFound = true;
-				break;
+
+		if (newBranch != null && !newBranch.isEmpty()) {
+			for (Ref ref : refs) {
+				String remoteBranchName = Repository.shortenRefName(ref.getName());
+				remoteBranchName = remoteBranchName.substring((this.name + "/").length()); //$NON-NLS-1$
+				if (remoteBranchName.equals(newBranch)) {
+					RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, this, remoteBranchName);
+					children = new JSONArray().put(remoteBranch.toJSON());
+					branchFound = true;
+					break;
+				}
+			}
+		} else {
+			for (Ref ref : refs) {
+				String remoteBranchName = Repository.shortenRefName(ref.getName());
+				remoteBranchName = remoteBranchName.substring((this.name + "/").length()); //$NON-NLS-1$
+				RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, this, remoteBranchName);
+				children.put(remoteBranch.toJSON());
 			}
 		}
 
@@ -128,7 +138,6 @@ public class Remote extends GitObject {
 			o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(cloneLocation, "", /*short name is {remote}/{branch}*/getName() + "/" + GitUtils.encode(newBranch))); //$NON-NLS-1$
 			children.put(o);
 		}
-
 		return children;
 	}
 

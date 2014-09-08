@@ -21,10 +21,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.filesystem.*;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 
 /**
  * This class performs exports of files from the workspace to the servlet client

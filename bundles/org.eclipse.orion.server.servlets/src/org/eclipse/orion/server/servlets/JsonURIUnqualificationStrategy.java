@@ -15,7 +15,7 @@ import java.net.URISyntaxException;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.tasks.IURIUnqualificationStrategy;
 import org.json.JSONArray;
 import org.json.JSONException;

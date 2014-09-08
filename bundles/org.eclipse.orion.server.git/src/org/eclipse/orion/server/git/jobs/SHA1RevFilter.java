@@ -33,7 +33,7 @@ public class SHA1RevFilter extends RevFilter {
 
 	@Override
 	public boolean include(RevWalk walker, RevCommit cmit) throws StopWalkException, MissingObjectException, IncorrectObjectTypeException, IOException {
-		return cmit.getName().equals(sha1);
+		return cmit.getName().contains(sha1);
 	}
 
 	@Override

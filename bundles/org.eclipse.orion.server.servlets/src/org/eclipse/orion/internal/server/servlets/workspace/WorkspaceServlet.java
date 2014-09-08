@@ -12,13 +12,16 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.io.IOException;
 import java.net.URI;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.*;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.metastore.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONObject;

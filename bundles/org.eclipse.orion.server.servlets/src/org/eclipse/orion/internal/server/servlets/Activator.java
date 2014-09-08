@@ -11,13 +11,23 @@
 package org.eclipse.orion.internal.server.servlets;
 
 import java.util.Collection;
+import java.util.Dictionary;
+import java.util.Hashtable;
+import java.util.Properties;
 
-import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
+import org.eclipse.orion.server.authentication.IAuthenticationService;
+import org.eclipse.orion.server.authentication.NoneAuthenticationService;
 import org.eclipse.orion.server.core.IWebResourceDecorator;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Filter;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.util.tracker.ServiceTracker;
 
@@ -40,13 +50,20 @@ public class Activator implements BundleActivator {
 	public static final String PI_SERVER_SERVLETS = "org.eclipse.orion.server.servlets"; //$NON-NLS-1$
 	public static final String PROP_USER_AREA = "org.eclipse.orion.server.core.userArea"; //$NON-NLS-1$
 
+	public static final String DEFAULT_AUTHENTICATION_NAME = "FORM+OpenID"; //$NON-NLS-1$
+	/**
+	 * Service reference property indicating if the authentication service has been configured.
+	 */
+	static final String PROP_CONFIGURED = "configured"; //$NON-NLS-1$
+
 	static Activator singleton;
 
 	private ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> decoratorTracker;
-	private ServiceTracker<ISiteHostingService, ISiteHostingService> siteHostingTracker;
 
 	private ServiceRegistration<IWebResourceDecorator> transferDecoratorRegistration;
 	private ServiceRegistration<IWebResourceDecorator> parentDecoratorRegistration;
+
+	private AuthServiceTracker authServiceTracker;
 
 	public static Activator getDefault() {
 		return singleton;
@@ -64,23 +81,9 @@ public class Activator implements BundleActivator {
 		return decoratorTracker;
 	}
 
-	private synchronized ServiceTracker<ISiteHostingService, ISiteHostingService> getSiteHostingTracker() {
-		if (siteHostingTracker == null) {
-			siteHostingTracker = new ServiceTracker<ISiteHostingService, ISiteHostingService>(bundleContext, ISiteHostingService.class, null);
-			siteHostingTracker.open();
-		}
-		return siteHostingTracker;
-	}
-
 	public Collection<IWebResourceDecorator> getWebResourceDecorators() {
 		ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> tracker = getDecoratorTracker();
 		return tracker.getTracked().values();
-	}
-
-	public ISiteHostingService getSiteHostingService() {
-		ServiceTracker<ISiteHostingService, ISiteHostingService> tracker = getSiteHostingTracker();
-		Collection<ISiteHostingService> hostingServices = tracker.getTracked().values();
-		return hostingServices.size() == 0 ? null : hostingServices.iterator().next();
 	}
 
 	/**
@@ -97,16 +100,19 @@ public class Activator implements BundleActivator {
 		singleton = this;
 		bundleContext = context;
 		registerServices();
+		authServiceTracker = new AuthServiceTracker(context);
+		authServiceTracker.open();
 	}
 
 	public void stop(BundleContext context) throws Exception {
+		if (authServiceTracker != null) {
+			authServiceTracker.close();
+			authServiceTracker = null;
+		}
+
 		if (decoratorTracker != null) {
 			decoratorTracker.close();
 			decoratorTracker = null;
-		}
-		if (siteHostingTracker != null) {
-			siteHostingTracker.close();
-			siteHostingTracker = null;
 		}
 		unregisterServices();
 		bundleContext = null;
@@ -120,6 +126,58 @@ public class Activator implements BundleActivator {
 		if (parentDecoratorRegistration != null) {
 			parentDecoratorRegistration.unregister();
 			parentDecoratorRegistration = null;
+		}
+	}
+
+	public IAuthenticationService getAuthService() {
+		return authServiceTracker.getService();
+	}
+
+	String getAuthName() {
+		//lookup order is:
+		// 1: Defined preference called "orion.auth.name"
+		// 2: System property called "orion.tests.authtype"
+		// 3: Default to Form+OpenID
+		return PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_NAME, System.getProperty("orion.tests.authtype", DEFAULT_AUTHENTICATION_NAME)); //$NON-NLS-1$
+	}
+
+	Filter getAuthFilter() throws InvalidSyntaxException {
+		StringBuilder sb = new StringBuilder("("); //$NON-NLS-1$
+		sb.append(ServerConstants.CONFIG_AUTH_NAME);
+		sb.append('=');
+		sb.append(getAuthName());
+		sb.append(')');
+		return FrameworkUtil.createFilter(sb.toString());
+	}
+
+	private class AuthServiceTracker extends ServiceTracker<IAuthenticationService, IAuthenticationService> {
+
+		public AuthServiceTracker(BundleContext context) throws InvalidSyntaxException {
+			super(context, getAuthFilter(), null);
+			// TODO: Filters are case sensitive, we should be too
+			if (NoneAuthenticationService.AUTH_TYPE.equalsIgnoreCase(getAuthName())) {
+				Dictionary<String, String> properties = new Hashtable<String, String>();
+				properties.put(ServerConstants.CONFIG_AUTH_NAME, getAuthName());
+				// TODO: shouldn't we always register the none-auth service?
+				context.registerService(IAuthenticationService.class, new NoneAuthenticationService(), properties);
+			}
+		}
+
+		@SuppressWarnings({"rawtypes", "unchecked"})
+		@Override
+		public IAuthenticationService addingService(ServiceReference<IAuthenticationService> reference) {
+			if ("true".equals(reference.getProperty(PROP_CONFIGURED))) //$NON-NLS-1$
+				return null;
+
+			IAuthenticationService authService = super.addingService(reference);
+			Dictionary dictionary = new Properties();
+			dictionary.put(PROP_CONFIGURED, "true"); //$NON-NLS-1$
+			if (getService() != null) {
+				getService().setRegistered(false);
+			}
+			authService.setRegistered(true);
+			context.registerService(IAuthenticationService.class.getName(), authService, dictionary);
+			return authService;
 		}
 	}
 }

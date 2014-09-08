@@ -20,7 +20,6 @@ import java.util.Locale;
 import javax.servlet.http.*;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.events.IEventService;
