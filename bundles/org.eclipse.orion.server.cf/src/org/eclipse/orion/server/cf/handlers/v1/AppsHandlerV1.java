@@ -10,9 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
@@ -21,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
 import org.eclipse.orion.server.cf.jobs.CFJob;
@@ -29,8 +27,7 @@ import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.objects.*;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
-import org.eclipse.orion.server.core.IOUtilities;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -226,9 +223,16 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 							appStore = parseManifestCommand.getAppStore();
 
 							if (manifest != null) {
+
 								ManifestParseTree applications = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS);
 								if (applications.getChildren().size() > 0)
 									manifestAppName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
+
+								if (persistManifest) {
+									/* non-manifest deployment - persist at contentLocation/manifest.yml */
+									IFileStore persistLocation = appStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
+									manifest.persist(persistLocation);
+								}
 							}
 
 						}
@@ -282,12 +286,6 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						new RestartAppCommand(target, app).doIt();
 					else
 						new StartAppCommand(target, app).doIt();
-
-					if (persistManifest && manifestJSON != null) {
-						/* non-manifest deployment - persist at contentLocation/manifest.yml */
-						IFileStore persistLocation = appStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
-						manifest.persist(persistLocation);
-					}
 
 					return status;
 				} catch (Exception e) {
