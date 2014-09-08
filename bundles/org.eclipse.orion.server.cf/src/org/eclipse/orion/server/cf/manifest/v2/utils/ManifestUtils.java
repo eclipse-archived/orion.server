@@ -25,6 +25,11 @@ public class ManifestUtils {
 	private static final Pattern NON_SLUG_PATTERN = Pattern.compile("[^\\w-]"); //$NON-NLS-1$
 	private static final Pattern WHITESPACE_PATTERN = Pattern.compile("[\\s]"); //$NON-NLS-1$
 
+	/* global defaults */
+	public static final String DEFAULT_MEMORY = "512M"; //$NON-NLS-1$
+	public static final String DEFAULT_INSTANCES = "1"; //$NON-NLS-1$
+	public static final String DEFAULT_PATH = "."; //$NON-NLS-1$
+
 	public static final String[] RESERVED_PROPERTIES = {//
 	"env", // //$NON-NLS-1$
 			"inherit", // //$NON-NLS-1$
@@ -285,5 +290,46 @@ public class ManifestUtils {
 			} else
 				throw new IllegalArgumentException("Objects may contain only JSON objects, arrays or string literals.");
 		}
+	}
+
+	/**
+	 * Creates a manifest boilerplate consisting of one application with the given name.
+	 * @param applicationName
+	 * @return
+	 * @throws IllegalArgumentException
+	 * @throws JSONException
+	 * @throws IOException
+	 * @throws TokenizerException
+	 * @throws ParserException
+	 * @throws AnalyzerException
+	 */
+	public static ManifestParseTree createBoilerplate(String applicationName) throws IllegalArgumentException, JSONException, IOException, TokenizerException, ParserException, AnalyzerException {
+
+		JSONObject application = new JSONObject();
+		application.put(ManifestConstants.NAME, applicationName);
+
+		JSONArray applications = new JSONArray();
+		applications.put(application);
+
+		JSONObject manifest = new JSONObject();
+		manifest.put(ManifestConstants.APPLICATIONS, applications);
+
+		return parse(manifest);
+	}
+
+	/**
+	 * Helper method for deciding whether a manifest has multiple applications or not.
+	 * @param manifest
+	 * @return
+	 */
+	public static boolean hasMultipleApplications(ManifestParseTree manifest) {
+		if (!manifest.has(ManifestConstants.APPLICATIONS))
+			return false;
+
+		ManifestParseTree applications = manifest.getOpt(ManifestConstants.APPLICATIONS);
+		if (!applications.isList())
+			return false;
+
+		return applications.getChildren().size() > 1;
 	}
 }

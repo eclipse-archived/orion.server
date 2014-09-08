@@ -13,9 +13,11 @@ package org.eclipse.orion.server.cf;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.params.HttpClientParams;
+import org.eclipse.orion.server.cf.ds.*;
 import org.eclipse.orion.server.cf.utils.TargetRegistry;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.util.tracker.ServiceTracker;
 
 /**
  * The activator class controls the plug-in life cycle
@@ -26,11 +28,13 @@ public class CFActivator implements BundleActivator {
 	public static final String PI_CF = "org.eclipse.orion.server.cf"; //$NON-NLS-1$
 
 	// The shared instance
-	private static CFActivator plugin;
+	private static CFActivator instance;
 
 	private BundleContext bundleContext;
 
 	private TargetRegistry targetRegistry = new TargetRegistry();
+
+	private ServiceTracker<DeploymentService, IDeploymentService> serviceTracker;
 
 	/*
 	 * (non-Javadoc)
@@ -38,9 +42,15 @@ public class CFActivator implements BundleActivator {
 	 * @see
 	 * org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
 	 */
+	@Override
 	public void start(BundleContext context) throws Exception {
-		plugin = this;
-		this.bundleContext = context;
+		instance = this;
+		bundleContext = context;
+
+		/* register the deployment service tracker */
+		DeploymentServiceTracker customer = new DeploymentServiceTracker(context);
+		serviceTracker = new ServiceTracker<DeploymentService, IDeploymentService>(context, DeploymentService.class.getName(), customer);
+		serviceTracker.open();
 	}
 
 	/*
@@ -49,13 +59,16 @@ public class CFActivator implements BundleActivator {
 	 * @see
 	 * org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
 	 */
+	@Override
 	public void stop(BundleContext context) throws Exception {
-		this.bundleContext = null;
-		plugin = null;
+		bundleContext = null;
+		instance = null;
+
+		serviceTracker.close();
 	}
 
 	public static CFActivator getDefault() {
-		return plugin;
+		return instance;
 	}
 
 	public BundleContext getContext() {
@@ -64,6 +77,10 @@ public class CFActivator implements BundleActivator {
 
 	public TargetRegistry getTargetRegistry() {
 		return targetRegistry;
+	}
+
+	public IDeploymentService getDeploymentService() {
+		return serviceTracker.getService();
 	}
 
 	/**

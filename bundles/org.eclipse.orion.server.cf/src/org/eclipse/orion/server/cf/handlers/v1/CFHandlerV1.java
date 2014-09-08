@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.cf.ds.objects.Plan;
 import org.eclipse.orion.server.cf.objects.*;
 
 /**
@@ -26,12 +27,13 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<String> infoHandlerV1;
 	private ServletResourceHandler<String> appsHandlerV1;
 	private ServletResourceHandler<String> logsHandlerV1;
-	private ServletResourceHandler<String> loggregatorHandlerV1;
 	private ServletResourceHandler<String> orgsHandlerV1;
 	private ServletResourceHandler<String> spacesHandlerV1;
 	private ServletResourceHandler<String> routesHandlerV1;
 	private ServletResourceHandler<String> manifestsHandlerV1;
 	private ServletResourceHandler<String> servicesHandlerV1;
+	private ServletResourceHandler<String> plansHandlerV1;
+	private ServletResourceHandler<String> loggregatorHandlerV1;
 
 	public CFHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		targetHandlerV1 = new TargetHandlerV1(statusHandler);
@@ -43,6 +45,7 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 		routesHandlerV1 = new RoutesHandlerV1(statusHandler);
 		manifestsHandlerV1 = new ManifestsHandlerV1(statusHandler);
 		servicesHandlerV1 = new ServicesHandlerV1(statusHandler);
+		plansHandlerV1 = new PlansHandlerV1(statusHandler);
 		loggregatorHandlerV1 = new LoggregatorHandlerV1(statusHandler);
 	}
 
@@ -80,6 +83,8 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 			return manifestsHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(Service.RESOURCE)) {
 			return servicesHandlerV1.handleRequest(request, response, pathString);
+		} else if (infoParts[1].equals(Plan.RESOURCE)) {
+			return plansHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals("logz")) {
 			return loggregatorHandlerV1.handleRequest(request, response, pathString);
 		}

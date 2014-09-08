@@ -86,23 +86,23 @@ public class PackageUtils {
 		}
 	}
 
-	public static String getApplicationPackageType(IFileStore applicationStore) throws IOException, CoreException {
+	public static String getApplicationPackageType(IFileStore applicationStore) throws CoreException {
+
 		if (applicationStore == null || !applicationStore.fetchInfo().exists())
-			return "unknown";
+			return "unknown"; //$NON-NLS-1$
 
 		/* check whether the application store is a war file */
 		if (applicationStore.getName().endsWith(".war")) { //$NON-NLS-1$
-			return "war";
+			return "war"; //$NON-NLS-1$
 		}
 
 		/* check whether the application store contains a war file */
 		for (IFileStore child : applicationStore.childStores(EFS.NONE, null)) {
 			if (child.getName().endsWith(".war")) { //$NON-NLS-1$
-				return "war";
+				return "war"; //$NON-NLS-1$
 			}
 		}
 
-		/* war is not the answer, zip application contents */
-		return "zip";
+		return "zip"; //$NON-NLS-1$
 	}
 }

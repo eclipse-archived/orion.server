@@ -19,8 +19,10 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
+import org.eclipse.orion.server.cf.ds.IDeploymentService;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
@@ -170,6 +172,10 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 		int userTimeout = jsonData.optInt(CFProtocolConstants.KEY_TIMEOUT, 60);
 		final int timeout = (userTimeout > 0) ? userTimeout : 0;
 
+		/* check for deployment planners */
+		IDeploymentService deploymentService = CFActivator.getDefault().getDeploymentService();
+		final String deploymentPlannerId = jsonData.optString(CFProtocolConstants.KEY_DEPLOYMENT_PLANNER, deploymentService.getDefaultDeplomentPlanner());
+
 		/* TODO: The force shouldn't be always with us */
 		final boolean force = jsonData.optBoolean(CFProtocolConstants.KEY_FORCE, true);
 
@@ -272,7 +278,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					app.setName(appName != null ? appName : manifestAppName);
 					app.setManifest(manifest);
 
-					status = new PushAppCommand(target, app, appStore, force).doIt();
+					status = new PushAppCommand(target, app, appStore, force, deploymentPlannerId).doIt();
 					if (!status.isOK())
 						return status;
 
