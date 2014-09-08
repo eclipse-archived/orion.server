@@ -157,6 +157,10 @@
                bundle="org.eclipse.orion.client.webtools"
                path="/web">
          </resource-mapping>
+         <resource-mapping
+               bundle="org.eclipse.orion.client.doc"
+               path="/web">
+         </resource-mapping>
       </httpcontext>
       <httpcontext
             id="org.eclipse.orion.server.configurator.httpcontext.editor.components">
