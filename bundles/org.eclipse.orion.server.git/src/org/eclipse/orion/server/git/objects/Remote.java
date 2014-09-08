@@ -135,6 +135,7 @@ public class Remote extends GitObject {
 			o.put(ProtocolConstants.KEY_NAME, name.substring(Constants.R_REMOTES.length()));
 			o.put(ProtocolConstants.KEY_FULL_NAME, name);
 			o.put(ProtocolConstants.KEY_TYPE, RemoteBranch.TYPE);
+			o.put(GitConstants.KEY_URL, getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, getName(), "url" /*RemoteConfig.KEY_URL*/)); //$NON-NLS-1$
 			o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(cloneLocation, "", /*short name is {remote}/{branch}*/getName() + "/" + GitUtils.encode(newBranch))); //$NON-NLS-1$
 			children.put(o);
 		}
