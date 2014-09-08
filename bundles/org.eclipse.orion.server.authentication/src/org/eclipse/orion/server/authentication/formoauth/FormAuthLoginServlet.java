@@ -134,7 +134,7 @@ public class FormAuthLoginServlet extends HttpServlet {
 			try {
 				resp.getWriter().print(FormAuthHelper.getUserJson(user, req.getContextPath()));
 			} catch (JSONException e) {
-				//handleException(resp, "An error occured when creating JSON object for logged in user", e, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+				displayError("An error occured when creating JSON object for logged in user", req, resp);
 			}
 			return;
 		}
