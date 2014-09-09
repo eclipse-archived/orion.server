@@ -31,6 +31,8 @@ import org.apache.oltu.oauth2.common.utils.OAuthUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.events.IEventService;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
@@ -41,6 +43,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Groups methods to handle session attributes for OAuth authentication.
@@ -316,5 +320,29 @@ public class OAuthHelper {
 			}
 		}
 		return eventService;
+	}
+
+	/**
+	 * Returns the string representation of the request  to use for the redirect (the URL
+	 * to return to after oauth login completes). The returned URL will include the host and
+	 * path, but no query parameters. If this server has not been configured with a different
+	 * authentication host, then the server that received this request is considered to
+	 * be the authentication server.
+	 */
+	static StringBuffer getAuthServerRequest(HttpServletRequest req) {
+		//use authentication host for redirect because we may be sitting behind a proxy
+		String hostPref = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_HOST, null);
+		//assume non-proxy direct server connection if no auth host defined
+		if (hostPref == null)
+			return req.getRequestURL();
+		StringBuffer result = new StringBuffer(hostPref);
+		result.append(req.getServletPath());
+		if (req.getPathInfo() != null)
+			result.append(req.getPathInfo());
+
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.oauth"); //$NON-NLS-1$
+		if (logger.isInfoEnabled())
+			logger.info("Auth server redirect: " + result.toString()); //$NON-NLS-1$
+		return result;
 	}
 }

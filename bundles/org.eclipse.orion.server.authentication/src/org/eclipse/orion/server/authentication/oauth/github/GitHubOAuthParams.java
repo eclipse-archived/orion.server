@@ -20,8 +20,6 @@ import org.eclipse.orion.server.authentication.oauth.OAuthException;
 import org.eclipse.orion.server.authentication.oauth.OAuthParams;
 import org.eclipse.orion.server.authentication.oauth.OAuthTokenResponse;
 import org.eclipse.orion.server.core.PreferenceHelper;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * GitHub specific OAuthParams containing all information related to GitHub
@@ -32,12 +30,6 @@ import org.json.JSONObject;
 public class GitHubOAuthParams extends OAuthParams {
 
 	private static final OAuthProviderType PROVIDER_TYPE = OAuthProviderType.GITHUB;
-
-	private static final String GITHUB = "GitHub";
-
-	private static final String REDIRECT_URI_LOGIN = "/login/oauth";
-
-	private static final String REDIRECT_URI_LINK = "/mixlogin/manageoauth/oauth";
 
 	private static final String RESPONSE_TYPE = "code";
 
@@ -75,10 +67,6 @@ public class GitHubOAuthParams extends OAuthParams {
 			client_secret = PreferenceHelper.getString(CLIENT_SECRET);
 		}
 		return client_secret;
-	}
-
-	public String getRedirectURI() {
-		return currentURL.toString() + (login ? REDIRECT_URI_LOGIN : REDIRECT_URI_LINK);
 	}
 
 	public String getResponseType() {
