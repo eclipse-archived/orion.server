@@ -24,8 +24,6 @@ import org.eclipse.orion.server.authentication.oauth.OAuthException;
 import org.eclipse.orion.server.authentication.oauth.OAuthParams;
 import org.eclipse.orion.server.authentication.oauth.OAuthTokenResponse;
 import org.eclipse.orion.server.core.PreferenceHelper;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 /**
  * Google specific OAuthParams containing all information related to google
@@ -36,12 +34,6 @@ import org.json.JSONObject;
 public class GoogleOAuthParams extends OAuthParams {
 
 	private static final OAuthProviderType PROVIDER_TYPE = OAuthProviderType.GOOGLE;
-
-	private static final String GOOGLE = "Google";
-
-	private static final String REDIRECT_URI_LOGIN = "/login/oauth";
-
-	private static final String REDIRECT_URI_LINK = "/mixlogin/manageoauth/oauth";
 
 	private static final String RESPONSE_TYPE = "code";
 
@@ -82,10 +74,6 @@ public class GoogleOAuthParams extends OAuthParams {
 		return client_secret;
 	}
 
-	public String getRedirectURI() {
-		return currentURL.toString() + (login ? REDIRECT_URI_LOGIN : REDIRECT_URI_LINK);
-	}
-
 	public String getResponseType() {
 		return RESPONSE_TYPE;
 	}
@@ -108,6 +96,7 @@ public class GoogleOAuthParams extends OAuthParams {
 
 	public void addAdditionsParams(AuthenticationRequestBuilder requestBuiler) throws OAuthException {
 		try {
+			URL currentURL = getCurrentURL();
 			// Add realm for openId 2.0 migration
 			String realm = new URL(currentURL.getProtocol(), currentURL.getHost(), currentURL.getPort(), "").toString();
 			requestBuiler.setParameter(OPEN_ID_PARAMETER, realm);
