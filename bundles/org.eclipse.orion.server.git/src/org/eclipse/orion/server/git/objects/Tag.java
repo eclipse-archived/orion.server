@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -19,6 +17,7 @@ import java.util.Comparator;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.*;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
@@ -36,6 +35,7 @@ public class Tag extends GitObject {
 		LIGHTWEIGHT, ANNOTATED;
 
 		public static TagType valueOf(Tag t) {
+			t.parseTag();
 			if (t.tag != null)
 				return ANNOTATED;
 			else if (t.ref != null)
@@ -70,21 +70,11 @@ public class Tag extends GitObject {
 	private Ref ref;
 	private URI tagLocation;
 	private URI commitLocation;
+	private RevCommit commit;
 
 	public Tag(URI cloneLocation, Repository db, Ref ref) throws IOException, CoreException {
 		super(cloneLocation, db);
-
-		RevWalk rw = new RevWalk(db);
-		RevObject any;
-		try {
-			any = rw.parseAny(db.resolve(ref.getName()));
-		} finally {
-			rw.dispose();
-		}
-		if (any instanceof RevTag)
-			this.tag = (RevTag) any;
-		else
-			this.ref = ref;
+		this.ref = ref;
 	}
 
 	@Override
@@ -105,6 +95,31 @@ public class Tag extends GitObject {
 	@PropertyDescription(name = ProtocolConstants.KEY_FULL_NAME)
 	private String getFullName() {
 		return getName(true, false);
+	}
+
+	private RevTag parseTag() {
+		parseCommit();
+		return this.tag;
+	}
+
+	private RevCommit parseCommit() {
+		if (this.commit == null) {
+			RevWalk rw = new RevWalk(db);
+			RevObject any;
+			try {
+				any = rw.parseAny(this.ref.getObjectId());
+				if (any instanceof RevTag) {
+					this.tag = (RevTag) any;
+					this.commit = (RevCommit) rw.peel(any);
+				} else if (any instanceof RevCommit) {
+					this.commit = (RevCommit) any;
+				}
+			} catch (IOException e) {
+			} finally {
+				rw.dispose();
+			}
+		}
+		return commit;
 	}
 
 	public JSONObject toJSON(JSONObject log) throws JSONException, URISyntaxException, IOException, CoreException {
@@ -167,30 +182,6 @@ public class Tag extends GitObject {
 		if (c != null)
 			return (long) c.getCommitTime() * 1000;
 		return 0;
-	}
-
-	private ObjectId getObjectId() {
-		if (tag != null)
-			return tag.toObjectId();
-		else if (ref != null)
-			return ref.getObjectId();
-		else
-			return null;
-	}
-
-	private RevCommit parseCommit() {
-		ObjectId oid = getObjectId();
-		if (oid == null)
-			return null;
-		RevWalk walk = new RevWalk(db);
-		try {
-			return walk.parseCommit(oid);
-		} catch (IOException e) {
-			// ignore and return null
-		} finally {
-			walk.release();
-		}
-		return null;
 	}
 
 	public String getRevCommitName() {
