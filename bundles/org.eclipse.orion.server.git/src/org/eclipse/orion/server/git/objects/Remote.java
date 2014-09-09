@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -20,6 +18,7 @@ import java.util.Map.Entry;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jgit.lib.*;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
@@ -113,7 +112,7 @@ public class Remote extends GitObject {
 				String remoteBranchName = Repository.shortenRefName(ref.getName());
 				remoteBranchName = remoteBranchName.substring((this.name + "/").length()); //$NON-NLS-1$
 				if (remoteBranchName.equals(newBranch)) {
-					RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, this, remoteBranchName);
+					RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, this, remoteBranchName, ref);
 					children = new JSONArray().put(remoteBranch.toJSON());
 					branchFound = true;
 					break;
@@ -123,7 +122,7 @@ public class Remote extends GitObject {
 			for (Ref ref : refs) {
 				String remoteBranchName = Repository.shortenRefName(ref.getName());
 				remoteBranchName = remoteBranchName.substring((this.name + "/").length()); //$NON-NLS-1$
-				RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, this, remoteBranchName);
+				RemoteBranch remoteBranch = new RemoteBranch(cloneLocation, db, this, remoteBranchName, ref);
 				children.put(remoteBranch.toJSON());
 			}
 		}

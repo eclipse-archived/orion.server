@@ -10,14 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
 import org.eclipse.core.runtime.*;
 import org.eclipse.jgit.lib.*;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
@@ -59,6 +58,13 @@ public class RemoteBranch extends GitObject {
 		this.remote = remote;
 		this.name = name;
 		this.ref = findRef();
+	}
+
+	public RemoteBranch(URI cloneLocation, Repository db, Remote remote, String name, Ref ref) {
+		super(cloneLocation, db);
+		this.remote = remote;
+		this.name = name;
+		this.ref = ref;
 	}
 
 	private Ref findRef() {
