@@ -10,15 +10,14 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.ds;
 
-import java.io.*;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.cf.ds.objects.Plan;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
-import org.eclipse.orion.server.cf.utils.PackageUtils;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.osgi.util.NLS;
 import org.json.*;
@@ -130,10 +129,5 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 			logger.error(msg, ex);
 			return null;
 		}
-	}
-
-	@Override
-	public File getDeploymentPackage(IFileStore contentLocation) throws IOException, CoreException {
-		return PackageUtils.getApplicationPackage(contentLocation);
 	}
 }

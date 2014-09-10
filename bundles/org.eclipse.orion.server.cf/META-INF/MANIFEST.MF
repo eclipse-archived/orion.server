@@ -30,8 +30,8 @@ Export-Package: org.eclipse.orion.server.cf;x-internal:=true,
  org.eclipse.orion.server.cf.objects;x-internal:=true,
  org.eclipse.orion.server.cf.servlets;x-friends:="org.eclipse.orion.server.configurator",
  org.eclipse.orion.server.cf.utils;x-internal:=true
-Service-Component: OSGI-INF/auth-component.xml,OSGI-INF/generic-dp-component.xml,OSGI-INF/nodejs-dp-component.xml,
- OSGI-INF/ds-component.xml
+Service-Component: OSGI-INF/auth-component.xml,OSGI-INF/generic-dp-component.xml,OSGI-INF/nodejs-dp-component.xml,OSGI-INF/ds-component.xml,
+ OSGI-INF/generic-dpck-component.xml
 Bundle-ClassPath: jetty9/javax-websocket-client-impl-9.1.0.v20131115.jar,
  jetty9/javax.websocket-api-1.0.jar,
  jetty9/jetty-io-9.1.0.v20131115.jar,

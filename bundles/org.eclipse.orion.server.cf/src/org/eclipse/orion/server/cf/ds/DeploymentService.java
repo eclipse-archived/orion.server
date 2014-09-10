@@ -19,22 +19,37 @@ import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 public final class DeploymentService implements IDeploymentService {
 
 	private List<IDeploymentPlanner> planners;
+	private List<IDeploymentPackager> packagers;
 
-	protected synchronized void bind(IDeploymentPlanner planner) {
+	protected synchronized void bindPlanner(IDeploymentPlanner planner) {
 		planners.add(planner);
 	}
 
-	protected synchronized void unbind(IDeploymentPlanner planner) {
+	protected synchronized void unbindPlanner(IDeploymentPlanner planner) {
 		planners.remove(planner);
+	}
+
+	protected synchronized void bindPackager(IDeploymentPackager packager) {
+		packagers.add(packager);
+	}
+
+	protected synchronized void unbindPackager(IDeploymentPackager packager) {
+		packagers.remove(packager);
 	}
 
 	public DeploymentService() {
 		planners = new ArrayList<IDeploymentPlanner>();
+		packagers = new ArrayList<IDeploymentPackager>();
 	}
 
 	@Override
-	public String getDefaultDeplomentPlanner() {
+	public String getDefaultDeplomentPlannerId() {
 		return GenericDeploymentPlanner.class.getSimpleName();
+	}
+
+	@Override
+	public IDeploymentPlanner getDefaultDeplomentPlanner() {
+		return getDeploymentPlanner(getDefaultDeplomentPlannerId());
 	}
 
 	@Override
@@ -59,5 +74,27 @@ public final class DeploymentService implements IDeploymentService {
 		}
 
 		return plans;
+	}
+
+	@Override
+	public String getDefaultDeplomentPackagerId() {
+		return GenericDeploymentPackager.class.getSimpleName();
+	}
+
+	@Override
+	public IDeploymentPackager getDefaultDeplomentPackager() {
+		return getDeploymentPackager(getDefaultDeplomentPackagerId());
+	}
+
+	@Override
+	public IDeploymentPackager getDeploymentPackager(String id) {
+		if (id == null)
+			return null;
+
+		for (IDeploymentPackager packager : packagers)
+			if (id.equals(packager.getId()))
+				return packager;
+
+		return null;
 	}
 }

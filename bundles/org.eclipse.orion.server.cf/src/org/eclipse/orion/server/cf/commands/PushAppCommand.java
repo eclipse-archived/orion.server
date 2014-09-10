@@ -14,7 +14,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
@@ -34,7 +33,6 @@ public class PushAppCommand extends AbstractCFCommand {
 	private App app;
 	private boolean reset;
 	private IFileStore appStore;
-	private String deploymentPlannerId;
 	private String commandName;
 
 	public PushAppCommand(Target target, App app, IFileStore appStore, boolean reset) {
@@ -43,16 +41,6 @@ public class PushAppCommand extends AbstractCFCommand {
 		this.app = app;
 		this.appStore = appStore;
 		this.reset = reset;
-		this.deploymentPlannerId = CFActivator.getDefault().getDeploymentService().getDefaultDeplomentPlanner();
-	}
-
-	public PushAppCommand(Target target, App app, IFileStore appStore, boolean reset, String deploymentPlannerId) {
-		super(target);
-		this.commandName = "Push application"; //$NON-NLS-1$
-		this.app = app;
-		this.appStore = appStore;
-		this.reset = reset;
-		this.deploymentPlannerId = deploymentPlannerId;
 	}
 
 	@Override
@@ -89,7 +77,7 @@ public class PushAppCommand extends AbstractCFCommand {
 				return status;
 
 			/* upload application contents */
-			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, appStore, deploymentPlannerId);
+			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, appStore);
 			multijobStatus = (ServerStatus) uploadBits.doIt(); /* FIXME: unsafe type cast */
 			status.add(multijobStatus);
 			if (!multijobStatus.isOK())

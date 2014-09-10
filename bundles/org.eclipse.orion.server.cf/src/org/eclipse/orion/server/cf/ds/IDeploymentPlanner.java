@@ -10,10 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.ds;
 
-import java.io.File;
-import java.io.IOException;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.cf.ds.objects.Plan;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 
@@ -22,7 +19,5 @@ public interface IDeploymentPlanner {
 	public String getId();
 
 	public Plan getDeploymentPlan(IFileStore contentLocation, ManifestParseTree manifest);
-
-	public File getDeploymentPackage(IFileStore contentLocation) throws IOException, CoreException;
 
 }

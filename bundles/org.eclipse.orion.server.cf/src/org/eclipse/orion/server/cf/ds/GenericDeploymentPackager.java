@@ -10,24 +10,22 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.ds;
 
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.orion.server.cf.ds.objects.Plan;
-import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.server.cf.utils.PackageUtils;
 
-public interface IDeploymentService {
+public class GenericDeploymentPackager implements IDeploymentPackager {
 
-	public String getDefaultDeplomentPlannerId();
+	@Override
+	public String getId() {
+		return getClass().getSimpleName();
+	}
 
-	public IDeploymentPlanner getDefaultDeplomentPlanner();
+	@Override
+	public File getDeploymentPackage(IFileStore contentLocation) throws IOException, CoreException {
+		return PackageUtils.getApplicationPackage(contentLocation);
+	}
 
-	public IDeploymentPlanner getDeploymentPlanner(String id);
-
-	public List<Plan> getDeploymentPlans(IFileStore contentLocation, ManifestParseTree manifest);
-
-	public String getDefaultDeplomentPackagerId();
-
-	public IDeploymentPackager getDefaultDeplomentPackager();
-
-	public IDeploymentPackager getDeploymentPackager(String id);
 }

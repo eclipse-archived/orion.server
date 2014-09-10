@@ -10,15 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.ds;
 
-import java.io.File;
-import java.io.IOException;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.cf.ds.objects.Plan;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
-import org.eclipse.orion.server.cf.utils.PackageUtils;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,10 +57,5 @@ public final class GenericDeploymentPlanner implements IDeploymentPlanner {
 			logger.error(msg, ex);
 			return null;
 		}
-	}
-
-	@Override
-	public File getDeploymentPackage(IFileStore contentLocation) throws IOException, CoreException {
-		return PackageUtils.getApplicationPackage(contentLocation);
 	}
 }
