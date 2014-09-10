@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.jobs;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -26,6 +24,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
@@ -122,7 +121,7 @@ public class RemoteDetailsJob extends GitJob {
 							for (int i = 0; i < children.length(); i++) {
 								JSONObject test = (JSONObject) children.get(i);
 								String name = (String) test.get("Name");
-								if (name.contains(nameFilter)) {
+								if (name.toLowerCase().contains(nameFilter.toLowerCase())) {
 									filteredChildren.put(test);
 								}
 							}

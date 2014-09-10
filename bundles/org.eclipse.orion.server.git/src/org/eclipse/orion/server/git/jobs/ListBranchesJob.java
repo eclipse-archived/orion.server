@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.jobs;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -26,6 +24,7 @@ import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
@@ -115,7 +114,7 @@ public class ListBranchesJob extends GitJob {
 			for (Ref ref : branchRefs) {
 				if (nameFilter != null && !nameFilter.equals("")) {
 					String shortName = Repository.shortenRefName(ref.getName());
-					if (shortName.contains(nameFilter)) {
+					if (shortName.toLowerCase().contains(nameFilter.toLowerCase())) {
 						branches.add(new Branch(cloneLocation, db, ref));
 					}
 				} else {
