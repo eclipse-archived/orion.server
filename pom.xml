@@ -270,7 +270,6 @@
 		<module>bundles/org.eclipse.orion.server.git</module>
 		<module>bundles/org.eclipse.orion.server.cf</module>
 		<module>bundles/org.eclipse.orion.server.docker</module>
-		<module>bundles/org.eclipse.orion.server.help</module>
 		<module>bundles/org.eclipse.orion.server.jetty</module>
 		<module>bundles/org.eclipse.orion.server.jettycustomizer</module>
 		<module>bundles/org.eclipse.orion.server.logs</module>
@@ -289,7 +288,6 @@
 		<module>features/org.eclipse.orion.server-feature</module>
 		<module>features/org.eclipse.orion.server.authentication-feature</module>
 		<module>features/org.eclipse.orion.server.jetty-feature</module>
-		<module>features/org.eclipse.orion.server.help-feature</module>
 		<module>features/org.eclipse.orion.server.hosting-feature</module>
 		<module>features/org.eclipse.orion.server.search-feature</module>
 		<module>features/org.eclipse.orion.server.ui-feature</module>
