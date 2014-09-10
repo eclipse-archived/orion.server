@@ -30,6 +30,7 @@ import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.utils.OAuthUtils;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.authentication.Activator;
+import org.eclipse.orion.server.authentication.form.FormAuthHelper;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
@@ -155,6 +156,9 @@ public class OAuthHelper {
 		String redirect = oauthConsumer.getRedirect();
 		User user = getUser(oauthConsumer);
 		if (user == null) {
+			 if(!FormAuthHelper.canAddUsers()){
+				 throw new OAuthException("There is no Orion account associated with this Id. Please register or contact your system administrator for assistance.");
+			 }
 			String url = "/mixloginstatic/LoginWindow.html";
 			url += "?oauth=create&email=" + oauthConsumer.getEmail();
 			url += "&username=" + oauthConsumer.getUsername();
