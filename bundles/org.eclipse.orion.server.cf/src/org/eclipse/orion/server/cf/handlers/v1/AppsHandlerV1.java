@@ -215,6 +215,12 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 								ManifestParseTree applications = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS);
 								if (applications.getChildren().size() > 0)
 									manifestAppName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
+
+								if (persistManifest) {
+									/* non-manifest deployment - persist at contentLocation/manifest.yml */
+									IFileStore persistLocation = appStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
+									manifest.persist(persistLocation);
+								}
 							}
 
 						} else {
@@ -229,16 +235,9 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 							appStore = parseManifestCommand.getAppStore();
 
 							if (manifest != null) {
-
 								ManifestParseTree applications = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS);
 								if (applications.getChildren().size() > 0)
 									manifestAppName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
-
-								if (persistManifest) {
-									/* non-manifest deployment - persist at contentLocation/manifest.yml */
-									IFileStore persistLocation = appStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
-									manifest.persist(persistLocation);
-								}
 							}
 
 						}
