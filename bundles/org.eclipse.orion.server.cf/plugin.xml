@@ -25,14 +25,14 @@
    <extension
          point="org.eclipse.equinox.http.registry.httpcontexts">
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.cf">
+            id="org.eclipse.orion.server.httpcontext.cf">
          <resource-mapping
                bundle="org.eclipse.orion.client.cf"
                path="/web/cfui">
          </resource-mapping>
       </httpcontext>
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.cf.components">
+            id="org.eclipse.orion.server.httpcontext.cf.components">
          <resource-mapping
                bundle="org.eclipse.orion.client.cf"
                path="/web/orion/cfui">
@@ -43,11 +43,11 @@
          point="org.eclipse.equinox.http.registry.resources">
       <resource
             alias="/cfui"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.cf">
+            httpcontextId="org.eclipse.orion.server.httpcontext.cf">
       </resource>
       <resource
             alias="/orion/cfui"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.cf.components">
+            httpcontextId="org.eclipse.orion.server.httpcontext.cf.components">
       </resource>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">

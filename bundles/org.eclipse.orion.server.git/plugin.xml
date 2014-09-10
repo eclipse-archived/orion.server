@@ -24,14 +24,14 @@
    <extension
          point="org.eclipse.equinox.http.registry.httpcontexts">
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.git">
+            id="org.eclipse.orion.server.httpcontext.git">
          <resource-mapping
                bundle="org.eclipse.orion.client.git"
                path="/web/git">
          </resource-mapping>
       </httpcontext>      
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.git.components">
+            id="org.eclipse.orion.server.httpcontext.git.components">
          <resource-mapping
                bundle="org.eclipse.orion.client.git"
                path="/web/orion/git">
@@ -42,11 +42,11 @@
          point="org.eclipse.equinox.http.registry.resources">
       <resource
             alias="/git"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.git">
+            httpcontextId="org.eclipse.orion.server.httpcontext.git">
       </resource>
       <resource
             alias="/orion/git"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.git.components">
+            httpcontextId="org.eclipse.orion.server.httpcontext.git.components">
       </resource>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">

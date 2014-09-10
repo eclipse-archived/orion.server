@@ -11,7 +11,7 @@
       <servlet
             alias="/hosted"
             class="org.eclipse.orion.server.hosting.HostedSiteServlet"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.site">
+            httpcontextId="org.eclipse.orion.server.httpcontext.site">
       </servlet>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
@@ -34,7 +34,7 @@
    <extension
          point="org.eclipse.equinox.http.registry.httpcontexts">
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.site">
+            id="org.eclipse.orion.server.httpcontext.site">
          <mime-mapping
                extension="webapp"
                mime-type="application/x-web-app-manifest+json">

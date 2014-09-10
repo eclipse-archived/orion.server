@@ -28,7 +28,7 @@ Export-Package: org.eclipse.orion.server.cf;x-internal:=true,
  org.eclipse.orion.server.cf.manifest.v2,
  org.eclipse.orion.server.cf.manifest.v2.utils,
  org.eclipse.orion.server.cf.objects;x-internal:=true,
- org.eclipse.orion.server.cf.servlets;x-friends:="org.eclipse.orion.server.configurator",
+ org.eclipse.orion.server.cf.servlets,
  org.eclipse.orion.server.cf.utils;x-internal:=true
 Service-Component: OSGI-INF/auth-component.xml,OSGI-INF/generic-dp-component.xml,OSGI-INF/nodejs-dp-component.xml,OSGI-INF/ds-component.xml,
  OSGI-INF/generic-dpck-component.xml

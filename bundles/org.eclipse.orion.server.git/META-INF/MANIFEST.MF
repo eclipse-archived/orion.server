@@ -21,7 +21,7 @@ Bundle-Vendor: %Bundle-Vendor
 Export-Package: org.eclipse.orion.server.git;x-friends:="org.eclipse.orion.server.tests",
  org.eclipse.orion.server.git.jobs;x-internal:=true,
  org.eclipse.orion.server.git.objects;x-friends:="org.eclipse.orion.server.tests",
- org.eclipse.orion.server.git.servlets;x-friends:="org.eclipse.orion.server.configurator,org.eclipse.orion.server.tests",
+ org.eclipse.orion.server.git.servlets;x-friends:="org.eclipse.orion.server.tests",
  org.eclipse.orion.server.jsch;x-internal:=true
 Bundle-Localization: bundle
 Import-Package: javax.servlet;version="2.5.0",

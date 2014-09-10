@@ -6,7 +6,7 @@
       <servlet
             alias="/filesearch"
             class="org.eclipse.orion.internal.server.search.SearchServlet"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.search">
+            httpcontextId="org.eclipse.orion.server.httpcontext.search">
       </servlet>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
@@ -25,7 +25,7 @@
    <extension
          point="org.eclipse.equinox.http.registry.httpcontexts">
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.search">
+            id="org.eclipse.orion.server.httpcontext.search">
          <resource-mapping
                bundle="org.eclipse.orion.server.search"
                path="/">

@@ -140,7 +140,7 @@
    <extension
          point="org.eclipse.equinox.http.registry.httpcontexts">
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.webide">
+            id="org.eclipse.orion.server.httpcontext.webide">
          <resource-mapping
                bundle="org.eclipse.orion.client.core"
                path="/web">
@@ -167,56 +167,56 @@
          </resource-mapping>
       </httpcontext>
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.editor.components">
+            id="org.eclipse.orion.server.httpcontext.editor.components">
          <resource-mapping
                bundle="org.eclipse.orion.client.editor"
                path="/web/orion/editor">
          </resource-mapping>
       </httpcontext>
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.editor.examples">
+            id="org.eclipse.orion.server.httpcontext.editor.examples">
          <resource-mapping
                bundle="org.eclipse.orion.client.editor"
                path="/web/examples/editor">
          </resource-mapping>
       </httpcontext>
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.textview.components">
+            id="org.eclipse.orion.server.httpcontext.textview.components">
          <resource-mapping
                bundle="org.eclipse.orion.client.editor"
                path="/web/orion/textview">
          </resource-mapping>
       </httpcontext>
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.editor.tests">
+            id="org.eclipse.orion.server.httpcontext.editor.tests">
          <resource-mapping
                bundle="org.eclipse.orion.client.editor"
                path="/web/js-tests/editor">
          </resource-mapping>
       </httpcontext>
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.textview.examples">
+            id="org.eclipse.orion.server.httpcontext.textview.examples">
          <resource-mapping
                bundle="org.eclipse.orion.client.editor"
                path="/web/examples/textview">
          </resource-mapping>
       </httpcontext>
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.textview.tests">
+            id="org.eclipse.orion.server.httpcontext.textview.tests">
          <resource-mapping
                bundle="org.eclipse.orion.client.editor"
                path="/web/js-tests/textview">
          </resource-mapping>
       </httpcontext>
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.userprofile">
+            id="org.eclipse.orion.server.httpcontext.userprofile">
          <resource-mapping
                bundle="org.eclipse.orion.client.users"
                path="/web/profile">
          </resource-mapping>
       </httpcontext>
       <httpcontext
-            id="org.eclipse.orion.server.configurator.httpcontext.userprofile.components">
+            id="org.eclipse.orion.server.httpcontext.userprofile.components">
          <resource-mapping
                bundle="org.eclipse.orion.client.users"
                path="/web/orion/profile">
@@ -227,39 +227,39 @@
          point="org.eclipse.equinox.http.registry.resources">
       <resource
             alias="/"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.webide">
+            httpcontextId="org.eclipse.orion.server.httpcontext.webide">
       </resource>
       <resource
             alias="/orion/editor"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.editor.components">
+            httpcontextId="org.eclipse.orion.server.httpcontext.editor.components">
       </resource>
       <resource
             alias="/examples/editor"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.editor.examples">
+            httpcontextId="org.eclipse.orion.server.httpcontext.editor.examples">
       </resource>
       <resource
             alias="/js-tests/editor"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.editor.tests">
+            httpcontextId="org.eclipse.orion.server.httpcontext.editor.tests">
       </resource>
       <resource
             alias="/orion/textview"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.textview.components">
+            httpcontextId="org.eclipse.orion.server.httpcontext.textview.components">
       </resource>
       <resource
             alias="/examples/textview"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.textview.examples">
+            httpcontextId="org.eclipse.orion.server.httpcontext.textview.examples">
       </resource>
       <resource
             alias="/js-tests/textview"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.textview.tests">
+            httpcontextId="org.eclipse.orion.server.httpcontext.textview.tests">
       </resource>
       <resource
             alias="/profile"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.userprofile">
+            httpcontextId="org.eclipse.orion.server.httpcontext.userprofile">
       </resource>
       <resource
             alias="/orion/profile"
-            httpcontextId="org.eclipse.orion.server.configurator.httpcontext.userprofile.components">
+            httpcontextId="org.eclipse.orion.server.httpcontext.userprofile.components">
       </resource>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
