@@ -42,6 +42,10 @@
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
       </serviceSelector>
+      <servlet
+            alias="/about"
+            class="org.eclipse.orion.internal.server.servlets.about.AboutServlet">
+      </servlet>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.filters">
