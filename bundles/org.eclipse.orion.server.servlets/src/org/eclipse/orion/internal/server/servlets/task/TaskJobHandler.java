@@ -128,12 +128,11 @@ public class TaskJobHandler {
 		}
 		if (result instanceof ServerStatus) {
 			ServerStatus status = (ServerStatus) result;
-			OrionServlet.writeJSONResponse(request, response, status.getJsonData(), strategy);
+			OrionServlet.writeJSONResponse(request, response, status.getJsonData() == null ? status.toJSON() : status.getJsonData(), strategy);
 			return true;
 		} else {
 			OrionServlet.writeJSONResponse(request, response, job.getFinalResult(), strategy);
 			return true;
 		}
 	}
-
 }
