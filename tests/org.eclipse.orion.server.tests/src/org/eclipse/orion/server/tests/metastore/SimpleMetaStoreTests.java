@@ -1504,8 +1504,8 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		assertTrue(SimpleMetaStoreUtil.createMetaUserFolder(rootLocation, baduser));
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, baduser);
 		String corruptedUserJson = "{\n\"FullName\": \"Administrator\",\n\"OrionVersion\": 4,";
-		File newFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, SimpleMetaStore.USER);
-		FileWriter fileWriter = new FileWriter(newFile);
+		File corruptedUserFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, SimpleMetaStore.USER);
+		FileWriter fileWriter = new FileWriter(corruptedUserFile);
 		fileWriter.write(corruptedUserJson);
 		fileWriter.write("\n");
 		fileWriter.flush();
@@ -1514,6 +1514,10 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		// read the user, should return null as the user is corrupted on disk
 		UserInfo readUserInfo = metaStore.readUser(baduser);
 		assertNull(readUserInfo);
+
+		// make sure we delete the corruptedUserFile afterwards or we break the indexer
+		corruptedUserFile.delete();
+		assertFalse(corruptedUserFile.exists());
 	}
 
 	@Test
