@@ -25,7 +25,12 @@ public final class GenericDeploymentPlanner implements IDeploymentPlanner {
 
 	@Override
 	public String getId() {
-		return getClass().getSimpleName();
+		return "org.eclipse.orion.server.cf.generic"; //$NON-NLS-1$
+	}
+
+	@Override
+	public String getWidgetId() {
+		return "org.eclipse.orion.client.cf.wizard.generic"; //$NON-NLS-1$
 	}
 
 	private String getApplicationName(IFileStore contentLocation) {
@@ -36,7 +41,7 @@ public final class GenericDeploymentPlanner implements IDeploymentPlanner {
 	public Plan getDeploymentPlan(IFileStore contentLocation, ManifestParseTree manifest) {
 
 		if (manifest != null)
-			return new Plan(getId(), TYPE, manifest);
+			return new Plan(getId(), getWidgetId(), TYPE, manifest);
 
 		try {
 
@@ -49,7 +54,7 @@ public final class GenericDeploymentPlanner implements IDeploymentPlanner {
 			application.put(ManifestConstants.MEMORY, ManifestUtils.DEFAULT_MEMORY);
 			application.put(ManifestConstants.INSTANCES, ManifestUtils.DEFAULT_INSTANCES);
 			application.put(ManifestConstants.PATH, ManifestUtils.DEFAULT_PATH);
-			return new Plan(getId(), TYPE, manifest);
+			return new Plan(getId(), getWidgetId(), TYPE, manifest);
 
 		} catch (Exception ex) {
 			/* Nobody expected the Spanish inquisition */

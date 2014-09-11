@@ -41,7 +41,6 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(Suite.class)
 @SuiteClasses({AdvancedFilesTest.class, //
 		AllCFTests.class,//
-		AllGitTests.class, //
 		AllSiteTests.class, //
 		AllTaskTests.class, //
 		Base64Test.class, //
@@ -61,7 +60,8 @@ import org.junit.runners.Suite.SuiteClasses;
 		TransferTest.class, //
 		UserInfoTests.class, //
 		WorkspaceInfoTests.class, //
-		WorkspaceServiceTest.class //
+		WorkspaceServiceTest.class, //
+		AllGitTests.class, //
 })
 public class AllServerTests {
 	//goofy junit4, no class body needed

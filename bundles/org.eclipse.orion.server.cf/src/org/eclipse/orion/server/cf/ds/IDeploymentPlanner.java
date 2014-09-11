@@ -18,6 +18,8 @@ public interface IDeploymentPlanner {
 
 	public String getId();
 
+	public String getWidgetId();
+
 	public Plan getDeploymentPlan(IFileStore contentLocation, ManifestParseTree manifest);
 
 }

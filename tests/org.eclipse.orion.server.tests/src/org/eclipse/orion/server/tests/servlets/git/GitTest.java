@@ -67,7 +67,6 @@ import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
-import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitConstants;
@@ -342,16 +341,8 @@ public abstract class GitTest extends FileSystemTest {
 		assertNotNull(workspace);
 		ProjectInfo wp = metaStore.readProject(workspace.getUniqueId(), path.segment(2));
 		assertNotNull(wp);
-		// find the userId for user name "test"
-		List<String> users = metaStore.readAllUsers();
-		String userId = null;
-		for (String id : users) {
-			UserInfo userInfo = metaStore.readUser(id);
-			if (userInfo.getUserName().equals("test")) {
-				userId = userInfo.getUniqueId();
-				break;
-			}
-		}
+		String userId = workspace.getUserId();
+		assertNotNull(userId);
 		IFileStore fsStore = getProjectStore(wp, userId);
 		fsStore = fsStore.getFileStore(path.removeFirstSegments(3));
 

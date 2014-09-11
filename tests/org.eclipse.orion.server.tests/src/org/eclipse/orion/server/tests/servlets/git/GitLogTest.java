@@ -32,6 +32,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Assume;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.meterware.httpunit.PostMethodWebRequest;
@@ -126,6 +127,7 @@ public class GitLogTest extends GitTest {
 		}
 	}
 
+	@Ignore("Bug 443416")
 	@Test
 	public void testLogOrionServerLinked() throws Exception {
 		File orionServer = new File("").getAbsoluteFile().getParentFile(/*org.eclipse.orion.server.tests*/).getParentFile(/*tests*/);

@@ -163,7 +163,8 @@ public class OAuthHelper {
 			url += "?oauth=create&email=" + oauthConsumer.getEmail();
 			url += "&username=" + oauthConsumer.getUsername();
 			url += "&identifier=" + oauthConsumer.getIdentifier();
-			url += "&redirect=" + redirect;
+			if(redirect != null)
+				url += "&redirect=" + redirect;
 			resp.sendRedirect(url);
 			return;
 		}

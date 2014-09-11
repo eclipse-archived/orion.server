@@ -1040,6 +1040,11 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		ProjectInfo projectInfo = new ProjectInfo();
 		projectInfo.setFullName(projectName);
 		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
+		IFileStore projectFolder = metaStore.getDefaultContentLocation(projectInfo);
+		assertFalse(projectFolder.fetchInfo().exists());
+		projectFolder.mkdir(EFS.NONE, null);
+		assertTrue(projectFolder.fetchInfo().exists() && projectFolder.fetchInfo().isDirectory());
+		projectInfo.setContentLocation(projectFolder.toURI());
 		metaStore.createProject(projectInfo);
 
 		// read the project
