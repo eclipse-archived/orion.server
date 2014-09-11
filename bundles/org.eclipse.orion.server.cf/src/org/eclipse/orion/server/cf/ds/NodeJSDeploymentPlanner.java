@@ -40,7 +40,12 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 
 	@Override
 	public String getId() {
-		return getClass().getSimpleName();
+		return "org.eclipse.orion.server.cf.nodejs"; //$NON-NLS-1$
+	}
+
+	@Override
+	public String getWidgetId() {
+		return "org.eclipse.orion.client.cf.wizard.nodejs"; //$NON-NLS-1$
 	}
 
 	protected String getApplicationName(IFileStore contentLocation) {
@@ -83,7 +88,7 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 
 			/* node.js application require a start command */
 			if (application.has(ManifestConstants.COMMAND))
-				return new Plan(getId(), TYPE, manifest);
+				return new Plan(getId(), getWidgetId(), TYPE, manifest);
 
 			InputStream is = null;
 			try {
@@ -94,7 +99,7 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 					JSONObject scripts = packageJSON.getJSONObject(SCRIPTS);
 					if (scripts.has(START)) {
 						application.put(ManifestConstants.COMMAND, scripts.getString(START));
-						return new Plan(getId(), TYPE, manifest);
+						return new Plan(getId(), getWidgetId(), TYPE, manifest);
 					}
 				}
 
@@ -110,17 +115,17 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 			IFileStore serverJS = contentLocation.getChild(SERVER_JS);
 			if (serverJS.fetchInfo().exists()) {
 				application.put(ManifestConstants.COMMAND, NODE_SERVER_JS);
-				return new Plan(getId(), TYPE, manifest);
+				return new Plan(getId(), getWidgetId(), TYPE, manifest);
 			}
 
 			IFileStore appJS = contentLocation.getChild(APP_JS);
 			if (appJS.fetchInfo().exists()) {
 				application.put(ManifestConstants.COMMAND, NODE_APP_JS);
-				return new Plan(getId(), TYPE, manifest);
+				return new Plan(getId(), getWidgetId(), TYPE, manifest);
 			}
 
 			/* could not deduce command, mark as required */
-			Plan plan = new Plan(getId(), TYPE, manifest);
+			Plan plan = new Plan(getId(), getWidgetId(), TYPE, manifest);
 			plan.addRequired(ManifestConstants.COMMAND);
 			return plan;
 
