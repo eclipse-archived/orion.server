@@ -54,6 +54,37 @@
             </plugin>
 			<plugin>
 				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>target-platform-configuration</artifactId>
+				<version>${tycho-version}</version>
+				<configuration>
+					<dependency-resolution>
+						<extraRequirements>
+							<requirement>
+								<type>eclipse-feature</type>
+								<id>org.eclipse.orion.base.feature</id>
+								<versionRange>0.0.0</versionRange>
+							</requirement>
+							<requirement>
+								<type>eclipse-feature</type>
+								<id>org.eclipse.orion.server.feature</id>
+								<versionRange>0.0.0</versionRange>
+							</requirement>
+							<requirement>
+								<type>eclipse-feature</type>
+								<id>org.eclipse.orion.server.search.feature</id>
+								<versionRange>0.0.0</versionRange>
+							</requirement>
+							<requirement>
+								<type>eclipse-feature</type>
+								<id>org.eclipse.orion.server.authentication.feature</id>
+								<versionRange>0.0.0</versionRange>
+							</requirement>
+						</extraRequirements>
+					</dependency-resolution>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
 				<artifactId>tycho-surefire-plugin</artifactId>
 				<version>${tycho-version}</version>
 				<configuration>
@@ -62,38 +93,6 @@
 					<argLine>${test.vmparams} -Dorg.eclipse.equinox.http.jetty.http.port=${http.port} -Dorg.eclipse.equinox.http.jetty.autostart=false -Dorion.tests.authtype=Basic</argLine>
 					<testSuite>org.eclipse.orion.server.tests</testSuite>
 					<testClass>org.eclipse.orion.server.tests.AllServerTests</testClass>
-					<dependencies>
-						<dependency>
-							<type>eclipse-feature</type>
-							<groupId>org.eclipse.orion.feature</groupId>
-							<artifactId>org.eclipse.orion.releng.test.master</artifactId>
-							<version>0.0.0</version>
-						</dependency>
-						<dependency>
-							<type>eclipse-feature</type>
-							<groupId>org.eclipse.orion.feature</groupId>
-							<artifactId>org.eclipse.orion.server.search.feature</artifactId>
-							<version>0.0.0</version>
-						</dependency>
-						<dependency>
-							<type>eclipse-feature</type>
-							<groupId>org.eclipse.orion.feature</groupId>
-							<artifactId>org.eclipse.orion.server.authentication.feature</artifactId>
-							<version>0.0.0</version>
-						</dependency>
-						<dependency>
-							<type>eclipse-feature</type>
-							<groupId>org.eclipse.orion.feature</groupId>
-							<artifactId>org.eclipse.orion.server.feature</artifactId>
-							<version>0.0.0</version>
-						</dependency>
-						<dependency>
-							<type>eclipse-feature</type>
-							<groupId>org.eclipse.orion.feature</groupId>
-							<artifactId>org.eclipse.orion.base.feature</artifactId>
-							<version>0.0.0</version>
-						</dependency>
-					</dependencies>
 				</configuration>
 			</plugin>
 		</plugins>
