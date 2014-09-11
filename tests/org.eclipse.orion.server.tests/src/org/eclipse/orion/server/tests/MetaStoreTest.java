@@ -16,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -59,14 +60,16 @@ public class MetaStoreTest extends AbstractServerTest {
 	public void testUniqueProjectIds() throws CoreException {
 		//tests that creating multiple projects will create unique ids
 		WorkspaceInfo workspace = createWorkspace();
-		IMetaStore store = getMetaStore();
+		IMetaStore metaStore = getMetaStore();
 		List<String> ids = new ArrayList<String>();
 		for (int i = 0; i < 100; i++) {
-			ProjectInfo project = new ProjectInfo();
-			project.setFullName("Project " + i);
-			project.setWorkspaceId(workspace.getUniqueId());
-			store.createProject(project);
-			String projectId = project.getUniqueId();
+			ProjectInfo projectInfo = new ProjectInfo();
+			projectInfo.setFullName("Project " + i);
+			projectInfo.setWorkspaceId(workspace.getUniqueId());
+			IFileStore fileStore = metaStore.getDefaultContentLocation(projectInfo);
+			projectInfo.setContentLocation(fileStore.toURI());
+			metaStore.createProject(projectInfo);
+			String projectId = projectInfo.getUniqueId();
 			final java.io.File currentProject = new java.io.File(projectId);
 			for (String id : ids) {
 				//tests that project id is unique based on current file system case sensitivity
