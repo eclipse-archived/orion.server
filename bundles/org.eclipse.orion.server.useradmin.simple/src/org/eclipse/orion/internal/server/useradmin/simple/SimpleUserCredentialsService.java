@@ -28,7 +28,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.core.metastore.SimpleUserPasswordUtil;
-import org.eclipse.orion.internal.server.servlets.useradmin.UserServlet;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -140,7 +139,6 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 				// Update the oauth cache
 				oauthCache.remove(value);
 			}
-
 
 		}
 
@@ -303,13 +301,13 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 						if (key.equals("openid")) {
 							// update the openid cache
 							openidCache.put(value, childName);
-						}else if(key.equals(OAUTH_KEY)){
+						} else if (key.equals(OAUTH_KEY)) {
 							// update the oauth cache
 							oauthCache.put(value, childName);
 						}
 					}
-					users.add(user);
 				}
+				users.add(user);
 			} catch (CoreException e) {
 				LogHelper.log(e);
 			}
@@ -424,7 +422,7 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 					ret.add(formUser(userNode));
 				}
 			}
-		} else if (key.equals(OAUTH_KEY)){
+		} else if (key.equals(OAUTH_KEY)) {
 			// Use the oauth cache to lookup the user for the oauth property
 			for (Map.Entry<String, String> entry : oauthCache.entrySet()) {
 				String oauth = entry.getKey();
