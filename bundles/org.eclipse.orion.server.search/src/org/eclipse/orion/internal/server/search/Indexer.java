@@ -90,7 +90,7 @@ public class Indexer extends Job {
 		this.server = server;
 		this.lockFile = new File(indexRoot, "lock.txt");
 		setSystem(true);
-		INDEXED_FILE_TYPES = Arrays.asList("css", "js", "html", "txt", "xml", "java", "properties", "php", "htm", "project", "conf", "pl", "sh", "text", "xhtml", "mf", "manifest", "md", "yaml", "yml", "go");
+		INDEXED_FILE_TYPES = Arrays.asList("css", "js", "json", "html", "txt", "xml", "java", "properties", "php", "htm", "project", "conf", "pl", "sh", "text", "xhtml", "mf", "manifest", "md", "yaml", "yml", "go");
 		Collections.sort(INDEXED_FILE_TYPES);
 		logger = LoggerFactory.getLogger(Indexer.class);
 
