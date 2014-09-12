@@ -41,6 +41,7 @@ import org.eclipse.jgit.lib.RepositoryState;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
+import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.IOUtilities;
@@ -335,22 +336,22 @@ public class GitCloneTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = new Path("file").append(workspaceId).append(project.getString(ProtocolConstants.KEY_NAME)).makeAbsolute();
 
-		// clone
-		IPath randomLocation = createTempDir();
-		assertNull(GitUtils.getGitDir(randomLocation.toFile()));
-		WebRequest request = getPostGitCloneRequest(randomLocation.toFile().toURI().toString(), clonePath);
-		WebResponse response = webConversation.getResponse(request);
-		ServerStatus status = waitForTask(response);
-		assertFalse(status.toString(), status.isOK());
+		try {
+			// clone
+			File notAGitRepository = createTempDir().toFile();
+			assertNull(GitUtils.getGitDir(notAGitRepository));
+			WebRequest request = getPostGitCloneRequest(notAGitRepository.toURI().toString(), clonePath);
+			WebResponse response = webConversation.getResponse(request);
+			ServerStatus status = waitForTask(response);
+			assertFalse(status.toString(), status.isOK());
 
-		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, status.getHttpCode());
-		assertEquals("Error cloning git repository", status.getMessage());
-		assertNotNull(status.getJsonData());
-		assertEquals(status.toString(), "Invalid remote: origin", status.getException().getMessage());
-
-		// we don't know ID of the clone that failed to be created, so we're checking if none has been added
-		JSONArray clonesArray = listClones(workspaceId, null);
-		assertEquals(0, clonesArray.length());
+			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, status.getHttpCode());
+			assertEquals("Error cloning git repository", status.getMessage());
+			assertNotNull(status.getJsonData());
+			assertEquals(status.toString(), "Invalid remote: origin", status.getException().getMessage());
+		} finally {
+			FileUtils.delete(gitDir, FileUtils.RECURSIVE);
+		}
 	}
 
 	@Test
