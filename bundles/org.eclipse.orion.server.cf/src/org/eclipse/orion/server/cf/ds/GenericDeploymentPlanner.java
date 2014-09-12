@@ -37,23 +37,29 @@ public final class GenericDeploymentPlanner implements IDeploymentPlanner {
 		return contentLocation.fetchInfo().getName();
 	}
 
+	private void set(ManifestParseTree application, String property, String defaultValue) {
+		if (application.has(property))
+			return;
+		else
+			application.put(property, defaultValue);
+	}
+
 	@Override
 	public Plan getDeploymentPlan(IFileStore contentLocation, ManifestParseTree manifest) {
-
-		if (manifest != null)
-			return new Plan(getId(), getWizardId(), TYPE, manifest);
 
 		try {
 
 			String applicationName = getApplicationName(contentLocation);
-			manifest = ManifestUtils.createBoilerplate(applicationName);
+
+			if (manifest == null)
+				manifest = ManifestUtils.createBoilerplate(applicationName);
 
 			/* set up generic defaults */
 			ManifestParseTree application = manifest.get(ManifestConstants.APPLICATIONS).get(0);
-			application.put(ManifestConstants.HOST, ManifestUtils.slugify(applicationName));
-			application.put(ManifestConstants.MEMORY, ManifestUtils.DEFAULT_MEMORY);
-			application.put(ManifestConstants.INSTANCES, ManifestUtils.DEFAULT_INSTANCES);
-			application.put(ManifestConstants.PATH, ManifestUtils.DEFAULT_PATH);
+			set(application, ManifestConstants.HOST, ManifestUtils.slugify(applicationName));
+			set(application, ManifestConstants.MEMORY, ManifestUtils.DEFAULT_MEMORY);
+			set(application, ManifestConstants.INSTANCES, ManifestUtils.DEFAULT_INSTANCES);
+			set(application, ManifestConstants.PATH, ManifestUtils.DEFAULT_PATH);
 			return new Plan(getId(), getWizardId(), TYPE, manifest);
 
 		} catch (Exception ex) {
