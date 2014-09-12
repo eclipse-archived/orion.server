@@ -195,9 +195,91 @@ public class SearchTest extends FileSystemTest {
 		assertOneMatch(searchResult, "a.txt");
 		searchResult = doSearch("at%40sign");
 		assertOneMatch(searchResult, "a.txt");
-		searchResult = doSearch("equals%3Dcharacter");
+	}
+
+	/**
+	 * Tests for special characters that are treated as delimiters
+	 * and replaced with blanks during tokenization
+	 */
+	@Test
+	public void testFilteredDelimiters() throws Exception {
+		// equals sign
+		JSONObject searchResult = doSearch("equals%3Dcharacter");
+		assertNoMatch(searchResult);
+		searchResult = doSearch("equals character");
+		assertNoMatch(searchResult);
+		searchResult = doSearch("\"equals character\"");
 		assertOneMatch(searchResult, "page.html");
 
+		//slash
+		searchResult = doSearch("orion/es5shim");
+		assertNoMatch(searchResult);
+		searchResult = doSearch("orion es5shim");
+		assertNoMatch(searchResult);
+		searchResult = doSearch("\"orion es5shim\"");
+		assertOneMatch(searchResult, "script.js");
+		searchResult = doSearch("orion");
+		assertOneMatch(searchResult, "script.js");
+		searchResult = doSearch("es5shim");
+		assertOneMatch(searchResult, "script.js");
+
+		//  colon
+		searchResult = doSearch("co:lon");
+		assertNoMatch(searchResult);
+		searchResult = doSearch("\"co lon\"");
+		assertOneMatch(searchResult, "a.txt");
+
+		//  comma
+		searchResult = doSearch("comma,comma");
+		assertNoMatch(searchResult);
+		searchResult = doSearch("\"comma comma\"");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("comma");
+		assertOneMatch(searchResult, "a.txt");
+
+		// semicolon
+		searchResult = doSearch("semi;colon");
+		assertNoMatch(searchResult);
+		searchResult = doSearch("\"semi colon\"");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("semi");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("colon");
+		assertOneMatch(searchResult, "a.txt");
+	}
+
+	/**
+	 * Test for bracket-ish delimiters that are replaced with
+	 * blanks during tokenization.
+	 */
+	@Test
+	public void testBracketishDelimiters() throws Exception {
+		JSONObject searchResult = doSearch("(round)");
+		assertNoMatch(searchResult);
+		searchResult = doSearch("round");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("[squared]");
+		assertNoMatch(searchResult);
+		searchResult = doSearch("squared");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("{curly}");
+		assertNoMatch(searchResult);
+		searchResult = doSearch("curly");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("<tagged>");
+		assertNoMatch(searchResult);
+		searchResult = doSearch("tagged");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("crazyfunc(param4711,param0815)");
+		assertNoMatch(searchResult);
+		searchResult = doSearch("\"crazyfunc param4711 param0815\"");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("crazyfunc");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("param4711");
+		assertOneMatch(searchResult, "a.txt");
+		searchResult = doSearch("param0815");
+		assertOneMatch(searchResult, "a.txt");
 	}
 
 	/**

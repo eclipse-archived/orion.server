@@ -151,6 +151,7 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 		createSolrFile(new File(configDir, "stopwords.txt")); //$NON-NLS-1$
 		createSolrFile(new File(configDir, "protwords.txt")); //$NON-NLS-1$
 		createSolrFile(new File(configDir, "elevate.xml")); //$NON-NLS-1$
+		createSolrFile(new File(configDir, "mapping.txt")); //$NON-NLS-1$
 		return configFile;
 
 	}
