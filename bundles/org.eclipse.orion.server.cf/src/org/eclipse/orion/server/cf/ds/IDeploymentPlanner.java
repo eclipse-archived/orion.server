@@ -18,7 +18,7 @@ public interface IDeploymentPlanner {
 
 	public String getId();
 
-	public String getWidgetId();
+	public String getWizardId();
 
 	public Plan getDeploymentPlan(IFileStore contentLocation, ManifestParseTree manifest);
 

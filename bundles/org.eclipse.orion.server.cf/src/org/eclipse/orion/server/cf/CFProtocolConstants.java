@@ -169,7 +169,7 @@ public class CFProtocolConstants {
 	/* Deployment planners */
 	public static final String KEY_DEPLOYMENT_PLANNER = "Planner"; //$NON-NLS-1$
 
-	public static final String KEY_DEPLOYMENT_WIDGET = "Widget"; //$NON-NLS-1$
+	public static final String KEY_DEPLOYMENT_WIZARD = "Wizard"; //$NON-NLS-1$
 
 	public static final String KEY_REQUIRED = "Required"; //$NON-NLS-1$
 
