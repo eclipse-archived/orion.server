@@ -55,15 +55,15 @@ public class GitBranchTest extends GitTest {
 		assertEquals(3, branchesArray.length());
 
 		// validate branch metadata
-		JSONObject branch = branchesArray.getJSONObject(1);
+		JSONObject branch = branchesArray.getJSONObject(0);
 		assertEquals(Constants.MASTER, branch.getString(ProtocolConstants.KEY_NAME));
 		assertBranchUri(branch.getString(ProtocolConstants.KEY_LOCATION));
 		assertTrue(branch.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false));
-		branch = branchesArray.getJSONObject(0);
+		branch = branchesArray.getJSONObject(1);
 		assertEquals("z", branch.getString(ProtocolConstants.KEY_NAME));
-		// assert properly sorted, new first
+		// assert properly sorted, current branch is first, then other branches sorted by timestamp
 		long lastTime = Long.MAX_VALUE;
-		for (int i = 0; i < branchesArray.length(); i++) {
+		for (int i = 1; i < branchesArray.length(); i++) {
 			long t = branchesArray.getJSONObject(i).getLong(ProtocolConstants.KEY_LOCAL_TIMESTAMP);
 			assertTrue(t <= lastTime);
 			lastTime = t;
