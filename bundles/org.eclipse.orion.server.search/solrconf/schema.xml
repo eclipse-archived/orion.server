@@ -105,6 +105,7 @@
         -->
     <fieldType name="text" class="solr.TextField" positionIncrementGap="100">
       <analyzer type="index">
+        <charFilter class="solr.MappingCharFilterFactory" mapping="mapping.txt"/>
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
         <!-- in this example, we will only use synonyms at query time
         <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="false"/>
@@ -123,6 +124,7 @@
       </analyzer>
 
       <analyzer type="query">
+        <charFilter class="solr.MappingCharFilterFactory" mapping="mapping.txt"/>
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
         <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
         <filter class="solr.StopFilterFactory"
