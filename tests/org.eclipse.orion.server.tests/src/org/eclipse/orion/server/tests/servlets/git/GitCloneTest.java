@@ -13,7 +13,6 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -336,22 +335,22 @@ public class GitCloneTest extends GitTest {
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = new Path("file").append(workspaceId).append(project.getString(ProtocolConstants.KEY_NAME)).makeAbsolute();
 
-		try {
-			// clone
-			File notAGitRepository = createTempDir().toFile();
-			assertNull(GitUtils.getGitDir(notAGitRepository));
-			WebRequest request = getPostGitCloneRequest(notAGitRepository.toURI().toString(), clonePath);
-			WebResponse response = webConversation.getResponse(request);
-			ServerStatus status = waitForTask(response);
-			assertFalse(status.toString(), status.isOK());
+		// clone
+		File notAGitRepository = createTempDir().toFile();
+		assertTrue(notAGitRepository.isDirectory());
+		assertTrue(notAGitRepository.list().length == 0);
+		WebRequest request = getPostGitCloneRequest(notAGitRepository.toURI().toString(), clonePath);
+		WebResponse response = webConversation.getResponse(request);
+		ServerStatus status = waitForTask(response);
+		assertFalse(status.toString(), status.isOK());
 
-			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, status.getHttpCode());
-			assertEquals("Error cloning git repository", status.getMessage());
-			assertNotNull(status.getJsonData());
-			assertEquals(status.toString(), "Invalid remote: origin", status.getException().getMessage());
-		} finally {
-			FileUtils.delete(gitDir, FileUtils.RECURSIVE);
-		}
+		assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, status.getHttpCode());
+		assertEquals("Error cloning git repository", status.getMessage());
+		assertNotNull(status.getJsonData());
+		assertEquals(status.toString(), "Invalid remote: origin", status.getException().getMessage());
+
+		// cleanup the tempDir
+		FileUtils.delete(notAGitRepository, FileUtils.RECURSIVE);
 	}
 
 	@Test
