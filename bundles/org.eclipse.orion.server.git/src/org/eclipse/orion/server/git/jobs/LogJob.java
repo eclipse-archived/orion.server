@@ -12,13 +12,23 @@ package org.eclipse.orion.server.git.jobs;
 
 import java.io.File;
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.lib.*;
+
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
+import org.eclipse.jgit.revwalk.RevWalkUtils;
+import org.eclipse.jgit.revwalk.filter.RevFilter;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
+import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Log;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
@@ -43,22 +53,34 @@ public class LogJob extends GitJob {
 	private String authorFilter;
 	private String committerFilter;
 	private String sha1Filter;
+	private boolean mergeBaseFilter;
 
 	/**
-	 * Creates job with given page range and adding <code>commitsSize</code> commits to every branch.
+	 * Creates job with given page range and adding <code>commitsSize</code>
+	 * commits to every branch.
+	 * 
 	 * @param userRunningTask
 	 * @param repositoryPath
 	 * @param cloneLocation
-	 * @param commitsSize user 0 to omit adding any log, only CommitLocation will be attached 
+	 * @param commitsSize
+	 *            user 0 to omit adding any log, only CommitLocation will be
+	 *            attached
 	 * @param pageNo
-	 * @param pageSize use negative to indicate that all commits need to be returned
-	 * @param messageFilter string used to filter log messages
-	 * @param authorFilter string used to filter author messages
-	 * @param committerFilter string used to filter committer messages
-	 * @param sha1Filter string used to filter commits by sha1
-	 * @param baseLocation URI used as a base for generating next and previous page links. Should not contain any parameters.
+	 * @param pageSize
+	 *            use negative to indicate that all commits need to be returned
+	 * @param messageFilter
+	 *            string used to filter log messages
+	 * @param authorFilter
+	 *            string used to filter author messages
+	 * @param committerFilter
+	 *            string used to filter committer messages
+	 * @param sha1Filter
+	 *            string used to filter commits by sha1
+	 * @param baseLocation
+	 *            URI used as a base for generating next and previous page
+	 *            links. Should not contain any parameters.
 	 */
-	public LogJob(String userRunningTask, IPath filePath, URI cloneLocation, int page, int pageSize, ObjectId toObjectId, ObjectId fromObjectId, Ref toRefId, Ref fromRefId, String refIdsRange, String pattern, String messageFilter, String authorFilter, String committerFilter, String sha1Filter) {
+	public LogJob(String userRunningTask, IPath filePath, URI cloneLocation, int page, int pageSize, ObjectId toObjectId, ObjectId fromObjectId, Ref toRefId, Ref fromRefId, String refIdsRange, String pattern, String messageFilter, String authorFilter, String committerFilter, String sha1Filter, boolean mergeBaseFilter) {
 		super(userRunningTask, false);
 		this.filePath = filePath;
 		this.cloneLocation = cloneLocation;
@@ -74,6 +96,7 @@ public class LogJob extends GitJob {
 		this.authorFilter = authorFilter;
 		this.committerFilter = committerFilter;
 		this.sha1Filter = sha1Filter;
+		this.mergeBaseFilter = mergeBaseFilter;
 		setFinalMessage("Generating git log completed.");
 	}
 
@@ -84,6 +107,27 @@ public class LogJob extends GitJob {
 		try {
 			File gitDir = GitUtils.getGitDir(filePath);
 			db = FileRepositoryBuilder.create(gitDir);
+			int aheadCount = 0, behindCount = 0;
+			if (mergeBaseFilter) {
+				RevWalk walk = new RevWalk(db);
+				try {
+					walk.setRevFilter(RevFilter.MERGE_BASE);
+					RevCommit toRevCommit = walk.lookupCommit(toObjectId);
+					walk.markStart(toRevCommit);
+					RevCommit fromRevCommit = walk.lookupCommit(fromObjectId);
+					walk.markUninteresting(fromRevCommit);
+					RevCommit next = walk.next();
+					walk.reset();
+					walk.setRevFilter(RevFilter.ALL);
+					aheadCount = RevWalkUtils.count(walk, toRevCommit, next);
+					behindCount = RevWalkUtils.count(walk, fromRevCommit, next);
+					toObjectId = next.toObjectId();
+					fromObjectId = null;
+				} finally {
+					walk.dispose();
+				}
+			}
+
 			logCommand = new LogCommand(db);
 			if (refIdsRange != null) {
 				// set the commit range
@@ -97,6 +141,8 @@ public class LogJob extends GitJob {
 				logCommand.all();
 			}
 			Log log = new Log(cloneLocation, db, null /* collected by the job */, pattern, toRefId, fromRefId);
+
+			log.setMergeBaseFilter(mergeBaseFilter);
 
 			if (messageFilter != null && messageFilter.length() > 0) {
 				log.setMessagePattern(messageFilter);
@@ -120,7 +166,8 @@ public class LogJob extends GitJob {
 
 			if (page > 0) {
 				logCommand.setSkip((page - 1) * pageSize);
-				logCommand.setMaxCount(pageSize + 1); // to check if next page link is needed
+				logCommand.setMaxCount(pageSize + 1); // to check if next page
+														// link is needed
 			}
 			if (pattern != null && !pattern.isEmpty()) {
 				logCommand.addPath(pattern);
@@ -130,6 +177,11 @@ public class LogJob extends GitJob {
 			Iterable<RevCommit> commits = logCommand.call();
 			log.setCommits(commits);
 			JSONObject result = log.toJSON();
+			if (mergeBaseFilter) {
+				result.put(GitConstants.KEY_BEHIND_COUNT, behindCount);
+				result.put(GitConstants.KEY_AHEAD_COUNT, aheadCount);
+			}
+
 			// return the commits log as status message
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 		} catch (Exception e) {
@@ -142,5 +194,4 @@ public class LogJob extends GitJob {
 			}
 		}
 	}
-
 }

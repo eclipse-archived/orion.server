@@ -10,21 +10,31 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.MissingObjectException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.RemoteConfig;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
@@ -33,7 +43,9 @@ import org.eclipse.orion.server.git.BaseToCommitConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * A compound object for {@link Commit}s.
@@ -52,7 +64,7 @@ public class Log extends GitObject {
 				new Property(GitConstants.KEY_LOG_TO_REF), //
 				new Property(GitConstants.KEY_LOG_FROM_REF), //
 				new Property(ProtocolConstants.KEY_PREVIOUS_LOCATION), //
-				new Property(ProtocolConstants.KEY_NEXT_LOCATION)};
+				new Property(ProtocolConstants.KEY_NEXT_LOCATION) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
@@ -62,6 +74,7 @@ public class Log extends GitObject {
 	private String authorPattern;
 	private String committerPattern;
 	private String sha1Pattern;
+	private boolean mergeBase;
 	private Ref toRefId;
 	private Ref fromRefId;
 	private int page;
@@ -105,6 +118,10 @@ public class Log extends GitObject {
 
 	public void setSHA1Pattern(String sha1Pattern) {
 		this.sha1Pattern = sha1Pattern;
+	}
+
+	public void setMergeBaseFilter(boolean mergeBaseFilter) {
+		this.mergeBase = mergeBaseFilter;
 	}
 
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
@@ -184,6 +201,9 @@ public class Log extends GitObject {
 		}
 		if (this.sha1Pattern != null) {
 			q += "&sha1=" + GitUtils.encode(this.sha1Pattern); //$NON-NLS-1$
+		}
+		if (this.mergeBase) {
+			q += "&mergeBase=true"; //$NON-NLS-1$
 		}
 		return q;
 	}

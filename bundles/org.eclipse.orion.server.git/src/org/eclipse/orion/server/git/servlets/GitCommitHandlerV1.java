@@ -10,35 +10,71 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.servlets.*;
-import java.io.*;
-import java.net.*;
-import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.api.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.api.CherryPickResult;
+import org.eclipse.jgit.api.CommitCommand;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
+import org.eclipse.jgit.api.RebaseCommand;
 import org.eclipse.jgit.api.RebaseCommand.Operation;
-import org.eclipse.jgit.api.errors.*;
+import org.eclipse.jgit.api.RebaseResult;
+import org.eclipse.jgit.api.RevertCommand;
 import org.eclipse.jgit.api.errors.CheckoutConflictException;
-import org.eclipse.jgit.errors.*;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.UnmergedPathsException;
+import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
+import org.eclipse.jgit.errors.AmbiguousObjectException;
+import org.eclipse.jgit.errors.IncorrectObjectTypeException;
+import org.eclipse.jgit.errors.MissingObjectException;
+import org.eclipse.jgit.errors.UnmergedPathException;
+import org.eclipse.jgit.lib.Config;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectStream;
+import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.merge.ResolveMerger.MergeFailureReason;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.treewalk.filter.*;
+import org.eclipse.jgit.treewalk.filter.AndTreeFilter;
+import org.eclipse.jgit.treewalk.filter.PathFilterGroup;
+import org.eclipse.jgit.treewalk.filter.TreeFilter;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.git.*;
+import org.eclipse.orion.server.git.AdditionalRebaseStatus;
+import org.eclipse.orion.server.git.BaseToCloneConverter;
+import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.jobs.LogJob;
 import org.eclipse.orion.server.git.objects.Commit;
-import org.eclipse.orion.server.useradmin.*;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
+import org.eclipse.orion.server.servlets.OrionServlet;
+import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
+import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.UserConstants;
+import org.eclipse.orion.server.useradmin.UserEmailUtil;
+import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -172,10 +208,11 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 	private boolean handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, IPath filePath, Repository db, String refIdsRange, String pattern) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException, CoreException {
 		int page = request.getParameter("page") != null ? new Integer(request.getParameter("page")).intValue() : 0; //$NON-NLS-1$ //$NON-NLS-2$
 		int pageSize = request.getParameter("pageSize") != null ? new Integer(request.getParameter("pageSize")).intValue() : PAGE_SIZE; //$NON-NLS-1$ //$NON-NLS-2$
-		String messageFilter = request.getParameter("filter");
-		String authorFilter = request.getParameter("author");
-		String committerFilter = request.getParameter("committer");
-		String sha1Filter = request.getParameter("sha1");
+		String messageFilter = request.getParameter("filter"); //$NON-NLS-1$
+		String authorFilter = request.getParameter("author"); //$NON-NLS-1$
+		String committerFilter = request.getParameter("committer"); //$NON-NLS-1$
+		String sha1Filter = request.getParameter("sha1"); //$NON-NLS-1$
+		String mergeBaseFilter = request.getParameter("mergeBase"); //$NON-NLS-1$
 		ObjectId toObjectId = null;
 		ObjectId fromObjectId = null;
 
@@ -218,7 +255,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		URI baseLocation = getURI(request);
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, refIdsRange == null ? BaseToCloneConverter.COMMIT : BaseToCloneConverter.COMMIT_REFRANGE);
 
-		LogJob job = new LogJob(TaskJobHandler.getUserId(request), filePath, cloneLocation, page, pageSize, toObjectId, fromObjectId, toRefId, fromRefId, refIdsRange, pattern, messageFilter, authorFilter, committerFilter, sha1Filter);
+		LogJob job = new LogJob(TaskJobHandler.getUserId(request), filePath, cloneLocation, page, pageSize, toObjectId, fromObjectId, toRefId, fromRefId, refIdsRange, pattern, messageFilter, authorFilter, committerFilter, sha1Filter, "true".equals(mergeBaseFilter));
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 	}
 
@@ -298,8 +335,9 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			String authorName = requestObject.optString(GitConstants.KEY_AUTHOR_NAME, null);
 			String authorEmail = requestObject.optString(GitConstants.KEY_AUTHOR_EMAIL, null);
 
-			// workaround of a bug in JGit which causes invalid 
-			// support of null values of author/committer name/email, see bug 352984
+			// workaround of a bug in JGit which causes invalid
+			// support of null values of author/committer name/email, see bug
+			// 352984
 			PersonIdent defPersonIdent = new PersonIdent(db);
 			if (committerName == null)
 				committerName = defPersonIdent.getName();
@@ -365,7 +403,8 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			Map<String, MergeFailureReason> failingPaths = new HashMap<String, MergeFailureReason>();
 			String[] files = e.getMessage().split("\n"); //$NON-NLS-1$
 			for (int i = 1; i < files.length; i++) {
-				// TODO: this is not always true, but it's a temporary workaround
+				// TODO: this is not always true, but it's a temporary
+				// workaround
 				failingPaths.put(files[i], MergeFailureReason.DIRTY_WORKTREE);
 			}
 			result.put(GitConstants.KEY_FAILING_PATHS, failingPaths);
@@ -408,9 +447,10 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		} catch (IllegalArgumentException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Invalid rebase operation.", e));
 		} catch (GitAPIException e) {
-			// get cause and try to handle 
+			// get cause and try to handle
 			if (e.getCause() instanceof org.eclipse.jgit.errors.CheckoutConflictException) {
-				// this error should be handled by client, so return a proper status
+				// this error should be handled by client, so return a proper
+				// status
 				result.put(GitConstants.KEY_RESULT, AdditionalRebaseStatus.FAILED_PENDING_CHANGES.name());
 			} else {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when rebasing.", e));

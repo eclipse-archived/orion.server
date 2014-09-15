@@ -11,7 +11,7 @@
 package org.eclipse.orion.server.git;
 
 /**
- * Constants used by Git. 
+ * Constants used by Git.
  */
 public class GitConstants {
 
@@ -222,4 +222,8 @@ public class GitConstants {
 	public static final String KEY_STASH_APPLY_LOCATION = "ApplyLocation"; //$NON-NLS-1$
 
 	public static final String KEY_STASH_DROP_LOCATION = "DropLocation"; //$NON-NLS-1$
+
+	public static final String KEY_BEHIND_COUNT = "BehindCount"; //$NON-NLS-1$
+
+	public static final String KEY_AHEAD_COUNT = "AheadCount"; //$NON-NLS-1$
 }
