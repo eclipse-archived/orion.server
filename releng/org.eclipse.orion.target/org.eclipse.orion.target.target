@@ -5,6 +5,7 @@
 <repository location="http://download.eclipse.org/egit/updates-3.4"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<unit id="com.google.protobuf" version="2.4.0.v201105131100"/>
 <unit id="ch.qos.logback.core" version="1.0.7.v20121108-1250"/>
 <unit id="ch.qos.logback.core.source" version="1.0.7.v20121108-1250"/>
 <unit id="ch.qos.logback.classic" version="1.0.7.v20121108-1250"/>

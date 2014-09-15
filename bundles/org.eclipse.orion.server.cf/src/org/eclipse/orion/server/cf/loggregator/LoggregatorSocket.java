@@ -10,9 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.loggregator;
 
-import java.util.concurrent.*;
+import com.google.protobuf.InvalidProtocolBufferException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
+import org.eclipse.jetty.websocket.api.extensions.Frame;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,21 +47,26 @@ public class LoggregatorSocket {
 
 	@OnWebSocketConnect
 	public void onConnect(final Session session) {
-		logger.debug(NLS.bind("Conected: {0}", session));
-		try {
-			Future<Void> fut;
-			fut = session.getRemote().sendStringByFuture("keep alive");
-			fut.get(25, TimeUnit.SECONDS);
-			fut = session.getRemote().sendStringByFuture("keep alive");
-			fut.get(25, TimeUnit.SECONDS);
-		} catch (Throwable t) {
-			logger.error("Error while connecting", t);
-		}
+		logger.debug(NLS.bind("Connected: {0}", session));
 	}
 
 	@OnWebSocketMessage
 	public void onMessage(String msg) {
 		logger.debug(NLS.bind("Got message: {0}", msg));
 		listener.add(msg);
+	}
+
+	@OnWebSocketFrame
+	public void onFrame(Frame frame) {
+		try {
+			if (frame == null || frame.getPayload() == null)
+				return;
+			LoggregatorMessage.Message message = LoggregatorMessage.Message.parseFrom(frame.getPayload().array());
+			listener.add(message.getMessage().toStringUtf8());
+		} catch (InvalidProtocolBufferException e) {
+			logger.error("Error while receiving socket frame", e);
+		} catch (Throwable t) {
+			logger.error("Error while receiving socket frame", t);
+		}
 	}
 }

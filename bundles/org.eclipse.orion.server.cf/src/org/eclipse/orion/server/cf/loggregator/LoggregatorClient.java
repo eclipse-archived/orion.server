@@ -25,8 +25,6 @@ public class LoggregatorClient {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	public void start(Target target, String loggregatorLocation, LoggregatorListener listener) throws Exception {
-		loggregatorLocation = "wss://echo.websocket.org";
-
 		SslContextFactory sslContextFactory = new SslContextFactory(true);
 		WebSocketClient client = new WebSocketClient(sslContextFactory);
 		LoggregatorSocket socket = new LoggregatorSocket(listener);
@@ -43,4 +41,21 @@ public class LoggregatorClient {
 			client.stop();
 		}
 	}
+
+	//	private SSLContext createSslContext() throws Exception {
+	//		TrustManager[] trustManagers = new TrustManager[] {new X509TrustManager() {
+	//			public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+	//			}
+	//
+	//			public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+	//			}
+	//
+	//			public X509Certificate[] getAcceptedIssuers() {
+	//				return null;
+	//			}
+	//		}};
+	//		SSLContext sslContext = SSLContext.getInstance("TLS");
+	//		sslContext.init(null, trustManagers, null);
+	//		return sslContext;
+	//	}
 }
