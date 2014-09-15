@@ -356,11 +356,13 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 		/* extract available apps */
 		JSONObject appsJSON = getAppsStatus.getJsonData();
 
+		JSONObject result = new JSONObject();
+		result.put("Apps", new JSONArray());
+
 		if (appsJSON.getInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS) < 1) {
-			return new ServerStatus(IStatus.OK, HttpServletResponse.SC_OK, null, null);
+			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 		}
 
-		JSONObject result = new JSONObject();
 		JSONArray resources = appsJSON.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
 		for (int k = 0; k < resources.length(); ++k) {
 			JSONObject appJSON = resources.getJSONObject(k);
