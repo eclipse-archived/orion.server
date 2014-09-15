@@ -191,7 +191,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					ManifestParseTree manifest = null;
 					IFileStore appStore = null;
 
-					if (contentLocation != null) {
+					if (contentLocation != null && state == null) {
 
 						/* check for non-manifest deployment */
 						if (manifestJSON != null) {
