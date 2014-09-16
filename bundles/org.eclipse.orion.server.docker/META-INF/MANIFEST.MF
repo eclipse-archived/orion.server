@@ -14,7 +14,14 @@ Require-Bundle: org.eclipse.core.runtime,
  org.apache.commons.compress;bundle-version="1.4.1"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
-Export-Package: org.eclipse.orion.server.docker,
+Export-Package: org.eclipse.jetty.util;x-internal:=true,
+ org.eclipse.jetty.util.component;x-internal:=true,
+ org.eclipse.jetty.util.ssl;x-internal:=true,
+ org.eclipse.jetty.websocket.api;x-internal:=true,
+ org.eclipse.jetty.websocket.api.annotations;x-internal:=true,
+ org.eclipse.jetty.websocket.api.extensions;x-internal:=true,
+ org.eclipse.jetty.websocket.client;x-internal:=true,
+ org.eclipse.orion.server.docker,
  org.eclipse.orion.server.docker.server,
  org.eclipse.orion.server.docker.servlets
 Import-Package: javax.servlet;version="2.6.0",
