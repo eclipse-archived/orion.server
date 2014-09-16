@@ -12,7 +12,6 @@ package org.eclipse.orion.server.cf.loggregator;
 
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eclipse.orion.server.cf.objects.Target;
@@ -25,8 +24,13 @@ public class LoggregatorClient {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	public void start(Target target, String loggregatorLocation, LoggregatorListener listener) throws Exception {
-		SslContextFactory sslContextFactory = new SslContextFactory(true);
-		WebSocketClient client = new WebSocketClient(sslContextFactory);
+		loggregatorLocation = loggregatorLocation.replaceAll("wss://", "ws://");
+		loggregatorLocation = loggregatorLocation.replaceAll(":443", ":80");
+
+		logger.debug(NLS.bind("About to connect: {0}", loggregatorLocation));
+
+		// SslContextFactory sslContextFactory = new SslContextFactory(true);
+		WebSocketClient client = new WebSocketClient(/*sslContextFactory*/);
 		LoggregatorSocket socket = new LoggregatorSocket(listener);
 		try {
 			client.start();
