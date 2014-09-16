@@ -51,6 +51,8 @@ public class LoggregatorHandlerV1 extends AbstractRESTHandler<Log> {
 			@Override
 			protected IStatus performJob() {
 				try {
+					logger.debug(NLS.bind("LoggregatorHandlerV1 starts collecting logs for: {0}", appName));
+
 					ComputeTargetCommand computeTargetCommand = new ComputeTargetCommand(this.userId, targetJSON);
 					IStatus result = computeTargetCommand.doIt();
 					if (!result.isOK())
@@ -68,6 +70,8 @@ public class LoggregatorHandlerV1 extends AbstractRESTHandler<Log> {
 					if (!getInfoStatus.isOK())
 						return getInfoStatus;
 
+					logger.debug(NLS.bind("Cloud info: {0}", getInfoStatus.getJsonData().toString()));
+
 					String loggingEndpoint = getInfoStatus.getJsonData().getString("logging_endpoint");
 					LoggregatorListener listener = new LoggregatorListener();
 					new LoggregatorClient().start(target, loggingEndpoint + "/dump/?app=" + app.getAppJSON().get("guid"), listener);
@@ -77,6 +81,11 @@ public class LoggregatorHandlerV1 extends AbstractRESTHandler<Log> {
 
 					return new ServerStatus(IStatus.OK, HttpServletResponse.SC_OK, null, messages, null);
 				} catch (Exception e) {
+					String msg = NLS.bind("Failed to handle request for {0}", pathString); //$NON-NLS-1$
+					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+					logger.error(msg, e);
+					return status;
+				} catch (Throwable e) {
 					String msg = NLS.bind("Failed to handle request for {0}", pathString); //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 					logger.error(msg, e);
