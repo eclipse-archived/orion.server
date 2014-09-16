@@ -162,7 +162,7 @@
                path="/web">
          </resource-mapping>
          <resource-mapping
-               bundle="org.eclipse.orion.client.doc"
+               bundle="org.eclipse.orion.client.help"
                path="/web">
          </resource-mapping>
       </httpcontext>
