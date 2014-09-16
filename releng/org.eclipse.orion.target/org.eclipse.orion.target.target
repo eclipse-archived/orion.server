@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><?pde version="3.8"?><target name="org.eclipse.orion" sequenceNumber="9">
+<?xml version="1.0" encoding="UTF-8"?><?pde version="3.8"?><target name="org.eclipse.orion" sequenceNumber="10">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.jgit" version="3.4.0.201406110918-r"/>
