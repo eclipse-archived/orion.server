@@ -281,6 +281,7 @@
 		<module>bundles/org.eclipse.orion.server.user.ldap</module>
 		<module>bundles/org.eclipse.orion.server.gerritfs</module>
 		<module>bundles/org.eclipse.orion.server.events</module>
+		<module>bundles/org.eclipse.jetty9.websocket</module>
 
 		<module>tests/org.eclipse.orion.server.tests</module>
 
