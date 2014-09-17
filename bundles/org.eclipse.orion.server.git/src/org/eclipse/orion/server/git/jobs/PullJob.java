@@ -11,23 +11,34 @@
 package org.eclipse.orion.server.git.jobs;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 import javax.servlet.http.Cookie;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
+import org.eclipse.jgit.api.PullCommand;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.*;
-import org.eclipse.orion.server.git.*;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.Transport;
+import org.eclipse.jgit.transport.TransportHttp;
+import org.eclipse.orion.server.git.GitActivator;
+import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
 
@@ -38,9 +49,6 @@ public class PullJob extends GitJob {
 
 	private IPath path;
 	private String projectName;
-
-	static boolean InitSetAdditionalHeaders;
-	static Method SetAdditionalHeadersM;
 
 	public PullJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force) {
 		super(userRunningTask, true, (GitCredentialsProvider) credentials);
@@ -74,21 +82,7 @@ public class PullJob extends GitJob {
 					if (t instanceof TransportHttp && cookie != null) {
 						HashMap<String, String> map = new HashMap<String, String>();
 						map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
-						//Temp. until JGit fix
-						try {
-							if (!InitSetAdditionalHeaders) {
-								InitSetAdditionalHeaders = true;
-								SetAdditionalHeadersM = TransportHttp.class.getMethod("setAdditionalHeaders", Map.class);
-							}
-							if (SetAdditionalHeadersM != null) {
-								SetAdditionalHeadersM.invoke(t, map);
-							}
-						} catch (SecurityException e) {
-						} catch (NoSuchMethodException e) {
-						} catch (IllegalArgumentException e) {
-						} catch (IllegalAccessException e) {
-						} catch (InvocationTargetException e) {
-						}
+						((TransportHttp) t).setAdditionalHeaders(map);
 					}
 				}
 			});

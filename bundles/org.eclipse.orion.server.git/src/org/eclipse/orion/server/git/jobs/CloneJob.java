@@ -10,30 +10,40 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.jobs;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
-import java.io.*;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.net.URI;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jgit.api.*;
+import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.jgit.api.CloneCommand;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.transport.*;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.Transport;
+import org.eclipse.jgit.transport.TransportHttp;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
-import org.eclipse.orion.server.git.*;
+import org.eclipse.orion.server.git.GitActivator;
+import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitCloneHandlerV1;
 import org.json.JSONException;
@@ -51,9 +61,6 @@ public class CloneJob extends GitJob {
 	private final String gitUserMail;
 	private String cloneLocation;
 	private final boolean initProject;
-
-	static boolean InitSetAdditionalHeaders;
-	static Method SetAdditionalHeadersM;
 
 	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project, String gitUserName, String gitUserMail, boolean initProject) {
 		super(userRunningTask, true, (GitCredentialsProvider) credentials);
@@ -99,21 +106,7 @@ public class CloneJob extends GitJob {
 						if (t instanceof TransportHttp && cookie != null) {
 							HashMap<String, String> map = new HashMap<String, String>();
 							map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
-							//Temp. until JGit fix
-							try {
-								if (!InitSetAdditionalHeaders) {
-									InitSetAdditionalHeaders = true;
-									SetAdditionalHeadersM = TransportHttp.class.getMethod("setAdditionalHeaders", Map.class);
-								}
-								if (SetAdditionalHeadersM != null) {
-									SetAdditionalHeadersM.invoke(t, map);
-								}
-							} catch (SecurityException e) {
-							} catch (NoSuchMethodException e) {
-							} catch (IllegalArgumentException e) {
-							} catch (IllegalAccessException e) {
-							} catch (InvocationTargetException e) {
-							}
+							((TransportHttp) t).setAdditionalHeaders(map);
 						}
 					}
 				});
@@ -197,7 +190,7 @@ public class CloneJob extends GitJob {
 			else
 				FileUtils.delete(URIUtil.toFile(clone.getContentLocation()), FileUtils.RECURSIVE);
 		} catch (IOException e) {
-			//log the secondary failure and return the original failure
+			// log the secondary failure and return the original failure
 			String msg = "An error occurred when cleaning up after a clone failure"; //$NON-NLS-1$
 			LogHelper.log(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		}

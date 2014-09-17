@@ -11,22 +11,39 @@
 package org.eclipse.orion.server.git.jobs;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.URISyntaxException;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
 import javax.servlet.http.Cookie;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jgit.api.*;
-import org.eclipse.jgit.api.errors.*;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.api.FetchCommand;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.TransportConfigCallback;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.errors.InvalidRemoteException;
+import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.RefUpdate.Result;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.*;
-import org.eclipse.orion.server.git.*;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteConfig;
+import org.eclipse.jgit.transport.TrackingRefUpdate;
+import org.eclipse.jgit.transport.Transport;
+import org.eclipse.jgit.transport.TransportHttp;
+import org.eclipse.orion.server.git.GitActivator;
+import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
 
@@ -39,9 +56,6 @@ public class FetchJob extends GitJob {
 	private String remote;
 	private boolean force;
 	private String branch; // can be null if fetching the whole branch
-
-	static boolean InitSetAdditionalHeaders;
-	static Method SetAdditionalHeadersM;
 
 	public FetchJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force) {
 		super(userRunningTask, true, (GitCredentialsProvider) credentials);
@@ -64,11 +78,11 @@ public class FetchJob extends GitJob {
 		// or {remote}/{branch}/file/{workspaceId}/{projectName}
 		String cloneName = path.lastSegment();
 		if (branch == null) {
-			Object[] bindings = new String[] {remote, cloneName};
+			Object[] bindings = new String[] { remote, cloneName };
 			setName(NLS.bind("Fetching {0} for {1}", bindings));
 			setFinalMessage(NLS.bind("Fetching {0} for {1} done.", bindings));
 		} else {
-			Object[] bindings = new String[] {remote, branch, cloneName};
+			Object[] bindings = new String[] { remote, branch, cloneName };
 			setName(NLS.bind("Fetching {0}/{1} for {2}", bindings));
 			setFinalMessage(NLS.bind("Fetching {0}/{1} for {2} done.", bindings));
 		}
@@ -92,21 +106,7 @@ public class FetchJob extends GitJob {
 						if (t instanceof TransportHttp && cookie != null) {
 							HashMap<String, String> map = new HashMap<String, String>();
 							map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
-							//Temp. until JGit fix
-							try {
-								if (!InitSetAdditionalHeaders) {
-									InitSetAdditionalHeaders = true;
-									SetAdditionalHeadersM = TransportHttp.class.getMethod("setAdditionalHeaders", Map.class);
-								}
-								if (SetAdditionalHeadersM != null) {
-									SetAdditionalHeadersM.invoke(t, map);
-								}
-							} catch (SecurityException e) {
-							} catch (NoSuchMethodException e) {
-							} catch (IllegalArgumentException e) {
-							} catch (IllegalAccessException e) {
-							} catch (InvocationTargetException e) {
-							}
+							((TransportHttp) t).setAdditionalHeaders(map);
 						}
 					}
 				});
@@ -140,20 +140,20 @@ public class FetchJob extends GitJob {
 		for (TrackingRefUpdate updateRes : fetchResult.getTrackingRefUpdates()) {
 			Result res = updateRes.getResult();
 			switch (res) {
-				case NOT_ATTEMPTED :
-				case NO_CHANGE :
-				case NEW :
-				case FORCED :
-				case FAST_FORWARD :
-				case RENAMED :
-					// do nothing, as these statuses are OK
-					break;
-				case REJECTED :
-					return new Status(IStatus.WARNING, GitActivator.PI_GIT, "Fetch rejected, not a fast-forward.");
-				case REJECTED_CURRENT_BRANCH :
-					return new Status(IStatus.WARNING, GitActivator.PI_GIT, "Rejected because trying to delete the current branch.");
-				default :
-					return new Status(IStatus.ERROR, GitActivator.PI_GIT, res.name());
+			case NOT_ATTEMPTED:
+			case NO_CHANGE:
+			case NEW:
+			case FORCED:
+			case FAST_FORWARD:
+			case RENAMED:
+				// do nothing, as these statuses are OK
+				break;
+			case REJECTED:
+				return new Status(IStatus.WARNING, GitActivator.PI_GIT, "Fetch rejected, not a fast-forward.");
+			case REJECTED_CURRENT_BRANCH:
+				return new Status(IStatus.WARNING, GitActivator.PI_GIT, "Rejected because trying to delete the current branch.");
+			default:
+				return new Status(IStatus.ERROR, GitActivator.PI_GIT, res.name());
 			}
 		}
 		return Status.OK_STATUS;
