@@ -11,7 +11,8 @@ Require-Bundle: org.eclipse.core.runtime,
  org.json;bundle-version="1.0.0",
  org.eclipse.orion.server.core;bundle-version="1.0.0",
  org.eclipse.core.filesystem;bundle-version="1.4.0",
- org.apache.commons.compress;bundle-version="1.4.1"
+ org.apache.commons.compress;bundle-version="1.4.1",
+ org.eclipse.jetty9.websocket;bundle-version="1.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: org.eclipse.orion.server.docker,
@@ -20,12 +21,4 @@ Export-Package: org.eclipse.orion.server.docker,
 Import-Package: javax.servlet;version="2.6.0",
  javax.servlet.http;version="2.6.0",
  org.slf4j;version="1.7.2"
-Bundle-ClassPath: jetty9/javax-websocket-client-impl-9.1.0.v20131115.jar,
- jetty9/javax.websocket-api-1.0.jar,
- jetty9/jetty-io-9.1.0.v20131115.jar,
- jetty9/jetty-util-9.1.0.v20131115.jar,
- jetty9/websocket-api-9.1.0.v20131115.jar,
- jetty9/websocket-client-9.1.0.v20131115.jar,
- jetty9/websocket-common-9.1.0.v20131115.jar,
- jetty9/websocket-servlet-9.1.0.v20131115.jar,
- .
+Bundle-ClassPath: .

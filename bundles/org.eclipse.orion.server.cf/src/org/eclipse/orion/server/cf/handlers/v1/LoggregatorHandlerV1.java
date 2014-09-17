@@ -85,9 +85,14 @@ public class LoggregatorHandlerV1 extends AbstractRESTHandler<Log> {
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 					logger.error(msg, e);
 					return status;
-				} catch (Throwable e) {
+				} catch (NoClassDefFoundError e) {
 					String msg = NLS.bind("Failed to handle request for {0}", pathString); //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+
+					if (e.getMessage().equals("org/eclipse/jetty/websocket/client/WebSocketClient")) {
+						status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Not supported", null);
+					}
+
 					logger.error(msg, e);
 					return status;
 				}
