@@ -16,7 +16,7 @@ import org.json.JSONObject;
  * Interface for the Orion event service. It has capabilities the publishing of 
  * MQTT events for changes within the Orion server.
  *  
- * @author Anthony Hunter
+ * @author Anthony Hunter, Malgorzata Janczarska
  */
 public interface IEventService {
 
@@ -26,5 +26,19 @@ public interface IEventService {
 	 * @param message JSON describing the event.
 	 */
 	public void publish(String topic, JSONObject message);
+	
+	/**
+	 * Register a listener that will receive messages from given topic
+	 * @param topic topic The topic for the event.
+	 * @param messageListener
+	 */
+	public void receive(String topic, IMessageListener messageListener);
+	
+	/**
+	 * Unregister the listener from the topic
+	 * @param topic
+	 * @param messageListener
+	 */
+	public void stopReceiving(String topic, IMessageListener messageListener);
 
 }

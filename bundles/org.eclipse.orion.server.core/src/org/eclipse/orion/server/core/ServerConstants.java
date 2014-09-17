@@ -111,6 +111,13 @@ public class ServerConstants {
 	 */
 	public static final String CONFIG_EVENT_HOST = "orion.events.uri"; //$NON-NLS-1$
 	
+	public static final String CONFIG_EVENT_KEY_TYPE = "orion.events.keyType";
+	public static final String CONFIG_EVENT_KEY_PASSWORD = "orion.events.keyPassword";
+	public static final String CONFIG_EVENT_KEY_STORE = "orion.events.keyStore";
+	public static final String CONFIG_EVENT_TRUST_STORE = "orion.events.trustStore";
+
+	
+	
 	/**
 	 * The name of a configuration property specifying a comma-separated list of server
 	 * file system paths where user content can be written. By default user content

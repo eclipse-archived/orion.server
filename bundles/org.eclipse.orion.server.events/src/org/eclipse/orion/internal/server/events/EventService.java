@@ -10,9 +10,18 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.events;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.events.IEventService;
+import org.eclipse.orion.server.core.events.IMessageListener;
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -33,20 +42,64 @@ public class EventService implements IEventService {
 	private MqttClient mqttClient;
 	private MqttConnectOptions mqttConnectOptions;
 	private Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+	
+	private Map<String, Set<IMessageListener>>  messageListeners = new HashMap<String, Set<IMessageListener>>();
+	private Callback callback;
+	
+	private class Callback implements MqttCallback{
+		
+		public void connectionLost(Throwable e) {
+			//Do nothing
+		}
 
-	public EventService() {
-		this.mqttClient = initClient();
+		public void deliveryComplete(IMqttDeliveryToken token) {
+			// Do nothing
+		}
+
+		public void messageArrived(String topic, MqttMessage msg) throws Exception {
+			JSONObject message = new JSONObject();
+			message.put("Topic", topic);
+			String messageText = new String(msg.getPayload());
+			try{
+				message.put("Message", new JSONObject(messageText));
+			} catch(JSONException e){
+				message.put("Message", messageText);
+			}
+			message.put("QoS", msg.getQos());
+			Set<IMessageListener> topicListners = messageListeners.get(topic);
+			if(topicListners!=null && !topicListners.isEmpty()){
+				for(IMessageListener listner : topicListners){
+					listner.receiveMessage(message);
+				}
+			}
+			
+		}
+		
 	}
 
-	private MqttClient initClient() {
+	public EventService() {
+		initClient();
+		this.callback = new Callback();
+		this.mqttClient.setCallback(callback);
+	}
+	
+	public void destroy(){
+		try {
+			mqttClient.disconnect();
+		} catch (MqttException e) {
+			logger.warn("Failure while disconecting the mqtt client", e); //$NON-NLS-1$
+		}
+	}
+
+	private void initClient() {
 		mqttConnectOptions = new MqttConnectOptions();
 		String serverURI = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_HOST, null);
 		if (serverURI == null) {
 			//no MQTT message broker host defined
-			if (logger.isDebugEnabled()) {
+			if (logger.isWarnEnabled()) {
 				logger.warn("No MQTT message broker specified in the orion.conf with " + ServerConstants.CONFIG_EVENT_HOST); //$NON-NLS-1$
 			}
-			return null;
+			return;
 		}
 		if (logger.isInfoEnabled()) {
 			logger.info("Using MQTT message broker at " + serverURI);
@@ -59,14 +112,36 @@ public class EventService implements IEventService {
 		if (password != null) {
 			mqttConnectOptions.setPassword(password.toCharArray());
 		}
+		
+		Properties sslProperties = new Properties();
+		String keyType = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_KEY_TYPE, null);
+		if(keyType!=null){
+			sslProperties.put("com.ibm.ssl.keyStoreType", keyType);
+			sslProperties.put("com.ibm.ssl.trustStoreType", keyType);
+		}
+		String keyPassword = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_KEY_PASSWORD, null);
+		if(keyPassword!=null){
+			sslProperties.put("com.ibm.ssl.keyStorePassword", keyPassword);
+			sslProperties.put("com.ibm.ssl.trustStorePassword", keyPassword);
+		}
+		String keyStore = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_KEY_STORE, null);
+		if(keyStore!=null){
+			sslProperties.put("com.ibm.ssl.keyStore", keyStore);
+		}
+		String trustStore = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_TRUST_STORE, null);
+		if(trustStore!=null){
+			sslProperties.put("com.ibm.ssl.trustStore", trustStore);
+		}
+		mqttConnectOptions.setSSLProperties(sslProperties);
 
 		try {
-			return new MqttClient(serverURI, MqttClient.generateClientId(), new MemoryPersistence());
+			mqttClient = new MqttClient(serverURI, MqttClient.generateClientId(), new MemoryPersistence());
+			mqttClient.connect(mqttConnectOptions);
+			logger.info("MQTT client connected");
 		} catch (MqttException e) {
 			logger.warn("Failed to initialize MQTT event client", e); //$NON-NLS-1$
 		}
 
-		return null;
 	}
 
 	public void publish(String topic, JSONObject message) {
@@ -76,9 +151,7 @@ public class EventService implements IEventService {
 		}
 		MqttMessage mqttMessage = new MqttMessage(message.toString().getBytes());
 		try {
-			mqttClient.connect(mqttConnectOptions);
 			mqttClient.publish(topic, mqttMessage);
-			mqttClient.disconnect();
 		} catch (MqttException e) {
 			logger.warn("Failure publishing event on topic: " + topic, ", message: " + message.toString(), e); //$NON-NLS-1$ //$NON-NLS-2$
 		}
@@ -89,6 +162,41 @@ public class EventService implements IEventService {
 				logger.error(e.getLocalizedMessage(), e);
 			}
 		}
+	}
+
+	public synchronized void receive(String topic, IMessageListener messageListener) {
+		Set<IMessageListener> topicListeners = messageListeners.get(topic);
+		if(topicListeners == null){
+			topicListeners = new HashSet<IMessageListener>();
+			messageListeners.put(topic, topicListeners);		
+			try {
+				if(mqttClient!=null){
+					mqttClient.subscribe(topic);
+				}
+			} catch (MqttException e) {
+				logger.warn("Failure subscribing on topic: " + topic, e); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+		}
+		topicListeners.add(messageListener);
+	}
+
+	public void stopReceiving(String topic, IMessageListener messageListener) {
+		Set<IMessageListener> topicListeners = messageListeners.get(topic);
+		if(topicListeners == null){
+			return;
+		}
+		topicListeners.remove(messageListener);
+		if(topicListeners.isEmpty()){
+			try{
+				if(mqttClient!=null){
+					mqttClient.unsubscribe(topic);
+				}
+				messageListeners.remove(topic);
+			} catch (MqttException e) {
+				logger.warn("Failure unsubscribing on topic: " + topic, e); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+		}
+		
 	}
 
 }

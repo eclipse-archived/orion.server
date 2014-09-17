@@ -25,6 +25,7 @@ public class Activator implements BundleActivator {
 	public static volatile BundleContext bundleContext;
 
 	static Activator singleton;
+	private EventService eventService;
 
 	public static Activator getDefault() {
 		return singleton;
@@ -41,14 +42,16 @@ public class Activator implements BundleActivator {
 	}
 
 	private void registerServices() {
-		IEventService service = new EventService();
-		if (service != null) {
+		eventService = new EventService();
+		if (eventService != null) {
 			@SuppressWarnings("unused")
-			ServiceRegistration<IEventService> eventServiceRegistration = bundleContext.registerService(IEventService.class, service, null);
+			ServiceRegistration<IEventService> eventServiceRegistration = bundleContext.registerService(IEventService.class, eventService, null);
 		}
 	}
 
 	public void stop(BundleContext context) throws Exception {
+		eventService.destroy();
+		eventService = null;
 		bundleContext = null;
 	}
 }
