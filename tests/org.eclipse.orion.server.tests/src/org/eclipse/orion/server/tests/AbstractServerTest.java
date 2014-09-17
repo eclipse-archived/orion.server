@@ -29,6 +29,7 @@ import org.junit.Rule;
 import org.junit.rules.TestName;
 
 import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.HttpUnitOptions;
 import com.meterware.httpunit.WebRequest;
 
 /**
@@ -53,6 +54,9 @@ public class AbstractServerTest {
 		// the test user by default is the test method name
 		testUserLogin = testName.getMethodName();
 		testUserPassword = testName.getMethodName();
+
+		// set to true to enable HttpUnit logging
+		HttpUnitOptions.setLoggingHttpHeaders(false);
 	}
 
 	public static void setAuthentication(WebRequest request) {
