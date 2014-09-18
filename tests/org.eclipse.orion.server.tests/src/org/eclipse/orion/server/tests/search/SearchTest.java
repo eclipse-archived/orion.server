@@ -13,41 +13,20 @@ package org.eclipse.orion.server.tests.search;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import com.meterware.httpunit.*;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.search.SearchActivator;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.xfer.TransferTest;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.json.*;
+import org.junit.*;
 import org.junit.Test;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.HttpUnitOptions;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 /**
  * Tests for the search servlet.
@@ -169,6 +148,24 @@ public class SearchTest extends FileSystemTest {
 		String location = match.getString("Location");
 		searchResult = doSearch("*ErrorMess+Location:" + location);
 		assertOneMatch(searchResult, "script.js");
+	}
+
+	/**
+	 * Tests that we don't concatenate over punctuation boundaries.
+	 * @throws Exception 
+	 */
+	@Test
+	public void testWordConcatenation() throws Exception {
+		JSONObject searchResult = doSearch("jsondata.Children");
+		assertOneMatch(searchResult, "script.js");
+		searchResult = doSearch("jsondataChildren");
+		assertNoMatch(searchResult);
+
+		searchResult = doSearch("functionparentLocation");
+		assertNoMatch(searchResult);
+		searchResult = doSearch("function(parentLocation");
+		assertOneMatch(searchResult, "script.js");
+
 	}
 
 	/**
