@@ -19,8 +19,6 @@ import org.osgi.service.useradmin.Role;
 
 public class User implements org.osgi.service.useradmin.User {
 
-	private static final String NAME = "name";
-
 	public static final String BLOCKED = "blocked";
 	
 	public static final String EMAIL_CONFIRMATION = "email_confirmation";
@@ -82,11 +80,11 @@ public class User implements org.osgi.service.useradmin.User {
 	}
 
 	public String getName() {
-		return userCredentials.getProperty(NAME);
+		return userCredentials.getProperty(UserConstants.KEY_NAME);
 	}
 
 	public void setName(String name) {
-		userCredentials.setProperty(NAME, name);
+		userCredentials.setProperty(UserConstants.KEY_NAME, name);
 	}
 
 	public void setUid(String uid) {

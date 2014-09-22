@@ -86,7 +86,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "testDupUser");
-		params.put("Name", "username_testCreateDuplicateUser");
+		params.put(UserConstants.KEY_NAME, "username_testCreateDuplicateUser");
 
 		params.put(UserConstants.KEY_PASSWORD, "pass_" + System.currentTimeMillis());
 		WebRequest request = getPostUsersRequest("", params, true);
@@ -106,7 +106,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "testDupEmail");
-		params.put("Name", "username_testCreateUserDuplicateEmail");
+		params.put(UserConstants.KEY_NAME, "username_testCreateUserDuplicateEmail");
 		params.put(UserConstants.KEY_PASSWORD, "pass_" + System.currentTimeMillis());
 		params.put(UserConstants.KEY_EMAIL, "username@example.com");
 		WebRequest request = getPostUsersRequest("", params, true);
@@ -128,7 +128,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "testCaseEmail");
-		params.put("Name", "username_testCreateUserEmailDifferentCase");
+		params.put(UserConstants.KEY_NAME, "username_testCreateUserEmailDifferentCase");
 		params.put(UserConstants.KEY_PASSWORD, "pass_" + System.currentTimeMillis());
 		params.put(UserConstants.KEY_EMAIL, "duplicateemail@example.com");
 		WebRequest request = getPostUsersRequest("", params, true);
@@ -162,7 +162,7 @@ public class BasicUsersTest extends UsersTest {
 			// create user
 			Map<String, String> params = new HashMap<String, String>();
 			params.put(UserConstants.KEY_LOGIN, name);
-			params.put("Name", "Tom");
+			params.put(UserConstants.KEY_NAME, "Tom");
 
 			params.put(UserConstants.KEY_PASSWORD, "pass_" + System.currentTimeMillis());
 			WebRequest request = getPostUsersRequest("", params, true);
@@ -180,7 +180,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "user" + System.currentTimeMillis());
-		params.put("Name", "username_" + System.currentTimeMillis());
+		params.put(UserConstants.KEY_NAME, "username_" + System.currentTimeMillis());
 
 		params.put(UserConstants.KEY_PASSWORD, "pass_" + System.currentTimeMillis());
 		WebRequest request = getPostUsersRequest("", params, true);
@@ -199,7 +199,7 @@ public class BasicUsersTest extends UsersTest {
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
 		assertEquals("Invalid user login", params.get(UserConstants.KEY_LOGIN), responseObject.getString(UserConstants.KEY_LOGIN));
-		assertEquals("Invalid user name", params.get("Name"), responseObject.getString("Name"));
+		assertEquals("Invalid user name", params.get(UserConstants.KEY_NAME), responseObject.getString(UserConstants.KEY_NAME));
 		assertFalse("Response shouldn't contain password", responseObject.has(UserConstants.KEY_PASSWORD));
 
 		// check if user can authenticate
@@ -256,7 +256,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "testCrDelRights");
-		params.put("name", "username_" + System.currentTimeMillis());
+		params.put(UserConstants.KEY_NAME, "username_" + System.currentTimeMillis());
 		params.put(UserConstants.KEY_EMAIL, "test@test_" + System.currentTimeMillis());
 		params.put("workspace", "workspace_" + System.currentTimeMillis());
 		params.put(UserConstants.KEY_PASSWORD, "pass_" + System.currentTimeMillis());
@@ -310,7 +310,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "user" + System.currentTimeMillis());
-		params.put("Name", "username_" + System.currentTimeMillis());
+		params.put(UserConstants.KEY_NAME, "username_" + System.currentTimeMillis());
 		params.put("roles", "admin");
 		String oldPass = "pass_" + System.currentTimeMillis();
 		params.put(UserConstants.KEY_PASSWORD, oldPass);
@@ -326,7 +326,7 @@ public class BasicUsersTest extends UsersTest {
 
 		// update user
 		JSONObject updateBody = new JSONObject();
-		updateBody.put("Name", "usernameUpdate_" + System.currentTimeMillis());
+		updateBody.put(UserConstants.KEY_NAME, "usernameUpdate_" + System.currentTimeMillis());
 		updateBody.put("oldPassword", oldPass);
 		updateBody.put(UserConstants.KEY_PASSWORD, "passUpdate_" + System.currentTimeMillis());
 		updateBody.put("roles", "");
@@ -342,7 +342,7 @@ public class BasicUsersTest extends UsersTest {
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
 		assertEquals("Invalid user login", params.get(UserConstants.KEY_LOGIN), responseObject.getString(UserConstants.KEY_LOGIN));
-		assertEquals("Invalid user name", updateBody.getString("Name"), responseObject.getString("Name"));
+		assertEquals("Invalid user name", updateBody.getString(UserConstants.KEY_NAME), responseObject.getString(UserConstants.KEY_NAME));
 		assertFalse("Response shouldn't contain password", responseObject.has(UserConstants.KEY_PASSWORD));
 
 		// check if user can authenticate and does not have admin role
@@ -366,7 +366,7 @@ public class BasicUsersTest extends UsersTest {
 		Map<String, String> params = new HashMap<String, String>();
 		String username = "user" + System.currentTimeMillis();
 		params.put(UserConstants.KEY_LOGIN, username);
-		params.put("Name", "username" + System.currentTimeMillis());
+		params.put(UserConstants.KEY_NAME, "username" + System.currentTimeMillis());
 		params.put("roles", "admin");
 		String oldPass = "pass_" + System.currentTimeMillis();
 		params.put(UserConstants.KEY_PASSWORD, oldPass);

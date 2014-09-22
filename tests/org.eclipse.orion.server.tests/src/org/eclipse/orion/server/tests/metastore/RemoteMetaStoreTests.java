@@ -288,7 +288,7 @@ public class RemoteMetaStoreTests {
 
 		JSONObject jsonObject = new JSONObject(response.getText());
 		String location = jsonObject.getString("Location");
-		String name = jsonObject.getString("Name");
+		String name = jsonObject.getString(UserConstants.KEY_NAME);
 		System.out.println("Created User: " + name + " at Location: " + location);
 		return response.getResponseCode();
 	}
