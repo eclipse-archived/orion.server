@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others
+ * Copyright (c) 2013, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -25,6 +25,7 @@ import org.eclipse.orion.server.useradmin.EmptyAuthorization;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.Role;
 import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.orion.server.useradmin.WebIdeAuthorization;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.service.useradmin.Authorization;
@@ -34,7 +35,6 @@ import org.osgi.service.useradmin.Authorization;
  */
 public class LDAPCredentialsService implements IOrionCredentialsService {
 	
-	static final String USER_LOGIN = "login"; //$NON-NLS-1$
 	static final String USER_UID = "uid"; //$NON-NLS-1$
 	static final String USER_EMAIL = "email"; //$NON-NLS-1$
 
@@ -79,7 +79,7 @@ public class LDAPCredentialsService implements IOrionCredentialsService {
 	}
 
 	public User getUser(String key, String value) {
-		if (key.equals(USER_LOGIN) || key.equals(USER_UID)) {
+		if (key.equals(UserConstants.KEY_LOGIN) || key.equals(USER_UID)) {
 			return new LDAPUser(value, this);
 		}
 		return null;

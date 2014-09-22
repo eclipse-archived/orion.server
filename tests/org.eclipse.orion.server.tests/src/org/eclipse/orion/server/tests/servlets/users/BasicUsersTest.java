@@ -347,7 +347,7 @@ public class BasicUsersTest extends UsersTest {
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
-		assertEquals("Invalid user login", params.get("login"), responseObject.getString("login"));
+		assertEquals("Invalid user login", params.get(UserConstants.KEY_LOGIN), responseObject.getString(UserConstants.KEY_LOGIN));
 		assertEquals("Invalid user name", updateBody.getString("Name"), responseObject.getString("Name"));
 		//		assertEquals("Invalid user email", updatedParams.get("email"), responseObject.getString("email"));
 		//		assertEquals("Invalid user workspace", updatedParams.get("workspace"), responseObject.getString("workspace"));
@@ -375,7 +375,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		String username = "user" + System.currentTimeMillis();
-		params.put("login", username);
+		params.put(UserConstants.KEY_LOGIN, username);
 		params.put("Name", "username" + System.currentTimeMillis());
 		//		params.put("email", "test@test_" + System.currentTimeMillis());
 		//		params.put("workspace", "workspace_" + System.currentTimeMillis());
@@ -395,7 +395,7 @@ public class BasicUsersTest extends UsersTest {
 		//reset password
 		String newPass = "passUpdate_" + System.currentTimeMillis();
 		params = new HashMap<String, String>();
-		params.put("login", username);
+		params.put(UserConstants.KEY_LOGIN, username);
 		params.put(UserConstants.KEY_PASSWORD, newPass);
 		params.put(UserConstants.KEY_RESET, "true");
 		request = getPostUsersRequest("", params, true);
@@ -404,7 +404,7 @@ public class BasicUsersTest extends UsersTest {
 
 		// check if user can authenticate
 		request = getAuthenticatedRequest(location, METHOD_GET, true);
-		setAuthentication(request, params.get("login"), newPass);
+		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), newPass);
 		response = webConversation.getResponse(request);
 		assertEquals("User cannot log in with new credentials", HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -424,7 +424,7 @@ public class BasicUsersTest extends UsersTest {
 
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
-		params.put("login", login1);
+		params.put(UserConstants.KEY_LOGIN, login1);
 		params.put(UserConstants.KEY_PASSWORD, password);
 		WebRequest request = getPostUsersRequest("", params, true);
 		WebResponse response = webConversation.getResponse(request);
@@ -438,7 +438,7 @@ public class BasicUsersTest extends UsersTest {
 
 		String login2 = "login2" + System.currentTimeMillis();
 		JSONObject updateBody = new JSONObject();
-		updateBody.put("login", login2);
+		updateBody.put(UserConstants.KEY_LOGIN, login2);
 
 		request = getAuthenticatedRequest(location, METHOD_PUT, true, null, updateBody);
 		response = webConversation.getResponse(request);
@@ -455,7 +455,7 @@ public class BasicUsersTest extends UsersTest {
 		assertEquals("User could not authenticate with new login" + response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		responseObject = new JSONObject(response.getText());
-		assertEquals("New login wasn't returned in user details", login2, responseObject.get("login"));
+		assertEquals("New login wasn't returned in user details", login2, responseObject.get(UserConstants.KEY_LOGIN));
 	}
 
 	@Test

@@ -23,6 +23,7 @@ import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.junit.Before;
 import org.junit.Rule;
@@ -85,8 +86,8 @@ public class AbstractServerTest {
 	protected User createUser(String login, String password) {
 		// see if the user exists already
 		IOrionCredentialsService userAdmin = UserServiceHelper.getDefault().getUserStore();
-		if (userAdmin.getUser("login", login) != null)
-			return userAdmin.getUser("login", login);
+		if (userAdmin.getUser(UserConstants.KEY_LOGIN, login) != null)
+			return userAdmin.getUser(UserConstants.KEY_LOGIN, login);
 
 		// create new user in metadata store
 		UserInfo userInfo = new UserInfo();
