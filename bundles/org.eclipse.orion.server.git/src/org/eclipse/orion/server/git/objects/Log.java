@@ -74,6 +74,8 @@ public class Log extends GitObject {
 	private String authorPattern;
 	private String committerPattern;
 	private String sha1Pattern;
+	private String fromDate;
+	private String toDate;
 	private boolean mergeBase;
 	private Ref toRefId;
 	private Ref fromRefId;
@@ -118,6 +120,14 @@ public class Log extends GitObject {
 
 	public void setSHA1Pattern(String sha1Pattern) {
 		this.sha1Pattern = sha1Pattern;
+	}
+
+	public void setFromDate(String fromDate) {
+		this.fromDate = fromDate;
+	}
+
+	public void setToDate(String toDate) {
+		this.toDate = toDate;
 	}
 
 	public void setMergeBaseFilter(boolean mergeBaseFilter) {
@@ -201,6 +211,12 @@ public class Log extends GitObject {
 		}
 		if (this.sha1Pattern != null) {
 			q += "&sha1=" + GitUtils.encode(this.sha1Pattern); //$NON-NLS-1$
+		}
+		if (this.fromDate != null) {
+			q += "&fromDate=" + this.fromDate; //$NON-NLS-1$
+		}
+		if (this.toDate != null) {
+			q += "&toDate=" + this.toDate; //$NON-NLS-1$
 		}
 		if (this.mergeBase) {
 			q += "&mergeBase=true"; //$NON-NLS-1$

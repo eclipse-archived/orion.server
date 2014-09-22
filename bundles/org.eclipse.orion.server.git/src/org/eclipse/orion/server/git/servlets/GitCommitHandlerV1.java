@@ -212,6 +212,8 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		String authorFilter = request.getParameter("author"); //$NON-NLS-1$
 		String committerFilter = request.getParameter("committer"); //$NON-NLS-1$
 		String sha1Filter = request.getParameter("sha1"); //$NON-NLS-1$
+		String fromDate = request.getParameter("fromDate"); //$NON-NLS-1$
+		String toDate = request.getParameter("toDate"); //$NON-NLS-1$
 		String mergeBaseFilter = request.getParameter("mergeBase"); //$NON-NLS-1$
 		ObjectId toObjectId = null;
 		ObjectId fromObjectId = null;
@@ -255,7 +257,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		URI baseLocation = getURI(request);
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, refIdsRange == null ? BaseToCloneConverter.COMMIT : BaseToCloneConverter.COMMIT_REFRANGE);
 
-		LogJob job = new LogJob(TaskJobHandler.getUserId(request), filePath, cloneLocation, page, pageSize, toObjectId, fromObjectId, toRefId, fromRefId, refIdsRange, pattern, messageFilter, authorFilter, committerFilter, sha1Filter, "true".equals(mergeBaseFilter));
+		LogJob job = new LogJob(TaskJobHandler.getUserId(request), filePath, cloneLocation, page, pageSize, toObjectId, fromObjectId, toRefId, fromRefId, refIdsRange, pattern, messageFilter, authorFilter, committerFilter, sha1Filter, "true".equals(mergeBaseFilter), fromDate, toDate);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 	}
 

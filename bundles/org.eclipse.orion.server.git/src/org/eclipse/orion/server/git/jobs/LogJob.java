@@ -53,18 +53,18 @@ public class LogJob extends GitJob {
 	private String authorFilter;
 	private String committerFilter;
 	private String sha1Filter;
+	private String fromDate;
+	private String toDate;
 	private boolean mergeBaseFilter;
 
 	/**
-	 * Creates job with given page range and adding <code>commitsSize</code>
-	 * commits to every branch.
+	 * Creates job with given page range and adding <code>commitsSize</code> commits to every branch.
 	 * 
 	 * @param userRunningTask
 	 * @param repositoryPath
 	 * @param cloneLocation
 	 * @param commitsSize
-	 *            user 0 to omit adding any log, only CommitLocation will be
-	 *            attached
+	 *            user 0 to omit adding any log, only CommitLocation will be attached
 	 * @param pageNo
 	 * @param pageSize
 	 *            use negative to indicate that all commits need to be returned
@@ -77,10 +77,9 @@ public class LogJob extends GitJob {
 	 * @param sha1Filter
 	 *            string used to filter commits by sha1
 	 * @param baseLocation
-	 *            URI used as a base for generating next and previous page
-	 *            links. Should not contain any parameters.
+	 *            URI used as a base for generating next and previous page links. Should not contain any parameters.
 	 */
-	public LogJob(String userRunningTask, IPath filePath, URI cloneLocation, int page, int pageSize, ObjectId toObjectId, ObjectId fromObjectId, Ref toRefId, Ref fromRefId, String refIdsRange, String pattern, String messageFilter, String authorFilter, String committerFilter, String sha1Filter, boolean mergeBaseFilter) {
+	public LogJob(String userRunningTask, IPath filePath, URI cloneLocation, int page, int pageSize, ObjectId toObjectId, ObjectId fromObjectId, Ref toRefId, Ref fromRefId, String refIdsRange, String pattern, String messageFilter, String authorFilter, String committerFilter, String sha1Filter, boolean mergeBaseFilter, String fromDate, String toDate) {
 		super(userRunningTask, false);
 		this.filePath = filePath;
 		this.cloneLocation = cloneLocation;
@@ -96,6 +95,8 @@ public class LogJob extends GitJob {
 		this.authorFilter = authorFilter;
 		this.committerFilter = committerFilter;
 		this.sha1Filter = sha1Filter;
+		this.fromDate = fromDate;
+		this.toDate = toDate;
 		this.mergeBaseFilter = mergeBaseFilter;
 		setFinalMessage("Generating git log completed.");
 	}
@@ -162,6 +163,19 @@ public class LogJob extends GitJob {
 			if (sha1Filter != null && sha1Filter.length() > 0) {
 				log.setSHA1Pattern(sha1Filter);
 				logCommand.setSHA1Filter(sha1Filter);
+			}
+
+			if (fromDate != null && fromDate.length() > 0) {
+				log.setFromDate(fromDate);
+				if (toDate != null && toDate.length() > 0) {
+					log.setToDate(toDate);
+					logCommand.setDateFilter(fromDate, toDate);
+				} else {
+					logCommand.setDateFilter(fromDate, null);
+				}
+			} else if (toDate != null && toDate.length() > 0) {
+				log.setToDate(toDate);
+				logCommand.setDateFilter(null, toDate);
 			}
 
 			if (page > 0) {
