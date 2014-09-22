@@ -98,6 +98,8 @@ class ClientImport {
 			statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 			return false;
 		}
+		// Remove temp files when move is finished
+		removeTempFiles();
 		return true;
 	}
 
@@ -236,7 +238,8 @@ class ClientImport {
 				statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, jsonData, null));
 				return false;
 			}
-
+			// Remove temp files when unzip is finished
+			removeTempFiles();
 		} catch (ZipException e) {
 			//zip exception implies client sent us invalid input
 			String msg = NLS.bind("Failed to complete file transfer on {0}", destPath.toString());
@@ -457,11 +460,27 @@ class ClientImport {
 		}
 	}
 
+	/**
+	 * Save any progress information for the import so far
+	 * @throws IOException Thrown if there is a problem saving the data
+	 */
 	void save() throws IOException {
 		File dir = getStorageDirectory();
 		dir.mkdirs();
 		File index = new File(dir, FILE_INDEX);
 		props.store(new FileOutputStream(index), null);
+	}
+
+	/**
+	 * Remove the temporary files for the import
+	 */
+	private void removeTempFiles() {
+		File dir = getStorageDirectory();
+		File index = new File(dir, FILE_INDEX);
+		File data = new File(dir, FILE_DATA);
+		data.delete();
+		index.delete();
+		dir.delete();
 	}
 
 	public void setFileName(String name) {
