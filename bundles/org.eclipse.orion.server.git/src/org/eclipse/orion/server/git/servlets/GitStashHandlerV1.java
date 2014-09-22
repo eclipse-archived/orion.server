@@ -10,26 +10,31 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-
-import org.eclipse.orion.server.servlets.OrionServlet;
 import java.net.URI;
 import java.util.Collection;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.StashApplyCommand;
+import org.eclipse.jgit.api.StashCreateCommand;
+import org.eclipse.jgit.api.StashDropCommand;
+import org.eclipse.jgit.api.StashListCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRefNameException;
 import org.eclipse.jgit.lib.PersonIdent;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.StashPage;
 import org.eclipse.orion.server.git.objects.StashRef;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
 
@@ -43,10 +48,12 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 
 	/**
 	 * Helper method extracting the StashRef for the stash commit rev
-	 * @param git Git handler object
-	 * @param stashRev Git commit name
-	 * @return StashRef wrapper object or <code>null</code> if the given commit
-	 * 	is not present in the stash
+	 * 
+	 * @param git
+	 *            Git handler object
+	 * @param stashRev
+	 *            Git commit name
+	 * @return StashRef wrapper object or <code>null</code> if the given commit is not present in the stash
 	 * @throws InvalidRefNameException
 	 * @throws GitAPIException
 	 */
@@ -70,7 +77,9 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 
 	/**
 	 * Helper method returning whether the stash is empty or not
-	 * @param git Git handler object
+	 * 
+	 * @param git
+	 *            Git handler object
 	 * @return <code>true</code> iff the git stash is empty
 	 * @throws InvalidRefNameException
 	 * @throws GitAPIException
@@ -184,7 +193,7 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 
 		int page = request.getParameter("page") != null ? new Integer(request.getParameter("page")).intValue() : 1; //$NON-NLS-1$ //$NON-NLS-2$
 		int pageSize = request.getParameter("pageSize") != null ? new Integer(request.getParameter("pageSize")).intValue() : PAGE_SIZE; //$NON-NLS-1$ //$NON-NLS-2$
-
+		String messageFilter = request.getParameter("filter"); //$NON-NLS-1$
 		try {
 
 			URI baseLocation = getURI(request);
@@ -194,7 +203,7 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 			StashListCommand stashList = git.stashList();
 			Collection<RevCommit> stashedRefsCollection = stashList.call();
 
-			StashPage stashPage = new StashPage(cloneLocation, db, stashedRefsCollection, page, pageSize);
+			StashPage stashPage = new StashPage(cloneLocation, db, stashedRefsCollection, page, pageSize, messageFilter);
 			OrionServlet.writeJSONResponse(request, response, stashPage.toJSON());
 			return true;
 
