@@ -113,8 +113,8 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 		// TODO: see bug 335699, the user storage should not configure authorization rules
 		// it should add Admin role, which will be used during authorization process
 		try {
-			AuthorizationService.addUserRight(admin.getUid(), User.USERS_URI);
-			AuthorizationService.addUserRight(admin.getUid(), User.USERS_URI + "/*"); //$NON-NLS-1$
+			AuthorizationService.addUserRight(admin.getUid(), "/users");
+			AuthorizationService.addUserRight(admin.getUid(), "/users/*"); //$NON-NLS-1$
 		} catch (CoreException e) {
 			LogHelper.log(e);
 		}
