@@ -315,7 +315,7 @@ public class GerritListFile extends HttpServlet {
 			log.debug("User name: " + username);
 		 	AccountState who = accountCache.getByUsername(username);
 		 	log.debug("AccountState " + who);
-			if (who == null && username.matches("ˆ([a-zA-Z0-9][a-zA-Z0-9._-]*[a-zA-Z0-9]|[a-zA-Z0-9])$")) {
+			if (who == null && username.matches("^([a-zA-Z0-9][a-zA-Z0-9._-]*[a-zA-Z0-9]|[a-zA-Z0-9])$")) {
 				log.debug("User is not registered with Gerrit. Register now."); // This approach assumes an auth type of HTTP_LDAP
 				final AuthRequest areq = AuthRequest.forUser(username);
 				try {
