@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2013 IBM Corporation and others 
+ * Copyright (c) 2010, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -25,6 +25,7 @@ import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.UserConstants;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
@@ -94,8 +95,8 @@ public class BasicAuthenticationService implements IAuthenticationService {
 			LogHelper.log(new Status(IStatus.ERROR, PI_BASIC_AUTH, "User admin server is not available"));
 			return null;
 		}
-		User user = userAdmin.getUser("login", login); //$NON-NLS-1$
-		if (user != null && user.hasCredential("password", password)) { //$NON-NLS-1$
+		User user = userAdmin.getUser(UserConstants.KEY_LOGIN, login);
+		if (user != null && user.hasCredential(UserConstants.KEY_PASSWORD, password)) {
 			return user;
 		}
 		//add a sleep to avoid brute force attack

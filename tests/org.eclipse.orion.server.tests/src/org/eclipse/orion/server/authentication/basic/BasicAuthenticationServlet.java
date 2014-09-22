@@ -39,7 +39,7 @@ public class BasicAuthenticationServlet extends OrionServlet {
 
 	private JSONObject getUserJson(String uid) throws JSONException {
 		JSONObject obj = new JSONObject();
-		obj.put("login", uid); //$NON-NLS-1$
+		obj.put(UserConstants.KEY_LOGIN, uid);
 
 		try {
 			User user = BasicAuthenticationService.userAdmin.getUser(UserConstants.KEY_UID, uid);

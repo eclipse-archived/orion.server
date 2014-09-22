@@ -59,8 +59,8 @@ public class FormAuthHelper {
 	 */
 	public static LoginResult performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException, UnsupportedUserStoreException {
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
-		String login = req.getParameter("login");//$NON-NLS-1$
-		User user = getUserForCredentials(login, req.getParameter("password")); //$NON-NLS-1$
+		String login = req.getParameter(UserConstants.KEY_LOGIN);
+		User user = getUserForCredentials(login, req.getParameter(UserConstants.KEY_PASSWORD));
 
 		if (user != null) {
 			if (user.getBlocked()) {
@@ -107,8 +107,8 @@ public class FormAuthHelper {
 		if (userAdmin == null) {
 			throw new UnsupportedUserStoreException();
 		}
-		user = userAdmin.getUser("login", login); //$NON-NLS-1$
-		if (user != null && user.hasCredential("password", password)) { //$NON-NLS-1$
+		user = userAdmin.getUser(UserConstants.KEY_LOGIN, login);
+		if (user != null && user.hasCredential(UserConstants.KEY_PASSWORD, password)) {
 			return user;
 		}
 		return null;
@@ -153,7 +153,7 @@ public class FormAuthHelper {
 
 	public static JSONObject getUserJson(String uid, String contextPath) throws JSONException {
 		JSONObject obj = new JSONObject();
-		obj.put("login", uid); //$NON-NLS-1$
+		obj.put(UserConstants.KEY_LOGIN, uid);
 		try {
 			User user = userAdmin.getUser(UserConstants.KEY_UID, uid);
 

@@ -21,10 +21,17 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.user.profile.RandomPasswordGenerator;
-import org.eclipse.orion.server.useradmin.*;
+import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
+import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.UserConstants;
+import org.eclipse.orion.server.useradmin.UserEmailUtil;
+import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -167,7 +174,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 
 		if (userLogin != null && userLogin.trim().length() > 0) {
 			//reset using login
-			User user = userAdmin.getUser("login", userLogin.trim());
+			User user = userAdmin.getUser(UserConstants.KEY_LOGIN, userLogin.trim());
 			if (user == null) {
 				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userLogin + " not found.");
 				return;

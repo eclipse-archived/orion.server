@@ -22,6 +22,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.tests.servlets.users.UsersTest;
 import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.test.performance.Performance;
 import org.eclipse.test.performance.PerformanceMeter;
 import org.junit.Test;
@@ -85,10 +86,10 @@ public class SimpleServerUserStressTest extends UsersTest {
 			// create a user
 			Map<String, String> params = new HashMap<String, String>();
 			String login = getRandomName();
-			params.put("login", login);
+			params.put(UserConstants.KEY_LOGIN, login);
 			params.put("Name", getRandomName() + " " + getRandomName());
 			params.put("email", login + "@example.com");
-			params.put("password", getRandomName());
+			params.put(UserConstants.KEY_PASSWORD, getRandomName());
 
 			WebRequest request = getPostUsersRequest("", params, true);
 			WebResponse response = webConversation.getResponse(request);

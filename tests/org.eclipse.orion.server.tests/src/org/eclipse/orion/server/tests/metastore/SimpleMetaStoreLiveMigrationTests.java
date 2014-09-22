@@ -37,6 +37,7 @@ import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.core.metastore.SimpleUserPasswordUtil;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
+import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -158,7 +159,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		jsonObject.put("UserName", userId);
 		jsonObject.put("FullName", userId);
 		String password = SimpleUserPasswordUtil.encryptPassword(userId);
-		jsonObject.put("password", password);
+		jsonObject.put(UserConstants.KEY_PASSWORD, password);
 		JSONObject properties = new JSONObject();
 		properties.put("UserRightsVersion", "3");
 		JSONArray userRights = new JSONArray();
@@ -1125,7 +1126,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		for (String workspaceId : workspaceIds) {
 			verifyValueExistsInJsonArray(workspaceIdsFromJson, workspaceId);
 		}
-		assertTrue(jsonObject.has("password"));
+		assertTrue(jsonObject.has(UserConstants.KEY_PASSWORD));
 		assertTrue(jsonObject.has("Properties"));
 		JSONObject properties = jsonObject.getJSONObject("Properties");
 		assertTrue(properties.has("UserRightsVersion"));

@@ -47,7 +47,7 @@ public class OrionCredentialsServiceTest {
 		String login = "delete";
 		String name = "Delete User";
 		String email = "duser@ca.ibm.com";
-		String password = "password";
+		String password = "DontUsePasswordAsThePassword";
 
 		// create user pattern is to persist the new user in the metadata store first
 		UserInfo userInfo = new UserInfo();
@@ -89,7 +89,7 @@ public class OrionCredentialsServiceTest {
 		String login = "update";
 		String name = "Update User";
 		String email = "uuser@ca.ibm.com";
-		String password = "password";
+		String password = "DontUsePasswordAsThePassword";
 
 		// create user pattern is to persist the new user in the metadata store first
 		UserInfo userInfo = new UserInfo();
@@ -161,7 +161,7 @@ public class OrionCredentialsServiceTest {
 		String login = "create";
 		String name = "Create User";
 		String email = "cuser@ca.ibm.com";
-		String password = "password";
+		String password = "DontUsePasswordAsThePassword";
 
 		// create user pattern is to persist the new user in the metadata store first
 		UserInfo userInfo = new UserInfo();
@@ -214,7 +214,7 @@ public class OrionCredentialsServiceTest {
 		String login = "all";
 		String name = "All User";
 		String email = "auser@ca.ibm.com";
-		String password = "password";
+		String password = "DontUsePasswordAsThePassword";
 
 		// create user pattern is to persist the new user in the metadata store first
 		UserInfo userInfo = new UserInfo();
@@ -246,7 +246,7 @@ public class OrionCredentialsServiceTest {
 		String login = "get";
 		String name = "Get User";
 		String email = "guser@ca.ibm.com";
-		String password = "password";
+		String password = "DontUsePasswordAsThePassword";
 
 		// create user pattern is to persist the new user in the metadata store first
 		UserInfo userInfo = new UserInfo();
@@ -300,7 +300,7 @@ public class OrionCredentialsServiceTest {
 		String login = "property";
 		String name = "Property User";
 		String email = "property_user@ca.ibm.com";
-		String password = "password";
+		String password = "DontUsePasswordAsThePassword";
 
 		// create user pattern is to persist the new user in the metadata store first
 		UserInfo userInfo = new UserInfo();
@@ -326,7 +326,7 @@ public class OrionCredentialsServiceTest {
 		assertNotNull(users);
 		assertEquals(1, users.size());
 		for (Iterator<User> i = users.iterator(); i.hasNext();) {
-			User nextUser = (User) i.next();
+			User nextUser = i.next();
 			assertEquals(login, nextUser.getLogin());
 			assertEquals(password, nextUser.getPassword());
 			assertEquals(name, nextUser.getName());

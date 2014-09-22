@@ -46,7 +46,7 @@ public class OrionUserProfileServiceTest {
 		String login = "testname";
 		String name = "Test Names";
 		String email = "testname@ca.ibm.com";
-		String password = "password";
+		String password = "DontUsePasswordAsThePassword";
 
 		// create user pattern is to persist the new user in the metadata store first
 		UserInfo userInfo = new UserInfo();
@@ -114,7 +114,7 @@ public class OrionUserProfileServiceTest {
 		String login = "profile";
 		String name = "Profile Node";
 		String email = "profile@ca.ibm.com";
-		String password = "password";
+		String password = "DontUsePasswordAsThePassword";
 
 		// create user pattern is to persist the new user in the metadata store first
 		UserInfo userInfo = new UserInfo();
@@ -164,7 +164,7 @@ public class OrionUserProfileServiceTest {
 		String login = "enode";
 		String name = "Existing Node";
 		String email = "enode@ca.ibm.com";
-		String password = "password";
+		String password = "DontUsePasswordAsThePassword";
 
 		// create user pattern is to persist the new user in the metadata store first
 		UserInfo userInfo = new UserInfo();
@@ -196,7 +196,7 @@ public class OrionUserProfileServiceTest {
 		String login = "cnode";
 		String name = "Create Node";
 		String email = "cnode@ca.ibm.com";
-		String password = "password";
+		String password = "DontUsePasswordAsThePassword";
 
 		// create user pattern is to persist the new user in the metadata store first
 		UserInfo userInfo = new UserInfo();
