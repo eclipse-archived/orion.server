@@ -192,7 +192,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			users.add(user);
 		} else if (userEmail != null && userEmail.trim().length() > 0) {
 			//reset using email address
-			User user = userAdmin.getUser("email", userEmail.trim());
+			User user = userAdmin.getUser(UserConstants.KEY_EMAIL, userEmail.trim());
 			if (user != null && user.isEmailConfirmed())
 				users.add(user);
 			if (users.size() == 0) {

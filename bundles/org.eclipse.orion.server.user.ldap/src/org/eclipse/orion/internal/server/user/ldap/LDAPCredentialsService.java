@@ -34,8 +34,6 @@ import org.osgi.service.useradmin.Authorization;
  * The implementation of User Service on LDAP
  */
 public class LDAPCredentialsService implements IOrionCredentialsService {
-	
-	static final String USER_EMAIL = "email"; //$NON-NLS-1$
 
 	public boolean deleteUser(User user) {
 		return false;

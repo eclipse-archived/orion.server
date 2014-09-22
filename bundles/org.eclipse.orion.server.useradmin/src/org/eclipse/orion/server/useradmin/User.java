@@ -21,8 +21,6 @@ public class User implements org.osgi.service.useradmin.User {
 
 	private static final String NAME = "name";
 
-	public static final String EMAIL = "email";
-	
 	public static final String BLOCKED = "blocked";
 	
 	public static final String EMAIL_CONFIRMATION = "email_confirmation";
@@ -152,11 +150,11 @@ public class User implements org.osgi.service.useradmin.User {
 	}
 	
 	public void setEmail(String email){
-		userCredentials.setProperty(EMAIL, email);
+		userCredentials.setProperty(UserConstants.KEY_EMAIL, email);
 	}
 	
 	public String getEmail(){
-		return userCredentials.getProperty(EMAIL);
+		return userCredentials.getProperty(UserConstants.KEY_EMAIL);
 	}
 	
 	public String getConfirmationId(){
