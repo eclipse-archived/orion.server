@@ -19,12 +19,6 @@ import org.osgi.service.useradmin.Role;
 
 public class User implements org.osgi.service.useradmin.User {
 
-	public static final String BLOCKED = "blocked";
-	
-	public static final String EMAIL_CONFIRMATION = "email_confirmation";
-	
-	public static final String USERS_URI = "/users";
-
 	private Set<Role> roles = new HashSet<Role>();
 
 	private Properties userCredentials = new Properties();
@@ -98,17 +92,17 @@ public class User implements org.osgi.service.useradmin.User {
 	public void setPassword(String password) {
 		userCredentials.setProperty(UserConstants.KEY_PASSWORD, password);
 	}
-	
-	public void setBlocked(boolean blocked){
-		if(blocked){
-			userCredentials.setProperty(BLOCKED, "true");
+
+	public void setBlocked(boolean blocked) {
+		if (blocked) {
+			userCredentials.setProperty(UserConstants.KEY_BLOCKED, "true");
 		} else {
-			userCredentials.remove(BLOCKED);
+			userCredentials.remove(UserConstants.KEY_BLOCKED);
 		}
 	}
-	
-	public boolean getBlocked(){
-		return userCredentials.getProperty(BLOCKED, "false").equalsIgnoreCase("true");
+
+	public boolean getBlocked() {
+		return userCredentials.getProperty(UserConstants.KEY_BLOCKED, "false").equalsIgnoreCase("true");
 	}
 
 	public int getType() {
@@ -140,40 +134,40 @@ public class User implements org.osgi.service.useradmin.User {
 	}
 
 	public String getLocation() {
-		return USERS_URI + '/' + getUid();
+		return '/' + UserConstants.KEY_USERS + '/' + getUid();
 	}
-	
-	public static String getUniqueEmailConfirmationId(){
+
+	public static String getUniqueEmailConfirmationId() {
 		return System.currentTimeMillis() + "-" + Math.random();
 	}
-	
-	public void setEmail(String email){
+
+	public void setEmail(String email) {
 		userCredentials.setProperty(UserConstants.KEY_EMAIL, email);
 	}
-	
-	public String getEmail(){
+
+	public String getEmail() {
 		return userCredentials.getProperty(UserConstants.KEY_EMAIL);
 	}
-	
-	public String getConfirmationId(){
-		return userCredentials.getProperty(EMAIL_CONFIRMATION);
+
+	public String getConfirmationId() {
+		return userCredentials.getProperty(UserConstants.KEY_EMAIL_CONFIRMATION);
 	}
-	
-	public void setConfirmationId(String confirmationId){
-		userCredentials.setProperty(EMAIL_CONFIRMATION, confirmationId);
+
+	public void setConfirmationId(String confirmationId) {
+		userCredentials.setProperty(UserConstants.KEY_EMAIL_CONFIRMATION, confirmationId);
 	}
-	
-	public void confirmEmail(){
-		userCredentials.remove(EMAIL_CONFIRMATION);
+
+	public void confirmEmail() {
+		userCredentials.remove(UserConstants.KEY_EMAIL_CONFIRMATION);
 		this.setBlocked(false);
 	}
-	
-	public void setConfirmationId(){
-		userCredentials.setProperty(EMAIL_CONFIRMATION, getUniqueEmailConfirmationId());
+
+	public void setConfirmationId() {
+		userCredentials.setProperty(UserConstants.KEY_EMAIL_CONFIRMATION, getUniqueEmailConfirmationId());
 	}
-	
-	public boolean isEmailConfirmed(){
+
+	public boolean isEmailConfirmed() {
 		String email = getEmail();
-		return (email!=null && email.length()>0) ? userCredentials.getProperty(EMAIL_CONFIRMATION)==null : false;
+		return (email != null && email.length() > 0) ? userCredentials.getProperty(UserConstants.KEY_EMAIL_CONFIRMATION) == null : false;
 	}
 }

@@ -57,8 +57,8 @@ public class BasicUsersTest extends UsersTest {
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		JSONObject responseObject = new JSONObject(response.getText());
-		assertTrue("Invalid format of response.", responseObject.has("users"));
-		JSONArray usersArray = responseObject.getJSONArray("users");
+		assertTrue("Invalid format of response.", responseObject.has(UserConstants.KEY_USERS));
+		JSONArray usersArray = responseObject.getJSONArray(UserConstants.KEY_USERS);
 		assertTrue("Too small number of users returned", usersArray.length() > 1);
 	}
 
