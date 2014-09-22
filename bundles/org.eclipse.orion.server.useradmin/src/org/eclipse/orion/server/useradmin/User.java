@@ -21,8 +21,6 @@ public class User implements org.osgi.service.useradmin.User {
 
 	private static final String NAME = "name";
 
-	public static final String UID = "uid";
-	
 	public static final String EMAIL = "email";
 	
 	public static final String BLOCKED = "blocked";
@@ -53,7 +51,7 @@ public class User implements org.osgi.service.useradmin.User {
 	}
 
 	public User(String uid, String login, String name, String password) {
-		userCredentials.setProperty(UID, uid);
+		userCredentials.setProperty(UserConstants.KEY_UID, uid);
 		setLogin(login);
 		if (name != null)
 			setName(name);
@@ -74,7 +72,7 @@ public class User implements org.osgi.service.useradmin.User {
 	}
 
 	public String getUid() {
-		return userCredentials.getProperty(UID);
+		return userCredentials.getProperty(UserConstants.KEY_UID);
 	}
 
 	public String getLogin() {
@@ -94,7 +92,7 @@ public class User implements org.osgi.service.useradmin.User {
 	}
 
 	public void setUid(String uid) {
-		userCredentials.setProperty(UID, uid);
+		userCredentials.setProperty(UserConstants.KEY_UID, uid);
 	}
 
 	public String getPassword() {

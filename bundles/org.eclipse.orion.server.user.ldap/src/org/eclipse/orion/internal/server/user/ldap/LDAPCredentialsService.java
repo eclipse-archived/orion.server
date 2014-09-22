@@ -35,7 +35,6 @@ import org.osgi.service.useradmin.Authorization;
  */
 public class LDAPCredentialsService implements IOrionCredentialsService {
 	
-	static final String USER_UID = "uid"; //$NON-NLS-1$
 	static final String USER_EMAIL = "email"; //$NON-NLS-1$
 
 	public boolean deleteUser(User user) {
@@ -79,7 +78,7 @@ public class LDAPCredentialsService implements IOrionCredentialsService {
 	}
 
 	public User getUser(String key, String value) {
-		if (key.equals(UserConstants.KEY_LOGIN) || key.equals(USER_UID)) {
+		if (key.equals(UserConstants.KEY_LOGIN) || key.equals(UserConstants.KEY_UID)) {
 			return new LDAPUser(value, this);
 		}
 		return null;

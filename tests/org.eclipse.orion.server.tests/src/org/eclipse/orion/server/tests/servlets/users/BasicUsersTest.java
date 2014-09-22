@@ -270,9 +270,9 @@ public class BasicUsersTest extends UsersTest {
 
 		JSONObject responseObject = new JSONObject(response.getText());
 
-		assertTrue("Response should contian user uid", responseObject.has("uid"));
+		assertTrue("Response should contian user uid", responseObject.has(UserConstants.KEY_UID));
 
-		String uid = responseObject.getString("uid");
+		String uid = responseObject.getString(UserConstants.KEY_UID);
 
 		// check if user can authenticate
 		request = getGetUsersRequest("", true);
@@ -474,7 +474,7 @@ public class BasicUsersTest extends UsersTest {
 		String propertyValue = "value" + System.currentTimeMillis();
 		user.addProperty(propertyName, propertyValue);
 		userAdmin.updateUser(user.getUid(), user);
-		User updatedUser = userAdmin.getUser("uid", user.getUid());
+		User updatedUser = userAdmin.getUser(UserConstants.KEY_UID, user.getUid());
 		assertEquals("The property was not set", propertyValue, updatedUser.getProperty(propertyName));
 		Set<User> foundUsers = userAdmin.getUsersByProperty(propertyName, propertyValue, false, false);
 		assertEquals("Invalid number of users found", 1, foundUsers.size());
