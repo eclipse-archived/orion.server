@@ -11,17 +11,14 @@
 package org.eclipse.orion.server.cf.manifest.v2;
 
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-public class TokenizerException extends Exception {
+public class TokenizerException extends AbstractManifestException {
 	private static final long serialVersionUID = 1L;
 
 	private String message;
 	private InputLine line;
-
-	public TokenizerException(String message) {
-		this.message = message;
-		this.line = null;
-	}
 
 	public TokenizerException(String message, InputLine line) {
 		this.message = message;
@@ -29,11 +26,21 @@ public class TokenizerException extends Exception {
 	}
 
 	@Override
+	public JSONObject getDetails() {
+		try {
+
+			JSONObject details = new JSONObject();
+			details.put(ERROR_LINE, line.getLineNumber());
+			details.put(ERROR_MESSAGE, getMessage());
+			return details;
+
+		} catch (JSONException ex) {
+			return null;
+		}
+	}
+
+	@Override
 	public String getMessage() {
-		if (line == null)
-			/* general tokenizer exception */
-			return message;
-		else
-			return NLS.bind(message, line.getLineNumber(), line.getContent());
+		return NLS.bind(message, line.getLineNumber(), line.getContent());
 	}
 }

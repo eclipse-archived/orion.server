@@ -144,11 +144,11 @@ public class ParseManifestCommand extends AbstractCFCommand {
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 
 		} catch (TokenizerException e) {
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), e.getDetails(), null);
 		} catch (ParserException e) {
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), e.getDetails(), null);
 		} catch (AnalyzerException e) {
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), e.getDetails(), null);
 		} catch (InvalidAccessException e) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		} catch (IOException e) {

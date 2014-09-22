@@ -10,13 +10,38 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.manifest.v2;
 
-public class AnalyzerException extends Exception {
+import org.json.JSONException;
+import org.json.JSONObject;
+
+public class AnalyzerException extends AbstractManifestException {
 	private static final long serialVersionUID = 1L;
 
 	private String message;
+	private Token token;
 
 	public AnalyzerException(String message) {
 		this.message = message;
+	}
+
+	public AnalyzerException(String message, Token token) {
+		this.message = message;
+		this.token = token;
+	}
+
+	@Override
+	public JSONObject getDetails() {
+		try {
+
+			JSONObject details = new JSONObject();
+			details.put(ERROR_MESSAGE, getMessage());
+			if (token != null)
+				details.put(ERROR_LINE, token.getLineNumber());
+
+			return details;
+
+		} catch (JSONException ex) {
+			return null;
+		}
 	}
 
 	@Override
