@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<assembly>
+  <id>org.eclipse.minicrm.server.war</id>
+  <formats>
+    <format>war</format>
+  </formats>
+  <includeBaseDirectory>false</includeBaseDirectory>
+  <fileSets>
+    <!-- web-inf template -->
+    <fileSet>
+      <directory>${basedir}/rootfiles/</directory>
+      <outputDirectory>/WEB-INF</outputDirectory>
+      <includes>
+        <include>**</include>
+      </includes>
+    </fileSet>
+    <!-- exported product files -->
+    <fileSet>
+      <directory>${product.outputDirectory}</directory>
+      <outputDirectory>/WEB-INF/eclipse</outputDirectory>
+      <includes>
+        <include>configuration/**</include>
+        <include>plugins/**</include>
+      </includes>
+    </fileSet>
+  </fileSets>
+</assembly>
+
