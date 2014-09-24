@@ -47,6 +47,7 @@ import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.FrameworkUtil;
 
@@ -88,12 +89,26 @@ class ClientImport {
 	 * handles setting an appropriate response.
 	 */
 	private boolean completeMove(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
+		List<String> options = getOptions();
+		boolean override = options.contains(ProtocolConstants.OPTION_OVERWRITE_OLDER);
+
 		IPath destPath = new Path(getPath()).append(getFileName());
 		try {
 			IFileStore source = EFS.getStore(new File(getStorageDirectory(), FILE_DATA).toURI());
 			IFileStore destination = NewFileServlet.getFileStore(req, destPath);
-			source.move(destination, EFS.OVERWRITE, null);
+			if (!override && destination.fetchInfo().exists()) {
+				String msg = NLS.bind("Failed to complete file transfer on {0}. The file could not be overwritten.", destPath.toString());
+				JSONObject jsonData = new JSONObject();
+				jsonData.put("ExistingFiles", getFileName());
+				statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, jsonData, null));
+				return false;
+			}
+			source.move(destination, override ? EFS.OVERWRITE : EFS.NONE, null);
 		} catch (CoreException e) {
+			String msg = NLS.bind("Failed to complete file transfer on {0}", destPath.toString());
+			statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
+			return false;
+		} catch (JSONException e) {
 			String msg = NLS.bind("Failed to complete file transfer on {0}", destPath.toString());
 			statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 			return false;
@@ -139,12 +154,12 @@ class ClientImport {
 	 */
 	private boolean completeUnzip(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		IPath destPath = new Path(getPath());
-		boolean force = false;
-		List<String> filesFailed = new ArrayList<String>();
-		if (req.getParameter("force") != null) { //$NON-NLS-1$
-			force = req.getParameter("force").equals("true"); //$NON-NLS-1$ //$NON-NLS-2$
-		}
 
+		//Override files
+		List<String> options = getOptions();
+		boolean force = options.contains(ProtocolConstants.OPTION_OVERWRITE_OLDER);
+
+		List<String> filesFailed = new ArrayList<String>();
 		List<String> excludedFiles = new ArrayList<String>();
 		if (req.getParameter(ProtocolConstants.PARAM_EXCLUDE) != null) {
 			excludedFiles = Arrays.asList(req.getParameter(ProtocolConstants.PARAM_EXCLUDE).split(",")); //$NON-NLS-1$
@@ -230,7 +245,7 @@ class ClientImport {
 					}
 					failedFilesList += file;
 				}
-				String msg = NLS.bind("Failed to transfer all files to {0}, the following files could not be overwritten {1}", destPath.toString(), failedFilesList);
+				String msg = NLS.bind("Failed to transfer all files to {0}, the following files could not be overwritten: {1}", destPath.toString(), failedFilesList);
 				JSONObject jsonData = new JSONObject();
 				jsonData.put("ExistingFiles", filesFailed);
 				statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, jsonData, null));
