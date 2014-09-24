@@ -74,11 +74,11 @@ public class User implements org.osgi.service.useradmin.User {
 	}
 
 	public String getName() {
-		return userCredentials.getProperty(UserConstants.KEY_NAME);
+		return userCredentials.getProperty(UserConstants.KEY_FULL_NAME);
 	}
 
 	public void setName(String name) {
-		userCredentials.setProperty(UserConstants.KEY_NAME, name);
+		userCredentials.setProperty(UserConstants.KEY_FULL_NAME, name);
 	}
 
 	public void setUid(String uid) {

@@ -88,7 +88,7 @@ public class AuthorizedUserFilter implements Filter {
 				try {
 					String method = xCreateOptions.contains("move") ? "POST" : "GET";
 					JSONObject requestObject = OrionServlet.readJSONRequest(httpRequest);
-					sourceLocation = requestObject.getString("Location");
+					sourceLocation = requestObject.getString(ProtocolConstants.KEY_LOCATION);
 					String normalizedLocation = new URI(sourceLocation).normalize().getPath();
 					normalizedLocation = normalizedLocation.startsWith(httpRequest.getContextPath()) ? normalizedLocation.substring(httpRequest.getContextPath().length()) : null;
 					if (normalizedLocation == null || !AuthorizationService.checkRights(userName, normalizedLocation, method)) {

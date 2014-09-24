@@ -181,7 +181,7 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 	private User createOrUpdateUser(IOrionUserProfileNode userProfileNode, User user) {
 		try {
 			if (user.getName() != null) {
-				userProfileNode.put(UserConstants.KEY_NAME, user.getName(), false);
+				userProfileNode.put(UserConstants.KEY_FULL_NAME, user.getName(), false);
 			}
 			if (user.getPassword() != null) {
 				userProfileNode.put(UserConstants.KEY_PASSWORD, user.getPassword(), true);
@@ -280,7 +280,7 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 		for (String childName : root.childrenNames()) {
 			IOrionUserProfileNode userProfileNode = root.getUserProfileNode(childName);
 			try {
-				User user = new User(childName, userProfileNode.get(UserConstants.KEY_LOGIN, childName), userProfileNode.get(UserConstants.KEY_NAME, ""), userProfileNode.get(UserConstants.KEY_PASSWORD, null) == null ? null : "" /* don't expose the password */); //$NON-NLS-1$ //$NON-NLS-2$
+				User user = new User(childName, userProfileNode.get(UserConstants.KEY_LOGIN, childName), userProfileNode.get(UserConstants.KEY_FULL_NAME, ""), userProfileNode.get(UserConstants.KEY_PASSWORD, null) == null ? null : "" /* don't expose the password */); //$NON-NLS-1$ //$NON-NLS-2$
 				user.setEmail(userProfileNode.get(UserConstants.KEY_EMAIL, "")); //$NON-NLS-1$
 				if (!user.getEmail().equals("")) {
 					// update the email cache
@@ -365,7 +365,7 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 			String password = SimpleUserPasswordUtil.decryptPassword(encryptedPassword);
 			String uid = userProfileNode.get(UserConstants.KEY_UID, "");
 			String login = userProfileNode.get(UserConstants.KEY_LOGIN, "");
-			String fullName = userProfileNode.get(UserConstants.KEY_NAME, "");
+			String fullName = userProfileNode.get(UserConstants.KEY_FULL_NAME, "");
 			User user = new User(uid, login, fullName, password);
 			String email = userProfileNode.get(UserConstants.KEY_EMAIL, "");
 			if (!email.equals("")) {

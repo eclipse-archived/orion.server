@@ -28,7 +28,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
@@ -86,7 +85,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "testDupUser");
-		params.put(UserConstants.KEY_NAME, "username_testCreateDuplicateUser");
+		params.put(UserConstants.KEY_FULL_NAME, "username_testCreateDuplicateUser");
 
 		params.put(UserConstants.KEY_PASSWORD, "pass_" + System.currentTimeMillis());
 		WebRequest request = getPostUsersRequest("", params, true);
@@ -106,7 +105,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "testDupEmail");
-		params.put(UserConstants.KEY_NAME, "username_testCreateUserDuplicateEmail");
+		params.put(UserConstants.KEY_FULL_NAME, "username_testCreateUserDuplicateEmail");
 		params.put(UserConstants.KEY_PASSWORD, "pass_" + System.currentTimeMillis());
 		params.put(UserConstants.KEY_EMAIL, "username@example.com");
 		WebRequest request = getPostUsersRequest("", params, true);
@@ -128,7 +127,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "testCaseEmail");
-		params.put(UserConstants.KEY_NAME, "username_testCreateUserEmailDifferentCase");
+		params.put(UserConstants.KEY_FULL_NAME, "username_testCreateUserEmailDifferentCase");
 		params.put(UserConstants.KEY_PASSWORD, "pass_" + System.currentTimeMillis());
 		params.put(UserConstants.KEY_EMAIL, "duplicateemail@example.com");
 		WebRequest request = getPostUsersRequest("", params, true);
@@ -162,7 +161,7 @@ public class BasicUsersTest extends UsersTest {
 			// create user
 			Map<String, String> params = new HashMap<String, String>();
 			params.put(UserConstants.KEY_LOGIN, name);
-			params.put(UserConstants.KEY_NAME, "Tom");
+			params.put(UserConstants.KEY_FULL_NAME, "Tom");
 
 			params.put(UserConstants.KEY_PASSWORD, "pass_" + System.currentTimeMillis());
 			WebRequest request = getPostUsersRequest("", params, true);
@@ -180,7 +179,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "user" + System.currentTimeMillis());
-		params.put(UserConstants.KEY_NAME, "username_" + System.currentTimeMillis());
+		params.put(UserConstants.KEY_FULL_NAME, "username_" + System.currentTimeMillis());
 
 		params.put(UserConstants.KEY_PASSWORD, "pass_" + System.currentTimeMillis());
 		WebRequest request = getPostUsersRequest("", params, true);
@@ -189,17 +188,17 @@ public class BasicUsersTest extends UsersTest {
 
 		JSONObject responseObject = new JSONObject(response.getText());
 
-		assertTrue("Response should contain user location", responseObject.has(ProtocolConstants.KEY_LOCATION));
+		assertTrue("Response should contain user location", responseObject.has(UserConstants.KEY_LOCATION));
 
 		// check user details
-		String location = responseObject.getString(ProtocolConstants.KEY_LOCATION);
+		String location = responseObject.getString(UserConstants.KEY_LOCATION);
 
 		request = getAuthenticatedRequest(location, METHOD_GET, true);
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
 		assertEquals("Invalid user login", params.get(UserConstants.KEY_LOGIN), responseObject.getString(UserConstants.KEY_LOGIN));
-		assertEquals("Invalid user name", params.get(UserConstants.KEY_NAME), responseObject.getString(UserConstants.KEY_NAME));
+		assertEquals("Invalid user name", params.get(UserConstants.KEY_FULL_NAME), responseObject.getString(UserConstants.KEY_FULL_NAME));
 		assertFalse("Response shouldn't contain password", responseObject.has(UserConstants.KEY_PASSWORD));
 
 		// check if user can authenticate
@@ -256,7 +255,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "testCrDelRights");
-		params.put(UserConstants.KEY_NAME, "username_" + System.currentTimeMillis());
+		params.put(UserConstants.KEY_FULL_NAME, "username_" + System.currentTimeMillis());
 		params.put(UserConstants.KEY_EMAIL, "test@test_" + System.currentTimeMillis());
 		params.put("workspace", "workspace_" + System.currentTimeMillis());
 		params.put(UserConstants.KEY_PASSWORD, "pass_" + System.currentTimeMillis());
@@ -310,7 +309,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "user" + System.currentTimeMillis());
-		params.put(UserConstants.KEY_NAME, "username_" + System.currentTimeMillis());
+		params.put(UserConstants.KEY_FULL_NAME, "username_" + System.currentTimeMillis());
 		params.put("roles", "admin");
 		String oldPass = "pass_" + System.currentTimeMillis();
 		params.put(UserConstants.KEY_PASSWORD, oldPass);
@@ -320,13 +319,13 @@ public class BasicUsersTest extends UsersTest {
 
 		JSONObject responseObject = new JSONObject(response.getText());
 
-		assertTrue("Response should contian user location", responseObject.has(ProtocolConstants.KEY_LOCATION));
+		assertTrue("Response should contian user location", responseObject.has(UserConstants.KEY_LOCATION));
 
-		String location = responseObject.getString(ProtocolConstants.KEY_LOCATION);
+		String location = responseObject.getString(UserConstants.KEY_LOCATION);
 
 		// update user
 		JSONObject updateBody = new JSONObject();
-		updateBody.put(UserConstants.KEY_NAME, "usernameUpdate_" + System.currentTimeMillis());
+		updateBody.put(UserConstants.KEY_FULL_NAME, "usernameUpdate_" + System.currentTimeMillis());
 		updateBody.put("oldPassword", oldPass);
 		updateBody.put(UserConstants.KEY_PASSWORD, "passUpdate_" + System.currentTimeMillis());
 		updateBody.put("roles", "");
@@ -342,7 +341,7 @@ public class BasicUsersTest extends UsersTest {
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
 		assertEquals("Invalid user login", params.get(UserConstants.KEY_LOGIN), responseObject.getString(UserConstants.KEY_LOGIN));
-		assertEquals("Invalid user name", updateBody.getString(UserConstants.KEY_NAME), responseObject.getString(UserConstants.KEY_NAME));
+		assertEquals("Invalid user name", updateBody.getString(UserConstants.KEY_FULL_NAME), responseObject.getString(UserConstants.KEY_FULL_NAME));
 		assertFalse("Response shouldn't contain password", responseObject.has(UserConstants.KEY_PASSWORD));
 
 		// check if user can authenticate and does not have admin role
@@ -366,7 +365,7 @@ public class BasicUsersTest extends UsersTest {
 		Map<String, String> params = new HashMap<String, String>();
 		String username = "user" + System.currentTimeMillis();
 		params.put(UserConstants.KEY_LOGIN, username);
-		params.put(UserConstants.KEY_NAME, "username" + System.currentTimeMillis());
+		params.put(UserConstants.KEY_FULL_NAME, "username" + System.currentTimeMillis());
 		params.put("roles", "admin");
 		String oldPass = "pass_" + System.currentTimeMillis();
 		params.put(UserConstants.KEY_PASSWORD, oldPass);
@@ -376,9 +375,9 @@ public class BasicUsersTest extends UsersTest {
 
 		JSONObject responseObject = new JSONObject(response.getText());
 
-		assertTrue("Response should contian user location", responseObject.has(ProtocolConstants.KEY_LOCATION));
+		assertTrue("Response should contian user location", responseObject.has(UserConstants.KEY_LOCATION));
 
-		String location = responseObject.getString(ProtocolConstants.KEY_LOCATION);
+		String location = responseObject.getString(UserConstants.KEY_LOCATION);
 
 		//reset password
 		String newPass = "passUpdate_" + System.currentTimeMillis();
@@ -420,9 +419,9 @@ public class BasicUsersTest extends UsersTest {
 
 		JSONObject responseObject = new JSONObject(response.getText());
 
-		assertTrue("Response should contian user location", responseObject.has(ProtocolConstants.KEY_LOCATION));
+		assertTrue("Response should contian user location", responseObject.has(UserConstants.KEY_LOCATION));
 
-		String location = responseObject.getString(ProtocolConstants.KEY_LOCATION);
+		String location = responseObject.getString(UserConstants.KEY_LOCATION);
 
 		String login2 = "login2" + System.currentTimeMillis();
 		JSONObject updateBody = new JSONObject();

@@ -86,7 +86,7 @@ public class SimpleUserProfileNode implements IOrionUserProfileNode {
 
 	public void put(String key, String value, boolean encrypt) throws CoreException {
 		try {
-			if (key.equals(UserConstants.KEY_NAME)) {
+			if (key.equals(UserConstants.KEY_FULL_NAME)) {
 				userJSONObject.put("FullName", value);
 			} else if (key.equals(UserConstants.KEY_UID)) {
 				throw new RuntimeException("SimpleUserProfileNode.put: cannot reset the user id for " + userJSONObject.getString("UserName"));
@@ -127,7 +127,7 @@ public class SimpleUserProfileNode implements IOrionUserProfileNode {
 	public String get(String key, String defaultValue) throws CoreException {
 		if (userJSONObject != null) {
 			try {
-				if (key.equals(UserConstants.KEY_NAME)) {
+				if (key.equals(UserConstants.KEY_FULL_NAME)) {
 					if (userJSONObject.has("FullName")) {
 						return userJSONObject.getString("FullName");
 					}

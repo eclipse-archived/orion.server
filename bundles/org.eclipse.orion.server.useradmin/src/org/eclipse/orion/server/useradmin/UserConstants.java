@@ -29,10 +29,12 @@ public interface UserConstants {
 
 	public static final String KEY_LOGIN = "login"; //$NON-NLS-1$
 	
-	public static final String KEY_NAME = "name"; //$NON-NLS-1$
+	public static final String KEY_LOCATION = "Location"; //$NON-NLS-1$
 	
 	public static final String KEY_UID = "uid"; //$NON-NLS-1$
 
+	public static final String KEY_FULL_NAME = "FullName"; //$NON-NLS-1$
+	
 	public static final String KEY_PASSWORD = "password"; //$NON-NLS-1$
 	
 	public static final String KEY_EMAIL = "email"; //$NON-NLS-1$

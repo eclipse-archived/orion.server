@@ -34,7 +34,6 @@ import org.eclipse.orion.internal.server.servlets.workspace.authorization.Author
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
@@ -221,9 +220,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, CoreException {
-		//		String store = req.getParameter(UserConstants.KEY_STORE);
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
-		String name = req.getParameter(ProtocolConstants.KEY_NAME);
+		String name = req.getParameter(UserConstants.KEY_FULL_NAME);
 		String email = req.getParameter(UserConstants.KEY_EMAIL);
 		String password = req.getParameter(UserConstants.KEY_PASSWORD);
 		String identifier = req.getParameter("identifier");
@@ -391,8 +389,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		if (data.has(UserConstants.KEY_LOGIN))
 			user.setLogin(data.getString(UserConstants.KEY_LOGIN));
-		if (data.has(ProtocolConstants.KEY_NAME))
-			user.setName(data.getString(ProtocolConstants.KEY_NAME));
+		if (data.has(UserConstants.KEY_FULL_NAME))
+			user.setName(data.getString(UserConstants.KEY_FULL_NAME));
 		if (data.has(UserConstants.KEY_PASSWORD))
 			user.setPassword(data.getString(UserConstants.KEY_PASSWORD));
 		if (data.has(UserConstants.KEY_EMAIL)) {
@@ -491,8 +489,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	private JSONObject formJson(User user, IOrionUserProfileNode userProfile, URI location, String contextPath) throws JSONException, CoreException {
 		JSONObject json = new JSONObject();
 		json.put(UserConstants.KEY_UID, user.getUid());
-		json.put(ProtocolConstants.KEY_LOCATION, location);
-		json.put(ProtocolConstants.KEY_NAME, user.getName());
+		json.put(UserConstants.KEY_LOCATION, location);
+		json.put(UserConstants.KEY_FULL_NAME, user.getName());
 		json.put(UserConstants.KEY_LOGIN, user.getLogin());
 		json.put(UserConstants.KEY_EMAIL, user.getEmail());
 		json.put(UserConstants.KEY_EMAIL_CONFIRMED, user.isEmailConfirmed());
