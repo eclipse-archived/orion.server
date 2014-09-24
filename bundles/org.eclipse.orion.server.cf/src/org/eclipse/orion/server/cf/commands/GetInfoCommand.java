@@ -16,7 +16,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFExtServiceHelper;
-import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
@@ -28,8 +28,8 @@ public class GetInfoCommand extends AbstractCFCommand {
 
 	private String commandName;
 
-	public GetInfoCommand(String userId, Target target) {
-		super(target);
+	public GetInfoCommand(String userId, Cloud cloud) {
+		super(cloud);
 		this.commandName = "Get Info";
 	}
 
@@ -37,10 +37,10 @@ public class GetInfoCommand extends AbstractCFCommand {
 	protected ServerStatus _doIt() {
 		try {
 			/* get available orgs */
-			URI infoURI = URIUtil.toURI(target.getUrl()).resolve("/v2/info");
+			URI infoURI = URIUtil.toURI(getCloud().getUrl()).resolve("/v2/info");
 
 			GetMethod getInfoMethod = new GetMethod(infoURI.toString());
-			HttpUtil.configureHttpMethod(getInfoMethod, target);
+			HttpUtil.configureHttpMethod(getInfoMethod, getCloud());
 
 			ServerStatus status = HttpUtil.executeMethod(getInfoMethod);
 			return status;
@@ -54,8 +54,8 @@ public class GetInfoCommand extends AbstractCFCommand {
 	@Override
 	protected ServerStatus retryIfNeeded(ServerStatus doItStatus) {
 		CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
-		if (!doItStatus.getJsonData().has("user") && target.getCloud().getAccessToken() != null && helper != null && helper.getService() != null) {
-			target.getCloud().setAccessToken(helper.getService().getToken(target.getCloud()));
+		if (!doItStatus.getJsonData().has("user") && getCloud().getAccessToken() != null && helper != null && helper.getService() != null) {
+			getCloud().setAccessToken(helper.getService().getToken(getCloud()));
 			return _doIt();
 		}
 		return doItStatus;

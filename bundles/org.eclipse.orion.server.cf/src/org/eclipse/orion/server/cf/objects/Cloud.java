@@ -23,6 +23,7 @@ public class Cloud extends CFObject {
 
 	private URL url;
 	private URL manageUrl;
+	private URL uaaUrl;
 	private String userId;
 	private JSONObject accessToken;
 
@@ -47,6 +48,14 @@ public class Cloud extends CFObject {
 
 	public void setManageUrl(URL manageUrl) {
 		this.manageUrl = manageUrl;
+	}
+
+	public URL getUaaUrl() {
+		return uaaUrl;
+	}
+
+	public void setUaaUrl(URL uaaUrl) {
+		this.uaaUrl = uaaUrl;
 	}
 
 	public JSONObject getAccessToken() {

@@ -19,10 +19,10 @@ import org.eclipse.orion.server.cf.objects.Target;
 
 public class TargetRegistry {
 
-	private Map<String, UserTargets> cloudMap;
+	private Map<String, UserClouds> cloudMap;
 
 	public TargetRegistry() {
-		this.cloudMap = Collections.synchronizedMap(new HashMap<String, UserTargets>());
+		this.cloudMap = Collections.synchronizedMap(new HashMap<String, UserClouds>());
 	}
 
 	public Target getTarget(String userId) {
@@ -30,25 +30,25 @@ public class TargetRegistry {
 	}
 
 	public Target getTarget(String userId, URL url) {
-		UserTargets userClouds = getUserClouds(userId);
+		UserClouds userClouds = getUserClouds(userId);
 		return userClouds.get(url);
 	}
 
 	public void markDefault(String userId, Target target) {
-		UserTargets userClouds = getUserClouds(userId);
+		UserClouds userClouds = getUserClouds(userId);
 		userClouds.markDefault(target);
 	}
 
-	private UserTargets getUserClouds(String userId) {
-		UserTargets userClouds = cloudMap.get(userId);
+	private UserClouds getUserClouds(String userId) {
+		UserClouds userClouds = cloudMap.get(userId);
 		if (userClouds == null) {
-			userClouds = new UserTargets(userId);
+			userClouds = new UserClouds(userId);
 			cloudMap.put(userId, userClouds);
 		}
 		return userClouds;
 	}
 
-	private class UserTargets {
+	private class UserClouds {
 
 		private String userId;
 
@@ -56,7 +56,7 @@ public class TargetRegistry {
 
 		private Target defaultTarget;
 
-		private UserTargets(String userId) {
+		private UserClouds(String userId) {
 			this.userId = userId;
 			this.userCloudMap = Collections.synchronizedMap(new HashMap<URL, Cloud>());
 		}

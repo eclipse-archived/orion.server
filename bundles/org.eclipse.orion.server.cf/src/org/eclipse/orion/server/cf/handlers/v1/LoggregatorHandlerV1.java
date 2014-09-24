@@ -65,7 +65,7 @@ public class LoggregatorHandlerV1 extends AbstractRESTHandler<Log> {
 						return getAppStatus;
 					App app = getAppCommand.getApp();
 
-					GetInfoCommand getInfoCommand = new GetInfoCommand(this.userId, target);
+					GetInfoCommand getInfoCommand = new GetInfoCommand(this.userId, target.getCloud());
 					ServerStatus getInfoStatus = (ServerStatus) getInfoCommand.doIt();
 					if (!getInfoStatus.isOK())
 						return getInfoStatus;

@@ -10,13 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-
 import java.net.URL;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.GetInfoCommand;
@@ -67,7 +66,7 @@ public class InfoHandlerV1 extends AbstractRESTHandler<Info> {
 						return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
 					}
 
-					return new GetInfoCommand(this.userId, target).doIt();
+					return new GetInfoCommand(this.userId, target.getCloud()).doIt();
 				} catch (Exception e) {
 					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
