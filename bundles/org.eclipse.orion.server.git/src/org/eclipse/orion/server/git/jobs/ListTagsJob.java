@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 IBM Corporation and others.
+ * Copyright (c) 2012, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,14 +13,22 @@ package org.eclipse.orion.server.git.jobs;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -51,16 +59,22 @@ public class ListTagsJob extends GitJob {
 
 	/**
 	 * Creates job with given page range and adding <code>commitsSize</code> commits to every tag.
+	 * 
 	 * @param userRunningTask
 	 * @param repositoryPath
 	 * @param cloneLocation
-	 * @param commitsSize user 0 to omit adding any log, only CommitLocation will be attached 
+	 * @param commitsSize
+	 *            user 0 to omit adding any log, only CommitLocation will be attached
 	 * @param pageNo
-	 * @param pageSize use negative to indicate that all commits need to be returned
-	 * @param baseLocation URI used as a base for generating next and previous page links. Should not contain any parameters.
-	 * @param nameFilter used to filter tags by name
+	 * @param pageSize
+	 *            use negative to indicate that all commits need to be returned
+	 * @param baseLocation
+	 *            URI used as a base for generating next and previous page links. Should not contain any parameters.
+	 * @param nameFilter
+	 *            used to filter tags by name
 	 */
-	public ListTagsJob(String userRunningTask, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize, String baseLocation, String nameFilter) {
+	public ListTagsJob(String userRunningTask, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize, String baseLocation,
+			String nameFilter) {
 		super(userRunningTask, false);
 		this.path = repositoryPath;
 		this.cloneLocation = cloneLocation;
@@ -74,6 +88,7 @@ public class ListTagsJob extends GitJob {
 
 	/**
 	 * Creates job returning list of all tags adding <code>commitsSize</code> commits to every tag.
+	 * 
 	 * @param userRunningTask
 	 * @param repositoryPath
 	 * @param cloneLocation
@@ -85,6 +100,7 @@ public class ListTagsJob extends GitJob {
 
 	/**
 	 * Creates job returning list of all tags.
+	 * 
 	 * @param userRunningTask
 	 * @param repositoryPath
 	 * @param cloneLocation

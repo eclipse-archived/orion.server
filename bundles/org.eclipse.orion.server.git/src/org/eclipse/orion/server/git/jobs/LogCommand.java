@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010, Christian Halstrick <christian.halstrick@sap.com>
+ * Copyright (C) 2010, 2014 Christian Halstrick <christian.halstrick@sap.com>
  * and other copyright owners as documented in the project's IP log.
  *
  * This program and the accompanying materials are made available
@@ -47,7 +47,6 @@ import static org.eclipse.jgit.lib.RefDatabase.ALL;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -80,7 +79,8 @@ import org.eclipse.jgit.treewalk.filter.PathFilterGroup;
 import org.eclipse.jgit.treewalk.filter.TreeFilter;
 
 /**
- * A class used to execute a {@code Log} command. It has setters for all supported options and arguments of this command and a {@link #call()} method to finally execute the command. Each instance of this class should only be used for one invocation of the command (means: one call to {@link #call()})
+ * A class used to execute a {@code Log} command. It has setters for all supported options and arguments of this command and a {@link #call()} method to finally
+ * execute the command. Each instance of this class should only be used for one invocation of the command (means: one call to {@link #call()})
  * <p>
  * Examples (<code>git</code> is a {@link Git} instance):
  * <p>
@@ -133,12 +133,15 @@ public class LogCommand extends GitCommand<Iterable<RevCommit>> {
 	}
 
 	/**
-	 * Executes the {@code Log} command with all the options and parameters collected by the setter methods (e.g. {@link #add(AnyObjectId)}, {@link #not(AnyObjectId)}, ..) of this class. Each instance of this class should only be used for one invocation of the command. Don't call this method twice on an instance.
+	 * Executes the {@code Log} command with all the options and parameters collected by the setter methods (e.g. {@link #add(AnyObjectId)},
+	 * {@link #not(AnyObjectId)}, ..) of this class. Each instance of this class should only be used for one invocation of the command. Don't call this method
+	 * twice on an instance.
 	 *
 	 * @return an iteration over RevCommits
 	 * @throws NoHeadException
 	 *             of the references ref cannot be resolved
 	 */
+	@Override
 	public Iterable<RevCommit> call() throws GitAPIException, NoHeadException {
 		checkCallable();
 		ArrayList<RevFilter> filters = new ArrayList<RevFilter>();
@@ -193,11 +196,15 @@ public class LogCommand extends GitCommand<Iterable<RevCommit>> {
 	 * @param start
 	 * @return {@code this}
 	 * @throws MissingObjectException
-	 *             the commit supplied is not available from the object database. This usually indicates the supplied commit is invalid, but the reference was constructed during an earlier invocation to {@link RevWalk#lookupCommit(AnyObjectId)}.
+	 *             the commit supplied is not available from the object database. This usually indicates the supplied commit is invalid, but the reference was
+	 *             constructed during an earlier invocation to {@link RevWalk#lookupCommit(AnyObjectId)}.
 	 * @throws IncorrectObjectTypeException
-	 *             the object was not parsed yet and it was discovered during parsing that it is not actually a commit. This usually indicates the caller supplied a non-commit SHA-1 to {@link RevWalk#lookupCommit(AnyObjectId)}.
+	 *             the object was not parsed yet and it was discovered during parsing that it is not actually a commit. This usually indicates the caller
+	 *             supplied a non-commit SHA-1 to {@link RevWalk#lookupCommit(AnyObjectId)}.
 	 * @throws JGitInternalException
-	 *             a low-level exception of JGit has occurred. The original exception can be retrieved by calling {@link Exception#getCause()}. Expect only {@code IOException's} to be wrapped. Subclasses of {@link IOException} (e.g. {@link MissingObjectException}) are typically not wrapped here but thrown as original exception
+	 *             a low-level exception of JGit has occurred. The original exception can be retrieved by calling {@link Exception#getCause()}. Expect only
+	 *             {@code IOException's} to be wrapped. Subclasses of {@link IOException} (e.g. {@link MissingObjectException}) are typically not wrapped here
+	 *             but thrown as original exception
 	 */
 	public LogCommand add(AnyObjectId start) throws MissingObjectException, IncorrectObjectTypeException {
 		return add(true, start);
@@ -209,11 +216,15 @@ public class LogCommand extends GitCommand<Iterable<RevCommit>> {
 	 * @param start
 	 * @return {@code this}
 	 * @throws MissingObjectException
-	 *             the commit supplied is not available from the object database. This usually indicates the supplied commit is invalid, but the reference was constructed during an earlier invocation to {@link RevWalk#lookupCommit(AnyObjectId)}.
+	 *             the commit supplied is not available from the object database. This usually indicates the supplied commit is invalid, but the reference was
+	 *             constructed during an earlier invocation to {@link RevWalk#lookupCommit(AnyObjectId)}.
 	 * @throws IncorrectObjectTypeException
-	 *             the object was not parsed yet and it was discovered during parsing that it is not actually a commit. This usually indicates the caller supplied a non-commit SHA-1 to {@link RevWalk#lookupCommit(AnyObjectId)}.
+	 *             the object was not parsed yet and it was discovered during parsing that it is not actually a commit. This usually indicates the caller
+	 *             supplied a non-commit SHA-1 to {@link RevWalk#lookupCommit(AnyObjectId)}.
 	 * @throws JGitInternalException
-	 *             a low-level exception of JGit has occurred. The original exception can be retrieved by calling {@link Exception#getCause()}. Expect only {@code IOException's} to be wrapped. Subclasses of {@link IOException} (e.g. {@link MissingObjectException}) are typically not wrapped here but thrown as original exception
+	 *             a low-level exception of JGit has occurred. The original exception can be retrieved by calling {@link Exception#getCause()}. Expect only
+	 *             {@code IOException's} to be wrapped. Subclasses of {@link IOException} (e.g. {@link MissingObjectException}) are typically not wrapped here
+	 *             but thrown as original exception
 	 */
 	public LogCommand not(AnyObjectId start) throws MissingObjectException, IncorrectObjectTypeException {
 		return add(false, start);
@@ -226,11 +237,15 @@ public class LogCommand extends GitCommand<Iterable<RevCommit>> {
 	 * @param until
 	 * @return {@code this}
 	 * @throws MissingObjectException
-	 *             the commit supplied is not available from the object database. This usually indicates the supplied commit is invalid, but the reference was constructed during an earlier invocation to {@link RevWalk#lookupCommit(AnyObjectId)}.
+	 *             the commit supplied is not available from the object database. This usually indicates the supplied commit is invalid, but the reference was
+	 *             constructed during an earlier invocation to {@link RevWalk#lookupCommit(AnyObjectId)}.
 	 * @throws IncorrectObjectTypeException
-	 *             the object was not parsed yet and it was discovered during parsing that it is not actually a commit. This usually indicates the caller supplied a non-commit SHA-1 to {@link RevWalk#lookupCommit(AnyObjectId)}.
+	 *             the object was not parsed yet and it was discovered during parsing that it is not actually a commit. This usually indicates the caller
+	 *             supplied a non-commit SHA-1 to {@link RevWalk#lookupCommit(AnyObjectId)}.
 	 * @throws JGitInternalException
-	 *             a low-level exception of JGit has occurred. The original exception can be retrieved by calling {@link Exception#getCause()}. Expect only {@code IOException's} to be wrapped. Subclasses of {@link IOException} (e.g. {@link MissingObjectException}) are typically not wrapped here but thrown as original exception
+	 *             a low-level exception of JGit has occurred. The original exception can be retrieved by calling {@link Exception#getCause()}. Expect only
+	 *             {@code IOException's} to be wrapped. Subclasses of {@link IOException} (e.g. {@link MissingObjectException}) are typically not wrapped here
+	 *             but thrown as original exception
 	 */
 	public LogCommand addRange(AnyObjectId since, AnyObjectId until) throws MissingObjectException, IncorrectObjectTypeException {
 		return not(since).add(until);
@@ -271,7 +286,8 @@ public class LogCommand extends GitCommand<Iterable<RevCommit>> {
 	}
 
 	/**
-	 * Show only commits that affect any of the specified paths. The path must either name a file or a directory exactly and use <code>/</code> (slash) as separator. Note that regex expressions or wildcards are not supported.
+	 * Show only commits that affect any of the specified paths. The path must either name a file or a directory exactly and use <code>/</code> (slash) as
+	 * separator. Note that regex expressions or wildcards are not supported.
 	 *
 	 * @param path
 	 *            a repository-relative path (with <code>/</code> as separator)

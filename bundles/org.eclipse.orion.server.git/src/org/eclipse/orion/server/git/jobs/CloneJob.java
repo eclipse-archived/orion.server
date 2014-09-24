@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -62,7 +62,8 @@ public class CloneJob extends GitJob {
 	private String cloneLocation;
 	private final boolean initProject;
 
-	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project, String gitUserName, String gitUserMail, boolean initProject) {
+	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project,
+			String gitUserName, String gitUserMail, boolean initProject) {
 		super(userRunningTask, true, (GitCredentialsProvider) credentials);
 		this.clone = clone;
 		this.user = user;
@@ -75,11 +76,13 @@ public class CloneJob extends GitJob {
 		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
 	}
 
-	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project, String gitUserName, String gitUserMail) {
+	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project,
+			String gitUserName, String gitUserMail) {
 		this(clone, userRunningTask, credentials, user, cloneLocation, project, gitUserName, gitUserMail, false);
 	}
 
-	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project, String gitUserName, String gitUserMail, boolean initProject, Object cookie) {
+	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project,
+			String gitUserName, String gitUserMail, boolean initProject, Object cookie) {
 		this(clone, userRunningTask, credentials, user, cloneLocation, project, gitUserName, gitUserMail, initProject);
 		this.cookie = (Cookie) cookie;
 	}

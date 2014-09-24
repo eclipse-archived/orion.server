@@ -123,6 +123,7 @@ public class StashPage extends GitObject {
 		return new URI(cloneLocation.getScheme(), cloneLocation.getAuthority(), stashPath.toString(), null, null);
 	}
 
+	@Override
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
 		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
 	}

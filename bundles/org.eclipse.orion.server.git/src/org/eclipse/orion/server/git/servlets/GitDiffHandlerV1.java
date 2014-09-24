@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,41 +10,65 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.servlets.*;
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
+
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.ApplyCommand;
+import org.eclipse.jgit.api.ApplyResult;
+import org.eclipse.jgit.api.DiffCommand;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.PatchApplyException;
 import org.eclipse.jgit.api.errors.PatchFormatException;
 import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
 import org.eclipse.jgit.dircache.DirCacheIterator;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectReader;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.treewalk.*;
-import org.eclipse.jgit.treewalk.filter.*;
+import org.eclipse.jgit.treewalk.AbstractTreeIterator;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.eclipse.jgit.treewalk.FileTreeIterator;
+import org.eclipse.jgit.treewalk.filter.AndTreeFilter;
+import org.eclipse.jgit.treewalk.filter.OrTreeFilter;
+import org.eclipse.jgit.treewalk.filter.PathFilter;
+import org.eclipse.jgit.treewalk.filter.TreeFilter;
 import org.eclipse.jgit.util.io.NullOutputStream;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Diff;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -88,7 +112,8 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 				return handleGetDiffs(request, response, db, gitSegment, pattern);
 			return false; // unknown part
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured while getting a diff.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured while getting a diff.", e));
 		}
 	}
 
@@ -140,27 +165,30 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 	}
 
 	private URI createContentLocation(URI cloneLocation, final DiffEntry entr, String path) throws URISyntaxException {
-		//remove /gitapi/clone from the start of path
+		// remove /gitapi/clone from the start of path
 		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
 		IPath result;
 		if (path == null) {
 			result = clonePath;
 		} else {
-			//need to start from the project root
-			//project path is of the form /file/{workspaceId}/{projectName}
+			// need to start from the project root
+			// project path is of the form /file/{workspaceId}/{projectName}
 			result = clonePath.uptoSegment(3).append(path);
 		}
-		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute().toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute()
+				.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
-	private boolean handleGetDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out) throws Exception {
+	private boolean handleGetDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out)
+			throws Exception {
 		DiffCommand command = getDiff(request, response, db, scope, pattern, new BufferedOutputStream(out));
 		if (command != null)
 			command.call();
 		return true;
 	}
 
-	private DiffCommand getDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out) throws Exception {
+	private DiffCommand getDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out)
+			throws Exception {
 		Git git = new Git(db);
 		DiffCommand diff = git.diff();
 		diff.setOutputStream(out);
@@ -292,12 +320,15 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 				return statusHandler.handleRequest(request, response, new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, resp));
 				// OrionServlet.writeJSONResponse(request, response, toJSON(applyResult));
 			} catch (PatchFormatException e) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, stripGlobalPaths(db, e.getMessage()), null));
+				return statusHandler.handleRequest(request, response,
+						new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, stripGlobalPaths(db, e.getMessage()), null));
 			} catch (PatchApplyException e) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, stripGlobalPaths(db, e.getMessage()), null));
+				return statusHandler.handleRequest(request, response,
+						new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, stripGlobalPaths(db, e.getMessage()), null));
 			}
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when reading the patch.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when reading the patch.", e));
 		}
 	}
 
@@ -326,25 +357,26 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, resovleOrionURI(request, nu).toString());
 			return true;
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when identifying a new Diff resource.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when identifying a new Diff resource.", e));
 		}
 	}
 
-	//	private Object toJSON(ApplyResult applyResult) throws JSONException {
-	//		JSONObject result = new JSONObject();
-	//		if (applyResult.getApplyErrors().isEmpty() && applyResult.getFormatErrors().isEmpty()) {
-	//			result.put(GitConstants.KEY_RESULT, "Ok");
-	//		} else {
-	//			if (!applyResult.getFormatErrors().isEmpty())
-	//				result.put("FormatErrors", applyResult.getFormatErrors());
-	//			if (!applyResult.getApplyErrors().isEmpty())
-	//				result.put("ApplyErrors", applyResult.getApplyErrors());
-	//		}
-	//		return result;
-	//	}
+	// private Object toJSON(ApplyResult applyResult) throws JSONException {
+	// JSONObject result = new JSONObject();
+	// if (applyResult.getApplyErrors().isEmpty() && applyResult.getFormatErrors().isEmpty()) {
+	// result.put(GitConstants.KEY_RESULT, "Ok");
+	// } else {
+	// if (!applyResult.getFormatErrors().isEmpty())
+	// result.put("FormatErrors", applyResult.getFormatErrors());
+	// if (!applyResult.getApplyErrors().isEmpty())
+	// result.put("ApplyErrors", applyResult.getApplyErrors());
+	// }
+	// return result;
+	// }
 
 	private String readPatch(ServletInputStream requestStream, String contentType) throws IOException {
-		//fast forward stream past multi-part header
+		// fast forward stream past multi-part header
 		int boundaryOff = contentType.indexOf("boundary="); //$NON-NLS-1$
 		String boundary = contentType.substring(boundaryOff + "boundary=".length(), contentType.length()); //$NON-NLS-1$
 		Map<String, String> parts = IOUtilities.parseMultiPart(requestStream, boundary);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 IBM Corporation and others
+ * Copyright (c) 2012, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,13 +14,21 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Set;
+
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -48,15 +56,20 @@ public class RemoteDetailsJob extends GitJob {
 
 	/**
 	 * Creates job with given page range and adding <code>commitsSize</code> commits to every branch.
+	 * 
 	 * @param userRunningTask
 	 * @param repositoryPath
 	 * @param cloneLocation
-	 * @param commitsSize user 0 to omit adding any log, only CommitLocation will be attached 
+	 * @param commitsSize
+	 *            user 0 to omit adding any log, only CommitLocation will be attached
 	 * @param pageNo
-	 * @param pageSize use negative to indicate that all commits need to be returned
-	 * @param baseLocation URI used as a base for generating next and previous page links. Should not contain any parameters.
+	 * @param pageSize
+	 *            use negative to indicate that all commits need to be returned
+	 * @param baseLocation
+	 *            URI used as a base for generating next and previous page links. Should not contain any parameters.
 	 */
-	public RemoteDetailsJob(String userRunningTask, String configName, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize, String baseLocation, String filter) {
+	public RemoteDetailsJob(String userRunningTask, String configName, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize,
+			String baseLocation, String filter) {
 		super(userRunningTask, false);
 		this.path = repositoryPath;
 		this.cloneLocation = cloneLocation;
@@ -70,6 +83,7 @@ public class RemoteDetailsJob extends GitJob {
 
 	/**
 	 * Creates job returning list of all branches.
+	 * 
 	 * @param userRunningTask
 	 * @param repositoryPath
 	 * @param cloneLocation
@@ -80,11 +94,12 @@ public class RemoteDetailsJob extends GitJob {
 
 	/**
 	 * Creates job returning list of all branches adding <code>commitsSize</code> commits to every branch.
+	 * 
 	 * @param userRunningTask
 	 * @param repositoryPath
 	 * @param cloneLocation
 	 * @param commitsSize
-	 * @param filterParm 
+	 * @param filterParm
 	 */
 	public RemoteDetailsJob(String userRunningTask, String configName, IPath repositoryPath, URI cloneLocation, int commitsSize, String filterParm) {
 		this(userRunningTask, configName, repositoryPath, cloneLocation, commitsSize, 0, -1, null, filterParm);

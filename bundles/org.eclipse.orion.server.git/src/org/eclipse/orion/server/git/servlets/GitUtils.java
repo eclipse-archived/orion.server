@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2013 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,14 +10,27 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.lib.Config;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
@@ -37,21 +50,18 @@ public class GitUtils {
 	}
 
 	/*
-	 * White list for URL schemes we can allow since they can't be used to gain access to git repositories
-	 * in another Orion workspace since they require a daemon to serve them. Especially file protocol needs
-	 * to be prohibited (bug 408270).
+	 * White list for URL schemes we can allow since they can't be used to gain access to git repositories in another Orion workspace since they require a
+	 * daemon to serve them. Especially file protocol needs to be prohibited (bug 408270).
 	 */
 	private static Set<String> uriSchemeWhitelist = new HashSet<String>(Arrays.asList("ftp", "git", "http", "https", "sftp", "ssh"));
 
 	/**
-	 * Returns the file representing the Git repository directory for the given
-	 * file path or any of its parent in the filesystem. If the file doesn't exits,
-	 * is not a Git repository or an error occurred while transforming the given
-	 * path into a store <code>null</code> is returned.
+	 * Returns the file representing the Git repository directory for the given file path or any of its parent in the filesystem. If the file doesn't exits, is
+	 * not a Git repository or an error occurred while transforming the given path into a store <code>null</code> is returned.
 	 *
-	 * @param path expected format /file/{Workspace}/{projectName}[/{path}]
-	 * @return the .git folder if found or <code>null</code> the give path
-	 * cannot be resolved to a file or it's not under control of a git repository
+	 * @param path
+	 *            expected format /file/{Workspace}/{projectName}[/{path}]
+	 * @return the .git folder if found or <code>null</code> the give path cannot be resolved to a file or it's not under control of a git repository
 	 * @throws CoreException
 	 */
 	public static File getGitDir(IPath path) throws CoreException {
@@ -79,38 +89,37 @@ public class GitUtils {
 	}
 
 	/**
-	 * Returns the existing git repositories for the given file path, following
-	 * the given traversal rule.
+	 * Returns the existing git repositories for the given file path, following the given traversal rule.
 	 *
-	 * @param path expected format /file/{Workspace}/{projectName}[/{path}]
-	 * @return a map of all git repositories found, or <code>null</code>
-	 * if the provided path format doesn't match the expected format.
+	 * @param path
+	 *            expected format /file/{Workspace}/{projectName}[/{path}]
+	 * @return a map of all git repositories found, or <code>null</code> if the provided path format doesn't match the expected format.
 	 * @throws CoreException
 	 */
 	public static Map<IPath, File> getGitDirs(IPath path, Traverse traverse) throws CoreException {
-		IPath p = path.removeFirstSegments(1);//remove /file
+		IPath p = path.removeFirstSegments(1);// remove /file
 		IFileStore fileStore = NewFileServlet.getFileStore(null, p);
 		if (fileStore == null)
 			return null;
 		Map<IPath, File> result = new HashMap<IPath, File>();
 		File file = fileStore.toLocalFile(EFS.NONE, null);
-		//jgit can only handle a local file
+		// jgit can only handle a local file
 		if (file == null)
 			return result;
 		switch (traverse) {
-			case CURRENT :
-				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
-					result.put(new Path(""), file); //$NON-NLS-1$
-				} else if (RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED)) {
-					result.put(new Path(""), new File(file, Constants.DOT_GIT)); //$NON-NLS-1$
-				}
-				break;
-			case GO_UP :
-				getGitDirsInParents(file, result);
-				break;
-			case GO_DOWN :
-				getGitDirsInChildren(file, p, result);
-				break;
+		case CURRENT:
+			if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
+				result.put(new Path(""), file); //$NON-NLS-1$
+			} else if (RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED)) {
+				result.put(new Path(""), new File(file, Constants.DOT_GIT)); //$NON-NLS-1$
+			}
+			break;
+		case GO_UP:
+			getGitDirsInParents(file, result);
+			break;
+		case GO_DOWN:
+			getGitDirsInChildren(file, p, result);
+			break;
 		}
 		return result;
 	}
@@ -167,6 +176,7 @@ public class GitUtils {
 				return;
 			}
 			File[] folders = localFile.listFiles(new FileFilter() {
+				@Override
 				public boolean accept(File file) {
 					return file.isDirectory() && !file.getName().equals(Constants.DOT_GIT);
 				}
@@ -229,9 +239,10 @@ public class GitUtils {
 	}
 
 	/**
-	 * Returns the existing WebProject corresponding to the provided path,
-	 * or <code>null</code> if no such project exists.
-	 * @param path path in the form /file/{workspaceId}/{projectName}/[filePath]
+	 * Returns the existing WebProject corresponding to the provided path, or <code>null</code> if no such project exists.
+	 * 
+	 * @param path
+	 *            path in the form /file/{workspaceId}/{projectName}/[filePath]
 	 * @return the web project, or <code>null</code>
 	 */
 	public static ProjectInfo projectFromPath(IPath path) {
@@ -248,20 +259,25 @@ public class GitUtils {
 
 	/**
 	 * Returns the HTTP path for the content resource of the given project.
-	 * @param workspace The web workspace
-	 * @param project The web project
+	 * 
+	 * @param workspace
+	 *            The web workspace
+	 * @param project
+	 *            The web project
 	 * @return the HTTP path of the project content resource
 	 */
 	public static IPath pathFromProject(WorkspaceInfo workspace, ProjectInfo project) {
-		return new Path(org.eclipse.orion.internal.server.servlets.Activator.LOCATION_FILE_SERVLET).append(workspace.getUniqueId()).append(project.getFullName());
+		return new Path(org.eclipse.orion.internal.server.servlets.Activator.LOCATION_FILE_SERVLET).append(workspace.getUniqueId()).append(
+				project.getFullName());
 
 	}
 
 	/**
-	 * Returns whether or not the git repository URI is forbidden. If a scheme of the URI is matched, check if the scheme
-	 * is a supported protocol. Otherwise, match for a scp-like ssh URI: [user@]host.xz:path/to/repo.git/ and ensure the URI
-	 * does not represent a local file path.
-	 * @param uri A git repository URI
+	 * Returns whether or not the git repository URI is forbidden. If a scheme of the URI is matched, check if the scheme is a supported protocol. Otherwise,
+	 * match for a scp-like ssh URI: [user@]host.xz:path/to/repo.git/ and ensure the URI does not represent a local file path.
+	 * 
+	 * @param uri
+	 *            A git repository URI
 	 * @return a boolean of whether or not the git repository URI is forbidden.
 	 */
 	public static boolean isForbiddenGitUri(URIish uri) {
@@ -286,7 +302,9 @@ public class GitUtils {
 
 	/**
 	 * Returns whether the key gerrit.createchangeid is set to true in the git configuration
-	 * @param config the configuration of the git repository
+	 * 
+	 * @param config
+	 *            the configuration of the git repository
 	 * @return true if the key gerrit.createchangeid is set to true
 	 */
 	public static boolean isGerrit(Config config) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2013 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -79,7 +79,9 @@ public class LogJob extends GitJob {
 	 * @param baseLocation
 	 *            URI used as a base for generating next and previous page links. Should not contain any parameters.
 	 */
-	public LogJob(String userRunningTask, IPath filePath, URI cloneLocation, int page, int pageSize, ObjectId toObjectId, ObjectId fromObjectId, Ref toRefId, Ref fromRefId, String refIdsRange, String pattern, String messageFilter, String authorFilter, String committerFilter, String sha1Filter, boolean mergeBaseFilter, String fromDate, String toDate) {
+	public LogJob(String userRunningTask, IPath filePath, URI cloneLocation, int page, int pageSize, ObjectId toObjectId, ObjectId fromObjectId, Ref toRefId,
+			Ref fromRefId, String refIdsRange, String pattern, String messageFilter, String authorFilter, String committerFilter, String sha1Filter,
+			boolean mergeBaseFilter, String fromDate, String toDate) {
 		super(userRunningTask, false);
 		this.filePath = filePath;
 		this.cloneLocation = cloneLocation;

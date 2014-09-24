@@ -10,15 +10,30 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-
 import javax.servlet.ServletException;
-import javax.servlet.http.*;
-import org.eclipse.core.runtime.*;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.*;
+import org.eclipse.orion.server.git.objects.Blame;
+import org.eclipse.orion.server.git.objects.Branch;
+import org.eclipse.orion.server.git.objects.Clone;
+import org.eclipse.orion.server.git.objects.Commit;
+import org.eclipse.orion.server.git.objects.ConfigOption;
+import org.eclipse.orion.server.git.objects.Diff;
+import org.eclipse.orion.server.git.objects.Ignore;
+import org.eclipse.orion.server.git.objects.Index;
+import org.eclipse.orion.server.git.objects.Remote;
+import org.eclipse.orion.server.git.objects.Stash;
 import org.eclipse.orion.server.git.objects.Status;
+import org.eclipse.orion.server.git.objects.Tag;
+import org.eclipse.orion.server.git.objects.Tree;
 
 /**
  * A git handler for Orion Git API v 1.0.
@@ -69,7 +84,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 			}
 		}
 
-		//TODO: Add to constants
+		// TODO: Add to constants
 		String tokenName = PreferenceHelper.getString("ltpa.token.name"); //$NON-NLS-1$
 		if (tokenName != null) {
 			javax.servlet.http.Cookie[] cookies = request.getCookies();

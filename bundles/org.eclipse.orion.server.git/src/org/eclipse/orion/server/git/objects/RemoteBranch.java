@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2013 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,14 +14,24 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
-import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.lib.*;
+
+import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
-import org.eclipse.orion.server.git.*;
+import org.eclipse.orion.server.git.BaseToCommitConverter;
+import org.eclipse.orion.server.git.BaseToIndexConverter;
+import org.eclipse.orion.server.git.BaseToRemoteConverter;
+import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.JSONException;
@@ -45,7 +55,7 @@ public class RemoteBranch extends GitObject {
 				new Property(GitConstants.KEY_HEAD), //
 				new Property(GitConstants.KEY_INDEX), //
 				new Property(GitConstants.KEY_URL), //
-				new Property(GitConstants.KEY_DIFF)};
+				new Property(GitConstants.KEY_DIFF) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
@@ -98,7 +108,8 @@ public class RemoteBranch extends GitObject {
 		Assert.isNotNull(cloneLocation);
 		IPath basePath = new Path(cloneLocation.getPath());
 		IPath p = new Path(GitServlet.GIT_URI).append(Diff.RESOURCE).append(getName(false, true)).append(basePath.removeFirstSegments(2));
-		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), p.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), p.toString(),
+				cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
 	@PropertyDescription(name = ProtocolConstants.KEY_NAME)
@@ -118,7 +129,7 @@ public class RemoteBranch extends GitObject {
 
 	@PropertyDescription(name = GitConstants.KEY_URL)
 	private String getUrl() {
-		return getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, remote.getName(), "url" /*RemoteConfig.KEY_URL*/); //$NON-NLS-1$
+		return getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, remote.getName(), "url" /* RemoteConfig.KEY_URL */); //$NON-NLS-1$
 	}
 
 	private String getName(boolean fullName, boolean encode) {
@@ -142,14 +153,15 @@ public class RemoteBranch extends GitObject {
 	}
 
 	private URI createTreeLocation(String path) throws URISyntaxException {
-		//remove /gitapi/clone from the start of path
+		// remove /gitapi/clone from the start of path
 		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
 
 		IPath result = new Path(GitServlet.GIT_URI).append(Tree.RESOURCE).append(clonePath).append(GitUtils.encode(this.getName()));
 		if (path != null) {
 			result.append(path);
 		}
-		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute().toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute()
+				.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_HEAD)

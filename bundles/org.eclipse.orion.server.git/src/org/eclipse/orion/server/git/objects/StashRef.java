@@ -11,8 +11,8 @@
 package org.eclipse.orion.server.git.objects;
 
 /**
- * Helper class encapsulating a StashRef in both
- * a numeric (0,1..) and string representation (e.g. stash@{0}).
+ * Helper class encapsulating a StashRef in both a numeric (0,1..) and string representation (e.g. stash@{0}).
+ * 
  * @author mbendkowski
  *
  */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others.
+ * Copyright (c) 2013, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,22 +10,28 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import org.eclipse.jgit.lib.*;
+
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.orion.server.core.resources.*;
+import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.JSONSerializer;
+import org.eclipse.orion.server.core.resources.Property;
+import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.core.users.UserUtilities;
 import org.eclipse.orion.server.git.BaseToCommitConverter;
 import org.eclipse.orion.server.git.GitConstants;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 @ResourceDescription(type = Blame.TYPE)
 public class Blame extends GitObject {
@@ -51,7 +57,7 @@ public class Blame extends GitObject {
 		Property[] defaultProperties = new Property[] { //
 		new Property(ProtocolConstants.KEY_LOCATION), // super
 				new Property(GitConstants.KEY_CLONE), // super
-				new Property(ProtocolConstants.KEY_CHILDREN)};
+				new Property(ProtocolConstants.KEY_CHILDREN) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
@@ -82,7 +88,8 @@ public class Blame extends GitObject {
 	}
 
 	/**
-	 * Add RevCommit to needed commits 
+	 * Add RevCommit to needed commits
+	 * 
 	 * @param commit
 	 */
 	public void addCommit(RevCommit commit) {
@@ -109,7 +116,7 @@ public class Blame extends GitObject {
 	}
 
 	/**
-	 *  clear lines array
+	 * clear lines array
 	 */
 	public void clearLines() {
 		this.lines = new ArrayList<String>();
@@ -124,7 +131,7 @@ public class Blame extends GitObject {
 	}
 
 	/**
-	 *  return the commit the blame function will start from
+	 * return the commit the blame function will start from
 	 * 
 	 * @return ObjectId
 	 */
@@ -134,6 +141,7 @@ public class Blame extends GitObject {
 
 	/**
 	 * Set the URI for the blame for this file
+	 * 
 	 * @param location
 	 */
 	public void setBlameLocation(URI location) {
@@ -144,6 +152,7 @@ public class Blame extends GitObject {
 	 * JSON Serializing
 	 */
 
+	@Override
 	public JSONObject toJSON() throws URISyntaxException {
 		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
 	}
@@ -222,38 +231,11 @@ public class Blame extends GitObject {
 
 	/**
 	 *
-	 * JSON STRUCTURE
-	 * {
-	 * 	"Location": Blame URI
-	 *  "Clone Location" : Clone URI
-	 *  "Type": "Blame"
-	 *  "Children":
-	 *  {
-	 * 	 	{
-	 *     		"CommitLocation":"/gitapi/commit/2b3a36c1b2f0064216a871740bd6906b6af7434a/file/C/",
-	 *     		"Name":"2b3a36c1b2f0064216a871740bd6906b6af7434a",
-	 *     		"Time":1234567890,
-	 *     		"AuthorName": Author Name,
-	 *     		"AuthorEmail": Author Email,
-	 *     		"AuthorImage": Gravatar URL,
-	 *     		"Message": Commit Message,
-	 *     		"Children":{
-	 *     						{
-	 *     							"Start":0,
-	 *     							"End":5
-	 *     						},
-	 *     						{
-	 *     							"Start":6,
-	 *     							"End":8
-	 *     						},
-	 *     					...
-	 *     					...
-	 *    					}
-	 *   },
-	 *   ...
-	 *   ...
-	 * }
-	 *   
+	 * JSON STRUCTURE { "Location": Blame URI "Clone Location" : Clone URI "Type": "Blame" "Children": { {
+	 * "CommitLocation":"/gitapi/commit/2b3a36c1b2f0064216a871740bd6906b6af7434a/file/C/", "Name":"2b3a36c1b2f0064216a871740bd6906b6af7434a", "Time":1234567890,
+	 * "AuthorName": Author Name, "AuthorEmail": Author Email, "AuthorImage": Gravatar URL, "Message": Commit Message, "Children":{ { "Start":0, "End":5 }, {
+	 * "Start":6, "End":8 }, ... ... } }, ... ... }
+	 * 
 	 */
 
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,17 +10,20 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.server.core.resources.*;
+import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.JSONSerializer;
+import org.eclipse.orion.server.core.resources.Property;
+import org.eclipse.orion.server.core.resources.ResourceShape;
+import org.eclipse.orion.server.core.resources.Serializer;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.GitConstants;
@@ -60,14 +63,14 @@ public class Clone {
 				new Property(GitConstants.KEY_STASH), //
 				new Property(GitConstants.KEY_STATUS), //
 				new Property(GitConstants.KEY_DIFF), //
-				new Property(GitConstants.KEY_URL)};
+				new Property(GitConstants.KEY_URL) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 	protected Serializer<JSONObject> jsonSerializer = new JSONSerializer();
 
 	/**
-	 * Sets the clone id. The clone id is the HTTP resource URI of the file
-	 * resource. This id is of the form /file/{workspaceId}/{projectName}[/{folderPath}]
+	 * Sets the clone id. The clone id is the HTTP resource URI of the file resource. This id is of the form /file/{workspaceId}/{projectName}[/{folderPath}]
+	 * 
 	 * @param id
 	 */
 	public void setId(String id) {
@@ -79,16 +82,14 @@ public class Clone {
 	}
 
 	/**
-	 * Sets the location of the contents of this clone. The location is an
-	 * absolute URI referencing to the filesystem.
+	 * Sets the location of the contents of this clone. The location is an absolute URI referencing to the filesystem.
 	 */
 	public void setContentLocation(URI contentURI) {
 		this.contentLocation = contentURI;
 	}
 
 	/**
-	 * Returns the location of the contents of this clone. The result is an
-	 * absolute URI in the filesystem.
+	 * Returns the location of the contents of this clone. The result is an absolute URI in the filesystem.
 	 * 
 	 * @return The location of the contents of this clone
 	 */
@@ -227,7 +228,8 @@ public class Clone {
 	}
 
 	private URI createUriWithPath(final IPath path) throws URISyntaxException {
-		return new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), path.toString(), baseLocation.getQuery(), baseLocation.getFragment());
+		return new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), path.toString(),
+				baseLocation.getQuery(), baseLocation.getFragment());
 	}
 
 	public JSONObject toJSON(IPath path, URI baseLocation, String cloneUrl) throws IOException, URISyntaxException {

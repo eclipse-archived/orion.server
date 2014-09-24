@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2013 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,12 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.jobs;
 
-import com.jcraft.jsch.JSchException;
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.regex.Pattern;
+
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -29,6 +30,8 @@ import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.jsch.HostFingerprintException;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.jcraft.jsch.JSchException;
 
 /**
  * Base class for all Git jobs.
@@ -100,28 +103,30 @@ public abstract class GitJob extends TaskJob {
 			HostFingerprintException cause = (HostFingerprintException) jschEx;
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, cause.getMessage(), addRepositoryInfo(cause.formJson()), cause);
 		}
-		//JSch handles auth fail by exception message, another one handles only by exception message is "invalid privatekey: ..." 
-		if (jschEx != null && jschEx.getMessage() != null && (jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail") || jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("invalid privatekey"))) { //$NON-NLS-1$
+		// JSch handles auth fail by exception message, another one handles only by exception message is "invalid privatekey: ..."
+		if (jschEx != null
+				&& jschEx.getMessage() != null
+				&& (jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail") || jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("invalid privatekey"))) { //$NON-NLS-1$
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, jschEx.getMessage(), addRepositoryInfo(new JSONObject()), jschEx);
 		}
 
-		//Log connection problems directly
+		// Log connection problems directly
 		if (e.getCause() instanceof TransportException) {
 			TransportException cause = (TransportException) e.getCause();
 			if (matchMessage(JGitText.get().serviceNotPermitted, cause.getMessage())) {
-				//HTTP connection problems are distinguished by exception message
+				// HTTP connection problems are distinguished by exception message
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
 			} else if (matchMessage(JGitText.get().notAuthorized, cause.getMessage())) {
-				//HTTP connection problems are distinguished by exception message
+				// HTTP connection problems are distinguished by exception message
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
 			} else if (cause.getMessage().endsWith("username must not be null.") || cause.getMessage().endsWith("host must not be null.")) { //$NON-NLS-1$ //$NON-NLS-2$
 				// see com.jcraft.jsch.JSch#getSession(String, String, int)
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
 			} else if (e instanceof GitAPIException) {
-				//Other HTTP connection problems reported directly
+				// Other HTTP connection problems reported directly
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, addRepositoryInfo(new JSONObject()), e);
 			} else {
-				//Other HTTP connection problems reported directly
+				// Other HTTP connection problems reported directly
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, addRepositoryInfo(new JSONObject()), cause);
 			}
 
@@ -136,10 +141,11 @@ public abstract class GitJob extends TaskJob {
 
 	IStatus getJGitInternalExceptionStatus(JGitInternalException e, String message) {
 		IStatus status = getExceptionStatus(e, message);
-		//TODO uncomment this when fix in jgit is merged
-		//		if (status instanceof ServerStatus) {
-		//			LogHelper.log(new Status(IStatus.WARNING, GitActivator.PI_GIT, "JGitInternalException should not be thrown for authentication errors. See https://git.eclipse.org/r/#/c/6207/", e));
-		//		}
+		// TODO uncomment this when fix in jgit is merged
+		// if (status instanceof ServerStatus) {
+		// LogHelper.log(new Status(IStatus.WARNING, GitActivator.PI_GIT,
+		// "JGitInternalException should not be thrown for authentication errors. See https://git.eclipse.org/r/#/c/6207/", e));
+		// }
 		return status;
 	}
 
@@ -154,8 +160,8 @@ public abstract class GitJob extends TaskJob {
 
 	/**
 	 * Check if message matches or contains pattern in {@link MessageFormat} format.
-	 *  
-	 * @param pattern 
+	 * 
+	 * @param pattern
 	 * @param message
 	 * @return <code>true</code> if the messages match, and <code>false</code> otherwise
 	 * @see MessageFormat

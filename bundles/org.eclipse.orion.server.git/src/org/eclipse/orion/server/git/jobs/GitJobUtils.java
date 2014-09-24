@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.git.jobs;
 
 import java.io.IOException;
+
 import org.eclipse.jgit.internal.storage.file.FileRepository;
 import org.eclipse.jgit.internal.storage.file.GC;
 import org.eclipse.jgit.lib.ProgressMonitor;
@@ -20,8 +21,10 @@ import org.eclipse.jgit.lib.Repository;
 public class GitJobUtils {
 	/**
 	 * Calls pack refs for a given repository
-	 * @param Repository the git repository
-	 * @throws IOException 
+	 * 
+	 * @param Repository
+	 *            the git repository
+	 * @throws IOException
 	 */
 	public static void packRefs(Repository repo, ProgressMonitor monitor) throws IOException {
 		if (repo != null && repo instanceof FileRepository) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2013 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -130,7 +130,8 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		super(statusHandler);
 	}
 
-	private boolean identifyNewCommitResource(HttpServletRequest request, HttpServletResponse response, Repository db, String newCommit) throws ServletException {
+	private boolean identifyNewCommitResource(HttpServletRequest request, HttpServletResponse response, Repository db, String newCommit)
+			throws ServletException {
 		try {
 			URI u = getURI(request);
 			IPath p = new Path(u.getPath());
@@ -151,7 +152,8 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, resovleOrionURI(request, nu).toString());
 			return true;
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when identifying a new Commit resource.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when identifying a new Commit resource.", e));
 		}
 	}
 
@@ -179,11 +181,13 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			}
 			return false;
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when requesting a commit info.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when requesting a commit info.", e));
 		}
 	}
 
-	private boolean handleGetCommitBody(HttpServletRequest request, HttpServletResponse response, Repository db, String ref, String pattern) throws IOException, ServletException, CoreException {
+	private boolean handleGetCommitBody(HttpServletRequest request, HttpServletResponse response, Repository db, String ref, String pattern)
+			throws IOException, ServletException, CoreException {
 		ObjectId refId = db.resolve(ref);
 		if (refId == null) {
 			String msg = NLS.bind("Failed to get commit body for ref {0}", ref);
@@ -205,7 +209,8 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		return true;
 	}
 
-	private boolean handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, IPath filePath, Repository db, String refIdsRange, String pattern) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException, CoreException {
+	private boolean handleGetCommitLog(HttpServletRequest request, HttpServletResponse response, IPath filePath, Repository db, String refIdsRange,
+			String pattern) throws AmbiguousObjectException, IOException, ServletException, JSONException, URISyntaxException, CoreException {
 		int page = request.getParameter("page") != null ? new Integer(request.getParameter("page")).intValue() : 0; //$NON-NLS-1$ //$NON-NLS-2$
 		int pageSize = request.getParameter("pageSize") != null ? new Integer(request.getParameter("pageSize")).intValue() : PAGE_SIZE; //$NON-NLS-1$ //$NON-NLS-2$
 		String messageFilter = request.getParameter("filter"); //$NON-NLS-1$
@@ -255,9 +260,11 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		}
 
 		URI baseLocation = getURI(request);
-		URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, refIdsRange == null ? BaseToCloneConverter.COMMIT : BaseToCloneConverter.COMMIT_REFRANGE);
+		URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, refIdsRange == null ? BaseToCloneConverter.COMMIT
+				: BaseToCloneConverter.COMMIT_REFRANGE);
 
-		LogJob job = new LogJob(TaskJobHandler.getUserId(request), filePath, cloneLocation, page, pageSize, toObjectId, fromObjectId, toRefId, fromRefId, refIdsRange, pattern, messageFilter, authorFilter, committerFilter, sha1Filter, "true".equals(mergeBaseFilter), fromDate, toDate);
+		LogJob job = new LogJob(TaskJobHandler.getUserId(request), filePath, cloneLocation, page, pageSize, toObjectId, fromObjectId, toRefId, fromRefId,
+				refIdsRange, pattern, messageFilter, authorFilter, committerFilter, sha1Filter, "true".equals(mergeBaseFilter), fromDate, toDate);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 	}
 
@@ -322,7 +329,8 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 
 			String message = requestObject.optString(GitConstants.KEY_COMMIT_MESSAGE, null);
 			if (message == null || message.isEmpty()) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Missing commit message.", null));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
+						"Missing commit message.", null));
 			}
 
 			Git git = new Git(db);
@@ -369,16 +377,20 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 				return true;
 			} catch (GitAPIException e) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "An error occured when commiting.", e));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
+						"An error occured when commiting.", e));
 			} catch (UnmergedPathException e) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An internal error occured when commiting.", e));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+						"An internal error occured when commiting.", e));
 			}
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when requesting a commit info.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when requesting a commit info.", e));
 		}
 	}
 
-	private boolean merge(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToMerge, boolean squash) throws ServletException, JSONException {
+	private boolean merge(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToMerge, boolean squash)
+			throws ServletException, JSONException {
 		try {
 			ObjectId objectId = db.resolve(commitToMerge);
 			Git git = new Git(db);
@@ -392,9 +404,11 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		} catch (CheckoutConflictException e) {
 			return workaroundBug356918(request, response, e);
 		} catch (IOException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when merging.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when merging.", e));
 		} catch (GitAPIException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when merging.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when merging.", e));
 		}
 	}
 
@@ -417,10 +431,12 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				e = e1;
 			}
 		}
-		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when merging.", e.getCause()));
+		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+				"An error occured when merging.", e.getCause()));
 	}
 
-	private boolean rebase(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToRebase, String rebaseOperation) throws ServletException, JSONException, AmbiguousObjectException, IOException {
+	private boolean rebase(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToRebase, String rebaseOperation)
+			throws ServletException, JSONException, AmbiguousObjectException, IOException {
 		JSONObject result = new JSONObject();
 		try {
 			Git git = new Git(db);
@@ -435,7 +451,8 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				ObjectId objectId = db.resolve(commitToRebase);
 				rebase.setUpstream(objectId);
 			} else if (operation.equals(Operation.BEGIN)) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Missing commit refId.", null));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
+						"Missing commit refId.", null));
 			}
 			rebase.setOperation(operation);
 			RebaseResult rebaseResult = rebase.call();
@@ -447,7 +464,8 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			// this error should be handled by client, so return a proper status
 			result.put(GitConstants.KEY_RESULT, AdditionalRebaseStatus.FAILED_WRONG_REPOSITORY_STATE.name());
 		} catch (IllegalArgumentException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Invalid rebase operation.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
+					"Invalid rebase operation.", e));
 		} catch (GitAPIException e) {
 			// get cause and try to handle
 			if (e.getCause() instanceof org.eclipse.jgit.errors.CheckoutConflictException) {
@@ -455,20 +473,23 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				// status
 				result.put(GitConstants.KEY_RESULT, AdditionalRebaseStatus.FAILED_PENDING_CHANGES.name());
 			} else {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when rebasing.", e));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+						"An error occured when rebasing.", e));
 			}
 		}
 		OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 		return true;
 	}
 
-	private boolean cherryPick(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToCherryPick) throws ServletException, JSONException {
+	private boolean cherryPick(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToCherryPick) throws ServletException,
+			JSONException {
 		RevWalk revWalk = new RevWalk(db);
 		try {
 
 			Ref headRef = db.getRef(Constants.HEAD);
 			if (headRef == null)
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when cherry-picking.", null));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+						"An error occured when cherry-picking.", null));
 			RevCommit head = revWalk.parseCommit(headRef.getObjectId());
 
 			ObjectId objectId = db.resolve(commitToCherryPick);
@@ -482,21 +503,25 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} catch (IOException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when cherry-picking.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when cherry-picking.", e));
 		} catch (GitAPIException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when cherry-picking.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when cherry-picking.", e));
 		} finally {
 			revWalk.release();
 		}
 	}
 
-	private boolean revert(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToRevert) throws ServletException, JSONException {
+	private boolean revert(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToRevert) throws ServletException,
+			JSONException {
 		RevWalk revWalk = new RevWalk(db);
 		try {
 
 			Ref headRef = db.getRef(Constants.HEAD);
 			if (headRef == null)
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when reverting.", null));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+						"An error occured when reverting.", null));
 
 			ObjectId objectId = db.resolve(commitToRevert);
 			Git git = new Git(db);
@@ -516,21 +541,25 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} catch (IOException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when reverting.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when reverting.", e));
 		} catch (GitAPIException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when reverting.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when reverting.", e));
 		} finally {
 			revWalk.release();
 		}
 	}
 
-	private boolean sendNotification(HttpServletRequest request, HttpServletResponse response, Repository db, String login, String commit, String url, String authorName, String message) throws ServletException, URISyntaxException, IOException, JSONException, CoreException, Exception {
+	private boolean sendNotification(HttpServletRequest request, HttpServletResponse response, Repository db, String login, String commit, String url,
+			String authorName, String message) throws ServletException, URISyntaxException, IOException, JSONException, CoreException, Exception {
 		UserEmailUtil util = UserEmailUtil.getUtil();
 		if (!util.isEmailConfigured()) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Smpt server not configured", null));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"Smpt server not configured", null));
 		}
 		IOrionCredentialsService userAdmin = UserServiceHelper.getDefault().getUserStore();
-		User user = (User) userAdmin.getUser(UserConstants.KEY_LOGIN, login);
+		User user = userAdmin.getUser(UserConstants.KEY_LOGIN, login);
 		try {
 			if (reviewRequestEmail == null) {
 				reviewRequestEmail = new EmailContent(EMAIL_REVIEW_REQUEST_FILE);
@@ -538,14 +567,18 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 
 			String emailAdress = user.getEmail();
 
-			util.sendEmail(reviewRequestEmail.getTitle(), reviewRequestEmail.getContent().replaceAll(EMAIL_COMMITER_NAME, authorName).replaceAll(EMAIL_URL_LINK, url).replaceAll(EMAIL_COMMIT_MESSAGE, message), emailAdress);
+			util.sendEmail(
+					reviewRequestEmail.getTitle(),
+					reviewRequestEmail.getContent().replaceAll(EMAIL_COMMITER_NAME, authorName).replaceAll(EMAIL_URL_LINK, url)
+							.replaceAll(EMAIL_COMMIT_MESSAGE, message), emailAdress);
 
 			JSONObject result = new JSONObject();
 			result.put(GitConstants.KEY_RESULT, "Email sent");
 			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "User doesn't exist", null));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"User doesn't exist", null));
 		}
 	};
 
@@ -565,11 +598,13 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			}
 			return false;
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when tagging.", e));
 		}
 	}
 
-	private boolean tag(HttpServletRequest request, HttpServletResponse response, Repository db, String commitId, String tagName, boolean isRoot) throws JSONException, URISyntaxException, ServletException {
+	private boolean tag(HttpServletRequest request, HttpServletResponse response, Repository db, String commitId, String tagName, boolean isRoot)
+			throws JSONException, URISyntaxException, ServletException {
 		Git git = new Git(db);
 		RevWalk walk = new RevWalk(db);
 		try {
@@ -585,11 +620,14 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} catch (IOException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when tagging.", e));
 		} catch (GitAPIException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when tagging.", e));
 		} catch (CoreException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when tagging.", e));
 		} finally {
 			walk.dispose();
 		}

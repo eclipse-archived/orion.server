@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2013 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,7 +14,10 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.git.servlets.GitUtils;
@@ -84,7 +87,7 @@ public abstract class BaseToCloneConverter {
 
 	private static IPath findClonePath(IPath filePath) throws CoreException {
 		Map<IPath, File> dirs = GitUtils.getGitDirs(filePath, GitUtils.Traverse.GO_UP);
-		//going up, there can only be one git repository
+		// going up, there can only be one git repository
 		if (dirs.size() != 1)
 			return null;
 		IPath relativePath = dirs.keySet().iterator().next();

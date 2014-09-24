@@ -13,7 +13,10 @@ package org.eclipse.orion.server.git.objects;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.orion.server.core.resources.Property;
@@ -48,7 +51,7 @@ public class Stash extends Commit {
 		IPath stashPath = new Path(GitServlet.GIT_URI).append(Stash.RESOURCE);
 		stashPath = stashPath.append(getName());
 
-		//clone location is of the form /gitapi/clone/file/{workspaceId}/{projectName}[/{path}]
+		// clone location is of the form /gitapi/clone/file/{workspaceId}/{projectName}[/{path}]
 		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
 		stashPath = stashPath.append(clonePath);
 

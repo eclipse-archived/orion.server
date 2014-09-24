@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2013 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,11 +13,16 @@ package org.eclipse.orion.server.git.objects;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
+
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
@@ -27,7 +32,9 @@ import org.eclipse.orion.server.git.BaseToRemoteConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 @ResourceDescription(type = Remote.TYPE)
 public class Remote extends GitObject {
@@ -44,7 +51,7 @@ public class Remote extends GitObject {
 				new Property(ProtocolConstants.KEY_NAME), //
 				new Property(GitConstants.KEY_URL), //
 				new Property(GitConstants.KEY_PUSH_URL),//
-				new Property(GitConstants.KEY_IS_GERRIT)};
+				new Property(GitConstants.KEY_IS_GERRIT) };
 		DEFAULT_RESOURCE_SHAPE_WITHOUT_CHILDREN.setProperties(defaultProperties);
 
 		DEFAULT_RESOURCE_SHAPE.setProperties(DEFAULT_RESOURCE_SHAPE_WITHOUT_CHILDREN.getProperties());
@@ -80,12 +87,12 @@ public class Remote extends GitObject {
 
 	@PropertyDescription(name = GitConstants.KEY_URL)
 	private String getUrl() {
-		return getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, name, "url" /*RemoteConfig.KEY_URL*/); //$NON-NLS-1$
+		return getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, name, "url" /* RemoteConfig.KEY_URL */); //$NON-NLS-1$
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_PUSH_URL)
 	private String getPushUrl() {
-		return getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, name, "pushurl" /*RemoteConfig.KEY_PUSHURL*/); //$NON-NLS-1$
+		return getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, name, "pushurl" /* RemoteConfig.KEY_PUSHURL */); //$NON-NLS-1$
 	}
 
 	@PropertyDescription(name = ProtocolConstants.KEY_CHILDREN)
@@ -134,8 +141,10 @@ public class Remote extends GitObject {
 			o.put(ProtocolConstants.KEY_NAME, name.substring(Constants.R_REMOTES.length()));
 			o.put(ProtocolConstants.KEY_FULL_NAME, name);
 			o.put(ProtocolConstants.KEY_TYPE, RemoteBranch.TYPE);
-			o.put(GitConstants.KEY_URL, getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, getName(), "url" /*RemoteConfig.KEY_URL*/)); //$NON-NLS-1$
-			o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(cloneLocation, "", /*short name is {remote}/{branch}*/getName() + "/" + GitUtils.encode(newBranch))); //$NON-NLS-1$
+			o.put(GitConstants.KEY_URL, getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, getName(), "url" /* RemoteConfig.KEY_URL */)); //$NON-NLS-1$
+			o.put(ProtocolConstants.KEY_LOCATION,
+					BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(cloneLocation,
+							"", /* short name is {remote}/{branch} */getName() + "/" + GitUtils.encode(newBranch))); //$NON-NLS-1$
 			children.put(o);
 		}
 		return children;

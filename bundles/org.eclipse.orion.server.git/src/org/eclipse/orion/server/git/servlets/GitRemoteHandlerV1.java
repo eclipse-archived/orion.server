@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2013 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,31 +10,48 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.servlets.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.lib.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.*;
+import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteConfig;
+import org.eclipse.jgit.transport.URIish;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.git.*;
-import org.eclipse.orion.server.git.jobs.*;
+import org.eclipse.orion.server.git.BaseToCloneConverter;
+import org.eclipse.orion.server.git.GitActivator;
+import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.jobs.FetchJob;
+import org.eclipse.orion.server.git.jobs.PushJob;
+import org.eclipse.orion.server.git.jobs.RemoteDetailsJob;
 import org.eclipse.orion.server.git.objects.Remote;
 import org.eclipse.orion.server.git.objects.RemoteBranch;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<IStatus> statusHandler;
@@ -60,14 +77,14 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			}
 
 			switch (getMethod(request)) {
-				case GET :
-					return handleGet(request, response, path);
-				case POST :
-					return handlePost(request, response, path);
-				case DELETE :
-					return handleDelete(request, response, path);
-				default :
-					return false;
+			case GET:
+				return handleGet(request, response, path);
+			case POST:
+				return handlePost(request, response, path);
+			case DELETE:
+				return handleDelete(request, response, path);
+			default:
+				return false;
 			}
 
 		} catch (Exception e) {
@@ -76,7 +93,8 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
+	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException,
+			URISyntaxException, CoreException {
 		Path p = new Path(path);
 		// FIXME: what if a remote or branch is named "file"?
 		if (p.segment(0).equals("file")) { //$NON-NLS-1$
@@ -112,9 +130,11 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			if (page != null) {
 				int pageNo = Integer.parseInt(page);
 				int pageSize = request.getParameter("pageSize") == null ? PAGE_SIZE : Integer.parseInt(request.getParameter("pageSize"));
-				job = new RemoteDetailsJob(TaskJobHandler.getUserId(request), p.segment(0), p.removeFirstSegments(1), BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE), commitsNumber, pageNo, pageSize, request.getRequestURI(), nameFilter);
+				job = new RemoteDetailsJob(TaskJobHandler.getUserId(request), p.segment(0), p.removeFirstSegments(1), BaseToCloneConverter.getCloneLocation(
+						getURI(request), BaseToCloneConverter.REMOTE), commitsNumber, pageNo, pageSize, request.getRequestURI(), nameFilter);
 			} else {
-				job = new RemoteDetailsJob(TaskJobHandler.getUserId(request), p.segment(0), p.removeFirstSegments(1), BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.REMOTE), commitsNumber, nameFilter);
+				job = new RemoteDetailsJob(TaskJobHandler.getUserId(request), p.segment(0), p.removeFirstSegments(1), BaseToCloneConverter.getCloneLocation(
+						getURI(request), BaseToCloneConverter.REMOTE), commitsNumber, nameFilter);
 			}
 			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 		} else if (p.segment(2).equals("file")) { //$NON-NLS-1$
@@ -138,13 +158,16 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			}
 			JSONObject errorData = new JSONObject();
 			errorData.put(GitConstants.KEY_CLONE, cloneLocation);
-			return statusHandler.handleRequest(request, response, new ServerStatus(new Status(IStatus.ERROR, GitActivator.PI_GIT, "No remote branch found: " + p.uptoSegment(2).removeTrailingSeparator()), HttpServletResponse.SC_NOT_FOUND, errorData));
+			return statusHandler.handleRequest(request, response, new ServerStatus(new Status(IStatus.ERROR, GitActivator.PI_GIT, "No remote branch found: "
+					+ p.uptoSegment(2).removeTrailingSeparator()), HttpServletResponse.SC_NOT_FOUND, errorData));
 		}
-		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad request, \"/git/remote/{remote}/{branch}/file/{path}\" expected", null));
+		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
+				"Bad request, \"/git/remote/{remote}/{branch}/file/{path}\" expected", null));
 	}
 
 	// remove remote
-	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String path) throws CoreException, IOException, URISyntaxException, JSONException, ServletException {
+	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String path) throws CoreException, IOException, URISyntaxException,
+			JSONException, ServletException {
 		Path p = new Path(path);
 		if (p.segment(1).equals("file")) { //$NON-NLS-1$
 			// expected path: /gitapi/remote/{remote}/file/{path}
@@ -157,7 +180,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 				StoredConfig config = db.getConfig();
 				config.unsetSection(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName);
 				config.save();
-				//TODO: handle result
+				// TODO: handle result
 				return true;
 			} finally {
 				if (db != null) {
@@ -168,7 +191,8 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException, URISyntaxException, CoreException {
+	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException,
+			URISyntaxException, CoreException {
 		Path p = new Path(path);
 		if (p.segment(0).equals("file")) { //$NON-NLS-1$
 			// handle adding new remote
@@ -190,34 +214,43 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		} else if (srcRef != null) {
 			return push(request, response, path, cp, srcRef, tags, force);
 		} else {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Only Fetch:true is currently supported.", null));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
+					"Only Fetch:true is currently supported.", null));
 		}
 	}
 
 	// add new remote
-	private boolean addRemote(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException, CoreException, URISyntaxException {
+	private boolean addRemote(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException,
+			CoreException, URISyntaxException {
 		// expected path: /git/remote/file/{path}
 		Path p = new Path(path);
 		JSONObject toPut = OrionServlet.readJSONRequest(request);
 		String remoteName = toPut.optString(GitConstants.KEY_REMOTE_NAME, null);
 		// remoteName is required
 		if (remoteName == null || remoteName.isEmpty()) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Remote name must be provided", null));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
+					"Remote name must be provided", null));
 		}
 		String remoteURI = toPut.optString(GitConstants.KEY_REMOTE_URI, null);
 		// remoteURI is required
 		if (remoteURI == null || remoteURI.isEmpty()) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Remote URI must be provided", null));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
+					"Remote URI must be provided", null));
 		}
 
 		try {
 			URIish uri = new URIish(remoteURI);
 			if (GitUtils.isForbiddenGitUri(uri)) {
-				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Remote URI {0} does not appear to be a git repository", remoteURI), null)); //$NON-NLS-1$
+				statusHandler.handleRequest(
+						request,
+						response,
+						new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind(
+								"Remote URI {0} does not appear to be a git repository", remoteURI), null)); //$NON-NLS-1$
 				return false;
 			}
 		} catch (URISyntaxException e) {
-			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid remote URI: {0}", remoteURI), e)); //$NON-NLS-1$
+			statusHandler.handleRequest(request, response,
+					new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Invalid remote URI: {0}", remoteURI), e)); //$NON-NLS-1$
 			return false;
 		}
 
@@ -264,16 +297,18 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean fetch(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path, boolean force) throws URISyntaxException, JSONException, IOException, ServletException {
+	private boolean fetch(HttpServletRequest request, HttpServletResponse response, GitCredentialsProvider cp, String path, boolean force)
+			throws URISyntaxException, JSONException, IOException, ServletException {
 		// {remote}/{branch}/{file}/{path}
 		Path p = new Path(path);
-		//check for SSO token
+		// check for SSO token
 		Object cookie = request.getAttribute(GitConstants.KEY_SSO_TOKEN);
 		FetchJob job = new FetchJob(TaskJobHandler.getUserId(request), cp, p, force, cookie);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 	}
 
-	private boolean push(HttpServletRequest request, HttpServletResponse response, String path, GitCredentialsProvider cp, String srcRef, boolean tags, boolean force) throws ServletException, CoreException, IOException, JSONException, URISyntaxException {
+	private boolean push(HttpServletRequest request, HttpServletResponse response, String path, GitCredentialsProvider cp, String srcRef, boolean tags,
+			boolean force) throws ServletException, CoreException, IOException, JSONException, URISyntaxException {
 		Path p = new Path(path);
 		// FIXME: what if a remote or branch is named "file"?
 		if (p.segment(2).equals("file")) { //$NON-NLS-1$

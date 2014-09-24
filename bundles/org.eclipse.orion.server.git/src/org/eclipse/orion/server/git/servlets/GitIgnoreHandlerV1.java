@@ -10,25 +10,37 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.servlets.OrionServlet;
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.Map.Entry;
 import java.util.Set;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.EncodingUtils;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class GitIgnoreHandlerV1 extends ServletResourceHandler<String> {
 
@@ -59,10 +71,10 @@ public class GitIgnoreHandlerV1 extends ServletResourceHandler<String> {
 				return false; // TODO: or an error response code, 405?
 
 			switch (getMethod(request)) {
-				case PUT :
-					return handlePut(request, response, filePath);
-				default :
-					//fall through and return false below
+			case PUT:
+				return handlePut(request, response, filePath);
+			default:
+				// fall through and return false below
 			}
 
 			return false;
@@ -75,13 +87,15 @@ public class GitIgnoreHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, IPath filePath) throws JSONException, IOException, ServletException, CoreException {
+	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, IPath filePath) throws JSONException, IOException, ServletException,
+			CoreException {
 
 		JSONObject toIgnore = OrionServlet.readJSONRequest(request);
 		JSONArray paths = toIgnore.optJSONArray(ProtocolConstants.KEY_PATH);
 
 		if (paths.length() < 1)
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "No paths to insert into .gitignore", null));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
+					"No paths to insert into .gitignore", null));
 
 		/* remove /file */
 		IFileStore projectStore = NewFileServlet.getFileStore(null, filePath.removeFirstSegments(1));
@@ -106,10 +120,12 @@ public class GitIgnoreHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	/**
-	 * Appends a single rule in the given .gitignore file store.
-	 * If necessary, the .gitignore file is created.
-	 * @param gitignoreStore The .gitignore file store.
-	 * @param rule The entry to be appended to the .gitignore.
+	 * Appends a single rule in the given .gitignore file store. If necessary, the .gitignore file is created.
+	 * 
+	 * @param gitignoreStore
+	 *            The .gitignore file store.
+	 * @param rule
+	 *            The entry to be appended to the .gitignore.
 	 * @throws CoreException
 	 * @throws IOException
 	 */

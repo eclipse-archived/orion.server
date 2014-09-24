@@ -10,29 +10,47 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.servlets.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.errors.MissingObjectException;
-import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.revwalk.*;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectLoader;
+import org.eclipse.jgit.lib.ObjectStream;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevTree;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
-import org.eclipse.orion.server.core.*;
-import org.eclipse.orion.server.core.metastore.*;
-import org.json.*;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
+import org.eclipse.orion.server.servlets.OrionServlet;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class GitTreeHandlerV1 extends AbstractGitHandler {
 
@@ -62,7 +80,8 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 				jsonObject.put(ProtocolConstants.KEY_LOCATION, location);
 				if (isDir) {
 					try {
-						jsonObject.put(ProtocolConstants.KEY_CHILDREN_LOCATION, new URI(location.getScheme(), location.getAuthority(), location.getPath(), "depth=1", location.getFragment())); //$NON-NLS-1$
+						jsonObject.put(ProtocolConstants.KEY_CHILDREN_LOCATION, new URI(location.getScheme(), location.getAuthority(), location.getPath(),
+								"depth=1", location.getFragment())); //$NON-NLS-1$
 					} catch (URISyntaxException e) {
 						throw new RuntimeException(e);
 					}
@@ -74,7 +93,7 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 
 		} catch (JSONException e) {
 		} catch (URISyntaxException e) {
-			//cannot happen because the key is non-null and the values are strings
+			// cannot happen because the key is non-null and the values are strings
 			throw new RuntimeException(e);
 		}
 		return jsonObject;
@@ -95,11 +114,13 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 		return false;
 	}
 
+	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
 		String userId = request.getRemoteUser();
 		if (path.length() == 0) {
 			if (userId == null) {
-				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, "User name not specified", null));
+				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, "User name not specified",
+						null));
 				return false;
 			}
 			try {
@@ -123,7 +144,8 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 					return true;
 				}
 			} catch (Exception e) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occurred while obtaining workspace data.", e));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+						"An error occurred while obtaining workspace data.", e));
 			}
 			return true;
 		}
@@ -231,7 +253,8 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 			OrionServlet.writeJSONResponse(request, response, result);
 			return true;
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when requesting commit info.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when requesting commit info.", e));
 		} finally {
 			if (walk != null)
 				walk.release();

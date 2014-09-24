@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,25 +10,40 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.diff.*;
+import org.eclipse.jgit.diff.DiffEntry;
 import org.eclipse.jgit.diff.DiffEntry.ChangeType;
+import org.eclipse.jgit.diff.DiffFormatter;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.ObjectStream;
+import org.eclipse.jgit.lib.PersonIdent;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.treewalk.*;
-import org.eclipse.jgit.treewalk.filter.*;
+import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.eclipse.jgit.treewalk.EmptyTreeIterator;
+import org.eclipse.jgit.treewalk.TreeWalk;
+import org.eclipse.jgit.treewalk.filter.AndTreeFilter;
+import org.eclipse.jgit.treewalk.filter.PathFilterGroup;
+import org.eclipse.jgit.treewalk.filter.TreeFilter;
 import org.eclipse.jgit.util.io.NullOutputStream;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
@@ -37,7 +52,9 @@ import org.eclipse.orion.server.core.users.UserUtilities;
 import org.eclipse.orion.server.git.BaseToCommitConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 @ResourceDescription(type = Commit.TYPE)
 public class Commit extends GitObject {
@@ -64,7 +81,7 @@ public class Commit extends GitObject {
 				new Property(GitConstants.KEY_BRANCHES), //
 				new Property(ProtocolConstants.KEY_PARENTS), //
 				new Property(GitConstants.KEY_TREE), //
-				new Property(GitConstants.KEY_COMMIT_DIFFS)};
+				new Property(GitConstants.KEY_COMMIT_DIFFS) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
@@ -72,8 +89,7 @@ public class Commit extends GitObject {
 	protected String pattern;
 	protected TreeFilter filter;
 	/**
-	 * Whether this is a commit at the root of the repository, or only a
-	 * particular path (git commit -o {path}).
+	 * Whether this is a commit at the root of the repository, or only a particular path (git commit -o {path}).
 	 */
 	protected boolean isRoot = true;
 	protected Map<ObjectId, JSONArray> commitToBranchMap;
@@ -113,7 +129,8 @@ public class Commit extends GitObject {
 	 * Return body of the commit
 	 *
 	 * @return body of the commit as an Object Stream
-	 * @throws IOException when reading the object failed
+	 * @throws IOException
+	 *             when reading the object failed
 	 */
 	public ObjectStream toObjectStream() throws IOException {
 		final TreeWalk w = TreeWalk.forPath(db, pattern, revCommit.getTree());
@@ -132,7 +149,8 @@ public class Commit extends GitObject {
 	@PropertyDescription(name = ProtocolConstants.KEY_CONTENT_LOCATION)
 	protected URI getContentLocation() throws URISyntaxException {
 		if (!isRoot) // linking to body makes only sense for files
-			return BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery("parts=body")); //$NON-NLS-1$		
+			return BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern,
+					BaseToCommitConverter.REMOVE_FIRST_2.setQuery("parts=body")); //$NON-NLS-1$		
 		return null; // in the eventuality of null, the property won't be added
 	}
 
@@ -281,22 +299,22 @@ public class Commit extends GitObject {
 	protected URI createDiffLocation(String toRefId, String fromRefId, String path) throws URISyntaxException {
 		IPath diffPath = new Path(GitServlet.GIT_URI).append(Diff.RESOURCE);
 
-		//diff range format is [fromRef..]toRef
+		// diff range format is [fromRef..]toRef
 		String diffRange = ""; //$NON-NLS-1$
 		if (fromRefId != null)
 			diffRange = fromRefId + ".."; //$NON-NLS-1$
 		diffRange += toRefId;
 		diffPath = diffPath.append(diffRange);
 
-		//clone location is of the form /gitapi/clone/file/{workspaceId}/{projectName}[/{path}]
+		// clone location is of the form /gitapi/clone/file/{workspaceId}/{projectName}[/{path}]
 		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
 		if (path == null) {
 			diffPath = diffPath.append(clonePath);
 		} else if (isRoot) {
 			diffPath = diffPath.append(clonePath).append(path);
 		} else {
-			//need to start from the project root
-			//project path is of the form /file/{workspaceId}/{projectName}
+			// need to start from the project root
+			// project path is of the form /file/{workspaceId}/{projectName}
 			IPath projectRoot = clonePath.uptoSegment(3);
 			diffPath = diffPath.append(projectRoot).append(path);
 		}
@@ -305,18 +323,19 @@ public class Commit extends GitObject {
 	}
 
 	protected URI createTreeLocation(String path) throws URISyntaxException {
-		//remove /gitapi/clone from the start of path
+		// remove /gitapi/clone from the start of path
 		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
 
 		IPath result = new Path(GitServlet.GIT_URI).append(Tree.RESOURCE).append(clonePath).append(this.getName());
 		if (path != null) {
 			result = result.append(path);
 		}
-		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute().toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute()
+				.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
 	protected URI createContentLocation(final DiffEntry entr, String path) throws URISyntaxException {
-		//remove /gitapi/clone from the start of path
+		// remove /gitapi/clone from the start of path
 		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
 		IPath result;
 		if (path == null) {
@@ -324,11 +343,12 @@ public class Commit extends GitObject {
 		} else if (isRoot) {
 			result = clonePath.append(path);
 		} else {
-			//need to start from the project root
-			//project path is of the form /file/{workspaceId}/{projectName}
+			// need to start from the project root
+			// project path is of the form /file/{workspaceId}/{projectName}
 			result = clonePath.uptoSegment(3).append(path);
 		}
-		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute().toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute()
+				.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
 	protected JSONArray parentsToJSON(RevCommit[] revCommits) throws JSONException, IOException, URISyntaxException {
@@ -336,7 +356,8 @@ public class Commit extends GitObject {
 		for (RevCommit revCommit : revCommits) {
 			JSONObject parent = new JSONObject();
 			parent.put(ProtocolConstants.KEY_NAME, revCommit.getName());
-			parent.put(ProtocolConstants.KEY_LOCATION, BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2));
+			parent.put(ProtocolConstants.KEY_LOCATION,
+					BaseToCommitConverter.getCommitLocation(cloneLocation, revCommit.getName(), pattern, BaseToCommitConverter.REMOVE_FIRST_2));
 			parents.put(parent);
 		}
 		return parents;

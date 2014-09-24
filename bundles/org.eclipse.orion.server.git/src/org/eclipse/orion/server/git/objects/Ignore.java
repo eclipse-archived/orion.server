@@ -12,6 +12,7 @@ package org.eclipse.orion.server.git.objects;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 

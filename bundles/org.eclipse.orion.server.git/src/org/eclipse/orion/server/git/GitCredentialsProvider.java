@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others 
+ * Copyright (c) 2011, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,8 +11,11 @@
 package org.eclipse.orion.server.git;
 
 import java.util.Locale;
+
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
-import org.eclipse.jgit.transport.*;
+import org.eclipse.jgit.transport.CredentialItem;
+import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider {
 
@@ -81,6 +84,6 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 				throw new UnsupportedCredentialItem(uri, item.getPromptText());
 			}
 		}
-		return true; //we assume that user provided all credentials that are needed
+		return true; // we assume that user provided all credentials that are needed
 	}
 }

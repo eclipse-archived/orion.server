@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 IBM Corporation and others.
+ * Copyright (c) 2012, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,25 +10,30 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-
-import org.eclipse.orion.server.servlets.OrionServlet;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map.Entry;
 import java.util.Set;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -107,18 +112,18 @@ public abstract class AbstractGitHandler extends ServletResourceHandler<String> 
 			db = FileRepositoryBuilder.create(gitDir);
 			RequestInfo requestInfo = new RequestInfo(request, response, db, gitSegment, relativePath, filePath);
 			switch (getMethod(request)) {
-				case GET :
-					return handleGet(requestInfo);
-				case POST :
-					return handlePost(requestInfo);
-				case PUT :
-					return handlePut(requestInfo);
-				case DELETE :
-					return handleDelete(requestInfo);
-				case OPTIONS :
-				case HEAD :
-				default :
-					return false;
+			case GET:
+				return handleGet(requestInfo);
+			case POST:
+				return handlePost(requestInfo);
+			case PUT:
+				return handlePut(requestInfo);
+			case DELETE:
+				return handleDelete(requestInfo);
+			case OPTIONS:
+			case HEAD:
+			default:
+				return false;
 			}
 		} catch (IOException e) {
 			String msg = NLS.bind("Failed to process a git request for {0}", path);

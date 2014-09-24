@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2008,2014 Shawn O. Pearce <spearce@spearce.org> and others
+ * Copyright (C) 2008, 2014 Shawn O. Pearce <spearce@spearce.org> and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -13,8 +13,7 @@ import org.eclipse.core.runtime.SubProgressMonitor;
 import org.eclipse.jgit.lib.ProgressMonitor;
 
 /**
- * Create a new Git to Eclipse progress monitor.
- * From org.eclipse.egit.core.
+ * Create a new Git to Eclipse progress monitor. From org.eclipse.egit.core.
  */
 public class EclipseGitProgressTransformer implements ProgressMonitor {
 	private static final String EMPTY_STRING = ""; //$NON-NLS-1$
@@ -39,10 +38,12 @@ public class EclipseGitProgressTransformer implements ProgressMonitor {
 		root = eclipseMonitor;
 	}
 
+	@Override
 	public void start(final int totalTasks) {
 		root.beginTask(EMPTY_STRING, totalTasks * 1000);
 	}
 
+	@Override
 	public void beginTask(final String name, final int total) {
 		endTask();
 		msg = name;
@@ -56,6 +57,7 @@ public class EclipseGitProgressTransformer implements ProgressMonitor {
 		task.subTask(msg);
 	}
 
+	@Override
 	public void update(final int work) {
 		if (task == null)
 			return;
@@ -95,6 +97,7 @@ public class EclipseGitProgressTransformer implements ProgressMonitor {
 		task.worked(work);
 	}
 
+	@Override
 	public void endTask() {
 		if (task != null) {
 			try {
@@ -105,6 +108,7 @@ public class EclipseGitProgressTransformer implements ProgressMonitor {
 		}
 	}
 
+	@Override
 	public boolean isCancelled() {
 		if (task != null)
 			return task.isCanceled();

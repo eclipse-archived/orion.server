@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,9 +14,17 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Comparator;
-import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.lib.*;
-import org.eclipse.jgit.revwalk.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevObject;
+import org.eclipse.jgit.revwalk.RevTag;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
@@ -47,6 +55,7 @@ public class Tag extends GitObject {
 	public static final String RESOURCE = "tag"; //$NON-NLS-1$
 	public static final String TYPE = "Tag"; //$NON-NLS-1$
 	public static final Comparator<Tag> COMPARATOR = new Comparator<Tag>() {
+		@Override
 		public int compare(Tag o1, Tag o2) {
 			return o1.getTime() < o2.getTime() ? 1 : (o1.getTime() > o2.getTime() ? -1 : o2.getName(false, false).compareTo(o1.getName(false, false)));
 		}
@@ -62,7 +71,7 @@ public class Tag extends GitObject {
 				new Property(GitConstants.KEY_TREE), //
 				new Property(ProtocolConstants.KEY_LOCAL_TIMESTAMP), //
 				new Property(GitConstants.KEY_TAG_TYPE), //
-				new Property(ProtocolConstants.KEY_FULL_NAME)};
+				new Property(ProtocolConstants.KEY_FULL_NAME) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
@@ -141,11 +150,13 @@ public class Tag extends GitObject {
 		return name;
 	}
 
+	@Override
 	protected URI getLocation() throws URISyntaxException {
 		if (tagLocation == null) {
 			IPath p = new Path(cloneLocation.getPath());
 			p = p.uptoSegment(1).append(RESOURCE).append(getName(false, true)).addTrailingSeparator().append(p.removeFirstSegments(2));
-			tagLocation = new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), p.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
+			tagLocation = new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), p.toString(),
+					cloneLocation.getQuery(), cloneLocation.getFragment());
 		}
 		return tagLocation;
 	}
@@ -155,7 +166,8 @@ public class Tag extends GitObject {
 		if (commitLocation == null) {
 			IPath p = new Path(cloneLocation.getPath());
 			p = p.uptoSegment(1).append(Commit.RESOURCE).append(parseCommit().getName()).addTrailingSeparator().append(p.removeFirstSegments(2));
-			commitLocation = new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), p.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
+			commitLocation = new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), p.toString(),
+					cloneLocation.getQuery(), cloneLocation.getFragment());
 		}
 		return commitLocation;
 	}
@@ -166,14 +178,15 @@ public class Tag extends GitObject {
 	}
 
 	private URI createTreeLocation(String path) throws URISyntaxException {
-		//remove /gitapi/clone from the start of path
+		// remove /gitapi/clone from the start of path
 		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
 
 		IPath result = new Path(GitServlet.GIT_URI).append(Tree.RESOURCE).append(clonePath).append(GitUtils.encode(this.getName()));
 		if (path != null) {
 			result.append(path);
 		}
-		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute().toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute()
+				.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
 	@PropertyDescription(name = ProtocolConstants.KEY_LOCAL_TIMESTAMP)

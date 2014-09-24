@@ -101,7 +101,8 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, String pattern) throws CoreException, IOException, ServletException {
+	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, Repository db, String pattern) throws CoreException, IOException,
+			ServletException {
 		Index index = new Index(null /* not needed */, db, pattern);
 		ObjectStream stream = index.toObjectStream();
 		if (stream == null) {
@@ -112,7 +113,8 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, Repository db, String pattern) throws ServletException, JSONException, IOException {
+	private boolean handlePut(HttpServletRequest request, HttpServletResponse response, Repository db, String pattern) throws ServletException, JSONException,
+			IOException {
 		JSONObject toAdd = OrionServlet.readJSONRequest(request);
 		JSONArray paths = toAdd.optJSONArray(ProtocolConstants.KEY_PATH);
 		if (paths == null) {
@@ -128,7 +130,8 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		try {
 			add.call();
 		} catch (GitAPIException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(),
+					e));
 		}
 
 		// TODO: we're calling "add" twice, this is inefficient, see bug 349299
@@ -140,18 +143,21 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		try {
 			add.call();
 		} catch (GitAPIException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(),
+					e));
 		}
 		return true;
 	}
 
-	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, IPath path) throws ServletException, NoFilepatternException, IOException, JSONException {
+	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, Repository db, IPath path) throws ServletException,
+			NoFilepatternException, IOException, JSONException {
 		JSONObject toReset = OrionServlet.readJSONRequest(request);
 		String resetType = toReset.optString(GitConstants.KEY_RESET_TYPE, null);
 		if (resetType != null) {
 			JSONArray paths = toReset.optJSONArray(ProtocolConstants.KEY_PATH);
 			if (paths != null) {
-				String msg = NLS.bind("Mixing {0} and {1} parameters is not allowed.", new Object[] { ProtocolConstants.KEY_PATH, GitConstants.KEY_RESET_TYPE });
+				String msg = NLS
+						.bind("Mixing {0} and {1} parameters is not allowed.", new Object[] { ProtocolConstants.KEY_PATH, GitConstants.KEY_RESET_TYPE });
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 			}
 			String ref = toReset.optString(GitConstants.KEY_TAG_COMMIT, Constants.HEAD);
@@ -166,7 +172,8 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 					try {
 						git.reset().setMode(type).setRef(ref).call();
 					} catch (GitAPIException e) {
-						statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
+						statusHandler.handleRequest(request, response,
+								new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
 					}
 					return true;
 				case KEEP:
@@ -181,7 +188,8 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		} else {
 			String commit = toReset.optString(GitConstants.KEY_TAG_COMMIT, null);
 			if (commit != null) {
-				String msg = NLS.bind("Mixing {0} and {1} parameters is not allowed.", new Object[] { ProtocolConstants.KEY_PATH, GitConstants.KEY_TAG_COMMIT });
+				String msg = NLS
+						.bind("Mixing {0} and {1} parameters is not allowed.", new Object[] { ProtocolConstants.KEY_PATH, GitConstants.KEY_TAG_COMMIT });
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 			}
 			JSONArray paths = toReset.optJSONArray(ProtocolConstants.KEY_PATH);
