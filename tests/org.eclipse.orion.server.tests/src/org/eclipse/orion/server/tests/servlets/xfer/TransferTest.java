@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.tests.servlets.xfer;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -532,4 +533,126 @@ public class TransferTest extends FileSystemTest {
 		assertTrue(checkFileExists(directoryPath + "/org.eclipse.e4.webide/static/js/navigate-tree/navigate-tree.js"));
 	}
 
+	@Test
+	public void testImportFilesWithoutOverride() throws CoreException, IOException, SAXException {
+		//create a directory to upload to
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+		//create a file that is not overwritten
+		String fileContents = "This is the file contents";
+		createFile(directoryPath + "/client.zip", fileContents);
+		//start the import
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/client.zip");
+		File source = new File(FileLocator.toFileURL(entry).getPath());
+		long length = source.length();
+		InputStream in = new BufferedInputStream(new FileInputStream(source));
+		PostMethodWebRequest request = new PostMethodWebRequest(getImportRequestPath(directoryPath), in, "application/zip");
+		request.setHeaderField("Content-Length", "" + length);
+		request.setHeaderField("Content-Type", "application/octet-stream");
+		request.setHeaderField("Slug", "client.zip");
+		request.setHeaderField("X-Xfer-Options", "raw,no-overwrite");
+		setAuthentication(request);
+		WebResponse postResponse = webConversation.getResponse(request);
+		//assert the server rejects the override
+		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, postResponse.getResponseCode());
+		//assert the file is still present in the workspace
+		assertTrue(checkFileExists(directoryPath + "/client.zip"));
+		//assert that imported file was not overwritten
+		assertTrue(checkContentEquals(createTempFile("expectedFile", fileContents), directoryPath + "/client.zip"));
+	}
+
+	@Test
+	public void testImportFilesWithOverride() throws CoreException, IOException, SAXException {
+		//create a directory to upload to
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+		//create a file that is to be overwritten
+		String fileContents = "This is the file contents";
+		createFile(directoryPath + "/client.zip", fileContents);
+		//start the import
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/client.zip");
+		File source = new File(FileLocator.toFileURL(entry).getPath());
+		long length = source.length();
+		InputStream in = new BufferedInputStream(new FileInputStream(source));
+		PostMethodWebRequest request = new PostMethodWebRequest(getImportRequestPath(directoryPath), in, "application/zip");
+		request.setHeaderField("Content-Length", "" + length);
+		request.setHeaderField("Content-Type", "application/octet-stream");
+		request.setHeaderField("Slug", "client.zip");
+		request.setHeaderField("X-Xfer-Options", "raw,overwrite-older");
+		setAuthentication(request);
+		WebResponse postResponse = webConversation.getResponse(request);
+		//assert the server accepts the override
+		assertEquals(HttpURLConnection.HTTP_CREATED, postResponse.getResponseCode());
+		String location = postResponse.getHeaderField("Location");
+		assertNotNull(location);
+		String type = postResponse.getHeaderField("Content-Type");
+		assertNotNull(type);
+		//assert the file is still present in the workspace
+		assertTrue(checkFileExists(directoryPath + "/client.zip"));
+		//assert that imported file was overwritten
+		assertFalse(checkContentEquals(createTempFile("expectedFile", fileContents), directoryPath + "/client.zip"));
+		assertTrue(checkContentEquals(source, directoryPath + "/client.zip"));
+	}
+
+	@Test
+	public void testImportAndUnzipWithoutOverride() throws CoreException, IOException, SAXException {
+		//create a directory to upload to
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		String filePath = "/org.eclipse.e4.webide/static/js/navigate-tree";
+		createDirectory(directoryPath + filePath);
+		//create a file that is not overwritten
+		String fileContents = "This is the file contents";
+		createFile(directoryPath + filePath + "/navigate-tree.js", fileContents);
+		//start the import
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/client.zip");
+		File source = new File(FileLocator.toFileURL(entry).getPath());
+		long length = source.length();
+		InputStream in = new BufferedInputStream(new FileInputStream(source));
+		PostMethodWebRequest request = new PostMethodWebRequest(getImportRequestPath(directoryPath), in, "application/zip");
+		request.setHeaderField("Content-Length", "" + length);
+		request.setHeaderField("Content-Type", "application/octet-stream");
+		request.setHeaderField("Slug", "client.zip");
+		request.setHeaderField("X-Xfer-Options", "no-overwrite");
+		setAuthentication(request);
+		WebResponse postResponse = webConversation.getResponse(request);
+		//assert the server rejects the override
+		assertEquals(HttpURLConnection.HTTP_BAD_REQUEST, postResponse.getResponseCode());
+		//assert the unzip still occurred in the workspace
+		assertTrue(checkFileExists(directoryPath + "/org.eclipse.e4.webide/static/images/unit_test/add-test-config.png"));
+		//assert that imported file was not overwritten
+		assertTrue(checkContentEquals(createTempFile("expectedFile", fileContents), directoryPath + filePath + "/navigate-tree.js"));
+	}
+
+	@Test
+	public void testImportAndUnzipWithOverride() throws CoreException, IOException, SAXException {
+		//create a directory to upload to
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		String filePath = "/org.eclipse.e4.webide/static/js/navigate-tree";
+		createDirectory(directoryPath + filePath);
+		//create a file that is to be overwritten
+		String fileContents = "This is the file contents";
+		createFile(directoryPath + filePath + "/navigate-tree.js", fileContents);
+		//start the import
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry("testData/importTest/client.zip");
+		File source = new File(FileLocator.toFileURL(entry).getPath());
+		long length = source.length();
+		InputStream in = new BufferedInputStream(new FileInputStream(source));
+		PostMethodWebRequest request = new PostMethodWebRequest(getImportRequestPath(directoryPath), in, "application/zip");
+		request.setHeaderField("Content-Length", "" + length);
+		request.setHeaderField("Content-Type", "application/octet-stream");
+		request.setHeaderField("Slug", "client.zip");
+		request.setHeaderField("X-Xfer-Options", "overwrite-older");
+		setAuthentication(request);
+		WebResponse postResponse = webConversation.getResponse(request);
+		//assert the server accepts the override
+		assertEquals(HttpURLConnection.HTTP_CREATED, postResponse.getResponseCode());
+		String location = postResponse.getHeaderField("Location");
+		assertNotNull(location);
+		String type = postResponse.getHeaderField("Content-Type");
+		assertNotNull(type);
+		//assert the unzip still occurred in the workspace
+		assertTrue(checkFileExists(directoryPath + "/org.eclipse.e4.webide/static/images/unit_test/add-test-config.png"));
+		//assert that imported file was overwritten
+		assertFalse(checkContentEquals(createTempFile("expectedFile", fileContents), directoryPath + filePath + "/navigate-tree.js"));
+	}
 }
