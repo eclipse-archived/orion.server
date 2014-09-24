@@ -10,11 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -46,6 +48,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONArray;
@@ -128,14 +131,18 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 				List<String> workspaces = user.getWorkspaceIds();
 				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaces.get(0));
 				URI baseLocation = getURI(request);
+				URI baseLocationFile = URIUtil.append(baseLocation, "file"); //$NON-NLS-N$
 				if (workspace != null) {
 					JSONArray children = new JSONArray();
 					for (String projectName : workspace.getProjectNames()) {
 						ProjectInfo project = OrionConfiguration.getMetaStore().readProject(workspace.getUniqueId(), projectName);
 						if (isAccessAllowed(user.getUserName(), project)) {
 							IPath projectPath = GitUtils.pathFromProject(workspace, project);
-							JSONObject repo = listEntry(projectName, 0, true, 0, baseLocation, projectPath.toPortableString());
-							children.put(repo);
+							Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
+							for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
+								JSONObject repo = listEntry(entry.getKey().lastSegment(), 0, true, 0, baseLocationFile, entry.getKey().toPortableString());
+								children.put(repo);
+							}
 						}
 					}
 					JSONObject result = listEntry("/", 0, true, 0, baseLocation, null); //$NON-NLS-1$
