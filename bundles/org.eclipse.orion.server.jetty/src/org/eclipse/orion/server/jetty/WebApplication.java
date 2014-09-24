@@ -27,25 +27,34 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
 
 /**
- * The main application for the Orion server. This application just starts the required
- * server bundles and allows the application to complete asynchronously when
- * closed from the OSGi console.
+ * The main application for the Orion server. This application just starts the required server bundles and allows the application to complete asynchronously
+ * when closed from the OSGi console.
  */
 public class WebApplication implements IApplication {
 
-	private static final String JETTY = "jetty"; //$NON-NLS-1$
-	private static final String HTTPS_ENABLED = JETTY + '.' + JettyConstants.HTTPS_ENABLED;
-	private static final String HTTPS_PORT = JETTY + '.' + JettyConstants.HTTPS_PORT;
-	private static final String HTTP_PORT = JETTY + '.' + JettyConstants.HTTP_PORT;
-	private static final String SSL_KEYSTORE = JETTY + '.' + JettyConstants.SSL_KEYSTORE;
-	private static final String SSL_PASSWORD = JETTY + '.' + JettyConstants.SSL_PASSWORD;
-	private static final String SSL_KEYPASSWORD = JETTY + '.' + JettyConstants.SSL_KEYPASSWORD;
-	private static final String SSL_PROTOCOL = JETTY + '.' + JettyConstants.SSL_PROTOCOL;
-
 	private static final String EQUINOX_HTTP_JETTY = "org.eclipse.equinox.http.jetty"; //$NON-NLS-1$
 	private static final String EQUINOX_HTTP_REGISTRY = "org.eclipse.equinox.http.registry"; //$NON-NLS-1$
+	private static final String JETTY = "jetty"; //$NON-NLS-1$
+	private static final String HTTP_PORT = JETTY + '.' + JettyConstants.HTTP_PORT;
+	private static final String HTTPS_ENABLED = JETTY + '.' + JettyConstants.HTTPS_ENABLED;
+	private static final String HTTPS_PORT = JETTY + '.' + JettyConstants.HTTPS_PORT;
+	private static final String SSL_KEYPASSWORD = JETTY + '.' + JettyConstants.SSL_KEYPASSWORD;
+	private static final String SSL_KEYSTORE = JETTY + '.' + JettyConstants.SSL_KEYSTORE;
+
+	private static final String SSL_PASSWORD = JETTY + '.' + JettyConstants.SSL_PASSWORD;
+	private static final String SSL_PROTOCOL = JETTY + '.' + JettyConstants.SSL_PROTOCOL;
 	private IApplicationContext appContext;
 
+	private void ensureBundleStarted(String symbolicName) throws BundleException {
+		Bundle bundle = Activator.getBundle(symbolicName);
+		if (bundle != null) {
+			if (bundle.getState() == Bundle.RESOLVED || bundle.getState() == Bundle.STARTING) {
+				bundle.start(Bundle.START_TRANSIENT);
+			}
+		}
+	}
+
+	@Override
 	public Object start(IApplicationContext context) throws Exception {
 		appContext = context;
 		ensureBundleStarted(EQUINOX_HTTP_JETTY);
@@ -71,7 +80,8 @@ public class WebApplication implements IApplication {
 			LogHelper.log(new Status(IStatus.INFO, Activator.PI_JETTY, "Https is enabled", null)); //$NON-NLS-1$
 
 			properties.put(JettyConstants.HTTPS_ENABLED, true);
-			properties.put(JettyConstants.HTTPS_PORT, new Integer(preferences.get(HTTPS_PORT, System.getProperty("org.eclipse.equinox.http.jetty.https.port", "8443")))); //$NON-NLS-1$//$NON-NLS-2$
+			properties.put(JettyConstants.HTTPS_PORT,
+					new Integer(preferences.get(HTTPS_PORT, System.getProperty("org.eclipse.equinox.http.jetty.https.port", "8443")))); //$NON-NLS-1$//$NON-NLS-2$
 			properties.put(JettyConstants.SSL_KEYSTORE, preferences.get(SSL_KEYSTORE, "keystore")); //$NON-NLS-1$
 
 			LogHelper.log(new Status(IStatus.INFO, Activator.PI_JETTY, "Keystore absolute path is " + preferences.get(SSL_KEYSTORE, "keystore"))); //$NON-NLS-1$ //$NON-NLS-2$
@@ -98,7 +108,7 @@ public class WebApplication implements IApplication {
 			}
 		}
 
-		//properties to help us filter orion content
+		// properties to help us filter orion content
 		properties.put("other.info", "org.eclipse.orion"); //$NON-NLS-1$ //$NON-NLS-2$ 
 
 		try {
@@ -113,6 +123,7 @@ public class WebApplication implements IApplication {
 		return IApplicationContext.EXIT_ASYNC_RESULT;
 	}
 
+	@Override
 	public void stop() {
 		try {
 			JettyConfigurator.stopServer("MasterJetty"); //$NON-NLS-1$
@@ -122,15 +133,6 @@ public class WebApplication implements IApplication {
 
 		if (appContext != null)
 			appContext.setResult(EXIT_OK, this);
-	}
-
-	private void ensureBundleStarted(String symbolicName) throws BundleException {
-		Bundle bundle = Activator.getBundle(symbolicName);
-		if (bundle != null) {
-			if (bundle.getState() == Bundle.RESOLVED || bundle.getState() == Bundle.STARTING) {
-				bundle.start(Bundle.START_TRANSIENT);
-			}
-		}
 	}
 
 }
