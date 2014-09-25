@@ -93,6 +93,7 @@ public class CFActivator implements BundleActivator {
 		MultiThreadedHttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
 		HttpClientParams clientParams = new HttpClientParams();
 		clientParams.setConnectionManagerTimeout(300000); // 5 minutes
+		clientParams.setSoTimeout(30000);
 		return new HttpClient(clientParams, connectionManager);
 	}
 }
