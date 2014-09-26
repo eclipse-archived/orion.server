@@ -39,7 +39,6 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.ApplyCommand;
 import org.eclipse.jgit.api.ApplyResult;
-import org.eclipse.jgit.api.DiffCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.PatchApplyException;
 import org.eclipse.jgit.api.errors.PatchFormatException;
@@ -66,6 +65,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.jobs.DiffCommand;
 import org.eclipse.orion.server.git.objects.Diff;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -189,9 +189,11 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 
 	private DiffCommand getDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out)
 			throws Exception {
-		Git git = new Git(db);
-		DiffCommand diff = git.diff();
+		boolean ignoreWS = Boolean.parseBoolean(request.getParameter("ignoreWS")); //$NON-NLS-1$
+		// Git git = new Git(db);
+		DiffCommand diff = new DiffCommand(db);
 		diff.setOutputStream(out);
+		diff.setIgnoreWhiteSpace(ignoreWS);
 		AbstractTreeIterator oldTree;
 		AbstractTreeIterator newTree = new FileTreeIterator(db);
 		if (scope.contains("..")) { //$NON-NLS-1$
