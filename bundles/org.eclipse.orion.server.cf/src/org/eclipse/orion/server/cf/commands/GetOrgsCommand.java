@@ -14,6 +14,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.httpclient.ConnectTimeoutException;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
@@ -73,6 +74,10 @@ public class GetOrgsCommand extends AbstractCFCommand {
 			}
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
+		} catch (ConnectTimeoutException e) {
+			String msg = NLS.bind("An error occurred when performing operation {0}", commandName); //$NON-NLS-1$
+			logger.error(msg, e);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_GATEWAY_TIMEOUT, msg, e);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occurred when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
