@@ -79,8 +79,6 @@ public class EventService implements IEventService {
 
 	public EventService() {
 		initClient();
-		this.callback = new Callback();
-		this.mqttClient.setCallback(callback);
 	}
 	
 	public void destroy(){
@@ -142,6 +140,8 @@ public class EventService implements IEventService {
 			logger.warn("Failed to initialize MQTT event client", e); //$NON-NLS-1$
 		}
 
+		this.callback = new Callback();
+		this.mqttClient.setCallback(callback);
 	}
 
 	public void publish(String topic, JSONObject message) {
