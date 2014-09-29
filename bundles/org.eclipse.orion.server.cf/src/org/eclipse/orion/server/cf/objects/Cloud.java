@@ -27,7 +27,7 @@ public class Cloud extends CFObject {
 	private String userId;
 	private JSONObject accessToken;
 
-	public Cloud(URL apiUrl, URL manageUrl, String userId) {
+	protected Cloud(URL apiUrl, URL manageUrl, String userId) {
 		super();
 		this.url = apiUrl;
 		this.manageUrl = manageUrl;

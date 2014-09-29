@@ -10,11 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf;
 
+import java.net.URL;
+import java.util.Map;
 import org.eclipse.orion.server.cf.objects.Cloud;
 import org.json.JSONObject;
 
 public interface ICFExtService {
 
 	public JSONObject getToken(Cloud cloud);
+
+	public Map<URL, Cloud> getClouds();
 
 }

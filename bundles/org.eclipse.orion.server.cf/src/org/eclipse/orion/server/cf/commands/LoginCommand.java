@@ -17,7 +17,7 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFActivator;
-import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
@@ -30,22 +30,22 @@ public class LoginCommand implements ICFCommand {
 
 	private String commandName;
 
-	private Target target;
+	private Cloud cloud;
 	private String username;
 	private String password;
 
 	private JSONObject accessToken;
 
-	public LoginCommand(Target target, String username, String password) {
+	public LoginCommand(Cloud cloud, String username, String password) {
 		this.commandName = "Login"; //$NON-NLS-1$
-		this.target = target;
+		this.cloud = cloud;
 		this.username = username;
 		this.password = password;
 	}
 
 	public IStatus doIt() {
 		try {
-			URI infoURI = URIUtil.toURI(target.getUrl());
+			URI infoURI = URIUtil.toURI(this.cloud.getUrl());
 
 			infoURI = infoURI.resolve("/v2/info");
 
@@ -94,7 +94,7 @@ public class LoginCommand implements ICFCommand {
 				postMethod.releaseConnection();
 			}
 
-			target.getCloud().setAccessToken(new JSONObject(response));
+			this.cloud.setAccessToken(new JSONObject(response));
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);

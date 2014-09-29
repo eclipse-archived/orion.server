@@ -31,12 +31,21 @@ public class TargetRegistry {
 
 	public Target getTarget(String userId, URL url) {
 		UserClouds userClouds = getUserClouds(userId);
-		return userClouds.get(url);
+		return userClouds.getTarget(url);
+	}
+
+	public Cloud getCloud(String userId, URL url) {
+		UserClouds userClouds = getUserClouds(userId);
+		return userClouds.getCloud(url);
+	}
+
+	public Cloud createTempCloud(URL url) {
+		return new DarkCloud(url, null, null);
 	}
 
 	public void markDefault(String userId, Target target) {
 		UserClouds userClouds = getUserClouds(userId);
-		userClouds.markDefault(target);
+		userClouds.setDefaulTarget(target);
 	}
 
 	private UserClouds getUserClouds(String userId) {
@@ -64,14 +73,24 @@ public class TargetRegistry {
 		private Cloud getCloud(URL url) {
 			Cloud cloud = userCloudMap.get(url);
 			if (cloud == null) {
-				cloud = new Cloud(url, null, this.userId);
+				CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
+				if (helper != null && helper.getService() != null) {
+					Cloud someCloud = helper.getService().getClouds().get(url);
+					if (someCloud != null)
+						cloud = new DarkCloud(someCloud, userId);
+				}
+
+				if (cloud == null) {
+					cloud = new DarkCloud(url, null, this.userId);
+				}
+
 				userCloudMap.put(cloud.getUrl(), cloud);
 			}
 			setAuthToken(cloud);
 			return cloud;
 		}
 
-		private Target get(URL url) {
+		private Target getTarget(URL url) {
 			url = normalizeURL(url);
 			if (url == null || (defaultTarget != null && url.equals(defaultTarget.getCloud().getUrl()))) {
 				return defaultTarget;
@@ -80,7 +99,7 @@ public class TargetRegistry {
 			return new Target(cloud);
 		}
 
-		private void markDefault(Target target) {
+		private void setDefaulTarget(Target target) {
 			Cloud cloud = getCloud(target.getCloud().getUrl());
 			Target newTarget = new Target(cloud);
 			newTarget.setOrg(target.getOrg());
@@ -109,6 +128,16 @@ public class TargetRegistry {
 			} catch (MalformedURLException e) {
 				return null;
 			}
+		}
+	}
+
+	private class DarkCloud extends Cloud {
+		protected DarkCloud(URL apiUrl, URL manageUrl, String userId) {
+			super(apiUrl, manageUrl, userId);
+		}
+
+		protected DarkCloud(Cloud cloud, String userId) {
+			super(cloud.getUrl(), cloud.getManageUrl(), userId);
 		}
 	}
 }

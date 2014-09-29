@@ -10,11 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
@@ -78,7 +77,7 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 					Target target = computeTarget.getTarget();
 
 					if (jsonData.has("Username") && jsonData.has("Password")) {
-						result = new LoginCommand(target, jsonData.getString("Username"), jsonData.getString("Password")).doIt();
+						result = new LoginCommand(target.getCloud(), jsonData.getString("Username"), jsonData.getString("Password")).doIt();
 						if (!result.isOK())
 							return result;
 					}
