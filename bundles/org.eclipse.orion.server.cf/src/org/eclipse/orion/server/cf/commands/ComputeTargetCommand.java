@@ -34,16 +34,10 @@ public class ComputeTargetCommand implements ICFCommand {
 
 	public IStatus doIt() {
 		URL targetUrl = null;
-		URL manageUrl = null;
 
 		if (targetJSON != null) {
 			try {
 				targetUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_URL));
-			} catch (Exception e) {
-				// do nothing
-			}
-			try {
-				manageUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_MANAGE_URL));
 			} catch (Exception e) {
 				// do nothing
 			}
@@ -54,8 +48,6 @@ public class ComputeTargetCommand implements ICFCommand {
 		if (target == null) {
 			return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
 		}
-
-		target.getCloud().setManageUrl(manageUrl);
 
 		IStatus result = new SetOrgCommand(this.target, targetJSON != null ? targetJSON.optString("Org") : null).doIt();
 		if (!result.isOK())
