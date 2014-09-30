@@ -84,7 +84,8 @@ cp $serverHome/orion.conf $serverHome/eclipse/orion.conf
 #copy old server-status.json file into new server to preserve server messages
 echo Copying old server status messages into new server
 uidir=$serverHome/$oldBuildDir/ui
-mkdir $uidir && mkdir $uidir/web/
+mkdir $uidir
+mkdir $uidir/web/
 pushd $uidir
 
 if [ -e $serverHome/$oldBuildDir/plugins/org.eclipse.orion.client.ui_*.jar ]
