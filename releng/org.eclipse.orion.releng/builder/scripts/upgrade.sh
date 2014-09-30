@@ -83,7 +83,25 @@ cp $serverHome/orion.conf $serverHome/eclipse/orion.conf
 
 #copy old server-status.json file into new server to preserve server messages
 echo Copying old server status messages into new server
-cp -f $serverHome/$oldBuildDir/plugins/org.eclipse.orion.client.ui_*/web/server-status.json $serverHome/eclipse/plugins/org.eclipse.orion.client.ui_*/web/server-status.json
+uidir=$serverHome/$oldBuildDir/ui
+mkdir $uidir && mkdir $uidir/web/
+pushd $uidir
+
+if [ -e $serverHome/$oldBuildDir/plugins/org.eclipse.orion.client.ui_*.jar ]
+then
+    echo Found an old jar $serverHome/$oldBuildDir/plugins/org.eclipse.orion.client.ui_*.jar, unzipping it to $uidir
+    unzip -q $serverHome/$oldBuildDir/plugins/org.eclipse.orion.client.ui_*.jar
+elif [ -e $serverHome/$oldBuildDir/plugins/org.eclipse.orion.client.ui_*/web/server-status.json ]
+then
+    echo Found $serverHome/$oldBuildDir/plugins/org.eclipse.orion.client.ui_*/web/server-status.json, copying it to $uidir/web/server-status.json
+    cp -f $serverHome/$oldBuildDir/plugins/org.eclipse.orion.client.ui_*/web/server-status.json $uidir/web/server-status.json
+fi
+# Add this point the file we want is at $uidir/web/server-status.json. Replace the file inside the new UI jar.
+echo Updating web/server-status.json in $serverHome/eclipse/plugins/org.eclipse.orion.client.ui_*.jar
+zip -r $serverHome/eclipse/plugins/org.eclipse.orion.client.ui_*.jar web/server-status.json
+popd
+# End of server-status.json
+
 
 #start new server
 echo Starting server
