@@ -16,6 +16,8 @@ import java.util.*;
 import org.eclipse.orion.server.cf.CFExtServiceHelper;
 import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.json.JSONObject;
 
 public class TargetRegistry {
 
@@ -83,18 +85,35 @@ public class TargetRegistry {
 				CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
 				if (helper != null && helper.getService() != null) {
 					Cloud someCloud = helper.getService().getClouds().get(url);
-					if (someCloud != null)
+					if (someCloud != null) {
 						cloud = new DarkCloud(someCloud, userId);
+					}
 				}
 
 				if (cloud == null) {
-					cloud = new DarkCloud(url, null, this.userId);
+					Cloud someCloud = getConfigCloud();
+					if (someCloud.getUrl().equals(url)) {
+						cloud = someCloud;
+					} else {
+						cloud = new DarkCloud(url, null, this.userId);
+					}
 				}
 
 				userCloudMap.put(cloud.getUrl(), cloud);
 			}
 			setAuthToken(cloud);
 			return cloud;
+		}
+
+		private Cloud getConfigCloud() {
+			try {
+				String cloudConf = OrionConfiguration.getMetaStore().readUser(userId).getProperties().get("cm/configurations/org.eclipse.orion.client.cf.settings");
+				JSONObject cloudConfJSON = new JSONObject(cloudConf);
+				URL cloudUrl = new URL(cloudConfJSON.getString("targetUrl"));
+				return new DarkCloud(cloudUrl, new URL(cloudConfJSON.getString("manageUrl")), userId);
+			} catch (Exception e) {
+				return null;
+			}
 		}
 
 		private Target getTarget(URL url) {
