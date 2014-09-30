@@ -212,7 +212,8 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 
 								if (persistManifest) {
 									/* non-manifest deployment - persist at contentLocation/manifest.yml */
-									IFileStore persistLocation = appStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
+									IFileStore persistBaseLocation = parseManifestJSONCommand.getPersistBaseLocation();
+									IFileStore persistLocation = persistBaseLocation.getChild(ManifestConstants.MANIFEST_FILE_NAME);
 									manifest.persist(persistLocation);
 								}
 							}

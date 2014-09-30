@@ -35,6 +35,12 @@ public class ParseManifestJSONCommand implements ICFCommand {
 	private String commandName;
 	private String userId;
 
+	private IFileStore persistBaseLocation;
+
+	public IFileStore getPersistBaseLocation() {
+		return persistBaseLocation;
+	}
+
 	public ManifestParseTree getManifest() {
 		return manifest;
 	}
@@ -68,7 +74,6 @@ public class ParseManifestJSONCommand implements ICFCommand {
 		if (manifestJSON == null)
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, //
 					"Missing manifest JSON representation", null);
-
 		try {
 
 			/* get the contentLocation file store */
@@ -105,6 +110,12 @@ public class ParseManifestJSONCommand implements ICFCommand {
 				String msg = NLS.bind("Failed to find application content due to incorrect path parameter: {0}", appStorePath);
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 			}
+
+			/* store the persist manifest location */
+			if (appStore.fetchInfo().isDirectory())
+				persistBaseLocation = appStore;
+			else
+				persistBaseLocation = fileStore;
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 
