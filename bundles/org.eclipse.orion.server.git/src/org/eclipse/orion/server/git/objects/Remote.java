@@ -162,7 +162,7 @@ public class Remote extends GitObject {
 
 	@PropertyDescription(name = GitConstants.KEY_IS_GERRIT)
 	public boolean getIsGerrit() {
-		return GitUtils.isGerrit(getConfig());
+		return GitUtils.isGerrit(getConfig(), this.name);
 	}
 
 	@Override

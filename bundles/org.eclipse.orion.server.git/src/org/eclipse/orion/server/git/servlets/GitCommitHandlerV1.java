@@ -338,7 +338,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			Config config = git.getRepository().getConfig();
 
 			boolean amend = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_COMMIT_AMEND, null));
-			boolean insertChangeId = GitUtils.isGerrit(config) || Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_CHANGE_ID, null));
+			boolean insertChangeId = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_CHANGE_ID, null));
 
 			String committerName = requestObject.optString(GitConstants.KEY_COMMITTER_NAME, null);
 			String committerEmail = requestObject.optString(GitConstants.KEY_COMMITTER_EMAIL, null);

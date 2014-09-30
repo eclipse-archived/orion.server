@@ -307,8 +307,14 @@ public class GitUtils {
 	 *            the configuration of the git repository
 	 * @return true if the key gerrit.createchangeid is set to true
 	 */
-	public static boolean isGerrit(Config config) {
-		return config.getBoolean(ConfigConstants.CONFIG_GERRIT_SECTION, ConfigConstants.CONFIG_KEY_CREATECHANGEID, false);
+	public static boolean isGerrit(Config config, String remote) {
+		String[] list = config.getStringList(ConfigConstants.CONFIG_REMOTE_SECTION, remote, GitConstants.KEY_GERRIT_PUSH);
+		for (int i = 0; i < list.length; i++) {
+			if (list[i].equals("true")) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public static void _testAllowFileScheme(boolean allow) {
