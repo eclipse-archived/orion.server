@@ -105,8 +105,8 @@ public class PushJob extends GitJob {
 			credentials.setUri(remoteConfig.getURIs().get(0));
 			pushCommand.setCredentialsProvider(credentials);
 
-			boolean pushToGerrit = branch.startsWith("refs/for") && GitUtils.isGerrit(git.getRepository().getConfig(), remote);
-			RefSpec spec = new RefSpec(srcRef + ':' + (pushToGerrit ? "" : Constants.R_HEADS) + branch);
+			boolean pushToGerrit = branch.startsWith("for/");
+			RefSpec spec = new RefSpec(srcRef + ':' + (pushToGerrit ? "refs/" : Constants.R_HEADS) + branch);
 			pushCommand.setRemote(remote).setRefSpecs(spec);
 			if (tags)
 				pushCommand.setPushTags();
