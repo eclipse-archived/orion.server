@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.utils;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import org.eclipse.orion.server.cf.CFExtServiceHelper;
@@ -109,15 +108,15 @@ public class TargetRegistry {
 			try {
 				String cloudConf = OrionConfiguration.getMetaStore().readUser(userId).getProperties().get("cm/configurations/org.eclipse.orion.client.cf.settings");
 				JSONObject cloudConfJSON = new JSONObject(cloudConf);
-				URL cloudUrl = new URL(cloudConfJSON.getString("targetUrl"));
-				return new DarkCloud(cloudUrl, new URL(cloudConfJSON.getString("manageUrl")), userId);
+				URL cloudUrl = URLUtil.normalizeURL(new URL(cloudConfJSON.getString("targetUrl")));
+				return new DarkCloud(cloudUrl, URLUtil.normalizeURL(new URL(cloudConfJSON.getString("manageUrl"))), userId);
 			} catch (Exception e) {
 				return null;
 			}
 		}
 
 		private Target getTarget(URL url) {
-			url = normalizeURL(url);
+			url = URLUtil.normalizeURL(url);
 			if (url == null || (defaultTarget != null && url.equals(defaultTarget.getCloud().getUrl()))) {
 				return defaultTarget;
 			}
@@ -137,22 +136,6 @@ public class TargetRegistry {
 			CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
 			if (cloud.getAccessToken() == null && helper != null && helper.getService() != null) {
 				cloud.setAccessToken(helper.getService().getToken(cloud));
-			}
-		}
-
-		private URL normalizeURL(URL url) {
-			if (url == null)
-				return null;
-
-			String urlString = url.toString();
-			if (urlString.endsWith("/")) {
-				urlString = urlString.substring(0, urlString.length() - 1);
-			}
-
-			try {
-				return new URL(urlString);
-			} catch (MalformedURLException e) {
-				return null;
 			}
 		}
 	}
