@@ -79,6 +79,11 @@ public class TargetRegistry {
 		}
 
 		private Cloud getCloud(URL url) {
+			url = URLUtil.normalizeURL(url);
+			if (url == null || (defaultTarget != null && url.equals(defaultTarget.getCloud().getUrl()))) {
+				return defaultTarget != null ? defaultTarget.getCloud() : null;
+			}
+
 			Cloud cloud = userCloudMap.get(url);
 			if (cloud == null) {
 				CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
@@ -91,7 +96,7 @@ public class TargetRegistry {
 
 				if (cloud == null) {
 					Cloud someCloud = getConfigCloud();
-					if (someCloud.getUrl().equals(url)) {
+					if (someCloud != null && someCloud.getUrl().equals(url)) {
 						cloud = someCloud;
 					} else {
 						cloud = new DarkCloud(url, null, this.userId);
