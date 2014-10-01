@@ -14,6 +14,7 @@ Bundle-ClassPath: jetty9/javax-websocket-client-impl-9.1.0.v20131115.jar,
  jetty9/websocket-servlet-9.1.0.v20131115.jar,
  .
 Export-Package: org.eclipse.jetty.util.component,
+ org.eclipse.jetty.util.ssl,
  org.eclipse.jetty.websocket.api,
  org.eclipse.jetty.websocket.api.annotations,
  org.eclipse.jetty.websocket.api.extensions,
