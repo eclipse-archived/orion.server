@@ -137,14 +137,16 @@ public class Remote extends GitObject {
 		if (!branchFound && newBranch != null && !newBranch.isEmpty()) {
 			JSONObject o = new JSONObject();
 			// TODO: this should be a RemoteBranch
-			String name = Constants.R_REMOTES + getName() + "/" + newBranch; //$NON-NLS-1$
-			o.put(ProtocolConstants.KEY_NAME, name.substring(Constants.R_REMOTES.length()));
-			o.put(ProtocolConstants.KEY_FULL_NAME, name);
+			boolean gerrit = getIsGerrit();
+			String remoteName = getName();
+			String fullName = gerrit ? "refs/for/" + newBranch : Constants.R_REMOTES + remoteName + "/" + newBranch; //$NON-NLS-1$ //$NON-NLS-2$
+			String name = gerrit ? getName() + "/for/" + newBranch : remoteName + "/" + newBranch; //$NON-NLS-1$ //$NON-NLS-2$
+			o.put(ProtocolConstants.KEY_NAME, name);
+			o.put(ProtocolConstants.KEY_FULL_NAME, fullName);
 			o.put(ProtocolConstants.KEY_TYPE, RemoteBranch.TYPE);
-			o.put(GitConstants.KEY_URL, getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, getName(), "url" /* RemoteConfig.KEY_URL */)); //$NON-NLS-1$
-			o.put(ProtocolConstants.KEY_LOCATION,
-					BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(cloneLocation,
-							"", /* short name is {remote}/{branch} */getName() + "/" + GitUtils.encode(newBranch))); //$NON-NLS-1$
+			o.put(GitConstants.KEY_URL, getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, "url" /* RemoteConfig.KEY_URL */)); //$NON-NLS-1$
+			o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(cloneLocation,
+					"", /* short name is {remote}/{branch} */remoteName + "/" + GitUtils.encode(gerrit ? fullName : newBranch))); //$NON-NLS-1$
 			children.put(o);
 		}
 		return children;

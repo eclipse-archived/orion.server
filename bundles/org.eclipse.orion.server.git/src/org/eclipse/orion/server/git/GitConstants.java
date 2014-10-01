@@ -59,8 +59,6 @@ public class GitConstants {
 
 	public static final String KEY_IS_GERRIT = "IsGerrit"; //$NON-NLS-1$
 
-	public static final String KEY_GERRIT_PUSH = "gerritPush"; //$NON-NLS-1$
-
 	public static final String KEY_USERNAME = "GitSshUsername"; //$NON-NLS-1$
 
 	public static final String KEY_PASSWORD = "GitSshPassword"; //$NON-NLS-1$

@@ -308,7 +308,7 @@ public class GitUtils {
 	 * @return true if the key gerrit.createchangeid is set to true
 	 */
 	public static boolean isGerrit(Config config, String remote) {
-		String[] list = config.getStringList(ConfigConstants.CONFIG_REMOTE_SECTION, remote, GitConstants.KEY_GERRIT_PUSH);
+		String[] list = config.getStringList(ConfigConstants.CONFIG_REMOTE_SECTION, remote, GitConstants.KEY_IS_GERRIT.toLowerCase());
 		for (int i = 0; i < list.length; i++) {
 			if (list[i].equals("true")) {
 				return true;
