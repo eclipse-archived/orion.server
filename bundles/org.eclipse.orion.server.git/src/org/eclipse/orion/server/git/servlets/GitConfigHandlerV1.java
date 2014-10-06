@@ -14,6 +14,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -37,6 +40,7 @@ import org.eclipse.orion.server.git.objects.ConfigOption;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -160,10 +164,13 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 				db = FileRepositoryBuilder.create(gitDir);
 				ConfigOption configOption = new ConfigOption(cloneLocation, db, key);
 				boolean present = configOption.exists();
-				if (present)
-					return statusHandler.handleRequest(request, response,
-							new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, NLS.bind("Config entry for {0} already exists", key), null));
-				save(configOption, value);
+				ArrayList<String> valList = new ArrayList<String>();
+				if (present) {
+					String[] val = configOption.getValue();
+					valList.addAll(Arrays.asList(val));
+				}
+				valList.add(value);
+				save(configOption, valList);
 
 				JSONObject result = configOption.toJSON();
 				OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
@@ -198,8 +205,8 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 				ConfigOption configOption = new ConfigOption(cloneLocation, db, p.segment(0));
 
 				JSONObject toPut = OrionServlet.readJSONRequest(request);
-				String value = toPut.optString(GitConstants.KEY_CONFIG_ENTRY_VALUE, null);
-				if (value == null || value.isEmpty())
+				JSONArray value = toPut.optJSONArray(GitConstants.KEY_CONFIG_ENTRY_VALUE);
+				if (value == null)
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
 							"Config entry value must be provided", null));
 
@@ -209,7 +216,12 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 					return true;
 				}
 
-				save(configOption, value);
+				ArrayList<String> valList = new ArrayList<String>();
+				for (int i = 0; i < value.length(); i++) {
+					valList.add(value.getString(i));
+				}
+
+				save(configOption, valList);
 
 				JSONObject result = configOption.toJSON();
 				OrionServlet.writeJSONResponse(request, response, result);
@@ -242,7 +254,14 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 				db = FileRepositoryBuilder.create(gitDir);
 				ConfigOption configOption = new ConfigOption(cloneLocation, db, GitUtils.decode(p.segment(0)));
 				if (configOption.exists()) {
-					delete(configOption);
+					String query = request.getParameter("index"); //$NON-NLS-1$
+					if (query != null) {
+						List<String> existing = new ArrayList<String>(Arrays.asList(configOption.getValue()));
+						existing.remove(Integer.parseInt(query));
+						save(configOption, existing);
+					} else {
+						delete(configOption);
+					}
 					response.setStatus(HttpServletResponse.SC_OK);
 				} else {
 					response.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -259,8 +278,8 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 		return false;
 	}
 
-	private static void save(ConfigOption co, String value) throws IOException {
-		co.getConfig().setString(co.getSection(), co.getSubsection(), co.getName(), value);
+	private static void save(ConfigOption co, List<String> value) throws IOException {
+		co.getConfig().setStringList(co.getSection(), co.getSubsection(), co.getName(), value);
 		co.getConfig().save();
 	}
 

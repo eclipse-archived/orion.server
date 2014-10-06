@@ -110,10 +110,10 @@ public class ConfigOption extends GitObject {
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_CONFIG_ENTRY_VALUE)
-	private String getValue() {
-		String value = config.getString(keySegments[0], keySegments[1], keySegments[2]);
+	public String[] getValue() {
+		String[] value = config.getStringList(keySegments[0], keySegments[1], keySegments[2]);
 		if (value == null)
-			value = EMPTY_VALUE;
+			value = null;
 		return value;
 	}
 
