@@ -171,7 +171,7 @@ public class DebugHandlerV1 extends AbstractRESTHandler<Debug> {
 					if (!status.isOK())
 						return status;
 
-					UninstrumentNodeAppCommand uninstrument = new UninstrumentNodeAppCommand(target, appStore);
+					UninstrumentNodeAppCommand uninstrument = new UninstrumentNodeAppCommand(target, appStore, appManifest);
 					return uninstrument.doIt();
 				} catch (Exception e) {
 					String msg = NLS.bind("Failed to handle request for {0}", pathString); //$NON-NLS-1$
