@@ -42,6 +42,7 @@ import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.TransportHttp;
+import org.eclipse.jgit.util.StringUtils;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
@@ -81,6 +82,8 @@ public class PushJob extends GitJob {
 		ProgressMonitor gitMonitor = new EclipseGitProgressTransformer(monitor);
 		// /git/remote/{remote}/{branch}/file/{path}
 		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(2));
+		// this will contain the detail message returned by the git server
+		String statusMessage = null;
 		// this set will contain only OK status or UP_TO_DATE status
 		Set<RemoteRefUpdate.Status> statusSet = new HashSet<RemoteRefUpdate.Status>();
 		Repository db = null;
@@ -116,6 +119,7 @@ public class PushJob extends GitJob {
 				return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
 			}
 			PushResult pushResult = resultIterable.iterator().next();
+			statusMessage = pushResult.getMessages();
 			for (final RemoteRefUpdate rru : pushResult.getRemoteUpdates()) {
 				if (monitor.isCanceled()) {
 					return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
@@ -137,12 +141,18 @@ public class PushJob extends GitJob {
 				db.close();
 			}
 		}
-		if (statusSet.contains(RemoteRefUpdate.Status.OK))
+		if (statusSet.contains(RemoteRefUpdate.Status.OK)) {
 			// if there is OK status in the set -> something was updated
-			return Status.OK_STATUS;
-		else
+			if (StringUtils.isEmptyOrNull(statusMessage)) {
+				return Status.OK_STATUS;
+			}
+			// deliver any message returned from the Git server as "DetailedMessage" to the client;
+			// ugly: the only way to achieve that is by wrapping the message as exception
+			return new Status(Status.OK_STATUS.getSeverity(), Status.OK_STATUS.getPlugin(), Status.OK_STATUS.getMessage(), new Throwable(statusMessage));
+		} else {
 			// if there is no OK status in the set -> only UP_TO_DATE status is possible
 			return new Status(IStatus.WARNING, GitActivator.PI_GIT, RemoteRefUpdate.Status.UP_TO_DATE.name());
+		}
 	}
 
 	@Override
