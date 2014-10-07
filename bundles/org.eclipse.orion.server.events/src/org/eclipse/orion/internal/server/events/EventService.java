@@ -91,7 +91,7 @@ public class EventService implements IEventService {
 
 	private void initClient() {
 		mqttConnectOptions = new MqttConnectOptions();
-		String serverURI = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_HOST, null);
+		String serverURI = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_HOST, "ssl://10.106.219.252:8883");
 		if (serverURI == null) {
 			//no MQTT message broker host defined
 			if (logger.isWarnEnabled()) {
@@ -102,31 +102,31 @@ public class EventService implements IEventService {
 		if (logger.isInfoEnabled()) {
 			logger.info("Using MQTT message broker at " + serverURI);
 		}
-		String username = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_USERNAME, null);
+		String username = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_USERNAME, "guest");
 		if (username != null) {
 			mqttConnectOptions.setUserName(username);
 		}
-		String password = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_PASSWORD, null);
+		String password = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_PASSWORD, "jazzhub");
 		if (password != null) {
 			mqttConnectOptions.setPassword(password.toCharArray());
 		}
 		
 		Properties sslProperties = new Properties();
-		String keyType = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_KEY_TYPE, null);
+		String keyType = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_KEY_TYPE, "JKS");
 		if(keyType!=null){
 			sslProperties.put("com.ibm.ssl.keyStoreType", keyType);
 			sslProperties.put("com.ibm.ssl.trustStoreType", keyType);
 		}
-		String keyPassword = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_KEY_PASSWORD, null);
+		String keyPassword = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_KEY_PASSWORD, "ibm-team");
 		if(keyPassword!=null){
 			sslProperties.put("com.ibm.ssl.keyStorePassword", keyPassword);
 			sslProperties.put("com.ibm.ssl.trustStorePassword", keyPassword);
 		}
-		String keyStore = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_KEY_STORE, null);
+		String keyStore = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_KEY_STORE, "/opt/IBM/JazzTeamServer/server/conf/manage/mqtt_keystore.keystore");
 		if(keyStore!=null){
 			sslProperties.put("com.ibm.ssl.keyStore", keyStore);
 		}
-		String trustStore = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_TRUST_STORE, null);
+		String trustStore = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_TRUST_STORE, "/opt/IBM/JazzTeamServer/server/conf/manage/mqtt_truststore.keystore");
 		if(trustStore!=null){
 			sslProperties.put("com.ibm.ssl.trustStore", trustStore);
 		}
@@ -165,6 +165,9 @@ public class EventService implements IEventService {
 	}
 
 	public synchronized void receive(String topic, IMessageListener messageListener) {
+		if(mqttClient==null || !mqttClient.isConnected()){
+			return;
+		}
 		Set<IMessageListener> topicListeners = messageListeners.get(topic);
 		if(topicListeners == null){
 			topicListeners = new HashSet<IMessageListener>();
