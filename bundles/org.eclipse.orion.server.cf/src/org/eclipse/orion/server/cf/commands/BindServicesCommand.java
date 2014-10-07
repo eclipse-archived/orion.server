@@ -87,8 +87,8 @@ public class BindServicesCommand extends AbstractCFApplicationCommand {
 						String serviceName = service.getLabel();
 
 						String nameService = "name:" + serviceName; //$NON-NLS-1$
-						NameValuePair[] pa = new NameValuePair[] {new NameValuePair("return_user_provided_service_instance", "false"), //  //$NON-NLS-1$//$NON-NLS-2$
-								new NameValuePair("q", nameService), new NameValuePair("inline-relations-depth", "2") //  //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+						NameValuePair[] pa = new NameValuePair[] {new NameValuePair("return_user_provided_service_instances", "true"), //  //$NON-NLS-1$//$NON-NLS-2$
+								new NameValuePair("q", nameService), new NameValuePair("inline-relations-depth", "1") //  //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 						};
 
 						GetMethod getServiceMethod = new GetMethod(serviceInstancesURI2.toString());
@@ -183,8 +183,8 @@ public class BindServicesCommand extends AbstractCFApplicationCommand {
 					for (ManifestParseTree service : services.getChildren()) {
 						String nameService = service.getValue();
 
-						NameValuePair[] pa = new NameValuePair[] {new NameValuePair("return_user_provided_service_instance", "true"), // //$NON-NLS-1$ //$NON-NLS-2$
-								new NameValuePair("q", "name:" + nameService), new NameValuePair("inline-relations-depth", "2")}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+						NameValuePair[] pa = new NameValuePair[] {new NameValuePair("return_user_provided_service_instances", "true"), // //$NON-NLS-1$ //$NON-NLS-2$
+								new NameValuePair("q", "name:" + nameService), new NameValuePair("inline-relations-depth", "1")}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
 
 						GetMethod getServiceMethod = new GetMethod(serviceInstancesURI.toString());
 						getServiceMethod.setQueryString(pa);
