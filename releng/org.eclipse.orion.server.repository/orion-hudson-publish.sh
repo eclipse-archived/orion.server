@@ -135,9 +135,25 @@ for zip in win32.win32.x86 macosx.cocoa.x86 linux.gtk.x86 macosx.cocoa.x86_64 wi
 	echo "Created org.eclipse.orion-${version}-${zip}.zip"
 done
 
-CLIENT_WORKSPACE=${HUDSON_HOME}/jobs/orion-client/workspace				
+case "$JOB_NAME" in
+*-dev)
+    echo "hudson job is orion-server-dev"
+    CLIENT_JOB=orion-client-dev
+    ;;
+*-stable)
+    echo "hudson job is orion-server-stable"
+    CLIENT_JOB=orion-client-stable
+    ;;
+*)
+    echo "hudson job is neither orion-server-dev or orion-server-stable"
+    exit 0;
+    ;;
+esac
+echo "hudson client job is ${CLIENT_JOB}"
+CLIENT_WORKSPACE=${HUDSON_HOME}/jobs/${CLIENT_JOB}/workspace
+				
 if [ -d ${CLIENT_WORKSPACE}/built-js ] ; then
-	for file in built-editor.zip built-editor-amd.min.js built-editor-amd.js built-editor.min.js built-editor.js built-editor.css built-compare.zip built-compare-amd.min.js built-compare-amd.js built-compare.min.js built-compare.js built-compare.css OrionIconFont-Regular.eot OrionIconFont-Regular.woff OrionIconFont-Regular.ttf OrionIconFont-Regular.svg ; do \
+	for file in built-editor.zip built-compare.zip ; do \
 		cp ${CLIENT_WORKSPACE}/built-js/${file} ${localDropDir}/${file}
 	echo "Copied ${file}"
 	done
