@@ -43,7 +43,7 @@ public class EventService implements IEventService {
 	private MqttConnectOptions mqttConnectOptions;
 	private Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 	
-	private Map<String, Set<IMessageListener>>  messageListeners = new HashMap<String, Set<IMessageListener>>();
+	private volatile Map<String, Set<IMessageListener>>  messageListeners = new HashMap<String, Set<IMessageListener>>();
 	private Callback callback;
 	
 	private class Callback implements MqttCallback{
@@ -174,7 +174,9 @@ public class EventService implements IEventService {
 		Set<IMessageListener> topicListeners = messageListeners.get(topic);
 		if(topicListeners == null){
 			topicListeners = new HashSet<IMessageListener>();
-			messageListeners.put(topic, topicListeners);		
+			messageListeners.put(topic, topicListeners);
+		}
+		if(topicListeners.isEmpty()){
 			try {
 				if(mqttClient!=null){
 					mqttClient.subscribe(topic);
