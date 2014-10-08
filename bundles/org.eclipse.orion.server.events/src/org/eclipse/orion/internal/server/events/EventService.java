@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
@@ -69,10 +70,16 @@ public class EventService implements IEventService {
 				message.put("Message", messageText);
 			}
 			message.put("QoS", msg.getQos());
-			Set<IMessageListener> topicListners = messageListeners.get(topic);
-			if(topicListners!=null && !topicListners.isEmpty()){
-				for(IMessageListener listner : topicListners){
-					listner.receiveMessage(message);
+			Set<String> topics = messageListeners.keySet(); 
+			for( String registeredTopic : topics ){
+				if(Pattern.matches(registeredTopic.replaceAll("/#", ".*").replaceAll("#", ".*").replaceAll("+", ".+"), topic)){
+					Set<IMessageListener> topicListners = messageListeners.get(registeredTopic);
+					if(topicListners!=null && !topicListners.isEmpty()){
+						for(IMessageListener listner : topicListners){
+							listner.receiveMessage(message);
+						}
+					}
+					
 				}
 			}
 			
