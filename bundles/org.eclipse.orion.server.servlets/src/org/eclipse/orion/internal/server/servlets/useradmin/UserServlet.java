@@ -39,12 +39,6 @@ import org.eclipse.osgi.util.NLS;
 // GET /users/[userId] gets user details
 // PUT /users/[userId] updates user details
 // DELETE /users/[usersId] deletes a user
-//
-// Roles methods:
-//
-// GET /users/[usersId]/roles returns a list of roles for given user
-// PUT /users/[usersId]/roles adds roles for given user
-// DELETE /users/[usersId]/roles removes roles for given a user
 public class UserServlet extends OrionServlet {
 
 	private static final long serialVersionUID = -6809742538472682623L;

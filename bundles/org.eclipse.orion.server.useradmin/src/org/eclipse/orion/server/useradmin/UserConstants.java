@@ -53,8 +53,6 @@ public interface UserConstants {
 	
 	public static final String KEY_PLUGIN_LOCATION = "Url"; //$NON-NLS-1$
 
-	public static final String KEY_ROLES = "Roles"; //$NON-NLS-1$
-	
 	public static final String KEY_RESET = "reset"; //$NON-NLS-1$
 	
 	public static final String KEY_LAST_LOGIN_TIMESTAMP = "LastLogInTimestamp"; //$NON-NLS-1$

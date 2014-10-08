@@ -37,11 +37,9 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.Role;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
-import org.osgi.framework.InvalidSyntaxException;
 
 /**
  * Implementation of the Orion credentials service on top of the simple meta store.
@@ -317,22 +315,6 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 		public int compare(User user1, User user2) {
 			return user1.getLogin().toLowerCase().compareTo(user2.getLogin().toLowerCase());
 		}
-	}
-
-	public Role createRole(String name, int type) {
-		throw new UnsupportedOperationException("Roles are not supported by SimpleUserCredentialsService.");
-	}
-
-	public IStatus removeRole(String name) {
-		throw new UnsupportedOperationException("Roles are not supported by SimpleUserCredentialsService.");
-	}
-
-	public Role getRole(String name) {
-		throw new UnsupportedOperationException("Roles are not supported by SimpleUserCredentialsService.");
-	}
-
-	public Role[] getRoles(String filter) throws InvalidSyntaxException {
-		throw new UnsupportedOperationException("Roles are not supported by SimpleUserCredentialsService.");
 	}
 
 	public User getUser(String key, String value) {

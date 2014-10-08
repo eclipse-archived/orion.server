@@ -22,10 +22,8 @@ import javax.naming.directory.InitialDirContext;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.Role;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
-import org.osgi.framework.InvalidSyntaxException;
 
 /**
  * The implementation of User Service on LDAP
@@ -53,22 +51,6 @@ public class LDAPCredentialsService implements IOrionCredentialsService {
 	}
 
 	public Collection<User> getUsers() {
-		return null;
-	}
-
-	public Role createRole(String name, int type) {
-		return null;
-	}
-
-	public IStatus removeRole(String name) {
-		return null;
-	}
-
-	public Role getRole(String name) {
-		return null;
-	}
-
-	public Role[] getRoles(String filter) throws InvalidSyntaxException {
 		return null;
 	}
 

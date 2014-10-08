@@ -100,14 +100,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			}
 		}
 
-		// handle calls to /users/[userId]/roles
-		String[] userPathInfoParts = userPathInfo.split("\\/", 2);
-		if (userPathInfoParts.length > 2 && userPathInfoParts[2].equals(UserConstants.KEY_ROLES)) {
-			//use UserRoleHandlerV1
-			return false;
-		}
-
 		// handle calls to /users/[userId]
+		String[] userPathInfoParts = userPathInfo.split("\\/", 2);
 		String userId = userPathInfoParts[1];
 		try {
 			switch (getMethod(request)) {
