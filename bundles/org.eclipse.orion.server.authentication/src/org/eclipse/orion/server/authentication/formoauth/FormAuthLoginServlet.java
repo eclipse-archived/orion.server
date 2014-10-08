@@ -21,9 +21,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.orion.server.authentication.form.FormAuthHelper;
 import org.eclipse.orion.server.authentication.form.FormAuthHelper.LoginResult;
-import org.eclipse.orion.server.authentication.formpersona.PersonaConstants;
-import org.eclipse.orion.server.authentication.formpersona.PersonaException;
-import org.eclipse.orion.server.authentication.formpersona.PersonaHelper;
 import org.eclipse.orion.server.authentication.oauth.OAuthException;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64;
@@ -98,16 +95,6 @@ public class FormAuthLoginServlet extends HttpServlet {
 				manageOAuthServlet.handleGetAndLogin(req, resp);
 			} catch (OAuthException e) {
 				displayError(e.getMessage(), req, resp);
-			}
-		}
-		if (pathInfo.startsWith("/persona")) { //$NON-NLS-1$
-			String assertion = req.getParameter(PersonaConstants.PARAM_ASSERTION);
-			if (assertion != null) {
-				try {
-					new PersonaHelper().handleCredentialsAndLogin(req, resp);
-				} catch (PersonaException e) {
-					displayError(e.getMessage(), req, resp);
-				}
 			}
 		}
 
