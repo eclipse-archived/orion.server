@@ -26,12 +26,6 @@
   <!-- Prints user account creations and deletions -->
   <logger name="org.eclipse.orion.server.account" level="INFO"/>
 
-  <!-- Prints details on openid handshakes -->
-  <!--   <logger name="org.eclipse.orion.server.openid" level="INFO"/> -->
-
-  <!-- Override the openid4java default logging level -->
-  <logger name="org.openid4java" level="WARN" />
-
   <!-- Prints details on sftp connections -->
   <!--   <logger name="org.eclipse.orion.server.sftp" level="INFO"/> -->
 

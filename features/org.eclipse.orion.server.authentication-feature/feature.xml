@@ -31,12 +31,6 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.openid4java"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.orion.server.authentication"
          download-size="0"
          install-size="0"

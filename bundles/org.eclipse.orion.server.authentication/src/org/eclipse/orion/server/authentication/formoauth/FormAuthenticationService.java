@@ -31,8 +31,6 @@ import org.osgi.service.http.NamespaceException;
 
 public class FormAuthenticationService implements IAuthenticationService {
 
-	public static final String OPENIDS_PROPERTY = "openids"; //$NON-NLS-1$
-
 	private boolean registered = false;
 
 	public String authenticateUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -73,7 +71,7 @@ public class FormAuthenticationService implements IAuthenticationService {
 			try {
 				result.put("SignInLocation", req.getContextPath() + "/mixloginstatic/LoginWindow.html");
 				result.put("label", "Orion workspace server");
-				result.put("SignInKey", "FORMOpenIdUser");
+				result.put("SignInKey", "FORMOAuthUser");
 			} catch (JSONException e) {
 				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_AUTHENTICATION_SERVLETS, 1, "An error occured during authenitcation", e));
 			}

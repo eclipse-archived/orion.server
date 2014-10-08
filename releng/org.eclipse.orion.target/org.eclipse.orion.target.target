@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><?pde version="3.8"?><target name="org.eclipse.orion" sequenceNumber="10">
+<?xml version="1.0" encoding="UTF-8"?><?pde version="3.8"?><target name="org.eclipse.orion" sequenceNumber="11">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.jgit" version="3.4.0.201406110918-r"/>
@@ -113,7 +113,6 @@
 <unit id="org.mozilla.javascript.source" version="1.7.4.v201209142200"/>
 <unit id="org.objenesis" version="1.0.0.v201105211943"/>
 <unit id="org.objenesis.source" version="1.0.0.v201105211943"/>
-<unit id="org.openid4java" version="0.9.5.v201105210655"/>
 <unit id="org.slf4j.api" version="1.7.2.v20121108-1250"/>
 <unit id="org.slf4j.api.source" version="1.7.2.v20121108-1250"/>
 <unit id="org.slf4j.jcl" version="1.7.2.v20130115-1340"/>
