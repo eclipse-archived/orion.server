@@ -12,9 +12,9 @@ package org.eclipse.orion.server.useradmin;
 
 import java.util.Collection;
 import java.util.Set;
+
 import org.eclipse.core.runtime.IStatus;
 import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.service.useradmin.Authorization;
 import org.osgi.service.useradmin.UserAdminEvent;
 
 public interface IOrionCredentialsService {
@@ -133,23 +133,6 @@ public interface IOrionCredentialsService {
 	 *         returned.
 	 */
 	public User getUser(String key, String value);
-
-	/**
-	 * Creates an {@code Authorization} object that encapsulates the
-	 * specified {@code User} object and the {@code Role} objects it
-	 * possesses. The {@code null} user is interpreted as the anonymous user.
-	 * The anonymous user represents a user that has not been authenticated. An
-	 * {@code Authorization} object for an anonymous user will be unnamed,
-	 * and will only imply groups that user.anyone implies.
-	 * 
-	 * @param user The {@code User} object to create an
-	 *        {@code Authorization} object for, or {@code null} for the
-	 *        anonymous user.
-	 * 
-	 * @return the {@code Authorization} object for the specified
-	 *         {@code User} object.
-	 */
-	public Authorization getAuthorization(User user);
 
 	/**
 	 * Finds users having given properties.

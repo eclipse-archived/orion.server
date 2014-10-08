@@ -21,14 +21,11 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.orion.server.useradmin.EmptyAuthorization;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.Role;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
-import org.eclipse.orion.server.useradmin.WebIdeAuthorization;
 import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.service.useradmin.Authorization;
 
 /**
  * The implementation of User Service on LDAP
@@ -80,13 +77,6 @@ public class LDAPCredentialsService implements IOrionCredentialsService {
 			return new LDAPUser(value, this);
 		}
 		return null;
-	}
-
-	public Authorization getAuthorization(User user) {
-		if (user instanceof User) {
-			return new WebIdeAuthorization((User) user);
-		}
-		return new EmptyAuthorization();
 	}
 
 	public Set<User> getUsersByProperty(String key, String value, boolean regExp, boolean ignoreCase) {

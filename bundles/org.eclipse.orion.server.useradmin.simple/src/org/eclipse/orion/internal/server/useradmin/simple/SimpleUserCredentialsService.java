@@ -36,15 +36,12 @@ import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.useradmin.EmptyAuthorization;
 import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
 import org.eclipse.orion.server.useradmin.Role;
 import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.orion.server.useradmin.UserServiceHelper;
-import org.eclipse.orion.server.useradmin.WebIdeAuthorization;
 import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.service.useradmin.Authorization;
 
 /**
  * Implementation of the Orion credentials service on top of the simple meta store.
@@ -393,13 +390,6 @@ public class SimpleUserCredentialsService implements IOrionCredentialsService {
 			LogHelper.log(e);
 		}
 		return null;
-	}
-
-	public Authorization getAuthorization(User user) {
-		if (user instanceof User) {
-			return new WebIdeAuthorization((User) user);
-		}
-		return new EmptyAuthorization();
 	}
 
 	public Set<User> getUsersByProperty(String key, String value, boolean regExp, boolean ignoreCase) {
