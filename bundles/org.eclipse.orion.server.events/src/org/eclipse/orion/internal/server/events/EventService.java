@@ -57,6 +57,9 @@ public class EventService implements IEventService {
 		}
 
 		public void messageArrived(String topic, MqttMessage msg) throws Exception {
+			if (logger.isDebugEnabled()) {
+				logger.debug("Message arrived " + (msg == null ? null : msg.toString()) + " topic " + topic);
+			}
 			JSONObject message = new JSONObject();
 			message.put("Topic", topic);
 			String messageText = new String(msg.getPayload());
@@ -165,6 +168,9 @@ public class EventService implements IEventService {
 	}
 
 	public synchronized void receive(String topic, IMessageListener messageListener) {
+		if (logger.isDebugEnabled()) {
+			logger.debug("MQTT Receiving topic " + topic + " " + messageListener);
+		}
 		Set<IMessageListener> topicListeners = messageListeners.get(topic);
 		if(topicListeners == null){
 			topicListeners = new HashSet<IMessageListener>();
@@ -181,6 +187,9 @@ public class EventService implements IEventService {
 	}
 
 	public void stopReceiving(String topic, IMessageListener messageListener) {
+		if (logger.isDebugEnabled()) {
+			logger.debug("MQTT Stop Receiving topic " + topic + " " + messageListener);
+		}
 		Set<IMessageListener> topicListeners = messageListeners.get(topic);
 		if(topicListeners == null){
 			return;
