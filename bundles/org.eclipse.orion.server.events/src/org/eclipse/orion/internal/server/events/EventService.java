@@ -72,7 +72,7 @@ public class EventService implements IEventService {
 			message.put("QoS", msg.getQos());
 			Set<String> topics = messageListeners.keySet(); 
 			for( String registeredTopic : topics ){
-				if(Pattern.matches(registeredTopic.replaceAll("/#", ".*").replaceAll("#", ".*").replaceAll("+", ".+"), topic)){
+				if(Pattern.matches(registeredTopic.replaceAll("/#", ".*").replaceAll("#", ".*").replaceAll("\\\\+", ".+"), topic)){
 					Set<IMessageListener> topicListners = messageListeners.get(registeredTopic);
 					if(topicListners!=null && !topicListners.isEmpty()){
 						for(IMessageListener listner : topicListners){
