@@ -28,7 +28,7 @@
     </parent>
 
 	<properties>
-		<uitest.vmparams></uitest.vmparams>
+		<test.vmparams></test.vmparams>
 	</properties>
 
 	<build>
@@ -59,7 +59,7 @@
 				<configuration>
 					<useUIHarness>false</useUIHarness>
 					<useUIThread>false</useUIThread>
-					<argLine>-Dorg.eclipse.equinox.http.jetty.http.port=${http.port} -Dorg.eclipse.equinox.http.jetty.autostart=false -Dorion.tests.authtype=Basic</argLine>
+					<argLine>${test.vmparams} -Dorg.eclipse.equinox.http.jetty.http.port=${http.port} -Dorg.eclipse.equinox.http.jetty.autostart=false -Dorion.tests.authtype=Basic</argLine>
 					<testSuite>org.eclipse.orion.server.tests</testSuite>
 					<testClass>org.eclipse.orion.server.tests.AllServerTests</testClass>
 					<dependencies>
