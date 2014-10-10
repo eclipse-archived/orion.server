@@ -119,7 +119,10 @@ public class Tag extends GitObject {
 				any = rw.parseAny(this.ref.getObjectId());
 				if (any instanceof RevTag) {
 					this.tag = (RevTag) any;
-					this.commit = (RevCommit) rw.peel(any);
+					RevObject o = rw.peel(any);
+					if (o instanceof RevCommit) {
+						this.commit = (RevCommit) rw.peel(any);
+					}
 				} else if (any instanceof RevCommit) {
 					this.commit = (RevCommit) any;
 				}
@@ -163,7 +166,7 @@ public class Tag extends GitObject {
 
 	@PropertyDescription(name = GitConstants.KEY_COMMIT)
 	private URI getCommitLocation() throws URISyntaxException {
-		if (commitLocation == null) {
+		if (commitLocation == null && this.commit != null) {
 			IPath p = new Path(cloneLocation.getPath());
 			p = p.uptoSegment(1).append(Commit.RESOURCE).append(parseCommit().getName()).addTrailingSeparator().append(p.removeFirstSegments(2));
 			commitLocation = new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), p.toString(),
@@ -198,6 +201,11 @@ public class Tag extends GitObject {
 	}
 
 	public String getRevCommitName() {
-		return parseCommit().getName();
+		RevCommit c = parseCommit();
+		if (c == null) {
+			return null;
+		} else {
+			return parseCommit().getName();
+		}
 	}
 }
