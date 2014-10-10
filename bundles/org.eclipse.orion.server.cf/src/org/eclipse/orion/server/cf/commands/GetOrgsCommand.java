@@ -86,6 +86,7 @@ public class GetOrgsCommand extends AbstractCFCommand {
 	}
 
 	private ServerStatus getSpaces(List<Space> spaces, JSONObject orgJSON) throws Exception {
+		long time = System.currentTimeMillis();
 		URI targetURI = URIUtil.toURI(target.getUrl());
 		URI spaceURI = targetURI.resolve(orgJSON.getJSONObject("entity").getString("spaces_url"));
 
@@ -110,6 +111,8 @@ public class GetOrgsCommand extends AbstractCFCommand {
 			JSONObject spaceJSON = orgs.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).getJSONObject(k);
 			spaces.add(new Space().setCFJSON(spaceJSON));
 		}
+
+		logger.debug("GetOrgsCommand: getting spaces using " + spaceURI + " took " + (System.currentTimeMillis() - time));
 
 		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 	}

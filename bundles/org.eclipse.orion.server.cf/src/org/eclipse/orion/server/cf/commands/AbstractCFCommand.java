@@ -15,8 +15,12 @@ import org.eclipse.orion.server.cf.CFExtServiceHelper;
 import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public abstract class AbstractCFCommand implements ICFCommand {
+
+	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	protected Target target;
 	private Cloud cloud;
@@ -42,12 +46,14 @@ public abstract class AbstractCFCommand implements ICFCommand {
 
 	@Override
 	public IStatus doIt() {
+		long time = System.currentTimeMillis();
 		IStatus status = validateParams();
 		if (!status.isOK())
 			return status;
 
 		ServerStatus doItStatus = this._doIt();
 		ServerStatus result = retryIfNeeded(doItStatus);
+		logger.debug(getClass() + " took " + (System.currentTimeMillis() - time));
 		wasRun = true;
 		return result;
 	}
