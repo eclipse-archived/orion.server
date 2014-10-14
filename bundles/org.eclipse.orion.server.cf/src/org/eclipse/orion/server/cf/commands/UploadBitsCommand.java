@@ -20,10 +20,8 @@ import org.apache.commons.httpclient.methods.multipart.*;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.ds.IDeploymentPackager;
-import org.eclipse.orion.server.cf.ds.IDeploymentService;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.*;
@@ -34,19 +32,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class UploadBitsCommand extends AbstractCFApplicationCommand {
-	private static final int MAX_ATTEMPTS = 150;
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
+	private static final int MAX_ATTEMPTS = 150;
 
 	private String commandName;
 	private IFileStore appStore;
 	private String deployedAppPackageName;
 
-	public UploadBitsCommand(Target target, App app, IFileStore appStore) {
+	private IDeploymentPackager packager;
+
+	public UploadBitsCommand(Target target, App app, IFileStore appStore, IDeploymentPackager packager) {
 		super(target, app);
 
 		String[] bindings = {app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Upload application {0} bits (guid: {1})", bindings);
 		this.appStore = appStore;
+		this.packager = packager;
 	}
 
 	public String getDeployedAppPackageName() {
@@ -61,10 +62,7 @@ public class UploadBitsCommand extends AbstractCFApplicationCommand {
 		try {
 
 			/* upload project contents */
-			IDeploymentService deploymentService = CFActivator.getDefault().getDeploymentService();
-			IDeploymentPackager deploymentPackager = deploymentService.getDefaultDeplomentPackager();
-
-			File appPackage = deploymentPackager.getDeploymentPackage(appStore);
+			File appPackage = packager.getDeploymentPackage(appStore);
 			deployedAppPackageName = PackageUtils.getApplicationPackageType(appStore);
 
 			if (appPackage == null) {
@@ -131,7 +129,6 @@ public class UploadBitsCommand extends AbstractCFApplicationCommand {
 
 			/* delete the tmp file */
 			appPackage.delete();
-
 			return status;
 
 		} catch (Exception e) {

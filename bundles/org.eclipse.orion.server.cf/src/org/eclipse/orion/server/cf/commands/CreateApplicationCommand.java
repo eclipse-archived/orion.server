@@ -42,22 +42,15 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 	private String buildPack;
 	private JSONObject env;
 
-	private boolean reset;
-
-	public CreateApplicationCommand(Target target, App app, boolean reset) {
+	public CreateApplicationCommand(Target target, App app) {
 		super(target);
 		this.commandName = "Create a new application";
 		this.application = app;
-		this.reset = reset;
 	}
 
 	@Override
 	protected ServerStatus _doIt() {
 		try {
-
-			if (reset) {
-				// TODO: if the app exists, and reset flag is true, we need to reset the app first
-			}
 
 			/* create cloud foundry application */
 			URI targetURI = URIUtil.toURI(target.getUrl());

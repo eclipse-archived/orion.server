@@ -27,22 +27,22 @@ import org.eclipse.orion.server.core.IOUtilities;
  * contents according to the .cfignore rules.
  */
 public class Packager {
-	private static String CF_IGNORE_FILE = ".cfignore"; //$NON-NLS-1$
+	protected static String CF_IGNORE_FILE = ".cfignore"; //$NON-NLS-1$
 
 	/**
 	 * Reusing jgit ignore utilities.
 	 * TODO: Consider a trie structure instead
 	 *  of the hash map in order to reduce memory usage.
 	 */
-	private HashMap<URI, IgnoreNode> cfIgnore;
-	private IFileStore base;
+	protected HashMap<URI, IgnoreNode> cfIgnore;
+	protected IFileStore base;
 
 	public Packager(IFileStore base) {
 		cfIgnore = new HashMap<URI, IgnoreNode>();
 		this.base = base;
 	}
 
-	private boolean isIgnored(IFileStore source, IPath path, boolean isDirectory) throws CoreException {
+	protected boolean isIgnored(IFileStore source, IPath path, boolean isDirectory) throws CoreException {
 
 		/* look for inherited rules up to the base node */
 		if (!base.isParentOf(source) && !base.equals(source))
@@ -69,7 +69,7 @@ public class Packager {
 		return isIgnored(source.getParent(), path, isDirectory);
 	}
 
-	private void writeZip(IFileStore source, IPath path, ZipOutputStream zos) throws CoreException, IOException {
+	protected void writeZip(IFileStore source, IPath path, ZipOutputStream zos) throws CoreException, IOException {
 
 		/* load .cfignore if present */
 		IFileStore cfIgnoreFile = source.getChild(CF_IGNORE_FILE);

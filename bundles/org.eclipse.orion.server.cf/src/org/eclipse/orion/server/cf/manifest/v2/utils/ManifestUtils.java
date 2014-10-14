@@ -332,4 +332,27 @@ public class ManifestUtils {
 
 		return applications.getChildren().size() > 1;
 	}
+
+	/**
+	 * Instruments application properties by copying values from the instrumentation JSON.
+	 * Note, that this method will perform a shallow instrumentation of single string properties.
+	 * @param manifest
+	 * @param instrumentation
+	 * @throws JSONException
+	 * @throws InvalidAccessException 
+	 */
+	public static void instrumentManifest(ManifestParseTree manifest, JSONObject instrumentation) throws JSONException, InvalidAccessException {
+
+		if (instrumentation == null || !manifest.has(ManifestConstants.APPLICATIONS))
+			return;
+
+		List<ManifestParseTree> applications = manifest.get(ManifestConstants.APPLICATIONS).getChildren();
+		for (String key : JSONObject.getNames(instrumentation)) {
+			String value = instrumentation.getString(key);
+			for (ManifestParseTree application : applications) {
+				if (application.has(key))
+					application.get(key).update(value);
+			}
+		}
+	}
 }
