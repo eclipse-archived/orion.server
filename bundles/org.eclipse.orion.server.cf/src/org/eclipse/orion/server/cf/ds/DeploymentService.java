@@ -44,7 +44,7 @@ public final class DeploymentService implements IDeploymentService {
 
 	@Override
 	public String getDefaultDeplomentPlannerId() {
-		return GenericDeploymentPlanner.class.getSimpleName();
+		return GenericDeploymentPlanner.class.getCanonicalName();
 	}
 
 	@Override
@@ -78,7 +78,7 @@ public final class DeploymentService implements IDeploymentService {
 
 	@Override
 	public String getDefaultDeplomentPackagerId() {
-		return GenericDeploymentPackager.class.getSimpleName();
+		return GenericDeploymentPackager.class.getCanonicalName();
 	}
 
 	@Override

@@ -20,12 +20,11 @@ public class GenericDeploymentPackager implements IDeploymentPackager {
 
 	@Override
 	public String getId() {
-		return getClass().getSimpleName();
+		return getClass().getCanonicalName();
 	}
 
 	@Override
 	public File getDeploymentPackage(IFileStore contentLocation) throws IOException, CoreException {
 		return PackageUtils.getApplicationPackage(contentLocation);
 	}
-
 }

@@ -96,6 +96,20 @@ public class ManifestParseTree {
 	}
 
 	/**
+	 * Updates the manifest node with the given value.
+	 * @param key
+	 */
+	public void update(String value) {
+
+		if (getChildren().isEmpty())
+			return;
+
+		ManifestParseTree child = getChildren().get(0);
+		child.getTokens().clear();
+		child.getTokens().add(new Token(value, TokenType.LITERAL));
+	}
+
+	/**
 	 * @return Token content concatenation.
 	 */
 	public String getLabel() {

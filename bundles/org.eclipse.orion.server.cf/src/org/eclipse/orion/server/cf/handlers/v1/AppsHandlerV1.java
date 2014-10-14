@@ -19,11 +19,15 @@ import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
+import org.eclipse.orion.server.cf.ds.IDeploymentPackager;
+import org.eclipse.orion.server.cf.ds.IDeploymentService;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
+import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
 import org.eclipse.orion.server.cf.objects.*;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -116,9 +120,9 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 	protected CFJob handlePut(App resource, HttpServletRequest request, HttpServletResponse response, final String pathString) {
 		final JSONObject targetJSON2 = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
 
-		IPath path = pathString != null ? new Path(pathString) : new Path("");
+		IPath path = pathString != null ? new Path(pathString) : new Path(""); //$NON-NLS-1$
 		final String appGuid = path.segment(0);
-		boolean addRoute = "routes".equals(path.segment(1));
+		boolean addRoute = "routes".equals(path.segment(1)); //$NON-NLS-1$
 		final String routeGuid = addRoute ? path.segment(2) : null;
 
 		if (addRoute)
@@ -162,16 +166,17 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 		final String appName = jsonData.optString(CFProtocolConstants.KEY_NAME, null);
 		final String contentLocation = ServletResourceHandler.toOrionLocation(request, jsonData.optString(CFProtocolConstants.KEY_CONTENT_LOCATION, null));
 
+		/* custom packager details */
+		final String packagerName = jsonData.optString(CFProtocolConstants.KEY_PACKAGER, null);
+
 		/* non-manifest deployments using a .json representation */
 		final JSONObject manifestJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_MANIFEST);
+		final JSONObject instrumentationJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_INSTRUMENTATION);
 		final boolean persistManifest = jsonData.optBoolean(CFProtocolConstants.KEY_PERSIST, false);
 
 		/* default application startup is one minute */
 		int userTimeout = jsonData.optInt(CFProtocolConstants.KEY_TIMEOUT, 60);
 		final int timeout = (userTimeout > 0) ? userTimeout : 0;
-
-		/* TODO: The force shouldn't be always with us */
-		final boolean force = jsonData.optBoolean(CFProtocolConstants.KEY_FORCE, true);
 
 		return new CFJob(request, false) {
 
@@ -269,10 +274,20 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						restart = false;
 					}
 
+					/* instrument the manifest if required */
+					ManifestUtils.instrumentManifest(manifest, instrumentationJSON);
+
 					app.setName(appName != null ? appName : manifestAppName);
 					app.setManifest(manifest);
 
-					status = new PushAppCommand(target, app, appStore, force).doIt();
+					/* determine deployment packager */
+					IDeploymentService deploymentService = CFActivator.getDefault().getDeploymentService();
+					IDeploymentPackager packager = deploymentService.getDeploymentPackager(packagerName);
+					if (packager == null)
+						packager = deploymentService.getDefaultDeplomentPackager();
+
+					status = new PushAppCommand(target, app, appStore, packager).doIt();
+
 					if (!status.isOK())
 						return status;
 
@@ -304,14 +319,14 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 
 		IPath path = new Path(pathString);
 		final String appGuid = path.segment(0);
-		boolean deleteRoute = "routes".equals(path.segment(1));
+		boolean deleteRoute = "routes".equals(path.segment(1)); //$NON-NLS-1$
 		final String routeGuid = deleteRoute ? path.segment(2) : null;
 
 		return new CFJob(request, false) {
 			@Override
 			protected IStatus performJob() {
 				try {
-					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
+					ComputeTargetCommand computeTarget = new ComputeTargetCommand(userId, targetJSON);
 					IStatus status = computeTarget.doIt();
 					if (!status.isOK())
 						return status;
@@ -342,8 +357,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 	}
 
 	private IStatus getApps(Target target) throws Exception {
-		String appsUrl = target.getSpace().getCFJSON().getJSONObject("entity").getString("apps_url");
-		//		appsUrl = appsUrl.replaceAll("apps", "summary");
+		String appsUrl = target.getSpace().getCFJSON().getJSONObject("entity").getString("apps_url"); //$NON-NLS-1$//$NON-NLS-2$
 		URI appsURI = URIUtil.toURI(target.getUrl()).resolve(appsUrl);
 
 		GetMethod getAppsMethod = new GetMethod(appsURI.toString());
@@ -358,7 +372,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 		JSONObject appsJSON = getAppsStatus.getJsonData();
 
 		JSONObject result = new JSONObject();
-		result.put("Apps", new JSONArray());
+		result.put("Apps", new JSONArray()); //$NON-NLS-1$
 
 		if (appsJSON.getInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS) < 1) {
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
@@ -369,7 +383,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 			JSONObject appJSON = resources.getJSONObject(k);
 			App2 app = new App2();
 			app.setCFJSON(appJSON);
-			result.append("Apps", app.toJSON());
+			result.append("Apps", app.toJSON()); //$NON-NLS-1$
 		}
 
 		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);

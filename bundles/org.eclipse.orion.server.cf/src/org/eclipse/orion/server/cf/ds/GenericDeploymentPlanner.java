@@ -25,7 +25,7 @@ public final class GenericDeploymentPlanner implements IDeploymentPlanner {
 
 	@Override
 	public String getId() {
-		return "org.eclipse.orion.server.cf.generic"; //$NON-NLS-1$
+		return getClass().getCanonicalName();
 	}
 
 	@Override

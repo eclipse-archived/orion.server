@@ -8,12 +8,13 @@
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.cf.ds;
+package org.eclipse.orion.server.cf.nodejs;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.orion.server.cf.ds.IDeploymentPlanner;
 import org.eclipse.orion.server.cf.ds.objects.Plan;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
@@ -28,19 +29,9 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 	protected final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 	protected static String TYPE = "node.js"; //$NON-NLS-1$
 
-	protected static String PACKAGE_JSON = "package.json"; //$NON-NLS-1$
-	protected static String SCRIPTS = "scripts"; //$NON-NLS-1$
-	protected static String START = "start"; //$NON-NLS-1$
-
-	protected static String SERVER_JS = "server.js"; //$NON-NLS-1$
-	protected static String APP_JS = "app.js"; //$NON-NLS-1$
-
-	protected static String NODE_SERVER_JS = "node server.js"; //$NON-NLS-1$
-	protected static String NODE_APP_JS = "node app.js"; //$NON-NLS-1$
-
 	@Override
 	public String getId() {
-		return "org.eclipse.orion.server.cf.nodejs"; //$NON-NLS-1$
+		return getClass().getCanonicalName();
 	}
 
 	@Override
@@ -63,7 +54,7 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 	public Plan getDeploymentPlan(IFileStore contentLocation, ManifestParseTree manifest) {
 
 		/* a present package.json file determines a node.js application */
-		IFileStore packageStore = contentLocation.getChild(PACKAGE_JSON);
+		IFileStore packageStore = contentLocation.getChild(NodeJSConstants.PACKAGE_JSON);
 		if (!packageStore.fetchInfo().exists())
 			return null;
 
@@ -95,10 +86,10 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 
 				is = packageStore.openInputStream(EFS.NONE, null);
 				JSONObject packageJSON = new JSONObject(new JSONTokener(new InputStreamReader(is)));
-				if (packageJSON.has(SCRIPTS)) {
-					JSONObject scripts = packageJSON.getJSONObject(SCRIPTS);
-					if (scripts.has(START)) {
-						application.put(ManifestConstants.COMMAND, scripts.getString(START));
+				if (packageJSON.has(NodeJSConstants.SCRIPTS)) {
+					JSONObject scripts = packageJSON.getJSONObject(NodeJSConstants.SCRIPTS);
+					if (scripts.has(NodeJSConstants.START)) {
+						application.put(ManifestConstants.COMMAND, scripts.getString(NodeJSConstants.START));
 						return new Plan(getId(), getWizardId(), TYPE, manifest);
 					}
 				}
@@ -112,15 +103,15 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 			}
 
 			/* look for server.js or app.js files */
-			IFileStore serverJS = contentLocation.getChild(SERVER_JS);
+			IFileStore serverJS = contentLocation.getChild(NodeJSConstants.SERVER_JS);
 			if (serverJS.fetchInfo().exists()) {
-				application.put(ManifestConstants.COMMAND, NODE_SERVER_JS);
+				application.put(ManifestConstants.COMMAND, NodeJSConstants.NODE_SERVER_JS);
 				return new Plan(getId(), getWizardId(), TYPE, manifest);
 			}
 
-			IFileStore appJS = contentLocation.getChild(APP_JS);
+			IFileStore appJS = contentLocation.getChild(NodeJSConstants.APP_JS);
 			if (appJS.fetchInfo().exists()) {
-				application.put(ManifestConstants.COMMAND, NODE_APP_JS);
+				application.put(ManifestConstants.COMMAND, NodeJSConstants.NODE_APP_JS);
 				return new Plan(getId(), getWizardId(), TYPE, manifest);
 			}
 

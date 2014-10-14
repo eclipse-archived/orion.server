@@ -15,6 +15,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.ds.IDeploymentPackager;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.objects.App;
@@ -31,16 +32,17 @@ public class PushAppCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private App app;
-	private boolean reset;
 	private IFileStore appStore;
 	private String commandName;
+	private IDeploymentPackager packager;
 
-	public PushAppCommand(Target target, App app, IFileStore appStore, boolean reset) {
+	public PushAppCommand(Target target, App app, IFileStore appStore, IDeploymentPackager packager) {
 		super(target);
 		this.commandName = "Push application"; //$NON-NLS-1$
+
 		this.app = app;
 		this.appStore = appStore;
-		this.reset = reset;
+		this.packager = packager;
 	}
 
 	@Override
@@ -60,7 +62,7 @@ public class PushAppCommand extends AbstractCFCommand {
 				setUpApplication = new UpdateApplicationCommand(target, app);
 
 			} else
-				setUpApplication = new CreateApplicationCommand(target, app, reset);
+				setUpApplication = new CreateApplicationCommand(target, app);
 
 			ServerStatus jobStatus = (ServerStatus) setUpApplication.doIt(); /* FIXME: unsafe type cast */
 			status.add(jobStatus);
@@ -77,7 +79,7 @@ public class PushAppCommand extends AbstractCFCommand {
 				return status;
 
 			/* upload application contents */
-			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, appStore);
+			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, appStore, packager);
 			multijobStatus = (ServerStatus) uploadBits.doIt(); /* FIXME: unsafe type cast */
 			status.add(multijobStatus);
 			if (!multijobStatus.isOK())
