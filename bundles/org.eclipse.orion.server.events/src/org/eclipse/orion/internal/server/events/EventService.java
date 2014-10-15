@@ -102,6 +102,7 @@ public class EventService implements IEventService {
 	private void initClient() {
 		mqttConnectOptions = new MqttConnectOptions();
 		String serverURI = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_HOST, null);
+		String clientId = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_CLIENT_ID, MqttClient.generateClientId());
 		if (serverURI == null) {
 			//no MQTT message broker host defined
 			if (logger.isWarnEnabled()) {
@@ -143,7 +144,7 @@ public class EventService implements IEventService {
 		mqttConnectOptions.setSSLProperties(sslProperties);
 
 		try {
-			mqttClient = new MqttClient(serverURI, MqttClient.generateClientId(), new MemoryPersistence());
+			mqttClient = new MqttClient(serverURI, clientId, new MemoryPersistence());
 			mqttClient.connect(mqttConnectOptions);
 			logger.info("MQTT client connected");
 		} catch (MqttException e) {

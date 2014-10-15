@@ -105,6 +105,7 @@ public class ServerConstants {
 	 * The name of configuration property specifying the URI for the MQTT message broker
 	 */
 	public static final String CONFIG_EVENT_HOST = "orion.events.uri"; //$NON-NLS-1$
+	public static final String CONFIG_EVENT_CLIENT_ID = "orion.events.clientId"; //$NON-NLS-1$
 	
 	public static final String CONFIG_EVENT_KEY_TYPE = "orion.events.keyType";
 	public static final String CONFIG_EVENT_KEY_PASSWORD = "orion.events.keyPassword";
