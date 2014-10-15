@@ -157,7 +157,7 @@ public class EventService implements IEventService {
 
 	public void publish(String topic, JSONObject message) {
 		//nothing to do if we have no MQTT event client configured
-		if (mqttClient == null) {
+		if (mqttClient == null || !mqttClient.isConnected()) {
 			return;
 		}
 		MqttMessage mqttMessage = new MqttMessage(message.toString().getBytes());
@@ -186,7 +186,7 @@ public class EventService implements IEventService {
 		}
 		if(topicListeners.isEmpty()){
 			try {
-				if(mqttClient!=null){
+				if(mqttClient!=null && mqttClient.isConnected()){
 					mqttClient.subscribe(topic);
 				}
 			} catch (MqttException e) {
@@ -201,7 +201,7 @@ public class EventService implements IEventService {
 			logger.debug("MQTT Stop Receiving topic " + topic + " " + messageListener);
 		}
 		Set<IMessageListener> topicListeners = messageListeners.get(topic);
-		if(topicListeners == null){
+		if(topicListeners == null || !mqttClient.isConnected()){
 			return;
 		}
 		topicListeners.remove(messageListener);
