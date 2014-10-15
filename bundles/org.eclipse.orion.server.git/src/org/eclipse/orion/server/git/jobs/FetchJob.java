@@ -115,7 +115,12 @@ public class FetchJob extends GitJob {
 			fc.setRemote(remote);
 			if (branch != null) {
 				// refs/heads/{branch}:refs/remotes/{remote}/{branch}
-				RefSpec spec = new RefSpec(Constants.R_HEADS + branch + ":" + Constants.R_REMOTES + remote + "/" + branch); //$NON-NLS-1$ //$NON-NLS-2$
+				String remoteBranch = branch;
+				if (branch.startsWith("for/")) {
+					remoteBranch = branch.substring(4);
+				}
+
+				RefSpec spec = new RefSpec(Constants.R_HEADS + remoteBranch + ":" + Constants.R_REMOTES + remote + "/" + branch); //$NON-NLS-1$ //$NON-NLS-2$
 				spec = spec.setForceUpdate(force);
 				fc.setRefSpecs(spec);
 			}
