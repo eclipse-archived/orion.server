@@ -226,4 +226,10 @@ public class GitConstants {
 	public static final String KEY_BEHIND_COUNT = "BehindCount"; //$NON-NLS-1$
 
 	public static final String KEY_AHEAD_COUNT = "AheadCount"; //$NON-NLS-1$
+
+	public static final String KEY_UPDATES = "Updates"; //$NON-NLS-1$
+
+	public static final String KEY_REMOTENAME = "RemoteName"; //$NON-NLS-1$
+
+	public static final String KEY_LOCALNAME = "LocalName"; //$NON-NLS-1$
 }

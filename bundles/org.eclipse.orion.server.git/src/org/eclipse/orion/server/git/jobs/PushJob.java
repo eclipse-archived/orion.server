@@ -14,11 +14,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -40,14 +39,18 @@ import org.eclipse.jgit.transport.PushResult;
 import org.eclipse.jgit.transport.RefSpec;
 import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.RemoteRefUpdate;
+import org.eclipse.jgit.transport.TrackingRefUpdate;
 import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.TransportHttp;
-import org.eclipse.jgit.util.StringUtils;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * A job to perform a push operation in the background
@@ -82,11 +85,8 @@ public class PushJob extends GitJob {
 		ProgressMonitor gitMonitor = new EclipseGitProgressTransformer(monitor);
 		// /git/remote/{remote}/{branch}/file/{path}
 		File gitDir = GitUtils.getGitDir(path.removeFirstSegments(2));
-		// this will contain the detail message returned by the git server
-		String statusMessage = null;
-		// this set will contain only OK status or UP_TO_DATE status
-		Set<RemoteRefUpdate.Status> statusSet = new HashSet<RemoteRefUpdate.Status>();
 		Repository db = null;
+		JSONObject result = new JSONObject();
 		try {
 			db = FileRepositoryBuilder.create(gitDir);
 			Git git = new Git(db);
@@ -119,7 +119,10 @@ public class PushJob extends GitJob {
 				return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
 			}
 			PushResult pushResult = resultIterable.iterator().next();
-			statusMessage = pushResult.getMessages();
+			boolean error = false;
+			JSONArray updates = new JSONArray();
+			result.put(GitConstants.KEY_COMMIT_MESSAGE, pushResult.getMessages());
+			result.put(GitConstants.KEY_UPDATES, updates);
 			for (final RemoteRefUpdate rru : pushResult.getRemoteUpdates()) {
 				if (monitor.isCanceled()) {
 					return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
@@ -127,32 +130,35 @@ public class PushJob extends GitJob {
 				final String rm = rru.getRemoteName();
 				// check status only for branch given in the URL or tags
 				if (branch.equals(Repository.shortenRefName(rm)) || rm.startsWith(Constants.R_TAGS)) {
+					JSONObject object = new JSONObject();
 					RemoteRefUpdate.Status status = rru.getStatus();
-					// any status different from UP_TO_DATE and OK should generate warning
+					if (status != RemoteRefUpdate.Status.UP_TO_DATE || !rm.startsWith(Constants.R_TAGS)) {
+						object.put(GitConstants.KEY_COMMIT_MESSAGE, rru.getMessage());
+						object.put(GitConstants.KEY_RESULT, status.name());
+						TrackingRefUpdate refUpdate = rru.getTrackingRefUpdate();
+						if (refUpdate != null) {
+							object.put(GitConstants.KEY_REMOTENAME, Repository.shortenRefName(refUpdate.getLocalName()));
+							object.put(GitConstants.KEY_LOCALNAME, Repository.shortenRefName(refUpdate.getRemoteName()));
+						} else {
+							object.put(GitConstants.KEY_REMOTENAME, Repository.shortenRefName(rru.getSrcRef()));
+							object.put(GitConstants.KEY_LOCALNAME, Repository.shortenRefName(rru.getRemoteName()));
+						}
+						updates.put(object);
+					}
 					if (status != RemoteRefUpdate.Status.OK && status != RemoteRefUpdate.Status.UP_TO_DATE)
-						return new Status(IStatus.WARNING, GitActivator.PI_GIT, status.name(), new Throwable(rru.getMessage()));
-					// add OK or UP_TO_DATE status to the set
-					statusSet.add(status);
+						error = true;
 				}
 				// TODO: return results for all updated branches once push is available for remote, see bug 352202
 			}
+			// needs to handle multiple
+			result.put("Severity", error ? "Error" : "Normal");
+		} catch (JSONException e) {
 		} finally {
 			if (db != null) {
 				db.close();
 			}
 		}
-		if (statusSet.contains(RemoteRefUpdate.Status.OK)) {
-			// if there is OK status in the set -> something was updated
-			if (StringUtils.isEmptyOrNull(statusMessage)) {
-				return Status.OK_STATUS;
-			}
-			// deliver any message returned from the Git server as "DetailedMessage" to the client;
-			// ugly: the only way to achieve that is by wrapping the message as exception
-			return new Status(Status.OK_STATUS.getSeverity(), Status.OK_STATUS.getPlugin(), Status.OK_STATUS.getMessage(), new Throwable(statusMessage));
-		} else {
-			// if there is no OK status in the set -> only UP_TO_DATE status is possible
-			return new Status(IStatus.WARNING, GitActivator.PI_GIT, RemoteRefUpdate.Status.UP_TO_DATE.name());
-		}
+		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 	}
 
 	@Override
