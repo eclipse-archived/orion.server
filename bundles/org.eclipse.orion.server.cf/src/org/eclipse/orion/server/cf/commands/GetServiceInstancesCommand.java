@@ -10,10 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.commands;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
 import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
@@ -21,6 +20,7 @@ import org.eclipse.orion.server.cf.objects.Service;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.cf.utils.MultiServerStatus;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONArray;
@@ -54,10 +54,15 @@ public class GetServiceInstancesCommand extends AbstractCFCommand {
 			String spaceGuid = target.getSpace().getGuid();
 
 			URI serviceInstancesURI = targetURI.resolve("/v2/spaces/" + spaceGuid + "/service_instances"); //$NON-NLS-1$//$NON-NLS-2$
+			NameValuePair[] pa = new NameValuePair[] {//
+			new NameValuePair("return_user_provided_service_instances", "true"), //  //$NON-NLS-1$//$NON-NLS-2$
+					new NameValuePair("inline-relations-depth", "1") //  //$NON-NLS-1$ //$NON-NLS-2$
+			};
 
 			do {
 
 				GetMethod getServiceInstancesMethod = new GetMethod(serviceInstancesURI.toString());
+				getServiceInstancesMethod.setQueryString(pa);
 				HttpUtil.configureHttpMethod(getServiceInstancesMethod, target);
 
 				/* send request */
@@ -75,8 +80,27 @@ public class GetServiceInstancesCommand extends AbstractCFCommand {
 				JSONArray resources = resp.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
 				for (int i = 0; i < resources.length(); ++i) {
 					JSONObject serviceObj = resources.getJSONObject(i);
-					Service s = new Service(serviceObj.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_NAME));
-					services.put(s.toJSON());
+
+					JSONObject serviceInstanceEntity = serviceObj.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY);
+					JSONObject serviceEntity = serviceInstanceEntity.getJSONObject(CFProtocolConstants.V2_KEY_SERVICE_PLAN)//
+							.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY);
+
+					String serviceGuid = serviceEntity.getString(CFProtocolConstants.V2_KEY_SERVICE_GUID);
+					GetServiceCommand getServiceCommand = new GetServiceCommand(target, serviceGuid);
+
+					/* get detailed info about the service */
+					jobStatus = (ServerStatus) getServiceCommand.doIt(); /* FIXME: unsafe type cast */
+					status.add(jobStatus);
+					if (!jobStatus.isOK())
+						return status;
+
+					JSONObject serviceResp = jobStatus.getJsonData();
+					boolean isBindable = serviceResp.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getBoolean(CFProtocolConstants.V2_KEY_BINDABLE);
+
+					if (isBindable) {
+						Service s = new Service(serviceInstanceEntity.getString(CFProtocolConstants.V2_KEY_NAME));
+						services.put(s.toJSON());
+					}
 				}
 
 			} while (serviceInstancesURI != null);

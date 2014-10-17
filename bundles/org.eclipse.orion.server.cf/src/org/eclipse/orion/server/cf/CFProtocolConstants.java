@@ -138,6 +138,12 @@ public class CFProtocolConstants {
 
 	public static final String V2_KEY_PLAN = "plan"; //$NON-NLS-1$
 
+	public static final String V2_KEY_BINDABLE = "bindable"; //$NON-NLS-1$
+
+	public static final String V2_KEY_SERVICE_PLAN = "service_plan"; //$NON-NLS-1$
+
+	public static final String V2_KEY_SERVICE_GUID = "service_guid"; //$NON-NLS-1$
+
 	public static final String V2_KEY_SERVICE_PLAN_GUID = "service_plan_guid"; //$NON-NLS-1$
 
 	public static final String V2_KEY_SERVICE_INSTANCE_GUID = "service_instance_guid"; //$NON-NLS-1$
