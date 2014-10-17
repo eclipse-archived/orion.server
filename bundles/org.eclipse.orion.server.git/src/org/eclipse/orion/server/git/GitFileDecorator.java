@@ -47,6 +47,7 @@ import org.eclipse.orion.server.git.objects.Remote;
 import org.eclipse.orion.server.git.objects.RemoteBranch;
 import org.eclipse.orion.server.git.objects.Status;
 import org.eclipse.orion.server.git.objects.Tag;
+import org.eclipse.orion.server.git.objects.Tree;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.JSONArray;
@@ -215,6 +216,13 @@ public class GitFileDecorator implements IWebResourceDecorator {
 
 		// add Git Clone URI
 		gitSection.put(GitConstants.KEY_CLONE, cloneLocation);
+
+		// add Git Tree URI
+		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
+		path = new Path(GitServlet.GIT_URI + '/' + Tree.RESOURCE).append(clonePath).append(Constants.HEAD)
+				.append(targetPath.toPortableString().substring(clonePath.toPortableString().length()));
+		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
+		gitSection.put(GitConstants.KEY_TREE, link);
 
 		representation.put(GitConstants.KEY_GIT, gitSection);
 	}
