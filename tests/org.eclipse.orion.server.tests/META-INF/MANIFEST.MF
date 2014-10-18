@@ -47,7 +47,7 @@ Import-Package: org.apache.commons.io,
 Bundle-ClassPath: .,
  lib/httpunit.jar,
  lib/nekohtml-0.9.5.jar,
- lib/xercesImpl-2.6.1.jar
+ lib/xercesImpl-2.6.2.jar
 Export-Package: com.meterware.httpunit,
  org.eclipse.orion.server.authentication.basic,
  org.eclipse.orion.server.tests,
