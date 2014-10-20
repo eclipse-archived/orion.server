@@ -69,7 +69,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 
 	private void resetPassword(User user, HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (user.getProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID) == null || "".equals(user.getProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID))) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "You have not requested to reset your password");
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "You have not requested to reset your password or this password reset request was already completed");
 			return;
 		}
 
@@ -81,6 +81,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 		String newPass = RandomPasswordGenerator.getRanromPassword();
 
 		user.setPassword(newPass);
+		user.removeProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID);
 
 		try {
 			UserEmailUtil.getUtil().setPasswordResetEmail(user);
