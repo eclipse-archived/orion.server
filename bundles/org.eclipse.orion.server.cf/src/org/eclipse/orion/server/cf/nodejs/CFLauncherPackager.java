@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.cf.nodejs;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.eclipse.core.filesystem.IFileStore;
@@ -54,7 +53,7 @@ public class CFLauncherPackager extends Packager {
 		writeZip(source, Path.EMPTY, zos);
 
 		/* deliver modified package.json with manifest.yml */
-		InputStream packageStream = new ByteArrayInputStream(packageJSON.toString().getBytes(StandardCharsets.UTF_8));
+		InputStream packageStream = new ByteArrayInputStream(packageJSON.toString().getBytes("UTF-8"));
 		zos.putNextEntry(new ZipEntry(Path.EMPTY.append(NodeJSConstants.PACKAGE_JSON).toString()));
 		IOUtilities.pipe(packageStream, zos, true, false);
 	}
