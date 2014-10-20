@@ -174,6 +174,8 @@ public class XSRFPreventionFilter implements Filter {
 		private Cookie cookie;
 
 		public CookieHandler(Cookie[] cookies, String name) {
+			if (cookies == null)
+				return;
 			for (Cookie c : cookies) {
 				if (name.equals(c.getName())) {
 					cookie = c;
