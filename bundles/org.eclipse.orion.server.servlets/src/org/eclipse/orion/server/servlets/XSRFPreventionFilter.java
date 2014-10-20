@@ -19,6 +19,7 @@ import java.util.Set;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -91,11 +92,11 @@ public class XSRFPreventionFilter implements Filter {
 
 		// check if nonce should be generated
 		CookieHandler ch = new CookieHandler(request.getCookies(), XSRF_TOKEN);
-		if (entryPointList.contains(path) && !ch.hasNonceCookie()) {
+		if (isEntryPoint(req, path) && !ch.hasNonceCookie()) {
 			response.addCookie(new Cookie(XSRF_TOKEN, generateNonce(method, path)));
 		}
 
-		boolean doNonceCheck = !"get".equalsIgnoreCase(method) && !exceptionList.contains(path);//$NON-NLS-1$
+		boolean doNonceCheck = !"get".equalsIgnoreCase(method) && !isException(req, path);//$NON-NLS-1$
 		if (doNonceCheck) {
 			String requestNonce = request.getHeader(XSRF_TOKEN);
 			boolean nonceValid = checkNonce(method, path, ch, requestNonce);
@@ -110,6 +111,20 @@ public class XSRFPreventionFilter implements Filter {
 		}
 
 		chain.doFilter(request, response);
+	}
+
+	private boolean isEntryPoint(ServletRequest req, String path) {
+		if (entryPointList.contains(path))
+			return true;
+		// Self-hosting check
+		return entryPointList.contains((String) req.getAttribute(RequestDispatcher.FORWARD_PATH_INFO));
+	}
+
+	private boolean isException(ServletRequest req, String path) {
+		if (exceptionList.contains(path))
+			return true;
+		// Self-hosting check
+		return exceptionList.contains((String) req.getAttribute(RequestDispatcher.FORWARD_PATH_INFO));
 	}
 
 	public void destroy() {
