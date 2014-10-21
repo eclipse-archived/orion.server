@@ -20,7 +20,6 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -31,10 +30,7 @@ import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -445,37 +441,6 @@ public class BasicUsersTest extends UsersTest {
 		assertEquals("New login wasn't returned in user details", login2, responseObject.get(UserConstants.KEY_LOGIN));
 	}
 
-	@Test
-	public void testUserProperties() {
-		String sampleUser1 = "login1" + System.currentTimeMillis();
-		String sampleUser2 = "login2" + System.currentTimeMillis();
-		String login = "login" + System.currentTimeMillis();
-		String password = UserConstants.KEY_PASSWORD + System.currentTimeMillis();
-		User user = createUser(login, password);
-		createUser(sampleUser1, password);
-		createUser(sampleUser2, password);
-
-		IOrionCredentialsService userAdmin = UserServiceHelper.getDefault().getUserStore();
-
-		String propertyName = "property" + System.currentTimeMillis();
-		String propertyValue = "value" + System.currentTimeMillis();
-		user.addProperty(propertyName, propertyValue);
-		userAdmin.updateUser(user.getUid(), user);
-		User updatedUser = userAdmin.getUser(UserConstants.KEY_UID, user.getUid());
-		assertEquals("The property was not set", propertyValue, updatedUser.getProperty(propertyName));
-		Set<User> foundUsers = userAdmin.getUsersByProperty(propertyName, propertyValue, false, false);
-		assertEquals("Invalid number of users found", 1, foundUsers.size());
-		User foundUser = foundUsers.iterator().next();
-		assertEquals("Invalid user found", user.getUid(), foundUser.getUid());
-		assertEquals("Found user doesn't have the property expected", propertyValue, foundUser.getProperty(propertyName));
-		String valuePattern = ".*" + propertyValue.substring(3, propertyValue.length() - 1) + ".";
-		foundUsers = userAdmin.getUsersByProperty(propertyName, valuePattern, true, false);
-		assertEquals("Invalid number of users found", 1, foundUsers.size());
-		foundUser = foundUsers.iterator().next();
-		assertEquals("Invalid user found", user.getUid(), foundUser.getUid());
-		assertEquals("Found user doesn't have the property expected", propertyValue, foundUser.getProperty(propertyName));
-	}
-
 	/**
 	 * @return a string representing the test users name.
 	 */
@@ -488,15 +453,15 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Override
-	public void setAdminRights(User adminUser) throws CoreException {
+	public void setAdminRights(UserInfo adminUser) throws CoreException {
 		//by default allow 'admin' to modify all users data
-		AuthorizationService.addUserRight(adminUser.getUid(), "/users");
-		AuthorizationService.addUserRight(adminUser.getUid(), "/users/*");
+		AuthorizationService.addUserRight(adminUser.getUniqueId(), "/users");
+		AuthorizationService.addUserRight(adminUser.getUniqueId(), "/users/*");
 	}
 
 	@Override
-	public void setTestUserRights(User testUser) throws CoreException {
+	public void setTestUserRights(UserInfo testUser) throws CoreException {
 		//by default allow 'test' to modify his own data
-		AuthorizationService.addUserRight(testUser.getUid(), "/users/" + testUser.getUid());
+		AuthorizationService.addUserRight(testUser.getUniqueId(), "/users/" + testUser.getUniqueId());
 	}
 }

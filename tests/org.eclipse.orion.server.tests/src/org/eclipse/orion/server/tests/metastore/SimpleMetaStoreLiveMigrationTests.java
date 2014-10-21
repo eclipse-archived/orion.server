@@ -35,6 +35,7 @@ import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreMigration;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.core.metastore.SimpleUserPasswordUtil;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.useradmin.UserConstants;
@@ -322,6 +323,9 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		assertTrue(invalidFileInUserHome.isFile());
 		String archivedFilePath = invalidFileInUserHome.toString().substring(getWorkspaceRoot().toString().length());
 
+		// since we modified files on disk directly, force user cache update by reading all users
+		OrionConfiguration.getMetaStore().readAllUsers();
+
 		// verify web requests
 		verifyWorkspaceRequest(workspaceIds);
 
@@ -383,6 +387,9 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		assertTrue(invalidFolderInUserHome.exists());
 		assertTrue(invalidFolderInUserHome.isDirectory());
 		String archivedFilePath = invalidFolderInUserHome.toString().substring(getWorkspaceRoot().toString().length());
+
+		// since we modified files on disk directly, force user cache update by reading all users
+		OrionConfiguration.getMetaStore().readAllUsers();
 
 		// verify web requests
 		verifyWorkspaceRequest(workspaceIds);
@@ -454,6 +461,9 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		assertTrue(corruptedProjectJSON.exists());
 		assertTrue(corruptedProjectJSON.isFile());
 
+		// since we modified files on disk directly, force user cache update by reading all users
+		OrionConfiguration.getMetaStore().readAllUsers();
+
 		// verify the web request has failed
 		WebRequest request = new GetMethodWebRequest(SERVER_LOCATION + "/workspace");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
@@ -509,6 +519,9 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		// create the sample content
 		String directoryPath = createSampleDirectory();
 		String fileName = createSampleFile(directoryPath);
+
+		// since we modified files on disk directly, force user cache update by reading all users
+		OrionConfiguration.getMetaStore().readAllUsers();
 
 		// verify web requests
 		verifyWorkspaceRequest(workspaceIds);
@@ -592,6 +605,9 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		JSONObject newUserJSON = createUserJson(version, testUserId, EMPTY_LIST);
 		createUserMetaData(newUserJSON, testUserId);
 
+		// since we modified files on disk directly, force user cache update by reading all users
+		OrionConfiguration.getMetaStore().readAllUsers();
+
 		// verify web requests
 		verifyWorkspaceRequest(EMPTY_LIST);
 
@@ -610,6 +626,9 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		JSONObject newUserJSON = createUserJson(SimpleMetaStore.VERSION, testUserId, EMPTY_LIST);
 		newUserJSON.remove(SimpleMetaStore.ORION_VERSION);
 		createUserMetaData(newUserJSON, testUserId);
+
+		// since we modified files on disk directly, force user cache update by reading all users
+		OrionConfiguration.getMetaStore().readAllUsers();
 
 		// verify web requests
 		verifyWorkspaceRequest(EMPTY_LIST);
@@ -678,6 +697,9 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		createUserMetaData(newUserJSON, testUserId);
 		JSONObject newWorkspaceJSON = createWorkspaceJson(version, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, EMPTY_LIST);
 		createWorkspaceMetaData(version, newWorkspaceJSON, testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+
+		// since we modified files on disk directly, force user cache update by reading all users
+		OrionConfiguration.getMetaStore().readAllUsers();
 
 		// verify web requests
 		verifyWorkspaceRequest(workspaceIds);
@@ -760,6 +782,9 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		// create the sample content
 		String directoryPath = createSampleDirectory();
 		String fileName = createSampleFile(directoryPath);
+
+		// since we modified files on disk directly, force user cache update by reading all users
+		OrionConfiguration.getMetaStore().readAllUsers();
 
 		// verify web requests
 		verifyWorkspaceRequest(workspaceIds);
@@ -860,6 +885,9 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		String directoryPath = createSampleDirectory();
 		String fileName = createSampleFile(directoryPath);
 
+		// since we modified files on disk directly, force user cache update by reading all users
+		OrionConfiguration.getMetaStore().readAllUsers();
+
 		// verify web requests
 		verifyWorkspaceRequest(workspaceIds);
 		verifyProjectRequest(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
@@ -942,6 +970,9 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		workspaceIds = new ArrayList<String>();
 		workspaceIds.add(workspaceId);
 
+		// since we modified files on disk directly, force user cache update by reading all users
+		OrionConfiguration.getMetaStore().readAllUsers();
+
 		// verify web requests
 		verifyWorkspaceRequest(workspaceIds);
 		verifyProjectRequest(testUserId, SimpleMetaStore.DEFAULT_WORKSPACE_NAME, projectNames.get(0));
@@ -1017,6 +1048,9 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		}
 		assertTrue(corruptedWorkspaceJSON.exists());
 		assertTrue(corruptedWorkspaceJSON.isFile());
+
+		// since we modified files on disk directly, force user cache update by reading all users
+		OrionConfiguration.getMetaStore().readAllUsers();
 
 		// verify the web request has failed
 		WebRequest request = new GetMethodWebRequest(SERVER_LOCATION + "/workspace");

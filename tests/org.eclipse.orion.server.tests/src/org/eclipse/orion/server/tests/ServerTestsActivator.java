@@ -50,7 +50,6 @@ public class ServerTestsActivator implements BundleActivator {
 				//get the webide bundle started via lazy activation.
 				org.eclipse.orion.server.authentication.Activator.getDefault();
 				Activator.getDefault();
-				org.eclipse.orion.internal.server.useradmin.simple.Activator.getDefault();
 				webapp = new WebApplication();
 				webapp.start(null);
 				initialize();

@@ -15,10 +15,10 @@ import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.eclipse.orion.server.useradmin.User;
 import org.json.JSONObject;
 import org.junit.Before;
 
@@ -41,15 +41,15 @@ public abstract class UsersTest extends AbstractServerTest {
 
 	@Override
 	public void setUpAuthorization() throws CoreException {
-		User testUser = createUser(getTestUserName(), getTestUserPassword());
+		UserInfo testUser = createUser(getTestUserName(), getTestUserPassword());
 		setTestUserRights(testUser);
-		User adminUser = createUser("admin", "admin");
+		UserInfo adminUser = createUser("admin", "admin");
 		setAdminRights(adminUser);
 	}
 
-	public abstract void setAdminRights(User adminUser) throws CoreException;
+	public abstract void setAdminRights(UserInfo adminUser) throws CoreException;
 
-	public abstract void setTestUserRights(User testUser) throws CoreException;
+	public abstract void setTestUserRights(UserInfo testUser) throws CoreException;
 
 	private void setAuthenticationUser(WebRequest request) {
 		try {

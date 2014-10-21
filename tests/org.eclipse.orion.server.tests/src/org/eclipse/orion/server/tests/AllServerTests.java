@@ -26,8 +26,6 @@ import org.eclipse.orion.server.tests.servlets.files.CoreFilesTest;
 import org.eclipse.orion.server.tests.servlets.git.AllGitTests;
 import org.eclipse.orion.server.tests.servlets.site.AllSiteTests;
 import org.eclipse.orion.server.tests.servlets.users.BasicUsersTest;
-import org.eclipse.orion.server.tests.servlets.users.OrionCredentialsServiceTest;
-import org.eclipse.orion.server.tests.servlets.users.OrionUserProfileServiceTest;
 import org.eclipse.orion.server.tests.servlets.workspace.WorkspaceServiceTest;
 import org.eclipse.orion.server.tests.servlets.xfer.TransferTest;
 import org.eclipse.orion.server.tests.tasks.AllTaskTests;
@@ -47,8 +45,6 @@ import org.junit.runners.Suite.SuiteClasses;
 		BasicUsersTest.class, //
 		CoreFilesTest.class, //
 		MetaStoreTest.class, //
-		OrionCredentialsServiceTest.class, //
-		OrionUserProfileServiceTest.class, //
 		PreferenceTest.class, //
 		ProjectInfoTests.class, //
 		SearchTest.class, //
