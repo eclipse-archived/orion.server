@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -56,14 +57,14 @@ public class SimpleMetaStore implements IMetaStore {
 	public final static String DESCRIPTION = "This JSON file is at the root of the Orion metadata store responsible for persisting user, workspace and project files and metadata.";
 
 	/**
-	 * The name of the Orion Version property in the JSON file.
-	 */
-	public final static String ORION_VERSION = "OrionVersion";
-
-	/**
 	 * The name of the Orion Description property in the JSON file.
 	 */
 	public final static String ORION_DESCRIPTION = "OrionDescription";
+
+	/**
+	 * The name of the Orion Version property in the JSON file.
+	 */
+	public final static String ORION_VERSION = "OrionVersion";
 
 	/**
 	 * Each metadata file is in JSON format and should have a version. A missing version is flagged by this value.
@@ -99,6 +100,11 @@ public class SimpleMetaStore implements IMetaStore {
 	 * The root location of this Simple Meta Store.
 	 */
 	private File rootLocation = null;
+
+	/**
+	 * 
+	 */
+	private SimpleMetaStoreUserPropertyCache userPropertyCache = new SimpleMetaStoreUserPropertyCache();
 
 	/**
 	 * Create an instance of a SimpleMetaStore under the provided folder.
@@ -204,6 +210,10 @@ public class SimpleMetaStore implements IMetaStore {
 				if (!SimpleMetaStoreUtil.createMetaFile(userMetaFolder, SimpleMetaStore.USER, jsonObject)) {
 					throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createUser: could not create user: " + userId, null));
 				}
+			}
+			// update the UniqueId cache
+			if (userPropertyCache.isRegistered("UniqueId")) {
+				userPropertyCache.add("UniqueId", userId, userId);
 			}
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			logger.debug("Created new user " + userId + "."); //$NON-NLS-1$
@@ -329,6 +339,8 @@ public class SimpleMetaStore implements IMetaStore {
 			if (!SimpleMetaStoreUtil.deleteMetaUserFolder(userMetaFolder, userId)) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.deleteUser: could not delete user: " + userId, null));
 			}
+			// update the userid cache
+			userPropertyCache.deleteUser(userId);
 		} finally {
 			lock.writeLock().unlock();
 		}
@@ -492,7 +504,9 @@ public class SimpleMetaStore implements IMetaStore {
 	}
 
 	public List<String> readAllUsers() throws CoreException {
-		return SimpleMetaStoreUtil.listMetaUserFolders(getRootLocation());
+		List<String> userIds = SimpleMetaStoreUtil.listMetaUserFolders(getRootLocation());
+		userPropertyCache.addUsers(userIds);
+		return userIds;
 	}
 
 	public ProjectInfo readProject(String workspaceId, String projectName) throws CoreException {
@@ -613,6 +627,67 @@ public class SimpleMetaStore implements IMetaStore {
 						logger.warn("SimpleMetaStore.readUser: user id " + userInfo.getUniqueId() + " has a multiple workspace conflict: workspace: " + userInfo.getWorkspaceIds().get(0) + " and workspace: " + userInfo.getWorkspaceIds().get(1));
 					}
 					setProperties(userInfo, jsonObject.getJSONObject("Properties"));
+					if (jsonObject.has("profileProperties")) {
+						JSONObject profileProperties = jsonObject.getJSONObject("profileProperties");
+						if (profileProperties.has("openid")) {
+							String value = profileProperties.get("openid").toString();
+							userInfo.setProperty("openid", value);
+							if (userPropertyCache.isRegistered("openid")) {
+								userPropertyCache.add("openid", value, userInfo.getUniqueId());
+							}
+						}
+						if (profileProperties.has("oauth")) {
+							String value = profileProperties.get("oauth").toString();
+							userInfo.setProperty("oauth", value);
+							if (userPropertyCache.isRegistered("oauth")) {
+								userPropertyCache.add("oauth", value, userInfo.getUniqueId());
+							}
+						}
+						if (profileProperties.has("passwordResetId")) {
+							// TODO: these top level keys need to change to properties
+							String passwordResetId = profileProperties.getString("passwordResetId");
+							userInfo.setProperty("passwordResetId", passwordResetId);
+						}
+					}
+					if (jsonObject.has("email")) {
+						// TODO: these top level keys need to change to properties
+						String email = jsonObject.getString("email");
+						userInfo.setProperty("email", email);
+						if (userPropertyCache.isRegistered("email")) {
+							userPropertyCache.add("email", email, userInfo.getUniqueId());
+						}
+					}
+					if (jsonObject.has("blocked")) {
+						// TODO: these top level keys need to change to properties
+						String blocked = jsonObject.getString("blocked");
+						userInfo.setProperty("blocked", blocked);
+					}
+					if (jsonObject.has("email_confirmation")) {
+						// TODO: these top level keys need to change to properties
+						String email_confirmation = jsonObject.getString("email_confirmation");
+						userInfo.setProperty("email_confirmation", email_confirmation);
+					}
+					if (jsonObject.has("diskusage")) {
+						// TODO: these top level keys need to change to properties
+						String diskusage = jsonObject.getString("diskusage");
+						userInfo.setProperty("diskusage", diskusage);
+					}
+					if (jsonObject.has("diskusagetimestamp")) {
+						// TODO: these top level keys need to change to properties
+						String diskusagetimestamp = jsonObject.getString("diskusagetimestamp");
+						userInfo.setProperty("diskusagetimestamp", diskusagetimestamp);
+					}
+					if (jsonObject.has("lastlogintimestamp")) {
+						// TODO: these top level keys need to change to properties
+						String lastlogintimestamp = jsonObject.getString("lastlogintimestamp");
+						userInfo.setProperty("lastlogintimestamp", lastlogintimestamp);
+					}
+					if (jsonObject.has("password")) {
+						// TODO: these top level keys need to change to properties
+						String encryptedPassword = jsonObject.getString("password");
+						String password = SimpleUserPasswordUtil.decryptPassword(encryptedPassword);
+						userInfo.setProperty("password", password);
+					}
 					userInfo.flush();
 				} catch (JSONException e) {
 					throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.readUser: could not read user " + userId, e));
@@ -630,6 +705,14 @@ public class SimpleMetaStore implements IMetaStore {
 		userInfo.setFullName("Unnamed User");
 		createUser(userInfo);
 		return userInfo;
+	}
+
+	public UserInfo readUserByProperty(String key, String value, boolean regExp, boolean ignoreCase) throws CoreException {
+		String userId = userPropertyCache.readUserByProperty(key, value, regExp, ignoreCase);
+		if (userId != null) {
+			return readUser(userId);
+		}
+		return null;
 	}
 
 	public WorkspaceInfo readWorkspace(String workspaceId) throws CoreException {
@@ -674,6 +757,11 @@ public class SimpleMetaStore implements IMetaStore {
 		return workspaceInfo;
 	}
 
+	public void registerUserProperties(List<String> keys) throws CoreException {
+		// register the user properties with the user cache
+		userPropertyCache.register(keys);
+	}
+
 	/**
 	 * Sets all the properties in the provided JSON into the MetaDataInfo.
 	 * @param metadataInfo The MetaData info
@@ -682,11 +770,18 @@ public class SimpleMetaStore implements IMetaStore {
 	 */
 	private void setProperties(MetadataInfo metadataInfo, JSONObject jsonObject) throws JSONException {
 		String[] properties = JSONObject.getNames(jsonObject);
+		Map<String, String> cachedProperties = new HashMap<String, String>();
 		if (properties != null) {
 			for (String key : properties) {
-				Object value = jsonObject.get(key);
-				metadataInfo.setProperty(key, value.toString());
+				String value = jsonObject.get(key).toString();
+				metadataInfo.setProperty(key, value);
+				if (metadataInfo instanceof UserInfo && userPropertyCache.isRegistered(key)) {
+					cachedProperties.put(key, value);
+				}
 			}
+		}
+		if (!cachedProperties.isEmpty()) {
+			userPropertyCache.setProperties(metadataInfo.getUniqueId(), cachedProperties);
 		}
 	}
 
@@ -801,6 +896,84 @@ public class SimpleMetaStore implements IMetaStore {
 					// delete the property
 					if (properties.has(key)) {
 						properties.remove(key);
+					} else if ("openid".equals(key) || "oauth".equals(key) || "email".equals(key) || "blocked".equals(key) ||"email_confirmation".equals(key) || "passwordResetId".equals(key) || "diskusage".equals(key) || "diskusagetimestamp".equals(key) || "lastlogintimestamp".equals(key) || "password".equals(key)) {
+						// TODO: these top level keys need to change to properties
+						String value = null;
+						if ("openid".equals(key)) {
+							JSONObject profileProperties = jsonObject.getJSONObject("profileProperties");
+							if (profileProperties.has("openid")) {
+								value = profileProperties.getString("openid");
+								profileProperties.remove("openid");
+							}
+							if (profileProperties.length() == 0) {
+								jsonObject.remove("profileProperties");
+							}
+						} else if ("oauth".equals(key)) {
+							JSONObject profileProperties = jsonObject.getJSONObject("profileProperties");
+							if (profileProperties.has("oauth")) {
+								value = profileProperties.getString("oauth");
+								profileProperties.remove("oauth");
+							}
+							if (profileProperties.length() == 0) {
+								jsonObject.remove("profileProperties");
+							}
+						} else if ("email".equals(key)) {
+							// TODO: these top level keys need to change to properties
+							if (jsonObject.has("email")) {
+								value = jsonObject.getString("email");
+								jsonObject.remove("email");
+							}
+						} else if ("blocked".equals(key)) {
+							// TODO: these top level keys need to change to properties
+							if (jsonObject.has("blocked")) {
+								value = jsonObject.getString("blocked");
+								jsonObject.remove("blocked");
+							}
+						} else if ("email_confirmation".equals(key)) {
+							// TODO: these top level keys need to change to properties
+							if (jsonObject.has("email_confirmation")) {
+								value = jsonObject.getString("email_confirmation");
+								jsonObject.remove("email_confirmation");
+							}
+						} else if ("lastlogintimestamp".equals(key)) {
+							// TODO: these top level keys need to change to properties
+							if (jsonObject.has("lastlogintimestamp")) {
+								value = jsonObject.getString("lastlogintimestamp");
+								jsonObject.remove("lastlogintimestamp");
+							}
+						} else if ("diskusagetimestamp".equals(key)) {
+							// TODO: these top level keys need to change to properties
+							if (jsonObject.has("diskusagetimestamp")) {
+								value = jsonObject.getString("diskusagetimestamp");
+								jsonObject.remove("diskusagetimestamp");
+							}
+						} else if ("diskusage".equals(key)) {
+							// TODO: these top level keys need to change to properties
+							if (jsonObject.has("diskusage")) {
+								value = jsonObject.getString("diskusage");
+								jsonObject.remove("diskusage");
+							}
+						} else if ("passwordResetId".equals(key)) {
+							// TODO: these top level keys need to change to properties
+							JSONObject profileProperties = jsonObject.getJSONObject("profileProperties");
+							if (profileProperties.has("passwordResetId")) {
+								value = profileProperties.getString("passwordResetId");
+								profileProperties.remove("passwordResetId");
+							}
+							if (profileProperties.length() == 0) {
+								jsonObject.remove("profileProperties");
+							}
+						} else if ("password".equals(key)) {
+							// TODO: these top level keys need to change to properties
+							if (jsonObject.has("password")) {
+								value = jsonObject.getString("password");
+								jsonObject.remove("password");
+							}
+						}
+						// update the user cache
+						if (metadataInfo instanceof UserInfo && userPropertyCache.isRegistered(key)) {
+							userPropertyCache.delete(key, value, metadataInfo.getUniqueId());
+						}
 					}
 				} else {
 					// create or update the property
@@ -813,6 +986,53 @@ public class SimpleMetaStore implements IMetaStore {
 						// UserRights needs to be handled specifically since it is a JSONObject and not a string.
 						JSONObject siteConfigurations = new JSONObject(value);
 						properties.put("SiteConfigurations", siteConfigurations);
+					} else if ("openid".equals(key) || "oauth".equals(key) || "passwordResetId".equals(key)) {
+						// openid needs to be handled specifically since it is within a profileProperties JSONObject.
+						JSONObject profileProperties;
+						if (jsonObject.has("profileProperties")) {
+							profileProperties = jsonObject.getJSONObject("profileProperties");
+						} else {
+							profileProperties = new JSONObject();
+						}
+						profileProperties.put(key, value);
+						jsonObject.put("profileProperties", profileProperties);
+						// update the user cache
+						if (metadataInfo instanceof UserInfo && userPropertyCache.isRegistered(key)) {
+							userPropertyCache.add(key, value, metadataInfo.getUniqueId());
+						}
+					} else if ("email".equals(key)) {
+						// TODO: these top level keys need to change to properties
+						// email needs to be handled specifically since it is at he root of the JSONObject.
+						jsonObject.put("email", value);
+						// update the user cache
+						if (metadataInfo instanceof UserInfo && userPropertyCache.isRegistered(key)) {
+							userPropertyCache.add(key, value, metadataInfo.getUniqueId());
+						}
+					} else if ("password".equals(key)) {
+						// TODO: these top level keys need to change to properties
+						// password needs to be handled specifically since it is at he root of the JSONObject.
+						String encryptedPassword = SimpleUserPasswordUtil.encryptPassword(value);
+						jsonObject.put("password", encryptedPassword);
+					} else if ("blocked".equals(key)) {
+						// TODO: these top level keys need to change to properties
+						// blocked needs to be handled specifically since it is at he root of the JSONObject.
+						jsonObject.put("blocked", value);
+					} else if ("email_confirmation".equals(key)) {
+						// TODO: these top level keys need to change to properties
+						// email_confirmation needs to be handled specifically since it is at he root of the JSONObject.
+						jsonObject.put("email_confirmation", value);
+					} else if ("diskusage".equals(key)) {
+						// TODO: these top level keys need to change to properties
+						// diskusage needs to be handled specifically since it is at he root of the JSONObject.
+						jsonObject.put("diskusage", value);
+					} else if ("diskusagetimestamp".equals(key)) {
+						// TODO: these top level keys need to change to properties
+						// diskusagetimestamp needs to be handled specifically since it is at he root of the JSONObject.
+						jsonObject.put("diskusagetimestamp", value);
+					} else if ("lastlogintimestamp".equals(key)) {
+						// TODO: these top level keys need to change to properties
+						// lastlogintimestamp needs to be handled specifically since it is at he root of the JSONObject.
+						jsonObject.put("lastlogintimestamp", value);
 					} else {
 						properties.put(key, value);
 					}
@@ -894,8 +1114,16 @@ public class SimpleMetaStore implements IMetaStore {
 				SimpleMetaStoreUtil.moveUserMetaFolder(oldUserMetaFolder, newUserMetaFolder);
 
 				userInfo.setUniqueId(newUserId);
+
+				// update the user cache
+				if (userPropertyCache.isRegistered("UniqueId")) {
+					userPropertyCache.delete("UniqueId", oldUserId, oldUserId);
+					userPropertyCache.add("UniqueId", newUserId, newUserId);
+				}
+
 				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 				logger.debug("Moved MetaStore for user " + oldUserId + " to user " + newUserId + "."); //$NON-NLS-1$
+
 			} finally {
 				oldUserLock.writeLock().unlock();
 				newUserLock.writeLock().unlock();

@@ -99,7 +99,7 @@ public interface IMetaStore {
 	 * @return The file store for the given project.
 	 */
 	public IFileStore getDefaultContentLocation(ProjectInfo projectInfo) throws CoreException;
-	
+
 	/**
 	 * Returns the root location where user data files for the given user are stored. 
 	 * @return The file store for the given user.
@@ -140,6 +140,19 @@ public interface IMetaStore {
 	public UserInfo readUser(String userId) throws CoreException;
 
 	/**
+	 * Finds a single user in the backing storage based on a property and returns it.
+	 * If there is no such user in the backing store, return <code>null</code>.
+	 * It is expected that the property was registered using the {@link #registerUserProperty(String) registerUserProperty} method. 
+	 * @param key The property key.
+	 * @param value The property value or regular expression to match.
+	 * @param regExp <code>true</code> if <code>value</code> should be matched as regular expression.
+	 * @param ignoreCase <code>true</code> if <code>value</code> should be matched without case sentitivity.
+	 * @return the user matching the criteria or <code>null</code>
+	 * @throws CoreException If there was a failure obtaining metadata from the backing store.
+	 */
+	public UserInfo readUserByProperty(String key, String value, boolean regExp, boolean ignoreCase) throws CoreException;
+
+	/**
 	 * Obtains information about a single workspace from the backing storage and returns it.
 	 * Returns <code>null</code> if there is no such workspace in the backing store.
 	 * @param workspaceId The unique id of the workspace to return
@@ -147,6 +160,14 @@ public interface IMetaStore {
 	 * @throws CoreException If there was a failure obtaining metadata from the backing store.
 	 */
 	public WorkspaceInfo readWorkspace(String workspaceId) throws CoreException;
+
+	/**
+	 * Registers a list of property keys that will be used by the {@link #readUserByProperty(String, String, boolean, boolean) readUserByProperty} 
+	 * method to find users in the backing store. 
+	 * @param keys A list of property keys.
+	 * @throws CoreException If there was a failure obtaining metadata from the backing store.
+	 */
+	public void registerUserProperties(List<String> keys) throws CoreException;
 
 	/**
 	 * Updates the metadata in this store based on the provided data.
