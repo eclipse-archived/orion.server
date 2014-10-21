@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others 
+ * Copyright (c) 2010, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -23,12 +23,14 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.useradmin.UserConstants;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.osgi.util.NLS;
 
 // POST /users/ creates a new user
@@ -48,7 +50,7 @@ public class UserServlet extends OrionServlet {
 
 	@Override
 	public void init() throws ServletException {
-		userSerializer = new ServletUserHandler(UserServiceHelper.getDefault(), getStatusHandler());
+		userSerializer = new ServletUserHandler(getStatusHandler());
 		String creators = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null);
 		if (creators != null) {
 			authorizedAccountCreators = new ArrayList<String>();
@@ -90,7 +92,16 @@ public class UserServlet extends OrionServlet {
 
 		if (pathInfo != null && !pathInfo.equals("/")) {
 			String userId = pathInfo.split("\\/")[1];
-			if (UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(userId, false) == null) {
+			UserInfo userInfo = null;
+			try {
+				userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", userId, false, false);
+			} catch (CoreException e) {
+				LogHelper.log(e);
+				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+				return;
+			}
+
+			if (userInfo == null) {
 				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("User not found: {0}", userId), null));
 				return;
 			}

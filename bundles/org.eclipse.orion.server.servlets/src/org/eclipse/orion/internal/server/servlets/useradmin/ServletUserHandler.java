@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,15 +17,14 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ProtocolConstants;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.osgi.service.resolver.VersionRange;
 import org.osgi.framework.Version;
 
 /**
  * General user handler.
  */
-public class ServletUserHandler extends ServletResourceHandler<String>{
-	
+public class ServletUserHandler extends ServletResourceHandler<String> {
+
 	public static VersionRange VERSION1 = new VersionRange("[1,2)"); //$NON-NLS-1$
 
 	private final ServletResourceHandler<String> genericUserHandler;
@@ -33,10 +32,10 @@ public class ServletUserHandler extends ServletResourceHandler<String>{
 
 	final ServletResourceHandler<IStatus> statusHandler;
 
-	ServletUserHandler(UserServiceHelper userServiceHelper, ServletResourceHandler<IStatus> statusHandler) {
+	ServletUserHandler(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
-		genericUserHandler = new GenericUserHandler(userServiceHelper, statusHandler);
-		userHandlerV1 = new UserHandlerV1(userServiceHelper, statusHandler);
+		genericUserHandler = new GenericUserHandler(statusHandler);
+		userHandlerV1 = new UserHandlerV1(statusHandler);
 	}
 
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String userPathInfo) throws ServletException {

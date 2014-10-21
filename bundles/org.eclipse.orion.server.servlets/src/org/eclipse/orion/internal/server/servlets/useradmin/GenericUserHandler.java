@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,8 +18,9 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -27,23 +28,24 @@ import org.eclipse.osgi.util.NLS;
  */
 public class GenericUserHandler extends ServletResourceHandler<String> {
 
-	private UserServiceHelper userServiceHelper;
-
-	GenericUserHandler(UserServiceHelper userServiceHelper, ServletResourceHandler<IStatus> statusHandler) {
-		this.userServiceHelper = userServiceHelper;
+	GenericUserHandler(ServletResourceHandler<IStatus> statusHandler) {
+		super();
 	}
 
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String userPathInfo) throws ServletException {
 		// can only generically handle GET /users/[userId]
-		if (getMethod(request) != Method.GET || userPathInfo == null || userPathInfo.equals("/"))
+		if (getMethod(request) != Method.GET || userPathInfo == null || userPathInfo.equals("/")) {
 			return false;
+		}
 
 		String userId = userPathInfo.split("\\/")[1]; //$NON-NLS-1$
-		if (UserServiceHelper.getDefault().getUserProfileService().getUserProfileNode(userId, false) == null)
-			return false;
-
 		try {
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", userId, false, false);
+			if (userInfo == null) {
+				return false;
+			}
+
 			PrintWriter writer = response.getWriter();
 			writer.println("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2 Final//EN\">"); //$NON-NLS-1$
 			writer.println("<html>"); //$NON-NLS-1$
@@ -53,13 +55,18 @@ public class GenericUserHandler extends ServletResourceHandler<String> {
 			writer.println("<body>"); //$NON-NLS-1$
 			writer.println("<h1>Details of " + userId + "</h1>"); //$NON-NLS-1$ //$NON-NLS-2$
 
-			IOrionUserProfileNode userProfileNode = userServiceHelper.getUserProfileService().getUserProfileNode(userId, false);
-			for (String partName : userProfileNode.childrenNames()) {
-				writer.println("<h2>Part : " + partName + "</h2>"); //$NON-NLS-1$ //$NON-NLS-2$
-				IOrionUserProfileNode partNode = userProfileNode.getUserProfileNode(partName);
-				for (String key : partNode.keys()) {
-					writer.println(key + " : " + partNode.get(key, "") + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-				}
+			writer.println("<h2>Part : " + IOrionUserProfileConstants.GENERAL_PROFILE_PART + "</h2>"); //$NON-NLS-1$ //$NON-NLS-2$
+			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP)) {
+				String lastLoginTimestamp = userInfo.getProperty(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP);
+				writer.println(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP + " : " + lastLoginTimestamp + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.DISK_USAGE)) {
+				String diskUsage = userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE);
+				writer.println(IOrionUserProfileConstants.DISK_USAGE + " : " + diskUsage + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+			}
+			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP)) {
+				String diskUsageTimestamp = userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP);
+				writer.println(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP + " : " + diskUsageTimestamp + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 
 			writer.println("<hr>"); //$NON-NLS-1$
