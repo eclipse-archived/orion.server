@@ -17,23 +17,21 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.authentication.IAuthenticationService;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.resources.Base64;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
 public class BasicAuthenticationService implements IAuthenticationService {
 
-	protected static IOrionCredentialsService userAdmin;
 	public static String PI_BASIC_AUTH = "org.eclipse.orion.server.authentication.formoauth";
-	private IOrionUserProfileService userProfileService;
 	private boolean registered;
 
 	public BasicAuthenticationService() {
@@ -60,11 +58,11 @@ public class BasicAuthenticationService implements IAuthenticationService {
 
 			String login = authString.substring(0, authString.indexOf(':'));
 			String password = authString.substring(authString.indexOf(':') + 1);
-			User user = getUserForCredentials(login, password);
-			if (user != null) {
+			UserInfo userInfo = getUserForCredentials(login, password);
+			if (userInfo != null) {
 				//				Authorization authorization = userAdmin.getAuthorization(user);
 				// TODO handle authorization
-				return user.getUid();
+				return userInfo.getUniqueId();
 			}
 		}
 		return null;
@@ -90,27 +88,19 @@ public class BasicAuthenticationService implements IAuthenticationService {
 		} while ((System.currentTimeMillis() - start) < SLEEP_TIME);
 	}
 
-	private User getUserForCredentials(String login, String password) {
-		if (userAdmin == null) {
-			LogHelper.log(new Status(IStatus.ERROR, PI_BASIC_AUTH, "User admin server is not available"));
-			return null;
+	private UserInfo getUserForCredentials(String login, String password) {
+		try {
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", login, false, false);
+			if (userInfo != null && userInfo.getProperty(UserConstants.KEY_PASSWORD) != null) {
+				String userPassword = userInfo.getProperty(UserConstants.KEY_PASSWORD);
+				if (password.equals(userPassword)) {
+					return userInfo;
+				}
+			}
+		} catch (CoreException e) {
+			LogHelper.log(new Status(IStatus.ERROR, PI_BASIC_AUTH, 1, "An error occured when validating user credentials", e));
 		}
-		User user = userAdmin.getUser(UserConstants.KEY_LOGIN, login);
-		if (user != null && user.hasCredential(UserConstants.KEY_PASSWORD, password)) {
-			return user;
-		}
-		//add a sleep to avoid brute force attack
 		return null;
-	}
-
-	public void bindUserAdmin(IOrionCredentialsService newUserAdmin) {
-		BasicAuthenticationService.userAdmin = newUserAdmin;
-	}
-
-	public void unbindUserAdmin(IOrionCredentialsService newUserAdmin) {
-		if (newUserAdmin.equals(BasicAuthenticationService.userAdmin)) {
-			BasicAuthenticationService.userAdmin = null;
-		}
 	}
 
 	public void setRegistered(boolean registered) {
@@ -135,17 +125,5 @@ public class BasicAuthenticationService implements IAuthenticationService {
 
 	public void unsetHttpService(HttpService httpService) {
 		httpService.unregister("/basiclogin"); //$NON-NLS-1$
-	}
-
-	public void bindUserProfileService(IOrionUserProfileService _userProfileService) {
-		userProfileService = _userProfileService;
-	}
-
-	public void unbindUserProfileService(IOrionUserProfileService newUserProfileService) {
-		userProfileService = null;
-	}
-
-	public IOrionUserProfileService getUserProfileService() {
-		return userProfileService;
 	}
 }

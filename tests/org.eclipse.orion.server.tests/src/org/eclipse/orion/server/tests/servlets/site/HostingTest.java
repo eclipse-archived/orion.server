@@ -28,7 +28,7 @@ import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.hosting.SiteConfigurationConstants;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.ProtocolConstants;
-import org.eclipse.orion.server.useradmin.User;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -229,8 +229,8 @@ public class HostingTest extends CoreSiteTest {
 	@Test
 	// Test for https://bugs.eclipse.org/bugs/show_bug.cgi?id=382760 
 	public void testDisallowedSiteAccess() throws SAXException, IOException, JSONException, URISyntaxException, CoreException {
-		User userBObject = createUser("userB", "userB");
-		String userB = userBObject.getLogin();
+		UserInfo userBObject = createUser("userB", "userB");
+		String userB = userBObject.getUniqueId();
 
 		// User "test": create file in test's workspace
 		final String filename = "foo.html";
@@ -246,8 +246,8 @@ public class HostingTest extends CoreSiteTest {
 
 		// User B: Give access to test's workspace
 		String bWorkspaceId = workspaceId;
-		AuthorizationService.addUserRight(userBObject.getUid(), "/workspace/" + bWorkspaceId);
-		AuthorizationService.addUserRight(userBObject.getUid(), "/workspace/" + bWorkspaceId + "/*");
+		AuthorizationService.addUserRight(userBObject.getUniqueId(), "/workspace/" + bWorkspaceId);
+		AuthorizationService.addUserRight(userBObject.getUniqueId(), "/workspace/" + bWorkspaceId + "/*");
 
 		// User B: create a site against B's workspace that exposes a file in test's workspace
 		final String siteName = "My hosted site";

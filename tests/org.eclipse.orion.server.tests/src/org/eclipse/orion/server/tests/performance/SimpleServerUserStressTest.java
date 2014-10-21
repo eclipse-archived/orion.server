@@ -20,8 +20,8 @@ import java.util.Random;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.tests.servlets.users.UsersTest;
-import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.test.performance.Performance;
 import org.eclipse.test.performance.PerformanceMeter;
@@ -40,16 +40,16 @@ import com.meterware.httpunit.WebResponse;
 public class SimpleServerUserStressTest extends UsersTest {
 
 	@Override
-	public void setAdminRights(User adminUser) throws CoreException {
+	public void setAdminRights(UserInfo adminUser) throws CoreException {
 		//by default allow 'admin' to modify all users data
-		AuthorizationService.addUserRight(adminUser.getUid(), "/users");
-		AuthorizationService.addUserRight(adminUser.getUid(), "/users/*");
+		AuthorizationService.addUserRight(adminUser.getUniqueId(), "/users");
+		AuthorizationService.addUserRight(adminUser.getUniqueId(), "/users/*");
 	}
 
 	@Override
-	public void setTestUserRights(User testUser) throws CoreException {
+	public void setTestUserRights(UserInfo testUser) throws CoreException {
 		//by default allow 'test' to modify his own data
-		AuthorizationService.addUserRight(testUser.getUid(), "/users/" + testUser.getUid());
+		AuthorizationService.addUserRight(testUser.getUniqueId(), "/users/" + testUser.getUniqueId());
 	}
 
 	/**
@@ -89,7 +89,7 @@ public class SimpleServerUserStressTest extends UsersTest {
 			params.put(UserConstants.KEY_LOGIN, login);
 			params.put(UserConstants.KEY_FULL_NAME, getRandomName() + " " + getRandomName());
 			params.put(UserConstants.KEY_EMAIL, login + "@example.com");
-			params.put(UserConstants.KEY_PASSWORD, getRandomName());
+			params.put(UserConstants.KEY_PASSWORD, getRandomName() + System.currentTimeMillis());
 
 			WebRequest request = getPostUsersRequest("", params, true);
 			WebResponse response = webConversation.getResponse(request);

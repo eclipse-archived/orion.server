@@ -10,21 +10,19 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests;
 
-import static org.junit.Assert.assertNotNull;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.resources.Base64;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.User;
-import org.eclipse.orion.server.useradmin.UserConstants;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
@@ -65,8 +63,8 @@ public class AbstractServerTest {
 	}
 
 	public void setUpAuthorization() throws CoreException {
-		User testUser = createUser(testUserLogin, testUserPassword);
-		testUserId = testUser.getUid();
+		UserInfo testUser = createUser(testUserLogin, testUserPassword);
+		testUserId = testUser.getUniqueId();
 		//by default allow tests to modify anything
 		AuthorizationService.addUserRight(testUserId, "/");
 		AuthorizationService.addUserRight(testUserId, "/*");
@@ -76,34 +74,35 @@ public class AbstractServerTest {
 	 * Returns the user id of the test user.
 	 */
 	protected String getTestUserId() {
-		return createUser(testUserLogin, testUserPassword).getUid();
+		return createUser(testUserLogin, testUserPassword).getUniqueId();
 	}
 
 	/**
 	 * Returns the user with the given login. If the user doesn't exist,
 	 * one is created with the provided id and password.
 	 */
-	protected User createUser(String login, String password) {
-		// see if the user exists already
-		IOrionCredentialsService userAdmin = UserServiceHelper.getDefault().getUserStore();
-		if (userAdmin.getUser(UserConstants.KEY_LOGIN, login) != null)
-			return userAdmin.getUser(UserConstants.KEY_LOGIN, login);
-
-		// create new user in metadata store
-		UserInfo userInfo = new UserInfo();
-		userInfo.setUserName(login);
-		userInfo.setFullName(login);
+	protected UserInfo createUser(String login, String password) {
+		UserInfo userInfo = null;
 		try {
+			// see if the user exists already
+			IMetaStore metaStore = OrionConfiguration.getMetaStore();
+			userInfo = metaStore.readUserByProperty("UniqueId", login, false, false);
+			if (userInfo != null) {
+				return userInfo;
+			}
+
+			// create new user in the metadata storage
+			userInfo = new UserInfo();
+			userInfo.setUserName(login);
+			userInfo.setFullName(login);
+			userInfo.setProperty("password", password);
+
 			OrionConfiguration.getMetaStore().createUser(userInfo);
 		} catch (CoreException e) {
-			return null;
+			LogHelper.log(new Status(IStatus.ERROR, ServerTestsActivator.PI_TESTS, 1, "An error occured when creating a user", e));
 		}
 
-		// create new user in the user store
-		User newUser = new User(userInfo.getUniqueId(), login, "", password);
-		newUser = userAdmin.createUser(newUser);
-		assertNotNull(newUser);
-		return newUser;
+		return userInfo;
 	}
 
 	protected static void setAuthentication(WebRequest request, String user, String pass) {

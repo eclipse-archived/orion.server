@@ -18,10 +18,10 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,25 +42,24 @@ public class BasicAuthenticationServlet extends OrionServlet {
 		obj.put(UserConstants.KEY_LOGIN, uid);
 
 		try {
-			User user = BasicAuthenticationService.userAdmin.getUser(UserConstants.KEY_UID, uid);
-			if (user == null) {
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", uid, false, false);
+			if (userInfo == null) {
 				return null;
 			}
-			IOrionUserProfileNode generalUserProfile = authService.getUserProfileService().getUserProfileNode(uid, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 			obj.put(UserConstants.KEY_UID, uid);
-			obj.put(UserConstants.KEY_LOGIN, user.getLogin());
-			obj.put(UserConstants.KEY_LOCATION, user.getLocation());
-			obj.put(UserConstants.KEY_FULL_NAME, user.getName());
-			if (generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, null) != null) {
-				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
+			obj.put(UserConstants.KEY_LOGIN, userInfo.getUserName());
+			obj.put(UserConstants.KEY_LOCATION, '/' + UserConstants.KEY_USERS + '/' + uid);
+			obj.put(UserConstants.KEY_FULL_NAME, userInfo.getFullName());
+			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP)) {
+				Long lastLogin = Long.parseLong(userInfo.getProperty(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP));
 				obj.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
 			}
-			if (generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, null) != null) {
-				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, ""));
+			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP)) {
+				Long lastLogin = Long.parseLong(userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP));
 				obj.put(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, lastLogin);
 			}
-			if (generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE, null) != null) {
-				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE, ""));
+			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.DISK_USAGE)) {
+				Long lastLogin = Long.parseLong(userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE));
 				obj.put(IOrionUserProfileConstants.DISK_USAGE, lastLogin);
 			}
 		} catch (IllegalArgumentException e) {
