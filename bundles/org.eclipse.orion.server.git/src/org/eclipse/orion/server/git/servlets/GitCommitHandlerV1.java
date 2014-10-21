@@ -62,8 +62,11 @@ import org.eclipse.jgit.treewalk.filter.TreeFilter;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
 import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.git.AdditionalRebaseStatus;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
@@ -71,11 +74,8 @@ import org.eclipse.orion.server.git.jobs.LogJob;
 import org.eclipse.orion.server.git.objects.Commit;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.User;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.orion.server.useradmin.UserEmailUtil;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -560,14 +560,20 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
 					"Smpt server not configured", null));
 		}
-		IOrionCredentialsService userAdmin = UserServiceHelper.getDefault().getUserStore();
-		User user = userAdmin.getUser(UserConstants.KEY_LOGIN, login);
+		UserInfo userInfo = null;
+		try {
+			userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", login, false, false);
+		} catch (CoreException e) {
+			LogHelper.log(e);
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(),
+					e));
+		}
 		try {
 			if (reviewRequestEmail == null) {
 				reviewRequestEmail = new EmailContent(EMAIL_REVIEW_REQUEST_FILE);
 			}
 
-			String emailAdress = user.getEmail();
+			String emailAdress = userInfo.getProperty(UserConstants.KEY_EMAIL);
 
 			util.sendEmail(
 					reviewRequestEmail.getTitle(),
