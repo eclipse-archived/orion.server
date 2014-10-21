@@ -15,7 +15,6 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
-import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -32,14 +31,12 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.authentication.form.FormAuthHelper;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.events.IEventService;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.User;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.BundleContext;
@@ -58,9 +55,7 @@ public class OAuthHelper {
 	public static final String REDIRECT_TYPE = "redirect_type"; //$NON-NLS-1$
 	static final String OAUTH_IDENTIFIER = "oauth_identifier"; //$NON-NLS-1$
 	static final String OAUTH_DISC = "oauth-disc"; //$NON-NLS-1$
-	private static IOrionCredentialsService userAdmin;
 
-	private static IOrionUserProfileService userProfileService;
 	private static IEventService eventService;
 
 	/**
@@ -72,13 +67,7 @@ public class OAuthHelper {
 	 */
 	public static void redirectToOAuthProvider(HttpServletRequest req, HttpServletResponse resp, OAuthParams oauthParams) throws OAuthException {
 		try {
-			AuthenticationRequestBuilder requestBuilder = OAuthClientRequest
-					.authorizationProvider(oauthParams.getProviderType())
-					.setClientId(oauthParams.getClientKey())
-					.setRedirectURI(oauthParams.getRedirectURI())
-					.setResponseType(oauthParams.getResponseType())
-					.setScope(oauthParams.getScope())
-					.setState(oauthParams.getState());
+			AuthenticationRequestBuilder requestBuilder = OAuthClientRequest.authorizationProvider(oauthParams.getProviderType()).setClientId(oauthParams.getClientKey()).setRedirectURI(oauthParams.getRedirectURI()).setResponseType(oauthParams.getResponseType()).setScope(oauthParams.getScope()).setState(oauthParams.getState());
 			oauthParams.addAdditionsParams(requestBuilder);
 			OAuthClientRequest request = requestBuilder.buildQueryMessage();
 			resp.sendRedirect(request.getLocationUri());
@@ -102,7 +91,7 @@ public class OAuthHelper {
 	public static OAuthConsumer handleOAuthReturnAndTokenAccess(HttpServletRequest req, HttpServletResponse resp, OAuthParams oauthParams) throws OAuthException {
 		// Check if the server response contains an error message
 		String error = req.getParameter("error");
-		if(error != null)
+		if (error != null)
 			throw new OAuthException(error);
 
 		String state = req.getParameter("state");
@@ -116,14 +105,7 @@ public class OAuthHelper {
 			throw new OAuthException("No code provided");
 
 		try {
-			OAuthClientRequest request = OAuthClientRequest
-					.tokenProvider(oauthParams.getProviderType())
-					.setGrantType(oauthParams.getGrantType())
-					.setClientId(oauthParams.getClientKey())
-					.setClientSecret(oauthParams.getClientSecret())
-					.setRedirectURI(oauthParams.getRedirectURI())
-					.setCode(code)
-					.buildBodyMessage();
+			OAuthClientRequest request = OAuthClientRequest.tokenProvider(oauthParams.getProviderType()).setGrantType(oauthParams.getGrantType()).setClientId(oauthParams.getClientKey()).setClientSecret(oauthParams.getClientSecret()).setRedirectURI(oauthParams.getRedirectURI()).setCode(code).buildBodyMessage();
 
 			OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
 
@@ -150,26 +132,26 @@ public class OAuthHelper {
 	 * @throws IOException Throw if there is a problem sending the redirect.
 	 */
 	public static void handleLogin(HttpServletRequest req, HttpServletResponse resp, OAuthConsumer oauthConsumer) throws OAuthException, IOException {
-		if(oauthConsumer == null || OAuthUtils.isEmpty(oauthConsumer.getIdentifier())) {
+		if (oauthConsumer == null || OAuthUtils.isEmpty(oauthConsumer.getIdentifier())) {
 			throw new OAuthException("There is no Orion account associated with this Id. Please register or contact your system administrator for assistance.");
 		}
 		String redirect = oauthConsumer.getRedirect();
-		User user = getUser(oauthConsumer);
-		if (user == null) {
-			 if(!FormAuthHelper.canAddUsers()){
-				 throw new OAuthException("There is no Orion account associated with this Id. Please register or contact your system administrator for assistance.");
-			 }
+		UserInfo userInfo = getUser(oauthConsumer);
+		if (userInfo == null) {
+			if (!FormAuthHelper.canAddUsers()) {
+				throw new OAuthException("There is no Orion account associated with this Id. Please register or contact your system administrator for assistance.");
+			}
 			String url = "/mixloginstatic/LoginWindow.html";
 			url += "?oauth=create&email=" + oauthConsumer.getEmail();
 			url += "&username=" + oauthConsumer.getUsername();
 			url += "&identifier=" + oauthConsumer.getIdentifier();
-			if(redirect != null)
+			if (redirect != null)
 				url += "&redirect=" + redirect;
 			resp.sendRedirect(url);
 			return;
 		}
 
-		req.getSession().setAttribute("user", user.getUid()); //$NON-NLS-1$
+		req.getSession().setAttribute("user", userInfo.getUniqueId()); //$NON-NLS-1$
 
 		if (getEventService() != null) {
 			JSONObject message = new JSONObject();
@@ -178,18 +160,17 @@ public class OAuthHelper {
 				Date date = new Date(System.currentTimeMillis());
 				message.put("event", "login");
 				message.put("published", format.format(date));
-				message.put("user", user.getUid());
+				message.put("user", userInfo.getUniqueId());
 			} catch (JSONException e1) {
 				LogHelper.log(e1);
 			}
 			getEventService().publish("orion/login", message);
 		}
 
-		IOrionUserProfileNode userProfileNode = getUserProfileService().getUserProfileNode(user.getUid(), IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 		try {
 			// try to store the login timestamp in the user profile
-			userProfileNode.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString(), false);
-			userProfileNode.flush();
+			userInfo.setProperty(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
+			OrionConfiguration.getMetaStore().updateUser(userInfo);
 		} catch (CoreException e) {
 			// just log that the login timestamp was not stored
 			LogHelper.log(e);
@@ -198,54 +179,58 @@ public class OAuthHelper {
 		if (redirect != null) {
 			resp.sendRedirect(redirect);
 			return;
-		}else{
+		} else {
 			resp.sendRedirect("/index.html");
 		}
 
 		return;
 	}
 
-	private static User getUser(OAuthConsumer oauthConsumer){
-		// Get user by oauth property
-		Set<User> users = userAdmin.getUsersByProperty("oauth", ".*\\Q" + oauthConsumer.getIdentifier() + "\\E.*", true, false);
-		if (users.size() > 0) {
-			return users.iterator().next();
-		}
-		// Might need migration, try openid property
-		String openidIdentifier = oauthConsumer.getOpenidIdentifier();
-		if(openidIdentifier == null)
-			return null;
-		users = userAdmin.getUsersByProperty("openid", ".*\\Q" + openidIdentifier + "\\E.*", true, false);
-		if (users.size() > 0) {
-			User user = users.iterator().next();
-			// Remove old property
-			String openidsString = (String) user.getProperty("openid");
-			String [] openIds = openidsString.split("\n");
-			if (openIds.length == 1) {
-				user.removeProperty("openid");
-			} else {
-				// Multiple open id's
-				// Remove the current one
-				String newOpenIds = "";
-				for (String openid : openIds) {
-					if (!openid.equals(oauthConsumer.getOpenidIdentifier())) {
-						newOpenIds += openid + "\n";
+	private static UserInfo getUser(OAuthConsumer oauthConsumer) {
+		try {
+			// Get user by oauth property
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty("oauth", ".*\\Q" + oauthConsumer.getIdentifier() + "\\E.*", true, false);
+			if (userInfo != null) {
+				return userInfo;
+			}
+			// Might need migration, try openid property
+			String openidIdentifier = oauthConsumer.getOpenidIdentifier();
+			if (openidIdentifier == null)
+				return null;
+			userInfo = OrionConfiguration.getMetaStore().readUserByProperty("openid", ".*\\Q" + openidIdentifier + "\\E.*", true, false);
+			if (userInfo != null) {
+				// Remove old property
+				String openidsString = (String) userInfo.getProperty("openid");
+				String[] openIds = openidsString.split("\n");
+				if (openIds.length == 1) {
+					userInfo.setProperty("openid", null);
+				} else {
+					// Multiple open id's
+					// Remove the current one
+					String newOpenIds = "";
+					for (String openid : openIds) {
+						if (!openid.equals(oauthConsumer.getOpenidIdentifier())) {
+							newOpenIds += openid + "\n";
+						}
 					}
+					newOpenIds = newOpenIds.substring(0, newOpenIds.length() - 1);
+					userInfo.setProperty("openid", newOpenIds);
 				}
-				newOpenIds = newOpenIds.substring(0, newOpenIds.length() - 1);
-				user.addProperty("openid", newOpenIds);
+				// Add new property
+				String oauths = userInfo.getProperty("oauth");
+				if (oauths != null && !oauths.equals("")) {
+					oauths += '\n';
+				} else {
+					oauths = "";
+				}
+				oauths += oauthConsumer.getIdentifier();
+				userInfo.setProperty("oauth", oauths);
+				OrionConfiguration.getMetaStore().updateUser(userInfo);
+				return userInfo;
 			}
-			// Add new property
-			String oauths = (String) user.getProperty("oauth");
-			if(oauths != null && !oauths.equals("")){
-				oauths += '\n';
-			} else {
-				oauths = "";
-			}
-			oauths += oauthConsumer.getIdentifier();
-			user.addProperty("oauth", oauths);
-			userAdmin.updateUser(user.getUid(), user);
-			return user;
+		} catch (CoreException e) {
+			// just log that there is some internal issue.
+			LogHelper.log(e);
 		}
 		return null;
 	}
@@ -282,32 +267,6 @@ public class OAuthHelper {
 
 	public static String getAuthType() {
 		return OAUTH; //$NON-NLS-1$
-	}
-
-	public static IOrionCredentialsService getDefaultUserAdmin() {
-		return userAdmin;
-	}
-
-	public void setUserAdmin(IOrionCredentialsService userAdmin) {
-		OAuthHelper.userAdmin = userAdmin;
-	}
-
-	public void unsetUserAdmin(IOrionCredentialsService userAdmin) {
-		if (userAdmin.equals(OAuthHelper.userAdmin)) {
-			OAuthHelper.userAdmin = null;
-		}
-	}
-
-	public static IOrionUserProfileService getUserProfileService() {
-		return userProfileService;
-	}
-
-	public static void bindUserProfileService(IOrionUserProfileService _userProfileService) {
-		userProfileService = _userProfileService;
-	}
-
-	public static void unbindUserProfileService(IOrionUserProfileService userProfileService) {
-		userProfileService = null;
 	}
 
 	private static IEventService getEventService() {

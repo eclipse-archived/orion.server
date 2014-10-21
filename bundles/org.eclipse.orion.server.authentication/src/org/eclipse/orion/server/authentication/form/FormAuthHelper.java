@@ -19,9 +19,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.events.IEventService;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.user.profile.*;
 import org.eclipse.orion.server.useradmin.*;
 import org.json.JSONException;
@@ -35,10 +38,6 @@ import org.slf4j.LoggerFactory;
  * Groups methods to handle session fields for form-based authentication.
  */
 public class FormAuthHelper {
-
-	private static IOrionCredentialsService userAdmin;
-
-	private static IOrionUserProfileService userProfileService;
 
 	public enum LoginResult {
 		OK, FAIL, BLOCKED
@@ -55,18 +54,17 @@ public class FormAuthHelper {
 	 * @param req
 	 * @param resp
 	 * @throws IOException
-	 * @throws UnsupportedUserStoreException 
 	 */
-	public static LoginResult performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException, UnsupportedUserStoreException {
+	public static LoginResult performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
-		User user = getUserForCredentials(login, req.getParameter(UserConstants.KEY_PASSWORD));
+		UserInfo userInfo = getUserForCredentials(login, req.getParameter(UserConstants.KEY_PASSWORD));
 
-		if (user != null) {
-			if (user.getBlocked()) {
+		if (userInfo != null) {
+			if (userInfo.getProperties().containsKey("blocked")) {
 				return LoginResult.BLOCKED;
 			}
-			String userId = user.getUid();
+			String userId = userInfo.getUniqueId();
 			if (logger.isInfoEnabled())
 				logger.info("Login success: " + login); //$NON-NLS-1$ 
 			req.getSession().setAttribute("user", userId); //$NON-NLS-1$
@@ -85,11 +83,10 @@ public class FormAuthHelper {
 				getEventService().publish("orion/login", message);
 			}
 
-			IOrionUserProfileNode userProfileNode = getUserProfileService().getUserProfileNode(userId, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 			try {
 				// try to store the login timestamp in the user profile
-				userProfileNode.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString(), false);
-				userProfileNode.flush();
+				userInfo.setProperty(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
+				OrionConfiguration.getMetaStore().updateUser(userInfo);
 			} catch (CoreException e) {
 				// just log that the login timestamp was not stored
 				LogHelper.log(e);
@@ -102,26 +99,29 @@ public class FormAuthHelper {
 		return LoginResult.FAIL;
 	}
 
-	private static User getUserForCredentials(String login, String password) throws UnsupportedUserStoreException {
-		User user;
-		if (userAdmin == null) {
-			throw new UnsupportedUserStoreException();
-		}
-		user = userAdmin.getUser(UserConstants.KEY_LOGIN, login);
-		if (user != null && user.hasCredential(UserConstants.KEY_PASSWORD, password)) {
-			return user;
+	private static UserInfo getUserForCredentials(String login, String password) {
+		try {
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", login, false, false);
+			if (userInfo != null && userInfo.getProperty(UserConstants.KEY_PASSWORD) != null) {
+				String userPassword = userInfo.getProperty(UserConstants.KEY_PASSWORD);
+				if (password.equals(userPassword)) {
+					return userInfo;
+				}
+			}
+		} catch (CoreException e) {
+			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_AUTHENTICATION_SERVLETS, 1, "An error occured when validating user credentials", e));
 		}
 		return null;
 	}
 
 	/**
-	 * Returns <code>true</code>ue if an unauthorised user can create a new account, 
+	 * Returns <code>true</code> if an unauthorised user can create a new account, 
 	 * and <code>false</code> otherwise.
 	 */
 	public static boolean canAddUsers() {
 		//if there is no list of users authorised to create accounts, it means everyone can create accounts
 		boolean allowAnonymousAccountCreation = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION, null) == null;
-		return allowAnonymousAccountCreation ? (userAdmin == null ? false : userAdmin.canCreateUsers()) : false;
+		return allowAnonymousAccountCreation;
 	}
 
 	public static boolean forceEmail() {
@@ -137,45 +137,29 @@ public class FormAuthHelper {
 		return PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_REGISTRATION_URI, null);
 	}
 
-	public static IOrionCredentialsService getDefaultUserAdmin() {
-		return userAdmin;
-	}
-
-	public void setUserAdmin(IOrionCredentialsService userAdmin) {
-		FormAuthHelper.userAdmin = userAdmin;
-	}
-
-	public void unsetUserAdmin(IOrionCredentialsService userAdmin) {
-		if (userAdmin.equals(FormAuthHelper.userAdmin)) {
-			FormAuthHelper.userAdmin = null;
-		}
-	}
-
 	public static JSONObject getUserJson(String uid, String contextPath) throws JSONException {
 		JSONObject obj = new JSONObject();
 		obj.put(UserConstants.KEY_LOGIN, uid);
 		try {
-			User user = userAdmin.getUser(UserConstants.KEY_UID, uid);
-
-			if (user == null) {
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", uid, false, false);
+			if (userInfo == null) {
 				return null;
 			}
-			IOrionUserProfileNode generalUserProfile = FormAuthHelper.getUserProfileService().getUserProfileNode(uid, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
 			obj.put(UserConstants.KEY_UID, uid);
-			obj.put(UserConstants.KEY_LOGIN, user.getLogin());
-			obj.put(UserConstants.KEY_LOCATION, contextPath + user.getLocation());
-			obj.put(UserConstants.KEY_FULL_NAME, user.getName());
-			if (generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, null) != null) {
-				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, ""));
-				obj.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
+			obj.put(UserConstants.KEY_LOGIN, userInfo.getUserName());
+			obj.put(UserConstants.KEY_LOCATION, contextPath + '/' + UserConstants.KEY_USERS + '/' + uid);
+			obj.put(UserConstants.KEY_FULL_NAME, userInfo.getFullName());
+			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP)) {
+				Long lastLoginTimestamp = Long.parseLong(userInfo.getProperty(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP));
+				obj.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLoginTimestamp);
 			}
-			if (generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, null) != null) {
-				Long lastLogin = Long.parseLong(generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, ""));
-				obj.put(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, lastLogin);
+			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP)) {
+				Long diskUsageTimestamp = Long.parseLong(userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP));
+				obj.put(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, diskUsageTimestamp);
 			}
-			if (generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE, null) != null) {
-				String lastLogin = generalUserProfile.get(IOrionUserProfileConstants.DISK_USAGE, "");
-				obj.put(IOrionUserProfileConstants.DISK_USAGE, lastLogin);
+			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.DISK_USAGE)) {
+				String diskUsage = userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE);
+				obj.put(IOrionUserProfileConstants.DISK_USAGE, diskUsage);
 			}
 		} catch (IllegalArgumentException e) {
 			LogHelper.log(e);
@@ -185,18 +169,6 @@ public class FormAuthHelper {
 
 		return obj;
 
-	}
-
-	private static IOrionUserProfileService getUserProfileService() {
-		return userProfileService;
-	}
-
-	public static void bindUserProfileService(IOrionUserProfileService _userProfileService) {
-		userProfileService = _userProfileService;
-	}
-
-	public static void unbindUserProfileService(IOrionUserProfileService userProfileService) {
-		userProfileService = null;
 	}
 
 	private static IEventService getEventService() {
