@@ -13,6 +13,7 @@ package org.eclipse.orion.server.useradmin.diskusage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.util.List;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.runtime.CoreException;
@@ -21,10 +22,9 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileNode;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileService;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,21 +62,16 @@ public class DiskUsageJob extends Job {
 				logger.info("Orion disk usage user data job started"); //$NON-NLS-1$
 			}
 
-			UserServiceHelper userServiceHelper = UserServiceHelper.getDefault();
-			if (userServiceHelper == null) {
-				//bundle providing metastore might not have started yet
-				return false;
-			}
-			IOrionUserProfileService userProfileService = userServiceHelper.getUserProfileService();
-			String[] userids = userProfileService.getUserNames();
+			IMetaStore metaStore = OrionConfiguration.getMetaStore();
+			List<String> userids = metaStore.readAllUsers();
 			for (String userId : userids) {
-				File userRoot = OrionConfiguration.getMetaStore().getUserHome(userId).toLocalFile(EFS.NONE, null);
+				File userRoot = metaStore.getUserHome(userId).toLocalFile(EFS.NONE, null);
 				String diskUsage = getFolderSize(userRoot);
-				IOrionUserProfileNode generalUserProfile = userProfileService.getUserProfileNode(userId, IOrionUserProfileConstants.GENERAL_PROFILE_PART);
+				UserInfo userInfo = metaStore.readUser(userId);
 				// try to store the disk usage timestamp and value in the user profile
-				generalUserProfile.put(IOrionUserProfileConstants.DISK_USAGE, diskUsage, false);
-				generalUserProfile.put(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, new Long(System.currentTimeMillis()).toString(), false);
-				generalUserProfile.flush();
+				userInfo.setProperty(IOrionUserProfileConstants.DISK_USAGE, diskUsage);
+				userInfo.setProperty(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
+				metaStore.updateUser(userInfo);
 			}
 			if (logger.isInfoEnabled()) {
 				logger.info("Orion disk usage user data updated"); //$NON-NLS-1$
