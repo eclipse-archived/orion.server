@@ -35,11 +35,6 @@ public class UserAdminActivator implements BundleActivator {
 		return singleton;
 	}
 
-	/**
-	 * If an {@link IOrionCredentialsService} of this name exists it will be returned as default by {@link #getUserStore()}
-	 */
-	public static final String eclipseWebUsrAdminName = "Orion";
-
 	/*
 	 * (non-Javadoc)
 	 * 

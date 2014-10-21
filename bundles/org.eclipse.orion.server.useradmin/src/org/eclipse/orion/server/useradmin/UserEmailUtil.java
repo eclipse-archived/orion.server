@@ -32,6 +32,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 
 /**
  * Handles sending emails to users
@@ -148,7 +149,7 @@ public class UserEmailUtil {
 		}
 	}
 
-	public void sendEmailConfirmation(HttpServletRequest req, User user) throws URISyntaxException, IOException, CoreException {
+	public void sendEmailConfirmation(HttpServletRequest req, UserInfo userInfo) throws URISyntaxException, IOException, CoreException {
 		URL confirmLocation = new URL(req.getScheme(),
                 req.getServerName(),
                 req.getServerPort(),
@@ -157,25 +158,25 @@ public class UserEmailUtil {
 			confirmationEmail = new EmailContent(EMAIL_CONFIRMATION_FILE);
 		}
 		String confirmURL = confirmLocation.toString();
-		confirmURL += "/" + user.getUid();
-		confirmURL += "?" + UserConstants.KEY_CONFIRMATION_ID + "=" + user.getConfirmationId();
-		sendEmail(confirmationEmail.getTitle(), confirmationEmail.getContent().replaceAll(EMAIL_USER_LINK, user.getLogin()).replaceAll(EMAIL_URL_LINK, confirmURL).replaceAll(EMAIL_ADDRESS_LINK, user.getEmail()), user.getEmail());
+		confirmURL += "/" + userInfo.getUniqueId();
+		confirmURL += "?" + UserConstants.KEY_CONFIRMATION_ID + "=" + userInfo.getProperty(UserConstants.KEY_EMAIL_CONFIRMATION);
+		sendEmail(confirmationEmail.getTitle(), confirmationEmail.getContent().replaceAll(EMAIL_USER_LINK, userInfo.getUniqueId()).replaceAll(EMAIL_URL_LINK, confirmURL).replaceAll(EMAIL_ADDRESS_LINK, userInfo.getProperty(UserConstants.KEY_EMAIL)), userInfo.getProperty(UserConstants.KEY_EMAIL));
 	}
 
-	public void sendResetPasswordConfirmation(URI baseURI, User user) throws URISyntaxException, IOException, CoreException {
+	public void sendResetPasswordConfirmation(URI baseURI, UserInfo userInfo) throws URISyntaxException, IOException, CoreException {
 		if (confirmationResetPassEmail == null) {
 			confirmationResetPassEmail = new EmailContent(EMAIL_CONFIRMATION_RESET_PASS_FILE);
 		}
 		String confirmURL = baseURI.toURL().toString();
-		confirmURL += "/" + user.getUid();
-		confirmURL += "?" + UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID + "=" + user.getProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID);
-		sendEmail(confirmationResetPassEmail.getTitle(), confirmationResetPassEmail.getContent().replaceAll(EMAIL_URL_LINK, confirmURL).replaceAll(EMAIL_USER_LINK, user.getLogin()), user.getEmail());
+		confirmURL += "/" + userInfo.getUniqueId();
+		confirmURL += "?" + UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID + "=" + userInfo.getProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID);
+		sendEmail(confirmationResetPassEmail.getTitle(), confirmationResetPassEmail.getContent().replaceAll(EMAIL_URL_LINK, confirmURL).replaceAll(EMAIL_USER_LINK, userInfo.getUniqueId()), userInfo.getProperty(UserConstants.KEY_EMAIL));
 	}
 
-	public void setPasswordResetEmail(User user) throws URISyntaxException, IOException, CoreException {
+	public void setPasswordResetEmail(UserInfo userInfo) throws URISyntaxException, IOException, CoreException {
 		if (passwordResetEmail == null) {
 			passwordResetEmail = new EmailContent(EMAIL_PASSWORD_RESET);
 		}
-		sendEmail(passwordResetEmail.getTitle(), passwordResetEmail.getContent().replaceAll(EMAIL_USER_LINK, user.getLogin()).replaceAll(EMAIL_PASSWORD_LINK, user.getPassword()), user.getEmail());
+		sendEmail(passwordResetEmail.getTitle(), passwordResetEmail.getContent().replaceAll(EMAIL_USER_LINK, userInfo.getUniqueId()).replaceAll(EMAIL_PASSWORD_LINK, userInfo.getProperty(UserConstants.KEY_PASSWORD)), userInfo.getProperty(UserConstants.KEY_EMAIL));
 	}
 }
