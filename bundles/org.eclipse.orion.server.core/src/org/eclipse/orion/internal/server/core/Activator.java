@@ -13,7 +13,9 @@ package org.eclipse.orion.internal.server.core;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -164,6 +166,9 @@ public class Activator implements BundleActivator {
 	private void initializeMetaStore() {
 		try {
 			metastore =  new SimpleMetaStore(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null));
+			List<String> keys = new ArrayList<String>();
+			keys.add("UniqueId");
+			metastore.registerUserProperties(keys);
 		} catch (CoreException e) {
 			throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
 		}
