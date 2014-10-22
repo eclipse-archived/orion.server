@@ -132,7 +132,14 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 			diffLocation = new URI(diffLocation.getScheme(), diffLocation.getAuthority(), diffPath.toPortableString(), null, null);
 		}
 		URI cloneLocation = BaseToCloneConverter.getCloneLocation(diffLocation, BaseToCloneConverter.DIFF);
-		for (DiffEntry entr : l) {
+
+		int page = request.getParameter("page") != null ? new Integer(request.getParameter("page")).intValue() : 0; //$NON-NLS-1$ //$NON-NLS-2$
+		int pageSize = request.getParameter("pageSize") != null ? new Integer(request.getParameter("pageSize")).intValue() : Integer.MAX_VALUE; //$NON-NLS-1$ //$NON-NLS-2$
+		int start = pageSize * (page - 1);
+		int end = Math.min(pageSize + start, l.size());
+		int i = start;
+		for (i = start; i < end; i++) {
+			DiffEntry entr = l.get(i);
 			JSONObject diff = new JSONObject();
 			diff.put(ProtocolConstants.KEY_TYPE, org.eclipse.orion.server.git.objects.Diff.TYPE);
 			diff.put(GitConstants.KEY_COMMIT_DIFF_NEWPATH, entr.getNewPath());
@@ -150,7 +157,12 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 		JSONObject result = new JSONObject();
 		result.put(ProtocolConstants.KEY_TYPE, org.eclipse.orion.server.git.objects.Diff.TYPE);
 		result.put(ProtocolConstants.KEY_CHILDREN, diffs);
-
+		result.put(ProtocolConstants.KEY_LENGTH, l.size());
+		if (i < l.size()) {
+			URI nextLocation = new URI(diffLocation.getScheme(), diffLocation.getUserInfo(), diffLocation.getHost(), diffLocation.getPort(),
+					diffLocation.getPath(), "pageSize=" + pageSize + "&page=" + (page + 1), diffLocation.getFragment()); //$NON-NLS-1$ //$NON-NLS-2$
+			result.put(ProtocolConstants.KEY_NEXT_LOCATION, nextLocation);
+		}
 		OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 
 		return true;

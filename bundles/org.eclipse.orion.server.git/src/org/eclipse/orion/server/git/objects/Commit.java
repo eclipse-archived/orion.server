@@ -233,9 +233,9 @@ public class Commit extends GitObject {
 
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_COMMIT_DIFFS)
-	protected JSONArray getDiffs() throws JSONException, URISyntaxException, MissingObjectException, IncorrectObjectTypeException, IOException {
+	protected JSONObject getDiffs() throws JSONException, URISyntaxException, MissingObjectException, IncorrectObjectTypeException, IOException {
 		JSONArray diffs = new JSONArray();
-
+		JSONObject result = new JSONObject();
 		TreeWalk tw = null;
 		try {
 			tw = new TreeWalk(db);
@@ -267,7 +267,14 @@ public class Commit extends GitObject {
 					rw.release();
 				}
 			}
-			for (DiffEntry entr : l) {
+
+			int pageSize = 100;
+			int page = 1;
+			int start = pageSize * (page - 1);
+			int end = Math.min(pageSize + start, l.size());
+			int i = start;
+			for (i = start; i < end; i++) {
+				DiffEntry entr = l.get(i);
 				JSONObject diff = new JSONObject();
 				diff.put(ProtocolConstants.KEY_TYPE, org.eclipse.orion.server.git.objects.Diff.TYPE);
 				diff.put(GitConstants.KEY_COMMIT_DIFF_NEWPATH, entr.getNewPath());
@@ -282,10 +289,20 @@ public class Commit extends GitObject {
 
 				diffs.put(diff);
 			}
+
+			result.put(ProtocolConstants.KEY_TYPE, org.eclipse.orion.server.git.objects.Diff.TYPE);
+			result.put(ProtocolConstants.KEY_CHILDREN, diffs);
+			result.put(ProtocolConstants.KEY_LENGTH, l.size());
+			if (i < l.size()) {
+				URI diffLocation = createDiffLocation(revCommit.getName(), fromName, "");
+				URI nextLocation = new URI(diffLocation.getScheme(), diffLocation.getUserInfo(), diffLocation.getHost(), diffLocation.getPort(),
+						diffLocation.getPath(), "pageSize=" + pageSize + "&page=" + (page + 1), diffLocation.getFragment());
+				result.put(ProtocolConstants.KEY_NEXT_LOCATION, nextLocation);
+			}
 		} finally {
 			tw.release();
 		}
-		return diffs;
+		return result;
 	}
 
 	protected JSONArray toJSON(Map<String, Ref> revTags) throws JSONException, URISyntaxException, CoreException, IOException {
