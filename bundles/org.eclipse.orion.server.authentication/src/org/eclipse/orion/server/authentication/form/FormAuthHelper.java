@@ -106,11 +106,21 @@ public class FormAuthHelper {
 				String userPassword = userInfo.getProperty(UserConstants.KEY_PASSWORD);
 				if (password.equals(userPassword)) {
 					return userInfo;
+				} else {
+					// password verification failed
+					return null;
 				}
+			}
+			
+			// TODO: workaround added for removal of LDAPCredentialsService
+			String preference = PreferenceHelper.getString("ldap.credentials.login");
+			if (userInfo == null && preference != null) {
+				return OrionConfiguration.getMetaStore().readUser(login);
 			}
 		} catch (CoreException e) {
 			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_AUTHENTICATION_SERVLETS, 1, "An error occured when validating user credentials", e));
 		}
+		
 		return null;
 	}
 
