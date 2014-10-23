@@ -15,23 +15,11 @@ import java.security.SecureRandom;
 import java.text.MessageFormat;
 import java.util.HashSet;
 import java.util.Set;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.Cookie;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import javax.servlet.*;
+import javax.servlet.http.*;
 import org.apache.commons.codec.binary.Base64;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,8 +54,8 @@ public class XSRFPreventionFilter implements Filter {
 		secureRandom = new SecureRandom();
 		secureRandom.nextBytes(new byte[1]);
 
-		String disableCSRF = PreferenceHelper.getString(ServerConstants.CONFIG_XSRF_PROTECTION_DISABLED);
-		xsrfPreventionFilterDisabled = Boolean.parseBoolean(disableCSRF);
+		String enableCSRF = PreferenceHelper.getString(ServerConstants.CONFIG_XSRF_PROTECTION_ENABLED);
+		xsrfPreventionFilterDisabled = !Boolean.parseBoolean(enableCSRF);
 	}
 
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain) throws IOException, ServletException {

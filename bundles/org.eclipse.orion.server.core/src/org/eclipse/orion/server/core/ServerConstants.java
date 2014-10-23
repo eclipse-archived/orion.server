@@ -14,7 +14,7 @@ package org.eclipse.orion.server.core;
  * Public constants available to clients of the orion server core API.
  */
 public class ServerConstants {
-	
+
 	/**
 	 * The name of configuration property specifying if access logs in NCSA format should be enabled on the Jetty server (see Bug 429063)
 	 */
@@ -106,14 +106,12 @@ public class ServerConstants {
 	 */
 	public static final String CONFIG_EVENT_HOST = "orion.events.uri"; //$NON-NLS-1$
 	public static final String CONFIG_EVENT_CLIENT_ID = "orion.events.clientId"; //$NON-NLS-1$
-	
+
 	public static final String CONFIG_EVENT_KEY_TYPE = "orion.events.keyType";
 	public static final String CONFIG_EVENT_KEY_PASSWORD = "orion.events.keyPassword";
 	public static final String CONFIG_EVENT_KEY_STORE = "orion.events.keyStore";
 	public static final String CONFIG_EVENT_TRUST_STORE = "orion.events.trustStore";
 
-	
-	
 	/**
 	 * The name of a configuration property specifying a comma-separated list of server
 	 * file system paths where user content can be written. By default user content
@@ -185,14 +183,14 @@ public class ServerConstants {
 	 * Orion search indices.  Must be an absolute path on the server file system.
 	 */
 	public static final String CONFIG_SEARCH_INDEX_LOCATION = "orion.search.index.location"; //$NON-NLS-1$
-	
+
 	/**
 	 * The name of a configuration property specifying the virtual hosts to use for
 	 * test sites launched by this server. The property value is a comma-separated 
 	 * list of host names.
 	 */
 	public static final String CONFIG_SITE_VIRTUAL_HOSTS = "orion.site.virtualHosts"; //$NON-NLS-1$
-	
+
 	/**
 	 * The name of a configuration property specifying the context path to use
 	 *  for the server (e.g. /code).
@@ -216,7 +214,7 @@ public class ServerConstants {
 	public static final String PROP_CONFIG_FILE_LOCATION = "orion.core.configFile"; //$NON-NLS-1$
 
 	/**
-	 * The name of a configuration property to disable XSRF protection when set to true.
+	 * The name of a configuration property to enable cross-site request forgery protection (XSRF - default is false).
 	 */
-	public static final String CONFIG_XSRF_PROTECTION_DISABLED = "orion.XSRFPreventionFilterDisabled"; //$NON-NLS-1$
+	public static final String CONFIG_XSRF_PROTECTION_ENABLED = "orion.XSRFPreventionFilterEnabled"; //$NON-NLS-1$
 }
