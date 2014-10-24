@@ -74,4 +74,12 @@ public class ManifestConstants {
 	public static final String ENV = "env"; //$NON-NLS-1$
 
 	public static final String SERVICES = "services"; //$NON-NLS-1$
+
+	public static final String BUILDPACK = "buildpack"; //$NON-NLS-1$
+
+	public static final String DOMAIN = "domain"; //$NON-NLS-1$
+
+	public static final String TIMEOUT = "timeout"; //$NON-NLS-1$
+
+	public static final String NOROUTE = "no-route"; //$NON-NLS-1$
 }

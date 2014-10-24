@@ -14,6 +14,8 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
@@ -30,6 +32,9 @@ import org.json.*;
  * 2) Tree nodes carry associated token lists.
  */
 public class ManifestParseTree {
+
+	private static final Pattern memoryPattern = Pattern.compile("[1-9][0-9]*(M|MB|G|GB|m|mb|g|gb)"); //$NON-NLS-1$
+	private static final Pattern nonNegativePattern = Pattern.compile("[1-9][0-9]*"); //$NON-NLS-1$
 
 	private List<Token> tokens;
 	private List<ManifestParseTree> children;
@@ -215,6 +220,59 @@ public class ManifestParseTree {
 	}
 
 	/**
+	 * @return <code>true</code> if and only if the node represents a string property.
+	 */
+	public boolean isStringProperty() {
+		if (getChildren().size() != 1)
+			return false;
+
+		if (isList())
+			return false;
+
+		ManifestParseTree valueNode = getChildren().get(0);
+		if (valueNode.getChildren().size() != 0)
+			return false;
+
+		return true;
+	}
+
+	/**
+	 * @return <code>true</code> if and only if the node represents a valid application memory property.
+	 */
+	public boolean isValidMemoryProperty() {
+		if (!isStringProperty())
+			return false;
+
+		try {
+
+			String memoryValue = getValue();
+			Matcher matcher = memoryPattern.matcher(memoryValue);
+			return matcher.matches();
+
+		} catch (InvalidAccessException ex) {
+			return false;
+		}
+	}
+
+	/**
+	 * @return <code>true</code> if and only if the node represents a valid non-negative valued property.
+	 */
+	public boolean isValidNonNegativeProperty() {
+		if (!isStringProperty())
+			return false;
+
+		try {
+
+			String instancesValue = getValue();
+			Matcher matcher = nonNegativePattern.matcher(instancesValue);
+			return matcher.matches();
+
+		} catch (InvalidAccessException ex) {
+			return false;
+		}
+	}
+
+	/**
 	 * Externalization helper method
 	 */
 	protected String toString(int indentation) {
@@ -379,5 +437,19 @@ public class ManifestParseTree {
 	@Override
 	public String toString() {
 		return toString(0);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof ManifestParseTree))
+			return false;
+
+		ManifestParseTree tree = (ManifestParseTree) obj;
+		return getLabel().equals(tree.getLabel());
+	}
+
+	@Override
+	public int hashCode() {
+		return getLabel().hashCode();
 	}
 }
