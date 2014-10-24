@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.manifest.v2.utils;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.eclipse.orion.server.cf.manifest.v2.*;
 import org.eclipse.osgi.util.NLS;
 
@@ -25,52 +23,50 @@ import org.eclipse.osgi.util.NLS;
  * e) no-routes are strings literals "true" if present
  */
 public class ApplicationSanizator implements Analyzer {
-	Pattern memoryPattern = Pattern.compile("[1-9][0-9]*(M|MB|G|GB|m|mb|g|gb)"); //$NON-NLS-1$
-	Pattern nonNegativePattern = Pattern.compile("[1-9][0-9]*"); //$NON-NLS-1$
 
 	@Override
 	public void apply(ManifestParseTree node) throws AnalyzerException {
 
-		if (!node.has("applications")) //$NON-NLS-1$
+		if (!node.has(ManifestConstants.APPLICATIONS))
 			/* nothing to do */
 			return;
 
 		try {
-			ManifestParseTree applications = node.get("applications"); //$NON-NLS-1$
+			ManifestParseTree applications = node.get(ManifestConstants.APPLICATIONS);
 			for (ManifestParseTree application : applications.getChildren()) {
 
-				String applicationName = application.get("name").getValue(); //$NON-NLS-1$
+				String applicationName = application.get(ManifestConstants.NAME).getValue();
 
 				checkEmptyProperties(applicationName, application);
 
-				ManifestParseTree buildpack = application.getOpt("buildpack"); //$NON-NLS-1$
+				ManifestParseTree buildpack = application.getOpt(ManifestConstants.BUILDPACK);
 				checkBuildpack(applicationName, buildpack);
 
-				ManifestParseTree command = application.getOpt("command"); //$NON-NLS-1$
+				ManifestParseTree command = application.getOpt(ManifestConstants.COMMAND);
 				checkCommand(applicationName, command);
 
-				ManifestParseTree domain = application.getOpt("domain"); //$NON-NLS-1$
+				ManifestParseTree domain = application.getOpt(ManifestConstants.DOMAIN);
 				checkDomain(applicationName, domain);
 
-				ManifestParseTree host = application.getOpt("host"); //$NON-NLS-1$
+				ManifestParseTree host = application.getOpt(ManifestConstants.HOST);
 				checkHost(applicationName, host);
 
-				ManifestParseTree path = application.getOpt("path"); //$NON-NLS-1$
+				ManifestParseTree path = application.getOpt(ManifestConstants.PATH);
 				checkPath(applicationName, path);
 
-				ManifestParseTree memory = application.getOpt("memory"); //$NON-NLS-1$
+				ManifestParseTree memory = application.getOpt(ManifestConstants.MEMORY);
 				checkMemory(applicationName, memory);
 
-				ManifestParseTree instances = application.getOpt("instances"); //$NON-NLS-1$
+				ManifestParseTree instances = application.getOpt(ManifestConstants.INSTANCES);
 				checkInstances(applicationName, instances);
 
-				ManifestParseTree timeout = application.getOpt("timeout"); //$NON-NLS-1$
+				ManifestParseTree timeout = application.getOpt(ManifestConstants.TIMEOUT);
 				checkTimeout(applicationName, timeout);
 
-				ManifestParseTree noRoute = application.getOpt("no-route"); //$NON-NLS-1$
+				ManifestParseTree noRoute = application.getOpt(ManifestConstants.NOROUTE);
 				checkNoRoute(applicationName, noRoute);
 
-				ManifestParseTree services = application.getOpt("services"); //$NON-NLS-1$
+				ManifestParseTree services = application.getOpt(ManifestConstants.SERVICES);
 				checkServices(applicationName, services);
 			}
 		} catch (InvalidAccessException ex) {
@@ -79,118 +75,98 @@ public class ApplicationSanizator implements Analyzer {
 		}
 	}
 
-	private boolean isStringProperty(ManifestParseTree node) {
-		if (node.getChildren().size() != 1)
-			return false;
-
-		if (node.isList())
-			return false;
-
-		ManifestParseTree valueNode = node.getChildren().get(0);
-		if (valueNode.getChildren().size() != 0)
-			return false;
-
-		return true;
-	}
-
-	private void checkEmptyProperties(String applicationName, ManifestParseTree application) throws AnalyzerException {
+	protected void checkEmptyProperties(String applicationName, ManifestParseTree application) throws AnalyzerException {
 		for (ManifestParseTree property : application.getChildren())
 			if (property.getChildren().isEmpty())
 				throw new AnalyzerException(NLS.bind("Empty property \"{0}\" in application \"{1}\".", property.getLabel(), applicationName), property.getTokens().get(0));
 	}
 
-	private void checkServices(String applicationName, ManifestParseTree services) throws AnalyzerException {
+	protected void checkServices(String applicationName, ManifestParseTree services) throws AnalyzerException {
 		if (services == null)
 			return;
 
-		if (isStringProperty(services))
+		if (services.isStringProperty())
 			throw new AnalyzerException(NLS.bind("Invalid services declaration for application \"{0}\". Expected a list of service names.", applicationName), services.getTokens().get(0));
 	}
 
-	private void checkBuildpack(String applicationName, ManifestParseTree buildpack) throws AnalyzerException {
+	protected void checkBuildpack(String applicationName, ManifestParseTree buildpack) throws AnalyzerException {
 		if (buildpack == null)
 			return;
 
-		if (!isStringProperty(buildpack))
+		if (!buildpack.isStringProperty())
 			throw new AnalyzerException(NLS.bind("Invalid \"buildpack\" value for application \"{0}\". Expected a string literal.", applicationName), buildpack.getTokens().get(0));
 	}
 
-	private void checkCommand(String applicationName, ManifestParseTree command) throws AnalyzerException {
+	protected void checkCommand(String applicationName, ManifestParseTree command) throws AnalyzerException {
 		if (command == null)
 			return;
 
-		if (!isStringProperty(command))
+		if (!command.isStringProperty())
 			throw new AnalyzerException(NLS.bind("Invalid \"command\" value for application \"{0}\". Expected a string literal.", applicationName), command.getTokens().get(0));
 	}
 
-	private void checkDomain(String applicationName, ManifestParseTree domain) throws AnalyzerException {
+	protected void checkDomain(String applicationName, ManifestParseTree domain) throws AnalyzerException {
 		if (domain == null)
 			return;
 
-		if (!isStringProperty(domain))
+		if (!domain.isStringProperty())
 			throw new AnalyzerException(NLS.bind("Invalid \"domain\" value for application \"{0}\". Expected a string literal.", applicationName), domain.getTokens().get(0));
 	}
 
-	private void checkHost(String applicationName, ManifestParseTree host) throws AnalyzerException {
+	protected void checkHost(String applicationName, ManifestParseTree host) throws AnalyzerException {
 		if (host == null)
 			return;
 
-		if (!isStringProperty(host))
+		if (!host.isStringProperty())
 			throw new AnalyzerException(NLS.bind("Invalid \"host\" value for application \"{0}\". Expected a string literal.", applicationName), host.getTokens().get(0));
 	}
 
-	private void checkPath(String applicationName, ManifestParseTree path) throws AnalyzerException {
+	protected void checkPath(String applicationName, ManifestParseTree path) throws AnalyzerException {
 		if (path == null)
 			return;
 
-		if (!isStringProperty(path))
+		if (!path.isStringProperty())
 			throw new AnalyzerException(NLS.bind("Invalid \"path\" value for application \"{0}\". Expected a path string.", applicationName), path.getTokens().get(0));
 	}
 
-	private void checkMemory(String applicationName, ManifestParseTree memory) throws AnalyzerException, InvalidAccessException {
+	protected void checkMemory(String applicationName, ManifestParseTree memory) throws AnalyzerException, InvalidAccessException {
 		if (memory == null)
 			return;
 
-		if (!isStringProperty(memory))
+		if (!memory.isStringProperty())
 			throw new AnalyzerException(NLS.bind("Invalid \"memory\" value for application \"{0}\". Expected a memory limit.", applicationName), memory.getTokens().get(0));
 
-		String memoryValue = memory.getValue();
-		Matcher matcher = memoryPattern.matcher(memoryValue);
-		if (!matcher.matches())
+		if (!memory.isValidMemoryProperty())
 			throw new AnalyzerException(NLS.bind("Invalid memory limit for application \"{0}\". Supported measurement units are M/MB, G/GB.", applicationName), memory.getTokens().get(0));
 	}
 
-	private void checkInstances(String applicationName, ManifestParseTree instances) throws AnalyzerException, InvalidAccessException {
+	protected void checkInstances(String applicationName, ManifestParseTree instances) throws AnalyzerException, InvalidAccessException {
 		if (instances == null)
 			return;
 
-		if (!isStringProperty(instances))
+		if (!instances.isStringProperty())
 			throw new AnalyzerException(NLS.bind("Invalid \"instances\" value for application \"{0}\". Expected a non-negative integer value.", applicationName), instances.getTokens().get(0));
 
-		String instancesValue = instances.getValue();
-		Matcher matcher = nonNegativePattern.matcher(instancesValue);
-		if (!matcher.matches())
+		if (!instances.isValidNonNegativeProperty())
 			throw new AnalyzerException(NLS.bind("Invalid \"instances\" value for application \"{0}\". Expected a non-negative integer value.", applicationName), instances.getTokens().get(0));
 	}
 
-	private void checkTimeout(String applicationName, ManifestParseTree timeout) throws AnalyzerException, InvalidAccessException {
+	protected void checkTimeout(String applicationName, ManifestParseTree timeout) throws AnalyzerException, InvalidAccessException {
 		if (timeout == null)
 			return;
 
-		if (!isStringProperty(timeout))
+		if (!timeout.isStringProperty())
 			throw new AnalyzerException(NLS.bind("Invalid \"timeout\" value for application \"{0}\". Expected a non-negative integer value.", applicationName), timeout.getTokens().get(0));
 
-		String timeoutValue = timeout.getValue();
-		Matcher matcher = nonNegativePattern.matcher(timeoutValue);
-		if (!matcher.matches())
+		if (!timeout.isValidNonNegativeProperty())
 			throw new AnalyzerException(NLS.bind("Invalid \"timeout\" value for application \"{0}\". Expected a non-negative integer value.", applicationName), timeout.getTokens().get(0));
 	}
 
-	private void checkNoRoute(String applicationName, ManifestParseTree noRoute) throws AnalyzerException, InvalidAccessException {
+	protected void checkNoRoute(String applicationName, ManifestParseTree noRoute) throws AnalyzerException, InvalidAccessException {
 		if (noRoute == null)
 			return;
 
-		if (!isStringProperty(noRoute))
+		if (!noRoute.isStringProperty())
 			throw new AnalyzerException(NLS.bind("Invalid \"no-route\" value for application \"{0}\". Expected a string literal \"true\".", applicationName), noRoute.getTokens().get(0));
 
 		String noRouteValue = noRoute.getValue();

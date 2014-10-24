@@ -24,6 +24,7 @@ import org.eclipse.orion.server.cf.ds.IDeploymentService;
 import org.eclipse.orion.server.cf.ds.objects.Plan;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
+import org.eclipse.orion.server.cf.manifest.v2.utils.ApplicationReconstructor;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -66,6 +67,8 @@ public class PlansHandlerV1 extends AbstractRESTHandler<Plan> {
 					/* check if the application has a manifest */
 					ManifestParseTree manifest = null;
 					ParseManifestCommand parseManifestCommand = new ParseManifestCommand(null, userId, contentPath.toString()); /* TODO: set target */
+					parseManifestCommand.setApplicationAnalyzer(new ApplicationReconstructor());
+
 					IStatus status = parseManifestCommand.doIt();
 					if (status.isOK())
 						manifest = parseManifestCommand.getManifest();

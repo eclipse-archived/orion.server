@@ -39,11 +39,18 @@ public class ParseManifestCommand extends AbstractCFCommand {
 	private ManifestParseTree manifest;
 	private IFileStore appStore;
 
+	private Analyzer applicationAnalyzer;
+
 	public ParseManifestCommand(Target target, String userId, String contentLocation) {
 		super(target);
 		this.userId = userId;
 		this.contentLocation = contentLocation;
+		this.applicationAnalyzer = null;
 		this.commandName = NLS.bind("Parse application manifest: {0}", contentLocation);
+	}
+
+	public void setApplicationAnalyzer(Analyzer applicationAnalyzer) {
+		this.applicationAnalyzer = applicationAnalyzer;
 	}
 
 	public ManifestParseTree getManifest() {
@@ -89,15 +96,13 @@ public class ParseManifestCommand extends AbstractCFCommand {
 				contentPath = contentPath.removeLastSegments(1);
 			}
 
-			if (fileStore == null) {
+			if (fileStore == null)
 				return cannotFindManifest(contentPath);
-			}
 
 			/* lookup the manifest description */
 			IFileStore manifestStore = fileStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
-			if (!manifestStore.fetchInfo().exists()) {
+			if (!manifestStore.fetchInfo().exists())
 				return cannotFindManifest(contentPath);
-			}
 
 			/* parse within the project sandbox */
 			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(contentPath.segment(0), contentPath.segment(1));
@@ -105,13 +110,14 @@ public class ParseManifestCommand extends AbstractCFCommand {
 
 			/* parse the manifest */
 			ManifestParseTree manifest = null;
+			String targetBase = null;
+
 			if (target != null) {
 				URI targetURI = URIUtil.toURI(target.getUrl());
-				String targetBase = targetURI.getHost().substring(4);
-				manifest = ManifestUtils.parse(projectStore, manifestStore, targetBase);
-			} else
-				manifest = ManifestUtils.parse(projectStore, manifestStore);
+				targetBase = targetURI.getHost().substring(4);
+			}
 
+			manifest = ManifestUtils.parse(projectStore, manifestStore, targetBase, applicationAnalyzer);
 			ManifestParseTree app = manifest.get("applications").get(0); //$NON-NLS-1$
 
 			/* optional */
