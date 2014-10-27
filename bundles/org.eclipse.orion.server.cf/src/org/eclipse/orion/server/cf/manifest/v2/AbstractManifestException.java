@@ -19,6 +19,9 @@ public abstract class AbstractManifestException extends Exception {
 	public static final String ERROR_LINE = "Line"; //$NON-NLS-1$
 	public static final String ERROR_MESSAGE = "Message"; //$NON-NLS-1$
 
+	public static final String ERROR_SEVERITY = "Severity"; //$NON-NLS-1$
+	public static final String WARNING = "Warning"; //$NON-NLS-1$
+
 	/**
 	 * Returns a detailed JSON representation of the exception.
 	 * @return Either a JSON representation or <code>null</code> in case of a JSON exception.

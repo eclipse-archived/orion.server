@@ -48,7 +48,7 @@ public class ManifestUtils {
 	/**
 	 * Inner helper method parsing single manifests with additional semantic analysis.
 	 */
-	protected static ManifestParseTree parseManifest(InputStream inputStream, String targetBase) throws IOException, TokenizerException, ParserException, AnalyzerException {
+	protected static ManifestParseTree parseManifest(InputStream inputStream, String targetBase, Analyzer analyzer) throws IOException, TokenizerException, ParserException, AnalyzerException {
 
 		/* run preprocessor */
 		ManifestPreprocessor preprocessor = new ManifestPreprocessor();
@@ -68,7 +68,7 @@ public class ManifestUtils {
 		symbolResolver.apply(parseTree);
 
 		/* validate common field values */
-		ApplicationSanizator applicationAnalyzer = new ApplicationSanizator();
+		Analyzer applicationAnalyzer = analyzer != null ? analyzer : new ApplicationSanizator();
 		applicationAnalyzer.apply(parseTree);
 		return parseTree;
 	}
@@ -76,7 +76,7 @@ public class ManifestUtils {
 	/**
 	 * Inner helper method parsing single manifests with additional semantic analysis.
 	 */
-	protected static ManifestParseTree parseManifest(IFileStore manifestFileStore, String targetBase) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException {
+	protected static ManifestParseTree parseManifest(IFileStore manifestFileStore, String targetBase, Analyzer analyzer) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException {
 
 		/* basic sanity checks */
 		IFileInfo manifestFileInfo = manifestFileStore.fetchInfo();
@@ -90,7 +90,7 @@ public class ManifestUtils {
 			throw new IOException(ManifestConstants.MANIFEST_FILE_SIZE_EXCEEDED);
 
 		InputStream inputStream = manifestFileStore.openInputStream(EFS.NONE, null);
-		return parseManifest(inputStream, targetBase);
+		return parseManifest(inputStream, targetBase, analyzer);
 	}
 
 	/**
@@ -109,8 +109,8 @@ public class ManifestUtils {
 	 * @throws AnalyzerException
 	 * @throws InvalidAccessException
 	 */
-	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore, String targetBase, List<IPath> manifestList) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException, InvalidAccessException {
-		ManifestParseTree manifest = parseManifest(manifestStore, targetBase);
+	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore, String targetBase, Analyzer analyzer, List<IPath> manifestList) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException, InvalidAccessException {
+		ManifestParseTree manifest = parseManifest(manifestStore, targetBase, analyzer);
 
 		if (!manifest.has(ManifestConstants.INHERIT))
 			/* nothing to do */
@@ -128,7 +128,7 @@ public class ManifestUtils {
 		manifestList.add(parentLocation);
 
 		IFileStore parentStore = manifestStore.getParent().getFileStore(parentLocation);
-		ManifestParseTree parentManifest = parse(sandbox, parentStore, targetBase, manifestList);
+		ManifestParseTree parentManifest = parse(sandbox, parentStore, targetBase, analyzer, manifestList);
 		InheritanceUtils.inherit(parentManifest, manifest);
 
 		/* perform additional inheritance transformations */
@@ -150,7 +150,7 @@ public class ManifestUtils {
 	 * @throws InvalidAccessException
 	 */
 	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException, InvalidAccessException {
-		return parse(sandbox, manifestStore, null, new ArrayList<IPath>());
+		return parse(sandbox, manifestStore, null, null, new ArrayList<IPath>());
 	}
 
 	/**
@@ -167,7 +167,24 @@ public class ManifestUtils {
 	 * @throws InvalidAccessException
 	 */
 	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore, String targetBase) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException, InvalidAccessException {
-		return parse(sandbox, manifestStore, targetBase, new ArrayList<IPath>());
+		return parse(sandbox, manifestStore, targetBase, null, new ArrayList<IPath>());
+	}
+
+	/**
+	 * Helper method for {@link #parse(IFileStore, IFileStore, String, List<IPath>)}
+	 * @param sandbox
+	 * @param manifestStore
+	 * @param targetBase
+	 * @return
+	 * @throws CoreException
+	 * @throws IOException
+	 * @throws TokenizerException
+	 * @throws ParserException
+	 * @throws AnalyzerException
+	 * @throws InvalidAccessException
+	 */
+	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore, String targetBase, Analyzer analyzer) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException, InvalidAccessException {
+		return parse(sandbox, manifestStore, targetBase, analyzer, new ArrayList<IPath>());
 	}
 
 	/**
@@ -223,7 +240,7 @@ public class ManifestUtils {
 
 		String manifestYAML = sb.toString();
 		InputStream inputStream = new ByteArrayInputStream(manifestYAML.getBytes("UTF-8")); //$NON-NLS-1$
-		return parseManifest(inputStream, null);
+		return parseManifest(inputStream, null, null);
 	}
 
 	private static void appendIndentation(StringBuilder sb, int indentation) {

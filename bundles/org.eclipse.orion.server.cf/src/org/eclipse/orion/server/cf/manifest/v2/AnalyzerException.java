@@ -37,6 +37,7 @@ public class AnalyzerException extends AbstractManifestException {
 			if (token != null)
 				details.put(ERROR_LINE, token.getLineNumber());
 
+			details.put(ERROR_SEVERITY, WARNING);
 			return details;
 
 		} catch (JSONException ex) {
