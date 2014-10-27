@@ -265,7 +265,6 @@
 		<module>bundles/org.eclipse.orion.server.core</module>
 		<module>bundles/org.eclipse.orion.server.servlets</module>
 		<module>bundles/org.eclipse.orion.server.useradmin</module>
-		<module>bundles/org.eclipse.orion.server.useradmin.simple</module>
 		<module>bundles/org.eclipse.orion.server.authentication</module>
 		<module>bundles/org.eclipse.orion.server.git</module>
 		<module>bundles/org.eclipse.orion.server.cf</module>
@@ -278,7 +277,6 @@
 		<module>bundles/org.eclipse.orion.server.npm</module>
 		<module>bundles/org.eclipse.orion.server.logback.config</module>
 		<module>bundles/org.eclipse.orion.server.ui</module>
-		<module>bundles/org.eclipse.orion.server.user.ldap</module>
 		<module>bundles/org.eclipse.orion.server.gerritfs</module>
 		<module>bundles/org.eclipse.orion.server.events</module>
 		<module>bundles/org.eclipse.jetty9.websocket</module>
