@@ -88,7 +88,7 @@ public class SimpleServerUserStressTest extends UsersTest {
 			Map<String, String> params = new HashMap<String, String>();
 			String login = getRandomName();
 			params.put(UserConstants.KEY_LOGIN, login);
-			params.put(UserConstants.KEY_FULL_NAME, getRandomName() + " " + getRandomName());
+			params.put(UserConstants2.FULL_NAME, getRandomName() + " " + getRandomName());
 			params.put(UserConstants2.EMAIL, login + "@example.com");
 			params.put(UserConstants2.PASSWORD, getRandomName() + System.currentTimeMillis());
 

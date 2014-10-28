@@ -33,8 +33,6 @@ public interface UserConstants {
 	
 	public static final String KEY_UID = "uid"; //$NON-NLS-1$
 
-	public static final String KEY_FULL_NAME = "FullName"; //$NON-NLS-1$
-	
 	public static final String KEY_EMAIL_CONFIRMED = "emailConfirmed"; //$NON-NLS-1$
 	
 	public static final String KEY_OLD_PASSWORD = "oldPassword"; //$NON-NLS-1$
