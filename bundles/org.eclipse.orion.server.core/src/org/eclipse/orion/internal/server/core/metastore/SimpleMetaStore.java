@@ -683,11 +683,11 @@ public class SimpleMetaStore implements IMetaStore {
 						String lastlogintimestamp = jsonObject.getString("lastlogintimestamp");
 						userInfo.setProperty("lastlogintimestamp", lastlogintimestamp);
 					}
-					if (jsonObject.has("password")) {
+					if (jsonObject.has(UserConstants2.PASSWORD)) {
 						// TODO: these top level keys need to change to properties
-						String encryptedPassword = jsonObject.getString("password");
+						String encryptedPassword = jsonObject.getString(UserConstants2.PASSWORD);
 						String password = SimpleUserPasswordUtil.decryptPassword(encryptedPassword);
-						userInfo.setProperty("password", password);
+						userInfo.setProperty(UserConstants2.PASSWORD, password);
 					}
 					userInfo.flush();
 				} catch (JSONException e) {
@@ -897,7 +897,7 @@ public class SimpleMetaStore implements IMetaStore {
 					// delete the property
 					if (properties.has(key)) {
 						properties.remove(key);
-					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || UserConstants2.EMAIL.equals(key) || "blocked".equals(key) ||"email_confirmation".equals(key) || "passwordResetId".equals(key) || "diskusage".equals(key) || "diskusagetimestamp".equals(key) || "lastlogintimestamp".equals(key) || "password".equals(key)) {
+					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || UserConstants2.EMAIL.equals(key) || "blocked".equals(key) ||"email_confirmation".equals(key) || "passwordResetId".equals(key) || "diskusage".equals(key) || "diskusagetimestamp".equals(key) || "lastlogintimestamp".equals(key) || UserConstants2.PASSWORD.equals(key)) {
 						// TODO: these top level keys need to change to properties
 						String value = null;
 						if (UserConstants2.OPENID.equals(key)) {
@@ -964,11 +964,11 @@ public class SimpleMetaStore implements IMetaStore {
 							if (profileProperties.length() == 0) {
 								jsonObject.remove("profileProperties");
 							}
-						} else if ("password".equals(key)) {
+						} else if (UserConstants2.PASSWORD.equals(key)) {
 							// TODO: these top level keys need to change to properties
-							if (jsonObject.has("password")) {
-								value = jsonObject.getString("password");
-								jsonObject.remove("password");
+							if (jsonObject.has(UserConstants2.PASSWORD)) {
+								value = jsonObject.getString(UserConstants2.PASSWORD);
+								jsonObject.remove(UserConstants2.PASSWORD);
 							}
 						}
 						// update the user cache
@@ -1009,11 +1009,11 @@ public class SimpleMetaStore implements IMetaStore {
 						if (metadataInfo instanceof UserInfo && userPropertyCache.isRegistered(key)) {
 							userPropertyCache.add(key, value, metadataInfo.getUniqueId());
 						}
-					} else if ("password".equals(key)) {
+					} else if (UserConstants2.PASSWORD.equals(key)) {
 						// TODO: these top level keys need to change to properties
 						// password needs to be handled specifically since it is at he root of the JSONObject.
 						String encryptedPassword = SimpleUserPasswordUtil.encryptPassword(value);
-						jsonObject.put("password", encryptedPassword);
+						jsonObject.put(UserConstants2.PASSWORD, encryptedPassword);
 					} else if ("blocked".equals(key)) {
 						// TODO: these top level keys need to change to properties
 						// blocked needs to be handled specifically since it is at he root of the JSONObject.

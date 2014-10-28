@@ -178,6 +178,6 @@ public class UserEmailUtil {
 		if (passwordResetEmail == null) {
 			passwordResetEmail = new EmailContent(EMAIL_PASSWORD_RESET);
 		}
-		sendEmail(passwordResetEmail.getTitle(), passwordResetEmail.getContent().replaceAll(EMAIL_USER_LINK, userInfo.getUniqueId()).replaceAll(EMAIL_PASSWORD_LINK, userInfo.getProperty(UserConstants.KEY_PASSWORD)), userInfo.getProperty(UserConstants2.EMAIL));
+		sendEmail(passwordResetEmail.getTitle(), passwordResetEmail.getContent().replaceAll(EMAIL_USER_LINK, userInfo.getUniqueId()).replaceAll(EMAIL_PASSWORD_LINK, userInfo.getProperty(UserConstants2.PASSWORD)), userInfo.getProperty(UserConstants2.EMAIL));
 	}
 }

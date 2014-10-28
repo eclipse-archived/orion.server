@@ -2144,18 +2144,18 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		userInfo.setUserName(testUserLogin);
 		userInfo.setFullName(testUserLogin);
 		String password = "sekret-Passw0rd";
-		userInfo.setProperty("password", password);
+		userInfo.setProperty(UserConstants2.PASSWORD, password);
 		metaStore.createUser(userInfo);
 
 		// read the user back again
 		UserInfo readUserInfo = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo);
 		assertEquals(testUserLogin, readUserInfo.getUserName());
-		assertEquals(password, readUserInfo.getProperty("password"));
+		assertEquals(password, readUserInfo.getProperty(UserConstants2.PASSWORD));
 
 		// update the UserInfo
 		String newPassword = "new-sekret-Passw0rd";
-		userInfo.setProperty("password", newPassword);
+		userInfo.setProperty(UserConstants2.PASSWORD, newPassword);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -2164,21 +2164,21 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo2 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo2);
 		assertEquals(testUserLogin, readUserInfo2.getUserName());
-		assertEquals(newPassword, readUserInfo2.getProperty("password"));
+		assertEquals(newPassword, readUserInfo2.getProperty(UserConstants2.PASSWORD));
 
 		// delete the password property and update the user
-		userInfo.setProperty("password", null);
+		userInfo.setProperty(UserConstants2.PASSWORD, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo3 = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo3);
 		assertEquals(readUserInfo3.getUniqueId(), userInfo.getUniqueId());
-		assertNull(readUserInfo3.getProperty("password"));
+		assertNull(readUserInfo3.getProperty(UserConstants2.PASSWORD));
 
 		// update the UserInfo again
 		String finalPassword = "final-sekret-Passw0rd";
-		userInfo.setProperty("password", finalPassword);
+		userInfo.setProperty(UserConstants2.PASSWORD, finalPassword);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -2187,7 +2187,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo4 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo4);
 		assertEquals(testUserLogin, readUserInfo4.getUserName());
-		assertEquals(finalPassword, readUserInfo4.getProperty("password"));
+		assertEquals(finalPassword, readUserInfo4.getProperty(UserConstants2.PASSWORD));
 	}
 
 	@Test

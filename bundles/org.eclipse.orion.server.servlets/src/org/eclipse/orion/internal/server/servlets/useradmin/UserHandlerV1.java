@@ -187,7 +187,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean handleUserReset(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
-		String password = req.getParameter(UserConstants.KEY_PASSWORD);
+		String password = req.getParameter(UserConstants2.PASSWORD);
 
 		if (login == null || login.length() == 0)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User login not specified.", null));
@@ -209,7 +209,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		try {
-			userInfo.setProperty(UserConstants.KEY_PASSWORD, password);
+			userInfo.setProperty(UserConstants2.PASSWORD, password);
 			OrionConfiguration.getMetaStore().updateUser(userInfo);
 		} catch (CoreException e) {
 			LogHelper.log(e);
@@ -222,7 +222,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
 		String name = req.getParameter(UserConstants.KEY_FULL_NAME);
 		String email = req.getParameter(UserConstants2.EMAIL);
-		String password = req.getParameter(UserConstants.KEY_PASSWORD);
+		String password = req.getParameter(UserConstants2.PASSWORD);
 		String identifier = req.getParameter("identifier");
 
 		boolean isEmailRequired = Boolean.TRUE.toString().equalsIgnoreCase(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL));
@@ -277,7 +277,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		userInfo = new UserInfo();
 		userInfo.setUserName(login);
 		userInfo.setFullName(name);
-		userInfo.setProperty(UserConstants.KEY_PASSWORD, password);
+		userInfo.setProperty(UserConstants2.PASSWORD, password);
 		if (identifier != null) {
 			userInfo.setProperty(UserConstants2.OAUTH, identifier);
 		}
@@ -399,14 +399,14 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		//users other than admin have to know the old password to set a new one
 		if (!isAdmin(req.getRemoteUser())) {
-			if (data.has(UserConstants.KEY_PASSWORD) && userInfo.getProperty(UserConstants.KEY_PASSWORD) != null && (!data.has(UserConstants.KEY_OLD_PASSWORD) || !userInfo.getProperty(UserConstants.KEY_PASSWORD).equals(data.getString(UserConstants.KEY_OLD_PASSWORD)))) {
+			if (data.has(UserConstants2.PASSWORD) && userInfo.getProperty(UserConstants2.PASSWORD) != null && (!data.has(UserConstants.KEY_OLD_PASSWORD) || !userInfo.getProperty(UserConstants2.PASSWORD).equals(data.getString(UserConstants.KEY_OLD_PASSWORD)))) {
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Invalid old password", null));
 			}
 		}
 
 		String newPassword = null;
-		if (data.has(UserConstants.KEY_PASSWORD)) {
-			newPassword = data.getString(UserConstants.KEY_PASSWORD);
+		if (data.has(UserConstants2.PASSWORD)) {
+			newPassword = data.getString(UserConstants2.PASSWORD);
 		}
 		String passwordMsg = validatePassword(newPassword);
 		if (data.has(UserConstants.KEY_OLD_PASSWORD) && passwordMsg != null) {
@@ -419,8 +419,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (data.has(UserConstants.KEY_FULL_NAME)) {
 			userInfo.setFullName(data.getString(UserConstants.KEY_FULL_NAME));
 		}
-		if (data.has(UserConstants.KEY_PASSWORD)) {
-			userInfo.setProperty(UserConstants.KEY_PASSWORD, data.getString(UserConstants.KEY_PASSWORD));
+		if (data.has(UserConstants2.PASSWORD)) {
+			userInfo.setProperty(UserConstants2.PASSWORD, data.getString(UserConstants2.PASSWORD));
 		}
 		if (data.has(UserConstants2.EMAIL)) {
 			userInfo.setProperty(UserConstants2.EMAIL, data.getString(UserConstants2.EMAIL));
@@ -522,7 +522,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		json.put(UserConstants2.EMAIL, email);
 		boolean emailConfirmed = (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants.KEY_EMAIL_CONFIRMATION) == null : false;
 		json.put(UserConstants.KEY_EMAIL_CONFIRMED, emailConfirmed);
-		json.put(UserConstants.KEY_HAS_PASSWORD, userInfo.getProperty("password") == null ? false : true);
+		json.put(UserConstants.KEY_HAS_PASSWORD, userInfo.getProperty(UserConstants2.PASSWORD) == null ? false : true);
 
 		JSONObject properties = new JSONObject();
 		if (userInfo.getProperty(UserConstants2.OAUTH) != null) {
@@ -540,7 +540,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		JSONArray plugins = new JSONArray();
 		try {
 			JSONObject plugin = new JSONObject();
-			URI result = userInfo.getProperty(UserConstants.KEY_PASSWORD) == null ? new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), contextPath + "/plugins/user/nopasswordProfilePlugin.html", null, null) : new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), contextPath + "/plugins/user/userProfilePlugin.html", null, null);
+			URI result = userInfo.getProperty(UserConstants2.PASSWORD) == null ? new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), contextPath + "/plugins/user/nopasswordProfilePlugin.html", null, null) : new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), contextPath + "/plugins/user/userProfilePlugin.html", null, null);
 			plugin.put(UserConstants.KEY_PLUGIN_LOCATION, result);
 			plugins.put(plugin);
 		} catch (URISyntaxException e) {

@@ -96,7 +96,7 @@ public class AbstractServerTest {
 			userInfo = new UserInfo();
 			userInfo.setUserName(login);
 			userInfo.setFullName(login);
-			userInfo.setProperty("password", password);
+			userInfo.setProperty(UserConstants2.PASSWORD, password);
 
 			OrionConfiguration.getMetaStore().createUser(userInfo);
 		} catch (CoreException e) {
