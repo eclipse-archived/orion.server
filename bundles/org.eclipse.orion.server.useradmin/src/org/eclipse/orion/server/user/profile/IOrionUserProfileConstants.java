@@ -12,8 +12,6 @@ package org.eclipse.orion.server.user.profile;
 
 public interface IOrionUserProfileConstants {
 	
-	public static final String GENERAL_PROFILE_PART = "general";
-	
 	public static final String LAST_LOGIN_TIMESTAMP = "lastlogintimestamp";
 	
 	public static final String DISK_USAGE = "diskusage";
