@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.orion.server.useradmin.UserConstants;
@@ -42,7 +43,7 @@ public class BasicAuthenticationServlet extends OrionServlet {
 		obj.put(UserConstants.KEY_LOGIN, uid);
 
 		try {
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", uid, false, false);
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, uid, false, false);
 			if (userInfo == null) {
 				return null;
 			}

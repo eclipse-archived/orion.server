@@ -33,6 +33,7 @@ import org.eclipse.orion.server.core.metastore.MetadataInfo;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -140,7 +141,7 @@ public class SimpleMetaStore implements IMetaStore {
 		JSONObject jsonObject = new JSONObject();
 		try {
 			jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
-			jsonObject.put("UniqueId", projectInfo.getUniqueId());
+			jsonObject.put(MetadataInfo.UNIQUE_ID, projectInfo.getUniqueId());
 			jsonObject.put("WorkspaceId", projectInfo.getWorkspaceId());
 			jsonObject.put("FullName", projectInfo.getFullName());
 			if (projectInfo.getContentLocation() != null) {
@@ -189,7 +190,7 @@ public class SimpleMetaStore implements IMetaStore {
 			JSONObject jsonObject = new JSONObject();
 			try {
 				jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
-				jsonObject.put("UniqueId", userId);
+				jsonObject.put(MetadataInfo.UNIQUE_ID, userId);
 				jsonObject.put("UserName", userId);
 				jsonObject.put("FullName", userInfo.getFullName());
 				jsonObject.put("WorkspaceIds", new JSONArray());
@@ -212,8 +213,8 @@ public class SimpleMetaStore implements IMetaStore {
 				}
 			}
 			// update the UniqueId cache
-			if (userPropertyCache.isRegistered("UniqueId")) {
-				userPropertyCache.add("UniqueId", userId, userId);
+			if (userPropertyCache.isRegistered(UserConstants2.USER_NAME)) {
+				userPropertyCache.add(UserConstants2.USER_NAME, userId, userId);
 			}
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			logger.debug("Created new user " + userId + "."); //$NON-NLS-1$
@@ -261,7 +262,7 @@ public class SimpleMetaStore implements IMetaStore {
 		JSONObject jsonObject = new JSONObject();
 		try {
 			jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
-			jsonObject.put("UniqueId", workspaceInfo.getUniqueId());
+			jsonObject.put(MetadataInfo.UNIQUE_ID, workspaceInfo.getUniqueId());
 			jsonObject.put("UserId", workspaceInfo.getUserId());
 			jsonObject.put("FullName", workspaceInfo.getFullName());
 			jsonObject.put("ProjectNames", new JSONArray());
@@ -559,7 +560,7 @@ public class SimpleMetaStore implements IMetaStore {
 			}
 		}
 		try {
-			projectInfo.setUniqueId(jsonObject.getString("UniqueId"));
+			projectInfo.setUniqueId(jsonObject.getString(MetadataInfo.UNIQUE_ID));
 			projectInfo.setWorkspaceId(jsonObject.getString("WorkspaceId"));
 			projectInfo.setFullName(jsonObject.getString("FullName"));
 			if (jsonObject.has("ContentLocation")) {
@@ -603,7 +604,7 @@ public class SimpleMetaStore implements IMetaStore {
 						}
 						jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
 					}
-					userInfo.setUniqueId(jsonObject.getString("UniqueId"));
+					userInfo.setUniqueId(jsonObject.getString(MetadataInfo.UNIQUE_ID));
 					userInfo.setUserName(jsonObject.getString("UserName"));
 					if (jsonObject.has("lastlogintimestamp")) {
 						userInfo.setProperty("lastlogintimestamp", jsonObject.getString("lastlogintimestamp"));
@@ -629,18 +630,18 @@ public class SimpleMetaStore implements IMetaStore {
 					setProperties(userInfo, jsonObject.getJSONObject("Properties"));
 					if (jsonObject.has("profileProperties")) {
 						JSONObject profileProperties = jsonObject.getJSONObject("profileProperties");
-						if (profileProperties.has("openid")) {
-							String value = profileProperties.get("openid").toString();
-							userInfo.setProperty("openid", value);
-							if (userPropertyCache.isRegistered("openid")) {
-								userPropertyCache.add("openid", value, userInfo.getUniqueId());
+						if (profileProperties.has(UserConstants2.OPENID)) {
+							String value = profileProperties.get(UserConstants2.OPENID).toString();
+							userInfo.setProperty(UserConstants2.OPENID, value);
+							if (userPropertyCache.isRegistered(UserConstants2.OPENID)) {
+								userPropertyCache.add(UserConstants2.OPENID, value, userInfo.getUniqueId());
 							}
 						}
-						if (profileProperties.has("oauth")) {
-							String value = profileProperties.get("oauth").toString();
-							userInfo.setProperty("oauth", value);
-							if (userPropertyCache.isRegistered("oauth")) {
-								userPropertyCache.add("oauth", value, userInfo.getUniqueId());
+						if (profileProperties.has(UserConstants2.OAUTH)) {
+							String value = profileProperties.get(UserConstants2.OAUTH).toString();
+							userInfo.setProperty(UserConstants2.OAUTH, value);
+							if (userPropertyCache.isRegistered(UserConstants2.OAUTH)) {
+								userPropertyCache.add(UserConstants2.OAUTH, value, userInfo.getUniqueId());
 							}
 						}
 						if (profileProperties.has("passwordResetId")) {
@@ -649,12 +650,12 @@ public class SimpleMetaStore implements IMetaStore {
 							userInfo.setProperty("passwordResetId", passwordResetId);
 						}
 					}
-					if (jsonObject.has("email")) {
+					if (jsonObject.has(UserConstants2.EMAIL)) {
 						// TODO: these top level keys need to change to properties
-						String email = jsonObject.getString("email");
-						userInfo.setProperty("email", email);
-						if (userPropertyCache.isRegistered("email")) {
-							userPropertyCache.add("email", email, userInfo.getUniqueId());
+						String email = jsonObject.getString(UserConstants2.EMAIL);
+						userInfo.setProperty(UserConstants2.EMAIL, email);
+						if (userPropertyCache.isRegistered(UserConstants2.EMAIL)) {
+							userPropertyCache.add(UserConstants2.EMAIL, email, userInfo.getUniqueId());
 						}
 					}
 					if (jsonObject.has("blocked")) {
@@ -738,7 +739,7 @@ public class SimpleMetaStore implements IMetaStore {
 		}
 		WorkspaceInfo workspaceInfo = new WorkspaceInfo();
 		try {
-			workspaceInfo.setUniqueId(jsonObject.getString("UniqueId"));
+			workspaceInfo.setUniqueId(jsonObject.getString(MetadataInfo.UNIQUE_ID));
 			workspaceInfo.setUserId(jsonObject.getString("UserId"));
 			workspaceInfo.setFullName(jsonObject.getString("FullName"));
 			List<String> workspaceProjectNames = new ArrayList<String>();
@@ -857,7 +858,7 @@ public class SimpleMetaStore implements IMetaStore {
 		}
 		try {
 			jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
-			jsonObject.put("UniqueId", projectInfo.getUniqueId());
+			jsonObject.put(MetadataInfo.UNIQUE_ID, projectInfo.getUniqueId());
 			jsonObject.put("WorkspaceId", projectInfo.getWorkspaceId());
 			jsonObject.put("FullName", projectInfo.getFullName());
 			if (projectInfo.getContentLocation() != null) {
@@ -896,32 +897,32 @@ public class SimpleMetaStore implements IMetaStore {
 					// delete the property
 					if (properties.has(key)) {
 						properties.remove(key);
-					} else if ("openid".equals(key) || "oauth".equals(key) || "email".equals(key) || "blocked".equals(key) ||"email_confirmation".equals(key) || "passwordResetId".equals(key) || "diskusage".equals(key) || "diskusagetimestamp".equals(key) || "lastlogintimestamp".equals(key) || "password".equals(key)) {
+					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || UserConstants2.EMAIL.equals(key) || "blocked".equals(key) ||"email_confirmation".equals(key) || "passwordResetId".equals(key) || "diskusage".equals(key) || "diskusagetimestamp".equals(key) || "lastlogintimestamp".equals(key) || "password".equals(key)) {
 						// TODO: these top level keys need to change to properties
 						String value = null;
-						if ("openid".equals(key)) {
+						if (UserConstants2.OPENID.equals(key)) {
 							JSONObject profileProperties = jsonObject.getJSONObject("profileProperties");
-							if (profileProperties.has("openid")) {
-								value = profileProperties.getString("openid");
-								profileProperties.remove("openid");
+							if (profileProperties.has(UserConstants2.OPENID)) {
+								value = profileProperties.getString(UserConstants2.OPENID);
+								profileProperties.remove(UserConstants2.OPENID);
 							}
 							if (profileProperties.length() == 0) {
 								jsonObject.remove("profileProperties");
 							}
-						} else if ("oauth".equals(key)) {
+						} else if (UserConstants2.OAUTH.equals(key)) {
 							JSONObject profileProperties = jsonObject.getJSONObject("profileProperties");
-							if (profileProperties.has("oauth")) {
-								value = profileProperties.getString("oauth");
-								profileProperties.remove("oauth");
+							if (profileProperties.has(UserConstants2.OAUTH)) {
+								value = profileProperties.getString(UserConstants2.OAUTH);
+								profileProperties.remove(UserConstants2.OAUTH);
 							}
 							if (profileProperties.length() == 0) {
 								jsonObject.remove("profileProperties");
 							}
-						} else if ("email".equals(key)) {
+						} else if (UserConstants2.EMAIL.equals(key)) {
 							// TODO: these top level keys need to change to properties
-							if (jsonObject.has("email")) {
-								value = jsonObject.getString("email");
-								jsonObject.remove("email");
+							if (jsonObject.has(UserConstants2.EMAIL)) {
+								value = jsonObject.getString(UserConstants2.EMAIL);
+								jsonObject.remove(UserConstants2.EMAIL);
 							}
 						} else if ("blocked".equals(key)) {
 							// TODO: these top level keys need to change to properties
@@ -986,7 +987,7 @@ public class SimpleMetaStore implements IMetaStore {
 						// UserRights needs to be handled specifically since it is a JSONObject and not a string.
 						JSONObject siteConfigurations = new JSONObject(value);
 						properties.put("SiteConfigurations", siteConfigurations);
-					} else if ("openid".equals(key) || "oauth".equals(key) || "passwordResetId".equals(key)) {
+					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || "passwordResetId".equals(key)) {
 						// openid needs to be handled specifically since it is within a profileProperties JSONObject.
 						JSONObject profileProperties;
 						if (jsonObject.has("profileProperties")) {
@@ -1000,10 +1001,10 @@ public class SimpleMetaStore implements IMetaStore {
 						if (metadataInfo instanceof UserInfo && userPropertyCache.isRegistered(key)) {
 							userPropertyCache.add(key, value, metadataInfo.getUniqueId());
 						}
-					} else if ("email".equals(key)) {
+					} else if (UserConstants2.EMAIL.equals(key)) {
 						// TODO: these top level keys need to change to properties
 						// email needs to be handled specifically since it is at he root of the JSONObject.
-						jsonObject.put("email", value);
+						jsonObject.put(UserConstants2.EMAIL, value);
 						// update the user cache
 						if (metadataInfo instanceof UserInfo && userPropertyCache.isRegistered(key)) {
 							userPropertyCache.add(key, value, metadataInfo.getUniqueId());
@@ -1116,9 +1117,9 @@ public class SimpleMetaStore implements IMetaStore {
 				userInfo.setUniqueId(newUserId);
 
 				// update the user cache
-				if (userPropertyCache.isRegistered("UniqueId")) {
-					userPropertyCache.delete("UniqueId", oldUserId, oldUserId);
-					userPropertyCache.add("UniqueId", newUserId, newUserId);
+				if (userPropertyCache.isRegistered(UserConstants2.USER_NAME)) {
+					userPropertyCache.delete(UserConstants2.USER_NAME, oldUserId, oldUserId);
+					userPropertyCache.add(UserConstants2.USER_NAME, newUserId, newUserId);
 				}
 
 				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
@@ -1139,7 +1140,7 @@ public class SimpleMetaStore implements IMetaStore {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateUser: could not find user " + userId, null));
 			}
 			try {
-				jsonObject.put("UniqueId", userInfo.getUniqueId());
+				jsonObject.put(MetadataInfo.UNIQUE_ID, userInfo.getUniqueId());
 				jsonObject.put("UserName", userInfo.getUserName());
 				jsonObject.put("FullName", userInfo.getFullName());
 				JSONArray workspaceIds = new JSONArray(userInfo.getWorkspaceIds());
@@ -1171,9 +1172,9 @@ public class SimpleMetaStore implements IMetaStore {
 		try {
 			jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
 			if (renameUser) {
-				jsonObject.put("UniqueId", newWorkspaceId);
+				jsonObject.put(MetadataInfo.UNIQUE_ID, newWorkspaceId);
 			} else {
-				jsonObject.put("UniqueId", workspaceInfo.getUniqueId());
+				jsonObject.put(MetadataInfo.UNIQUE_ID, workspaceInfo.getUniqueId());
 			}
 			jsonObject.put("UserId", workspaceInfo.getUserId());
 			jsonObject.put("FullName", workspaceInfo.getFullName());

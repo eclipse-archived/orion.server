@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.osgi.util.NLS;
 
@@ -41,7 +42,7 @@ public class GenericUserHandler extends ServletResourceHandler<String> {
 
 		String userId = userPathInfo.split("\\/")[1]; //$NON-NLS-1$
 		try {
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", userId, false, false);
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, userId, false, false);
 			if (userInfo == null) {
 				return false;
 			}

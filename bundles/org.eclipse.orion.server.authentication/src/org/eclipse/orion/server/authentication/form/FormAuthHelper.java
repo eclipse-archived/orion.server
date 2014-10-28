@@ -25,6 +25,7 @@ import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.events.IEventService;
 import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.user.profile.*;
 import org.eclipse.orion.server.useradmin.*;
 import org.json.JSONException;
@@ -101,7 +102,7 @@ public class FormAuthHelper {
 
 	private static UserInfo getUserForCredentials(String login, String password) {
 		try {
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", login, false, false);
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, login, false, false);
 			if (userInfo != null && userInfo.getProperty(UserConstants.KEY_PASSWORD) != null) {
 				String userPassword = userInfo.getProperty(UserConstants.KEY_PASSWORD);
 				if (password.equals(userPassword)) {
@@ -145,7 +146,7 @@ public class FormAuthHelper {
 		JSONObject obj = new JSONObject();
 		obj.put(UserConstants.KEY_LOGIN, uid);
 		try {
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", uid, false, false);
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, uid, false, false);
 			if (userInfo == null) {
 				return null;
 			}

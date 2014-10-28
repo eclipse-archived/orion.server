@@ -30,6 +30,7 @@ import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -103,7 +104,7 @@ public class BasicUsersTest extends UsersTest {
 		params.put(UserConstants.KEY_LOGIN, "testDupEmail");
 		params.put(UserConstants.KEY_FULL_NAME, "username_testCreateUserDuplicateEmail");
 		params.put(UserConstants.KEY_PASSWORD, "pass_" + System.currentTimeMillis());
-		params.put(UserConstants.KEY_EMAIL, "username@example.com");
+		params.put(UserConstants2.EMAIL, "username@example.com");
 		WebRequest request = getPostUsersRequest("", params, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -125,13 +126,13 @@ public class BasicUsersTest extends UsersTest {
 		params.put(UserConstants.KEY_LOGIN, "testCaseEmail");
 		params.put(UserConstants.KEY_FULL_NAME, "username_testCreateUserEmailDifferentCase");
 		params.put(UserConstants.KEY_PASSWORD, "pass_" + System.currentTimeMillis());
-		params.put(UserConstants.KEY_EMAIL, "duplicateemail@example.com");
+		params.put(UserConstants2.EMAIL, "duplicateemail@example.com");
 		WebRequest request = getPostUsersRequest("", params, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		//try creating another user with same email address but different case
-		params.put(UserConstants.KEY_EMAIL, "DUPLICATEEMAIL@example.com");
+		params.put(UserConstants2.EMAIL, "DUPLICATEEMAIL@example.com");
 		params.put(UserConstants.KEY_LOGIN, "testCaseEmail2");
 		request = getPostUsersRequest("", params, true);
 		response = webConversation.getResponse(request);
@@ -252,7 +253,7 @@ public class BasicUsersTest extends UsersTest {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "testCrDelRights");
 		params.put(UserConstants.KEY_FULL_NAME, "username_" + System.currentTimeMillis());
-		params.put(UserConstants.KEY_EMAIL, "test@test_" + System.currentTimeMillis());
+		params.put(UserConstants2.EMAIL, "test@test_" + System.currentTimeMillis());
 		params.put("workspace", "workspace_" + System.currentTimeMillis());
 		params.put(UserConstants.KEY_PASSWORD, "pass_" + System.currentTimeMillis());
 		WebRequest request = getPostUsersRequest("", params, true);

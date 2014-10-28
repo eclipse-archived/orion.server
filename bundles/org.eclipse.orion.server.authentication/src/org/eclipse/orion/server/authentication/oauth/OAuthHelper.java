@@ -36,6 +36,7 @@ import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.events.IEventService;
 import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -189,7 +190,7 @@ public class OAuthHelper {
 	private static UserInfo getUser(OAuthConsumer oauthConsumer) {
 		try {
 			// Get user by oauth property
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty("oauth", ".*\\Q" + oauthConsumer.getIdentifier() + "\\E.*", true, false);
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.OAUTH, ".*\\Q" + oauthConsumer.getIdentifier() + "\\E.*", true, false);
 			if (userInfo != null) {
 				return userInfo;
 			}
@@ -197,13 +198,13 @@ public class OAuthHelper {
 			String openidIdentifier = oauthConsumer.getOpenidIdentifier();
 			if (openidIdentifier == null)
 				return null;
-			userInfo = OrionConfiguration.getMetaStore().readUserByProperty("openid", ".*\\Q" + openidIdentifier + "\\E.*", true, false);
+			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.OPENID, ".*\\Q" + openidIdentifier + "\\E.*", true, false);
 			if (userInfo != null) {
 				// Remove old property
-				String openidsString = (String) userInfo.getProperty("openid");
+				String openidsString = (String) userInfo.getProperty(UserConstants2.OPENID);
 				String[] openIds = openidsString.split("\n");
 				if (openIds.length == 1) {
-					userInfo.setProperty("openid", null);
+					userInfo.setProperty(UserConstants2.OPENID, null);
 				} else {
 					// Multiple open id's
 					// Remove the current one
@@ -214,17 +215,17 @@ public class OAuthHelper {
 						}
 					}
 					newOpenIds = newOpenIds.substring(0, newOpenIds.length() - 1);
-					userInfo.setProperty("openid", newOpenIds);
+					userInfo.setProperty(UserConstants2.OPENID, newOpenIds);
 				}
 				// Add new property
-				String oauths = userInfo.getProperty("oauth");
+				String oauths = userInfo.getProperty(UserConstants2.OAUTH);
 				if (oauths != null && !oauths.equals("")) {
 					oauths += '\n';
 				} else {
 					oauths = "";
 				}
 				oauths += oauthConsumer.getIdentifier();
-				userInfo.setProperty("oauth", oauths);
+				userInfo.setProperty(UserConstants2.OAUTH, oauths);
 				OrionConfiguration.getMetaStore().updateUser(userInfo);
 				return userInfo;
 			}
