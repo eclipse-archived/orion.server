@@ -77,7 +77,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		jsonObject.put("WorkspaceId", workspaceId);
 		String projectId = SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectName);
 		jsonObject.put(MetadataInfo.UNIQUE_ID, projectId);
-		jsonObject.put("FullName", projectName);
+		jsonObject.put(UserConstants2.FULL_NAME, projectName);
 		String encodedContentLocation = SimpleMetaStoreUtil.encodeProjectContentLocation(contentLocation.toURI().toString());
 		jsonObject.put("ContentLocation", encodedContentLocation);
 		JSONObject properties = new JSONObject();
@@ -159,7 +159,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		jsonObject.put(SimpleMetaStore.ORION_VERSION, version);
 		jsonObject.put(MetadataInfo.UNIQUE_ID, userId);
 		jsonObject.put("UserName", userId);
-		jsonObject.put("FullName", userId);
+		jsonObject.put(UserConstants2.FULL_NAME, userId);
 		String password = SimpleUserPasswordUtil.encryptPassword(userId);
 		jsonObject.put(UserConstants2.PASSWORD, password);
 		JSONObject properties = new JSONObject();
@@ -228,7 +228,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(userId, workspaceName);
 		jsonObject.put(MetadataInfo.UNIQUE_ID, workspaceId);
 		jsonObject.put("UserId", userId);
-		jsonObject.put("FullName", workspaceName);
+		jsonObject.put(UserConstants2.FULL_NAME, workspaceName);
 		JSONArray projectNamesJson = new JSONArray();
 		for (String projectName : projectNames) {
 			projectNamesJson.put(projectName);
@@ -506,7 +506,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		// create metadata on disk
 		JSONObject newUserJSON = createUserJson(SimpleMetaStoreMigration.VERSION4, testUserId, workspaceIds);
 		// tweak the default to match the internal server's metadata.
-		newUserJSON.put("FullName", "Unnamed User");
+		newUserJSON.put(UserConstants2.FULL_NAME, "Unnamed User");
 		createUserMetaData(newUserJSON, testUserId);
 		JSONObject newWorkspaceJSON = createWorkspaceJson(SimpleMetaStoreMigration.VERSION4, testUserId, workspaceName, projectNames);
 		createWorkspaceMetaData(SimpleMetaStoreMigration.VERSION4, newWorkspaceJSON, testUserId, workspaceName);
@@ -1074,8 +1074,8 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		assertEquals(projectName, jsonObject.getString(MetadataInfo.UNIQUE_ID));
 		assertTrue(jsonObject.has("WorkspaceId"));
 		assertEquals(workspaceId, jsonObject.getString("WorkspaceId"));
-		assertTrue(jsonObject.has("FullName"));
-		assertEquals(projectName, jsonObject.getString("FullName"));
+		assertTrue(jsonObject.has(UserConstants2.FULL_NAME));
+		assertEquals(projectName, jsonObject.getString(UserConstants2.FULL_NAME));
 		assertTrue(jsonObject.has("Properties"));
 		assertTrue(jsonObject.has("ContentLocation"));
 		String contentLocationFromJson = jsonObject.getString("ContentLocation");
@@ -1154,7 +1154,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		assertEquals(userId, jsonObject.getString(MetadataInfo.UNIQUE_ID));
 		assertTrue(jsonObject.has("UserName"));
 		assertEquals(userId, jsonObject.getString("UserName"));
-		assertTrue(jsonObject.has("FullName"));
+		assertTrue(jsonObject.has(UserConstants2.FULL_NAME));
 		assertTrue(jsonObject.has("WorkspaceIds"));
 		JSONArray workspaceIdsFromJson = jsonObject.getJSONArray("WorkspaceIds");
 		assertNotNull(workspaceIdsFromJson);
@@ -1193,8 +1193,8 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		assertEquals(workspaceId, jsonObject.getString(MetadataInfo.UNIQUE_ID));
 		assertTrue(jsonObject.has("UserId"));
 		assertEquals(userId, jsonObject.getString("UserId"));
-		assertTrue(jsonObject.has("FullName"));
-		assertEquals(workspaceName, jsonObject.getString("FullName"));
+		assertTrue(jsonObject.has(UserConstants2.FULL_NAME));
+		assertEquals(workspaceName, jsonObject.getString(UserConstants2.FULL_NAME));
 		assertTrue(jsonObject.has("ProjectNames"));
 		JSONArray projectNamesJson = jsonObject.getJSONArray("ProjectNames");
 		for (String projectName : projectNames) {

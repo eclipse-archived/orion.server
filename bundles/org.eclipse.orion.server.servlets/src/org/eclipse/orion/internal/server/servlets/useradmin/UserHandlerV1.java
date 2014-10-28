@@ -220,7 +220,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, CoreException {
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
-		String name = req.getParameter(UserConstants.KEY_FULL_NAME);
+		String name = req.getParameter(UserConstants2.FULL_NAME);
 		String email = req.getParameter(UserConstants2.EMAIL);
 		String password = req.getParameter(UserConstants2.PASSWORD);
 		String identifier = req.getParameter("identifier");
@@ -416,8 +416,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (data.has(UserConstants.KEY_LOGIN)) {
 			userInfo.setUserName(data.getString(UserConstants.KEY_LOGIN));
 		}
-		if (data.has(UserConstants.KEY_FULL_NAME)) {
-			userInfo.setFullName(data.getString(UserConstants.KEY_FULL_NAME));
+		if (data.has(UserConstants2.FULL_NAME)) {
+			userInfo.setFullName(data.getString(UserConstants2.FULL_NAME));
 		}
 		if (data.has(UserConstants2.PASSWORD)) {
 			userInfo.setProperty(UserConstants2.PASSWORD, data.getString(UserConstants2.PASSWORD));
@@ -516,7 +516,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		JSONObject json = new JSONObject();
 		json.put(UserConstants.KEY_UID, userInfo.getUniqueId());
 		json.put(UserConstants.KEY_LOCATION, location);
-		json.put(UserConstants.KEY_FULL_NAME, userInfo.getFullName());
+		json.put(UserConstants2.FULL_NAME, userInfo.getFullName());
 		json.put(UserConstants.KEY_LOGIN, userInfo.getUserName());
 		String email = userInfo.getProperty(UserConstants2.EMAIL);
 		json.put(UserConstants2.EMAIL, email);
