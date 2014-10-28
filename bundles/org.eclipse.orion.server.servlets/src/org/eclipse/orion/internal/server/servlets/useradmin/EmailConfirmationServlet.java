@@ -83,7 +83,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 
 		String newPass = RandomPasswordGenerator.getRandomPassword();
 
-		userInfo.setProperty("password", newPass);
+		userInfo.setProperty(UserConstants2.PASSWORD, newPass);
 		userInfo.setProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID, null);
 
 		try {

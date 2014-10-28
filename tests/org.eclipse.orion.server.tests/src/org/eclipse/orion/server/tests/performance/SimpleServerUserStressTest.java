@@ -90,7 +90,7 @@ public class SimpleServerUserStressTest extends UsersTest {
 			params.put(UserConstants.KEY_LOGIN, login);
 			params.put(UserConstants.KEY_FULL_NAME, getRandomName() + " " + getRandomName());
 			params.put(UserConstants2.EMAIL, login + "@example.com");
-			params.put(UserConstants.KEY_PASSWORD, getRandomName() + System.currentTimeMillis());
+			params.put(UserConstants2.PASSWORD, getRandomName() + System.currentTimeMillis());
 
 			WebRequest request = getPostUsersRequest("", params, true);
 			WebResponse response = webConversation.getResponse(request);

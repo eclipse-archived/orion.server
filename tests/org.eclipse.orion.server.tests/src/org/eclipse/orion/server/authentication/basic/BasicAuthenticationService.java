@@ -26,7 +26,6 @@ import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.core.users.UserConstants2;
-import org.eclipse.orion.server.useradmin.UserConstants;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
 
@@ -92,8 +91,8 @@ public class BasicAuthenticationService implements IAuthenticationService {
 	private UserInfo getUserForCredentials(String login, String password) {
 		try {
 			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, login, false, false);
-			if (userInfo != null && userInfo.getProperty(UserConstants.KEY_PASSWORD) != null) {
-				String userPassword = userInfo.getProperty(UserConstants.KEY_PASSWORD);
+			if (userInfo != null && userInfo.getProperty(UserConstants2.PASSWORD) != null) {
+				String userPassword = userInfo.getProperty(UserConstants2.PASSWORD);
 				if (password.equals(userPassword)) {
 					return userInfo;
 				}

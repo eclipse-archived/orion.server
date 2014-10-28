@@ -23,7 +23,8 @@ public class UserConstants2 {
 
 	public static final String FULL_NAME = "FullName"; //$NON-NLS-1$
 	
-	public static final String PASSWORD = "Password"; //$NON-NLS-1$
+	// TODO: Bug 444864 should be upper case Password
+	public static final String PASSWORD = "password"; //$NON-NLS-1$
 	
 	// TODO: Bug 444864 should be upper case Email
 	public static final String EMAIL = "email"; //$NON-NLS-1$

@@ -22,6 +22,7 @@ import java.util.Iterator;
 import org.eclipse.orion.internal.server.hosting.SiteConfigurationConstants;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -282,7 +283,7 @@ public class RemoteMetaStoreTests {
 		WebRequest request = new PostMethodWebRequest(getOrionServerURI("/users"));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		request.setParameter(UserConstants.KEY_LOGIN, login);
-		request.setParameter(UserConstants.KEY_PASSWORD, password);
+		request.setParameter(UserConstants2.PASSWORD, password);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -380,7 +381,7 @@ public class RemoteMetaStoreTests {
 		WebRequest request = new PostMethodWebRequest(getOrionServerURI("/login/form"));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		request.setParameter(UserConstants.KEY_LOGIN, login);
-		request.setParameter(UserConstants.KEY_PASSWORD, password);
+		request.setParameter(UserConstants2.PASSWORD, password);
 		WebResponse response = webConversation.getResponse(request);
 		return response.getResponseCode();
 	}

@@ -59,7 +59,7 @@ public class FormAuthHelper {
 	public static LoginResult performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
-		UserInfo userInfo = getUserForCredentials(login, req.getParameter(UserConstants.KEY_PASSWORD));
+		UserInfo userInfo = getUserForCredentials(login, req.getParameter(UserConstants2.PASSWORD));
 
 		if (userInfo != null) {
 			if (userInfo.getProperties().containsKey("blocked")) {
@@ -103,8 +103,8 @@ public class FormAuthHelper {
 	private static UserInfo getUserForCredentials(String login, String password) {
 		try {
 			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, login, false, false);
-			if (userInfo != null && userInfo.getProperty(UserConstants.KEY_PASSWORD) != null) {
-				String userPassword = userInfo.getProperty(UserConstants.KEY_PASSWORD);
+			if (userInfo != null && userInfo.getProperty(UserConstants2.PASSWORD) != null) {
+				String userPassword = userInfo.getProperty(UserConstants2.PASSWORD);
 				if (password.equals(userPassword)) {
 					return userInfo;
 				} else {
