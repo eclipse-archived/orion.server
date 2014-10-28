@@ -28,6 +28,7 @@ import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.user.profile.RandomPasswordGenerator;
 import org.eclipse.orion.server.useradmin.UserConstants;
@@ -49,7 +50,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 
 		UserInfo userInfo = null;
 		try {
-			userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", userId, false, false);
+			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, userId, false, false);
 		} catch (CoreException e) {
 			LogHelper.log(e);
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userId + " not found.");
@@ -163,7 +164,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 		String userLogin;
 		try {
 			JSONObject data = OrionServlet.readJSONRequest(req);
-			userEmail = data.getString(UserConstants.KEY_EMAIL);
+			userEmail = data.getString(UserConstants2.EMAIL);
 			userLogin = data.getString(UserConstants.KEY_LOGIN);
 		} catch (JSONException e) {
 			getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not parse json request", e));
@@ -176,7 +177,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			//reset using login
 			UserInfo userInfo = null;
 			try {
-				userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", userLogin.trim(), false, false);
+				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, userLogin.trim(), false, false);
 			} catch (CoreException e) {
 				LogHelper.log(e);
 				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
@@ -192,7 +193,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User " + userLogin + " email has not been yet confirmed." + " Please follow the instructions from the confirmation email in your inbox and then request a password reset again.");
 					return;
 				}
-				if (!userEmail.equals(userInfo.getProperty(UserConstants.KEY_EMAIL))) {
+				if (!userEmail.equals(userInfo.getProperty(UserConstants2.EMAIL))) {
 					resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userLogin + " with email " + userEmail + " does not exist.");
 					return;
 				}
@@ -202,7 +203,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			//reset using email address
 			UserInfo userInfo = null;
 			try {
-				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.KEY_EMAIL, userEmail.trim().toLowerCase(), false, false);
+				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.EMAIL, userEmail.trim().toLowerCase(), false, false);
 			} catch (CoreException e) {
 				LogHelper.log(e);
 				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
@@ -245,7 +246,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 	}
 
 	private IStatus sendPasswordResetConfirmation(UserInfo userInfo, URI baseUri) {
-		if (userInfo.getProperty(UserConstants.KEY_EMAIL) == null || userInfo.getProperty(UserConstants.KEY_EMAIL).length() == 0) {
+		if (userInfo.getProperty(UserConstants2.EMAIL) == null || userInfo.getProperty(UserConstants2.EMAIL).length() == 0) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userInfo.getUniqueId() + " doesn't have its email set. Contact administrator to reset your password.", null);
 		}
 
@@ -271,7 +272,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 	}
 
 	public boolean isEmailConfirmed(UserInfo userInfo) {
-		String email = userInfo.getProperty(UserConstants.KEY_EMAIL);
+		String email = userInfo.getProperty(UserConstants2.EMAIL);
 		return (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants.KEY_EMAIL_CONFIRMATION) == null : false;
 	}
 

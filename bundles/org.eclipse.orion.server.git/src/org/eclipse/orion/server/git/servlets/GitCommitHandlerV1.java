@@ -67,6 +67,7 @@ import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.git.AdditionalRebaseStatus;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
@@ -74,7 +75,6 @@ import org.eclipse.orion.server.git.jobs.LogJob;
 import org.eclipse.orion.server.git.objects.Commit;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.orion.server.useradmin.UserEmailUtil;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
@@ -562,7 +562,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		}
 		UserInfo userInfo = null;
 		try {
-			userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", login, false, false);
+			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, login, false, false);
 		} catch (CoreException e) {
 			LogHelper.log(e);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(),
@@ -573,7 +573,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				reviewRequestEmail = new EmailContent(EMAIL_REVIEW_REQUEST_FILE);
 			}
 
-			String emailAdress = userInfo.getProperty(UserConstants.KEY_EMAIL);
+			String emailAdress = userInfo.getProperty(UserConstants2.EMAIL);
 
 			util.sendEmail(
 					reviewRequestEmail.getTitle(),

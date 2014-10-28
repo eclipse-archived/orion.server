@@ -41,6 +41,7 @@ import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.orion.server.useradmin.UserConstants;
@@ -174,7 +175,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleUserGet(HttpServletRequest req, HttpServletResponse resp, String userId) throws IOException, JSONException, ServletException, CoreException {
-		UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", userId, false, false);
+		UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, userId, false, false);
 
 		if (userInfo == null)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User not found " + userId, null));
@@ -193,7 +194,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		UserInfo userInfo = null;
 		try {
-			userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", login, false, false);
+			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, login, false, false);
 		} catch (CoreException e) {
 			LogHelper.log(e);
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
@@ -220,7 +221,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, CoreException {
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
 		String name = req.getParameter(UserConstants.KEY_FULL_NAME);
-		String email = req.getParameter(UserConstants.KEY_EMAIL);
+		String email = req.getParameter(UserConstants2.EMAIL);
 		String password = req.getParameter(UserConstants.KEY_PASSWORD);
 		String identifier = req.getParameter("identifier");
 
@@ -246,7 +247,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		UserInfo userInfo = null;
 		try {
-			userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", login, false, false);
+			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, login, false, false);
 		} catch (CoreException e) {
 			LogHelper.log(e);
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
@@ -262,7 +263,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 			userInfo = null;
 			try {
-				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.KEY_EMAIL, email.toLowerCase(), false, false);
+				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.EMAIL, email.toLowerCase(), false, false);
 			} catch (CoreException e) {
 				LogHelper.log(e);
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
@@ -278,10 +279,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		userInfo.setFullName(name);
 		userInfo.setProperty(UserConstants.KEY_PASSWORD, password);
 		if (identifier != null) {
-			userInfo.setProperty("oauth", identifier);
+			userInfo.setProperty(UserConstants2.OAUTH, identifier);
 		}
 		if (email != null && email.length() > 0) {
-			userInfo.setProperty(UserConstants.KEY_EMAIL, email);
+			userInfo.setProperty(UserConstants2.EMAIL, email);
 		}
 		if (isEmailRequired) {
 			userInfo.setProperty(UserConstants.KEY_BLOCKED, "true");
@@ -315,7 +316,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CREATED, NLS.bind("Your account {0} has been successfully created. You have been sent an email address verification. Follow the instructions in this email to login to your Orion account.", login), null));
 			} catch (URISyntaxException e) {
 				LogHelper.log(e);
-				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email to " + userInfo.getProperty(UserConstants.KEY_EMAIL), null));
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email to " + userInfo.getProperty(UserConstants2.EMAIL), null));
 			}
 		}
 		OrionServlet.writeJSONResponse(req, resp, formJson(userInfo, userLocation, req.getContextPath()));
@@ -385,7 +386,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 		UserInfo userInfo = null;
 		try {
-			userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", userId, false, false);
+			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, userId, false, false);
 		} catch (CoreException e) {
 			LogHelper.log(e);
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
@@ -421,8 +422,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (data.has(UserConstants.KEY_PASSWORD)) {
 			userInfo.setProperty(UserConstants.KEY_PASSWORD, data.getString(UserConstants.KEY_PASSWORD));
 		}
-		if (data.has(UserConstants.KEY_EMAIL)) {
-			userInfo.setProperty(UserConstants.KEY_EMAIL, data.getString(UserConstants.KEY_EMAIL));
+		if (data.has(UserConstants2.EMAIL)) {
+			userInfo.setProperty(UserConstants2.EMAIL, data.getString(UserConstants2.EMAIL));
 		}
 
 		if (data.has(UserConstants.KEY_PROPERTIES)) {
@@ -444,10 +445,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (userInfo.getProperty(UserConstants.KEY_EMAIL_CONFIRMATION) != null && !userInfo.getProperty(UserConstants.KEY_EMAIL_CONFIRMATION).equals(emailConfirmationid)) {
 			try {
 				UserEmailUtil.getUtil().sendEmailConfirmation(req, userInfo);
-				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been sent to " + userInfo.getProperty(UserConstants.KEY_EMAIL), null));
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been sent to " + userInfo.getProperty(UserConstants2.EMAIL), null));
 			} catch (Exception e) {
 				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Error while sending email" + (e.getMessage() == null ? "" : ": " + e.getMessage()) + ". See http://wiki.eclipse.org/Orion/Server_admin_guide#Email_configuration for email configuration guide."));
-				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email to " + userInfo.getProperty(UserConstants.KEY_EMAIL), null));
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email to " + userInfo.getProperty(UserConstants2.EMAIL), null));
 			}
 		}
 
@@ -472,7 +473,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handleUserDelete(HttpServletRequest req, HttpServletResponse resp, String userId) throws ServletException {
 		UserInfo userInfo = null;
 		try {
-			userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", userId, false, false);
+			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, userId, false, false);
 		} catch (CoreException e) {
 			LogHelper.log(e);
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + userId + " failed.", e));
@@ -517,18 +518,18 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		json.put(UserConstants.KEY_LOCATION, location);
 		json.put(UserConstants.KEY_FULL_NAME, userInfo.getFullName());
 		json.put(UserConstants.KEY_LOGIN, userInfo.getUserName());
-		String email = userInfo.getProperty("email");
-		json.put(UserConstants.KEY_EMAIL, email);
+		String email = userInfo.getProperty(UserConstants2.EMAIL);
+		json.put(UserConstants2.EMAIL, email);
 		boolean emailConfirmed = (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants.KEY_EMAIL_CONFIRMATION) == null : false;
 		json.put(UserConstants.KEY_EMAIL_CONFIRMED, emailConfirmed);
 		json.put(UserConstants.KEY_HAS_PASSWORD, userInfo.getProperty("password") == null ? false : true);
 
 		JSONObject properties = new JSONObject();
-		if (userInfo.getProperty("oauth") != null) {
-			properties.put("oauth", userInfo.getProperty("oauth"));
+		if (userInfo.getProperty(UserConstants2.OAUTH) != null) {
+			properties.put(UserConstants2.OAUTH, userInfo.getProperty(UserConstants2.OAUTH));
 		}
-		if (userInfo.getProperty("openid") != null) {
-			properties.put("openid", userInfo.getProperty("oauth"));
+		if (userInfo.getProperty(UserConstants2.OPENID) != null) {
+			properties.put(UserConstants2.OPENID, userInfo.getProperty(UserConstants2.OPENID));
 		}
 		json.put(UserConstants.KEY_PROPERTIES, properties);
 

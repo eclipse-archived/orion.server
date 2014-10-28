@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
@@ -43,9 +44,9 @@ public class Activator implements BundleActivator {
 		bundleContext = context;
 		IMetaStore metastore =  OrionConfiguration.getMetaStore();
 		List<String> keys = new ArrayList<String>();
-		keys.add("email");
-		keys.add("oauth");
-		keys.add("openid");
+		keys.add(UserConstants2.EMAIL);
+		keys.add(UserConstants2.OAUTH);
+		keys.add(UserConstants2.OPENID);
 		metastore.registerUserProperties(keys);
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 		if (logger.isDebugEnabled()) {

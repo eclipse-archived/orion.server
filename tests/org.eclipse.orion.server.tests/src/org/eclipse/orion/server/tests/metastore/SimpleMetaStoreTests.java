@@ -35,6 +35,7 @@ import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.junit.Test;
 
@@ -1029,7 +1030,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		metaStore.createUser(userInfo);
 
 		// read the user
-		UserInfo readUserInfo = metaStore.readUserByProperty("UniqueId", testUserLogin, false, false);
+		UserInfo readUserInfo = metaStore.readUserByProperty(UserConstants2.USER_NAME, testUserLogin, false, false);
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
 
@@ -1037,7 +1038,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		metaStore.deleteUser(testUserLogin);
 
 		// read the user again
-		UserInfo readUserInfo2 = metaStore.readUserByProperty("UniqueId", testUserLogin, false, false);
+		UserInfo readUserInfo2 = metaStore.readUserByProperty(UserConstants2.USER_NAME, testUserLogin, false, false);
 		assertNull(readUserInfo2);
 	}
 
@@ -1384,7 +1385,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		metaStore.createUser(userInfo);
 
 		// read the user using the cache
-		UserInfo readUserInfo = metaStore.readUserByProperty("UniqueId", testUserLogin, false, false);
+		UserInfo readUserInfo = metaStore.readUserByProperty(UserConstants2.USER_NAME, testUserLogin, false, false);
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
 
@@ -1425,11 +1426,11 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		assertTrue(readUserInfo2.getUserName().equals(newUserName));
 
 		// read the user using the cache
-		UserInfo readUserInfo3 = metaStore.readUserByProperty("UniqueId", testUserLogin, false, false);
+		UserInfo readUserInfo3 = metaStore.readUserByProperty(UserConstants2.USER_NAME, testUserLogin, false, false);
 		assertNull(readUserInfo3);
 
 		// read the user using the cache
-		UserInfo readUserInfo4 = metaStore.readUserByProperty("UniqueId", newUserName, false, false);
+		UserInfo readUserInfo4 = metaStore.readUserByProperty(UserConstants2.USER_NAME, newUserName, false, false);
 		assertNotNull(readUserInfo4);
 		assertEquals(readUserInfo4.getUniqueId(), userInfo.getUniqueId());
 
@@ -1957,51 +1958,51 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		String emailAddress = "test@example.com";
 		userInfo.setUserName(testUserLogin);
 		userInfo.setFullName(testUserLogin);
-		userInfo.setProperty("email", emailAddress);
+		userInfo.setProperty(UserConstants2.EMAIL, emailAddress);
 		metaStore.createUser(userInfo);
 
 		// read the user using the cache
-		UserInfo readUserInfo = metaStore.readUserByProperty("email", emailAddress, false, false);
+		UserInfo readUserInfo = metaStore.readUserByProperty(UserConstants2.EMAIL, emailAddress, false, false);
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(readUserInfo.getProperty("email"), emailAddress);
+		assertEquals(readUserInfo.getProperty(UserConstants2.EMAIL), emailAddress);
 
 		// update the UserInfo
 		String newEmailAddress = "new@sample.ca";
-		userInfo.setProperty("email", newEmailAddress);
+		userInfo.setProperty(UserConstants2.EMAIL, newEmailAddress);
 
 		// update the user
 		metaStore.updateUser(userInfo);
 
 		// read the user using the cache
-		UserInfo readUserInfo2 = metaStore.readUserByProperty("email", newEmailAddress, false, false);
+		UserInfo readUserInfo2 = metaStore.readUserByProperty(UserConstants2.EMAIL, newEmailAddress, false, false);
 		assertNotNull(readUserInfo2);
 		assertEquals(readUserInfo2.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(readUserInfo2.getProperty("email"), newEmailAddress);
+		assertEquals(readUserInfo2.getProperty(UserConstants2.EMAIL), newEmailAddress);
 
 		// read the user using the cache
-		UserInfo readUserInfo3 = metaStore.readUserByProperty("email", emailAddress, false, false);
+		UserInfo readUserInfo3 = metaStore.readUserByProperty(UserConstants2.EMAIL, emailAddress, false, false);
 		assertNull(readUserInfo3);
 
 		// delete the email property and update the user
-		userInfo.setProperty("email", null);
+		userInfo.setProperty(UserConstants2.EMAIL, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo6 = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo6);
 		assertEquals(readUserInfo6.getUniqueId(), userInfo.getUniqueId());
-		assertNull(readUserInfo6.getProperty("email"));
+		assertNull(readUserInfo6.getProperty(UserConstants2.EMAIL));
 
 		// read the user using the cache
-		UserInfo readUserInfo7 = metaStore.readUserByProperty("email", newEmailAddress, false, false);
+		UserInfo readUserInfo7 = metaStore.readUserByProperty(UserConstants2.EMAIL, newEmailAddress, false, false);
 		assertNull(readUserInfo7);
 
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());
 
 		// read the user using the cache
-		UserInfo readUserInfo4 = metaStore.readUserByProperty("email", newEmailAddress, false, false);
+		UserInfo readUserInfo4 = metaStore.readUserByProperty(UserConstants2.EMAIL, newEmailAddress, false, false);
 		assertNull(readUserInfo4);
 	}
 
@@ -2015,57 +2016,57 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		String oauth = "https://www.google.com/accounts/o8/id?id=AItOawnmfbTrOADLMe3BteRFouYMK99xMTiqACw";
 		userInfo.setUserName(testUserLogin);
 		userInfo.setFullName(testUserLogin);
-		userInfo.setProperty("oauth", oauth);
+		userInfo.setProperty(UserConstants2.OAUTH, oauth);
 		metaStore.createUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(readUserInfo.getProperty("oauth"), oauth);
+		assertEquals(readUserInfo.getProperty(UserConstants2.OAUTH), oauth);
 
 		// read the user using the cache
-		UserInfo readUserInfo5 = metaStore.readUserByProperty("oauth", oauth, false, false);
+		UserInfo readUserInfo5 = metaStore.readUserByProperty(UserConstants2.OAUTH, oauth, false, false);
 		assertNotNull(readUserInfo5);
 		assertEquals(readUserInfo5.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(readUserInfo5.getProperty("oauth"), oauth);
+		assertEquals(readUserInfo5.getProperty(UserConstants2.OAUTH), oauth);
 
 		// update the UserInfo
 		String newoauth = "https://www.google.com/accounts/o8/id?id=AItOawmBI-L96jdXg8wdb08OzgWvXveS1_95zKI";
-		userInfo.setProperty("oauth", newoauth);
+		userInfo.setProperty(UserConstants2.OAUTH, newoauth);
 
 		// update the user
 		metaStore.updateUser(userInfo);
 
 		// read the user using the cache
-		UserInfo readUserInfo2 = metaStore.readUserByProperty("oauth", newoauth, false, false);
+		UserInfo readUserInfo2 = metaStore.readUserByProperty(UserConstants2.OAUTH, newoauth, false, false);
 		assertNotNull(readUserInfo2);
 		assertEquals(readUserInfo2.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(readUserInfo2.getProperty("oauth"), newoauth);
+		assertEquals(readUserInfo2.getProperty(UserConstants2.OAUTH), newoauth);
 
 		// read the user using the cache
-		UserInfo readUserInfo3 = metaStore.readUserByProperty("oauth", oauth, false, false);
+		UserInfo readUserInfo3 = metaStore.readUserByProperty(UserConstants2.OAUTH, oauth, false, false);
 		assertNull(readUserInfo3);
 
 		// delete the oauth property and update the user
-		userInfo.setProperty("oauth", null);
+		userInfo.setProperty(UserConstants2.OAUTH, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo6 = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo6);
 		assertEquals(readUserInfo6.getUniqueId(), userInfo.getUniqueId());
-		assertNull(readUserInfo6.getProperty("oauth"));
+		assertNull(readUserInfo6.getProperty(UserConstants2.OAUTH));
 
 		// read the user using the cache
-		UserInfo readUserInfo7 = metaStore.readUserByProperty("oauth", newoauth, false, false);
+		UserInfo readUserInfo7 = metaStore.readUserByProperty(UserConstants2.OAUTH, newoauth, false, false);
 		assertNull(readUserInfo7);
 
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());
 
 		// read the user using the cache
-		UserInfo readUserInfo4 = metaStore.readUserByProperty("oauth", newoauth, false, false);
+		UserInfo readUserInfo4 = metaStore.readUserByProperty(UserConstants2.OAUTH, newoauth, false, false);
 		assertNull(readUserInfo4);
 	}
 
@@ -2079,57 +2080,57 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		String openid = "https://www.google.com/accounts/o8/id?id=AItOawnmfbTrOADLMe3BteRFouYMK99xMTiqACw";
 		userInfo.setUserName(testUserLogin);
 		userInfo.setFullName(testUserLogin);
-		userInfo.setProperty("openid", openid);
+		userInfo.setProperty(UserConstants2.OPENID, openid);
 		metaStore.createUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(openid, readUserInfo.getProperty("openid"));
+		assertEquals(openid, readUserInfo.getProperty(UserConstants2.OPENID));
 
 		// read the user using the cache
-		UserInfo readUserInfo5 = metaStore.readUserByProperty("openid", openid, false, false);
+		UserInfo readUserInfo5 = metaStore.readUserByProperty(UserConstants2.OPENID, openid, false, false);
 		assertNotNull(readUserInfo5);
 		assertEquals(readUserInfo5.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(readUserInfo5.getProperty("openid"), openid);
+		assertEquals(readUserInfo5.getProperty(UserConstants2.OPENID), openid);
 
 		// update the UserInfo
 		String newOpenid = "https://www.google.com/accounts/o8/id?id=AItOawmBI-L96jdXg8wdb08OzgWvXveS1_95zKI";
-		userInfo.setProperty("openid", newOpenid);
+		userInfo.setProperty(UserConstants2.OPENID, newOpenid);
 
 		// update the user
 		metaStore.updateUser(userInfo);
 
 		// read the user using the cache
-		UserInfo readUserInfo2 = metaStore.readUserByProperty("openid", newOpenid, false, false);
+		UserInfo readUserInfo2 = metaStore.readUserByProperty(UserConstants2.OPENID, newOpenid, false, false);
 		assertNotNull(readUserInfo2);
 		assertEquals(readUserInfo2.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(readUserInfo2.getProperty("openid"), newOpenid);
+		assertEquals(readUserInfo2.getProperty(UserConstants2.OPENID), newOpenid);
 
 		// read the user using the cache
-		UserInfo readUserInfo3 = metaStore.readUserByProperty("openid", openid, false, false);
+		UserInfo readUserInfo3 = metaStore.readUserByProperty(UserConstants2.OPENID, openid, false, false);
 		assertNull(readUserInfo3);
 
 		// delete the openid property and update the user
-		userInfo.setProperty("openid", null);
+		userInfo.setProperty(UserConstants2.OPENID, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo6 = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo6);
 		assertEquals(readUserInfo6.getUniqueId(), userInfo.getUniqueId());
-		assertNull(readUserInfo6.getProperty("openid"));
+		assertNull(readUserInfo6.getProperty(UserConstants2.OPENID));
 
 		// read the user using the cache
-		UserInfo readUserInfo7 = metaStore.readUserByProperty("openid", newOpenid, false, false);
+		UserInfo readUserInfo7 = metaStore.readUserByProperty(UserConstants2.OPENID, newOpenid, false, false);
 		assertNull(readUserInfo7);
 
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());
 
 		// read the user using the cache
-		UserInfo readUserInfo4 = metaStore.readUserByProperty("openid", newOpenid, false, false);
+		UserInfo readUserInfo4 = metaStore.readUserByProperty(UserConstants2.OPENID, newOpenid, false, false);
 		assertNull(readUserInfo4);
 	}
 
@@ -2190,7 +2191,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 	}
 
 	@Test
-	public void testReadUserByUniqueIdProperty() throws CoreException {
+	public void testReadUserByUserNameProperty() throws CoreException {
 		// create the MetaStore
 		IMetaStore metaStore = OrionConfiguration.getMetaStore();
 
@@ -2201,7 +2202,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		metaStore.createUser(userInfo);
 
 		// read the user using the cache
-		UserInfo readUserInfo = metaStore.readUserByProperty("UniqueId", testUserLogin, false, false);
+		UserInfo readUserInfo = metaStore.readUserByProperty(UserConstants2.USER_NAME, testUserLogin, false, false);
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
 	}

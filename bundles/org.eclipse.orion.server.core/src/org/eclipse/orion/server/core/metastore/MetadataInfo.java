@@ -20,6 +20,8 @@ import java.util.*;
 public class MetadataInfo {
 
 	protected static final List<String> EMPTY = Collections.emptyList();
+	
+	public static final String UNIQUE_ID = "UniqueId"; //$NON-NLS-1$
 
 	// List of operations that can be performed on the properties list
 	public enum OperationType {

@@ -37,6 +37,7 @@ import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.core.metastore.SimpleUserPasswordUtil;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.metastore.MetadataInfo;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONArray;
@@ -75,7 +76,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(userId, workspaceName);
 		jsonObject.put("WorkspaceId", workspaceId);
 		String projectId = SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectName);
-		jsonObject.put("UniqueId", projectId);
+		jsonObject.put(MetadataInfo.UNIQUE_ID, projectId);
 		jsonObject.put("FullName", projectName);
 		String encodedContentLocation = SimpleMetaStoreUtil.encodeProjectContentLocation(contentLocation.toURI().toString());
 		jsonObject.put("ContentLocation", encodedContentLocation);
@@ -156,7 +157,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	protected JSONObject createUserJson(int version, String userId, List<String> workspaceIds) throws Exception {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put(SimpleMetaStore.ORION_VERSION, version);
-		jsonObject.put("UniqueId", userId);
+		jsonObject.put(MetadataInfo.UNIQUE_ID, userId);
 		jsonObject.put("UserName", userId);
 		jsonObject.put("FullName", userId);
 		String password = SimpleUserPasswordUtil.encryptPassword(userId);
@@ -225,7 +226,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put(SimpleMetaStore.ORION_VERSION, version);
 		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(userId, workspaceName);
-		jsonObject.put("UniqueId", workspaceId);
+		jsonObject.put(MetadataInfo.UNIQUE_ID, workspaceId);
 		jsonObject.put("UserId", userId);
 		jsonObject.put("FullName", workspaceName);
 		JSONArray projectNamesJson = new JSONArray();
@@ -1069,8 +1070,8 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	protected void verifyProjectJson(JSONObject jsonObject, String userId, String workspaceId, String projectName, File contentLocation) throws Exception {
 		assertTrue(jsonObject.has(SimpleMetaStore.ORION_VERSION));
 		assertEquals("OrionVersion is incorrect", SimpleMetaStore.VERSION, jsonObject.getInt(SimpleMetaStore.ORION_VERSION));
-		assertTrue(jsonObject.has("UniqueId"));
-		assertEquals(projectName, jsonObject.getString("UniqueId"));
+		assertTrue(jsonObject.has(MetadataInfo.UNIQUE_ID));
+		assertEquals(projectName, jsonObject.getString(MetadataInfo.UNIQUE_ID));
 		assertTrue(jsonObject.has("WorkspaceId"));
 		assertEquals(workspaceId, jsonObject.getString("WorkspaceId"));
 		assertTrue(jsonObject.has("FullName"));
@@ -1149,8 +1150,8 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	protected void verifyUserJson(JSONObject jsonObject, String userId, List<String> workspaceIds) throws Exception {
 		assertTrue(jsonObject.has(SimpleMetaStore.ORION_VERSION));
 		assertEquals("OrionVersion is incorrect", SimpleMetaStore.VERSION, jsonObject.getInt(SimpleMetaStore.ORION_VERSION));
-		assertTrue(jsonObject.has("UniqueId"));
-		assertEquals(userId, jsonObject.getString("UniqueId"));
+		assertTrue(jsonObject.has(MetadataInfo.UNIQUE_ID));
+		assertEquals(userId, jsonObject.getString(MetadataInfo.UNIQUE_ID));
 		assertTrue(jsonObject.has("UserName"));
 		assertEquals(userId, jsonObject.getString("UserName"));
 		assertTrue(jsonObject.has("FullName"));
@@ -1188,8 +1189,8 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	protected void verifyWorkspaceJson(JSONObject jsonObject, String userId, String workspaceId, String workspaceName, List<String> projectNames) throws Exception {
 		assertTrue(jsonObject.has(SimpleMetaStore.ORION_VERSION));
 		assertEquals("OrionVersion is incorrect", SimpleMetaStore.VERSION, jsonObject.getInt(SimpleMetaStore.ORION_VERSION));
-		assertTrue(jsonObject.has("UniqueId"));
-		assertEquals(workspaceId, jsonObject.getString("UniqueId"));
+		assertTrue(jsonObject.has(MetadataInfo.UNIQUE_ID));
+		assertEquals(workspaceId, jsonObject.getString(MetadataInfo.UNIQUE_ID));
 		assertTrue(jsonObject.has("UserId"));
 		assertEquals(userId, jsonObject.getString("UserId"));
 		assertTrue(jsonObject.has("FullName"));

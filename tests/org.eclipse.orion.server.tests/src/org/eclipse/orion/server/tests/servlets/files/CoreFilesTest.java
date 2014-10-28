@@ -39,6 +39,7 @@ import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.metastore.MetadataInfo;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -457,7 +458,7 @@ public class CoreFilesTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		JSONObject responseObject = new JSONObject(response.getText());
-		assertNotNull(responseObject.get("UniqueId"));
+		assertNotNull(responseObject.get(MetadataInfo.UNIQUE_ID));
 		assertNotNull(responseObject.get("ProjectNames"));
 	}
 

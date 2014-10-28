@@ -29,6 +29,7 @@ import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.osgi.util.NLS;
@@ -94,7 +95,7 @@ public class UserServlet extends OrionServlet {
 			String userId = pathInfo.split("\\/")[1];
 			UserInfo userInfo = null;
 			try {
-				userInfo = OrionConfiguration.getMetaStore().readUserByProperty("UniqueId", userId, false, false);
+				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, userId, false, false);
 			} catch (CoreException e) {
 				LogHelper.log(e);
 				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());

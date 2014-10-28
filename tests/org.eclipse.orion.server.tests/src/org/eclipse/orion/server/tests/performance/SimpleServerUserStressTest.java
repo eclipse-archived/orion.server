@@ -21,6 +21,7 @@ import java.util.Random;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.tests.servlets.users.UsersTest;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.test.performance.Performance;
@@ -88,7 +89,7 @@ public class SimpleServerUserStressTest extends UsersTest {
 			String login = getRandomName();
 			params.put(UserConstants.KEY_LOGIN, login);
 			params.put(UserConstants.KEY_FULL_NAME, getRandomName() + " " + getRandomName());
-			params.put(UserConstants.KEY_EMAIL, login + "@example.com");
+			params.put(UserConstants2.EMAIL, login + "@example.com");
 			params.put(UserConstants.KEY_PASSWORD, getRandomName() + System.currentTimeMillis());
 
 			WebRequest request = getPostUsersRequest("", params, true);

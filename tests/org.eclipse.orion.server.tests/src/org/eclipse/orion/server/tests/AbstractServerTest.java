@@ -23,6 +23,7 @@ import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.resources.Base64;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
@@ -86,7 +87,7 @@ public class AbstractServerTest {
 		try {
 			// see if the user exists already
 			IMetaStore metaStore = OrionConfiguration.getMetaStore();
-			userInfo = metaStore.readUserByProperty("UniqueId", login, false, false);
+			userInfo = metaStore.readUserByProperty(UserConstants2.USER_NAME, login, false, false);
 			if (userInfo != null) {
 				return userInfo;
 			}

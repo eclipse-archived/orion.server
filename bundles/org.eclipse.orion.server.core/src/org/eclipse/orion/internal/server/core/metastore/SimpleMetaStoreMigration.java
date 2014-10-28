@@ -14,6 +14,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.orion.server.core.metastore.MetadataInfo;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -201,11 +202,11 @@ public class SimpleMetaStoreMigration {
 		File parent = folder.getParentFile();
 		File oldWorkspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(folder, SimpleMetaStore.WORKSPACE);
 		JSONObject workspaceJSON = SimpleMetaStoreUtil.readMetaFile(folder, SimpleMetaStore.WORKSPACE);
-		if (!workspaceJSON.has("UniqueId")) {
+		if (!workspaceJSON.has(MetadataInfo.UNIQUE_ID)) {
 			logger.error("Migration: Workspace metadata is missing UniqueId " + oldWorkspaceMetaFile.toString()); //$NON-NLS-1$
 			return;
 		}
-		String workspaceId = workspaceJSON.getString("UniqueId");
+		String workspaceId = workspaceJSON.getString(MetadataInfo.UNIQUE_ID);
 		File newWorkspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(parent, workspaceId);
 		if (newWorkspaceMetaFile.exists()) {
 			logger.error("Migration: Duplicate workspace metadata file at " + newWorkspaceMetaFile.toString()); //$NON-NLS-1$
