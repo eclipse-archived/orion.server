@@ -301,7 +301,8 @@ public class GitCommitTest extends GitTest {
 
 			JSONObject commit = commitsArray.getJSONObject(0);
 			assertEquals("test.txt and folder/folder.txt changed", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
-			JSONArray diffs = commit.getJSONArray(GitConstants.KEY_COMMIT_DIFFS);
+			JSONObject diffsParent = commit.getJSONObject(GitConstants.KEY_COMMIT_DIFFS);
+			JSONArray diffs = diffsParent.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			assertEquals(2, diffs.length());
 			String oldPath = diffs.getJSONObject(0).getString(GitConstants.KEY_COMMIT_DIFF_OLDPATH);
 			assertTrue("folder/folder.txt".equals(oldPath) || "test.txt".equals(oldPath));
