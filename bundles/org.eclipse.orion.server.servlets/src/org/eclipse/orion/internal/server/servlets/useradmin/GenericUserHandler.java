@@ -56,7 +56,6 @@ public class GenericUserHandler extends ServletResourceHandler<String> {
 			writer.println("<body>"); //$NON-NLS-1$
 			writer.println("<h1>Details of " + userId + "</h1>"); //$NON-NLS-1$ //$NON-NLS-2$
 
-			writer.println("<h2>Part : " + IOrionUserProfileConstants.GENERAL_PROFILE_PART + "</h2>"); //$NON-NLS-1$ //$NON-NLS-2$
 			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP)) {
 				String lastLoginTimestamp = userInfo.getProperty(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP);
 				writer.println(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP + " : " + lastLoginTimestamp + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
