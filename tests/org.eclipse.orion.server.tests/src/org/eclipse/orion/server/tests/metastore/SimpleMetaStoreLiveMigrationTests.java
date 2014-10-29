@@ -199,6 +199,19 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		jsonObject.put("WorkspaceIds", workspaceIdsJson);
 		properties.put("UserRights", userRights);
 		jsonObject.put("Properties", properties);
+		if (version == SimpleMetaStoreMigration.VERSION4 || version == SimpleMetaStoreMigration.VERSION6 || version == SimpleMetaStore.VERSION) {
+			jsonObject.put(UserConstants2.BLOCKED, "true");
+			jsonObject.put(UserConstants2.DISK_USAGE, "74M");
+			jsonObject.put(UserConstants2.DISK_USAGE_TIMESTAMP, "1414613142309");
+			jsonObject.put(UserConstants2.EMAIL, userId + "@example.com");
+			jsonObject.put(UserConstants2.EMAIL_CONFIRMATION, "1382712950778-0.7170133049530362");
+			jsonObject.put(UserConstants2.LAST_LOGIN_TIMESTAMP, "1414089330754");
+			JSONObject profileProperties = new JSONObject();
+			profileProperties.put(UserConstants2.OAUTH, "https://api.github.com/users/ahunter-orion/4500523");
+			profileProperties.put(UserConstants2.OPENID, "https://www.google.com/accounts/o8/id?id=AItOawkTs8dYMgHG0tlvW8PE7RmNZwDlOWlWIU8");
+			profileProperties.put(UserConstants2.PASSWORD_RESET_ID, "1382712210708-0.6296026603269941");
+			jsonObject.put("profileProperties", profileProperties);
+		}
 		return jsonObject;
 	}
 
@@ -1166,6 +1179,37 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		JSONObject properties = jsonObject.getJSONObject("Properties");
 		assertTrue(properties.has("UserRightsVersion"));
 		assertTrue(properties.has("UserRights"));
+
+		if (jsonObject.has(UserConstants2.BLOCKED)) {
+			assertEquals(jsonObject.getString(UserConstants2.BLOCKED), "true");
+		}
+		if (jsonObject.has(UserConstants2.DISK_USAGE)) {
+			assertEquals(jsonObject.getString(UserConstants2.DISK_USAGE), "74M");
+		}
+		if (jsonObject.has(UserConstants2.DISK_USAGE_TIMESTAMP)) {
+			assertEquals(jsonObject.getString(UserConstants2.DISK_USAGE_TIMESTAMP), "1414613142309");
+		}
+		if (jsonObject.has(UserConstants2.EMAIL)) {
+			assertEquals(jsonObject.getString(UserConstants2.EMAIL), userId + "@example.com");
+		}
+		if (jsonObject.has(UserConstants2.EMAIL_CONFIRMATION)) {
+			assertEquals(jsonObject.getString(UserConstants2.EMAIL_CONFIRMATION), "1382712950778-0.7170133049530362");
+		}
+		if (jsonObject.has(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
+			assertEquals(jsonObject.getString(UserConstants2.LAST_LOGIN_TIMESTAMP), "1414089330754");
+		}
+		if (jsonObject.has("profileProperties")) {
+			JSONObject profileProperties = jsonObject.getJSONObject("profileProperties");
+			if (profileProperties.has(UserConstants2.OAUTH)) {
+				assertEquals(profileProperties.getString(UserConstants2.OAUTH), "https://api.github.com/users/ahunter-orion/4500523");
+			}
+			if (profileProperties.has(UserConstants2.OPENID)) {
+				assertEquals(profileProperties.getString(UserConstants2.OPENID), "https://www.google.com/accounts/o8/id?id=AItOawkTs8dYMgHG0tlvW8PE7RmNZwDlOWlWIU8");
+			}
+			if (profileProperties.has(UserConstants2.PASSWORD_RESET_ID)) {
+				assertEquals(profileProperties.getString(UserConstants2.PASSWORD_RESET_ID), "1382712210708-0.6296026603269941");
+			}
+		}
 	}
 
 	protected void verifyUserMetaData(String userId, List<String> workspaceIds) throws Exception {
