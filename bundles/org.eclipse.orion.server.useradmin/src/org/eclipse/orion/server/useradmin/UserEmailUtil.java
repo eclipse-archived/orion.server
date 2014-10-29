@@ -160,7 +160,7 @@ public class UserEmailUtil {
 		}
 		String confirmURL = confirmLocation.toString();
 		confirmURL += "/" + userInfo.getUniqueId();
-		confirmURL += "?" + UserConstants.KEY_CONFIRMATION_ID + "=" + userInfo.getProperty(UserConstants.KEY_EMAIL_CONFIRMATION);
+		confirmURL += "?" + UserConstants.KEY_CONFIRMATION_ID + "=" + userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION);
 		sendEmail(confirmationEmail.getTitle(), confirmationEmail.getContent().replaceAll(EMAIL_USER_LINK, userInfo.getUniqueId()).replaceAll(EMAIL_URL_LINK, confirmURL).replaceAll(EMAIL_ADDRESS_LINK, userInfo.getProperty(UserConstants2.EMAIL)), userInfo.getProperty(UserConstants2.EMAIL));
 	}
 

@@ -285,7 +285,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 		if (isEmailRequired) {
 			userInfo.setProperty(UserConstants2.BLOCKED, "true");
-			userInfo.setProperty(UserConstants.KEY_EMAIL_CONFIRMATION, getUniqueEmailConfirmationId());
+			userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION, getUniqueEmailConfirmationId());
 		}
 
 		try {
@@ -394,7 +394,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (userInfo == null) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
 		}
-		String emailConfirmationid = userInfo.getProperty(UserConstants.KEY_EMAIL_CONFIRMATION);
+		String emailConfirmationid = userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION);
 
 		//users other than admin have to know the old password to set a new one
 		if (!isAdmin(req.getRemoteUser())) {
@@ -441,7 +441,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
 		}
 
-		if (userInfo.getProperty(UserConstants.KEY_EMAIL_CONFIRMATION) != null && !userInfo.getProperty(UserConstants.KEY_EMAIL_CONFIRMATION).equals(emailConfirmationid)) {
+		if (userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION) != null && !userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION).equals(emailConfirmationid)) {
 			try {
 				UserEmailUtil.getUtil().sendEmailConfirmation(req, userInfo);
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been sent to " + userInfo.getProperty(UserConstants2.EMAIL), null));
@@ -519,7 +519,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		json.put(UserConstants.KEY_LOGIN, userInfo.getUserName());
 		String email = userInfo.getProperty(UserConstants2.EMAIL);
 		json.put(UserConstants2.EMAIL, email);
-		boolean emailConfirmed = (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants.KEY_EMAIL_CONFIRMATION) == null : false;
+		boolean emailConfirmed = (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION) == null : false;
 		json.put(UserConstants.KEY_EMAIL_CONFIRMED, emailConfirmed);
 		json.put(UserConstants.KEY_HAS_PASSWORD, userInfo.getProperty(UserConstants2.PASSWORD) == null ? false : true);
 
