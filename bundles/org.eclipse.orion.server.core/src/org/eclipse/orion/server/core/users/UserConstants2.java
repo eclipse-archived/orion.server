@@ -31,6 +31,12 @@ public class UserConstants2 {
 	public static final String FULL_NAME = "FullName"; //$NON-NLS-1$
 	
 	/**
+	 * JSON representation key for a user's last login timestamp. The value's data type is a String.
+	 */
+	// TODO: Bug 444864 should be upper case LastLoginTimestamp
+	public static final String LAST_LOGIN_TIMESTAMP = "lastlogintimestamp";
+	
+	/**
 	 * JSON representation key for a user's OAuth 2.0 Id. The value's data type is a String.
 	 */
 	// TODO: Bug 444864 should be upper case OAuth
@@ -53,4 +59,5 @@ public class UserConstants2 {
 	 */
 	public static final String USER_NAME = "UserName"; //$NON-NLS-1$
 	
+
 }

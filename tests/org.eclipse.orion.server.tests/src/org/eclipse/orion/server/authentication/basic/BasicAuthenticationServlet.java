@@ -51,9 +51,9 @@ public class BasicAuthenticationServlet extends OrionServlet {
 			obj.put(UserConstants.KEY_LOGIN, userInfo.getUserName());
 			obj.put(UserConstants.KEY_LOCATION, '/' + UserConstants.KEY_USERS + '/' + uid);
 			obj.put(UserConstants2.FULL_NAME, userInfo.getFullName());
-			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP)) {
-				Long lastLogin = Long.parseLong(userInfo.getProperty(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP));
-				obj.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLogin);
+			if (userInfo.getProperties().containsKey(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
+				Long lastLogin = Long.parseLong(userInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
+				obj.put(UserConstants2.LAST_LOGIN_TIMESTAMP, lastLogin);
 			}
 			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP)) {
 				Long lastLogin = Long.parseLong(userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP));

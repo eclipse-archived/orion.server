@@ -606,8 +606,8 @@ public class SimpleMetaStore implements IMetaStore {
 					}
 					userInfo.setUniqueId(jsonObject.getString(MetadataInfo.UNIQUE_ID));
 					userInfo.setUserName(jsonObject.getString("UserName"));
-					if (jsonObject.has("lastlogintimestamp")) {
-						userInfo.setProperty("lastlogintimestamp", jsonObject.getString("lastlogintimestamp"));
+					if (jsonObject.has(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
+						userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, jsonObject.getString(UserConstants2.LAST_LOGIN_TIMESTAMP));
 					}
 					if (jsonObject.isNull(UserConstants2.FULL_NAME)) {
 						userInfo.setFullName("Unnamed User");
@@ -678,10 +678,10 @@ public class SimpleMetaStore implements IMetaStore {
 						String diskusagetimestamp = jsonObject.getString("diskusagetimestamp");
 						userInfo.setProperty("diskusagetimestamp", diskusagetimestamp);
 					}
-					if (jsonObject.has("lastlogintimestamp")) {
+					if (jsonObject.has(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
 						// TODO: these top level keys need to change to properties
-						String lastlogintimestamp = jsonObject.getString("lastlogintimestamp");
-						userInfo.setProperty("lastlogintimestamp", lastlogintimestamp);
+						String lastlogintimestamp = jsonObject.getString(UserConstants2.LAST_LOGIN_TIMESTAMP);
+						userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, lastlogintimestamp);
 					}
 					if (jsonObject.has(UserConstants2.PASSWORD)) {
 						// TODO: these top level keys need to change to properties
@@ -897,7 +897,7 @@ public class SimpleMetaStore implements IMetaStore {
 					// delete the property
 					if (properties.has(key)) {
 						properties.remove(key);
-					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || UserConstants2.EMAIL.equals(key) || "blocked".equals(key) ||"email_confirmation".equals(key) || "passwordResetId".equals(key) || "diskusage".equals(key) || "diskusagetimestamp".equals(key) || "lastlogintimestamp".equals(key) || UserConstants2.PASSWORD.equals(key)) {
+					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || UserConstants2.EMAIL.equals(key) || "blocked".equals(key) ||"email_confirmation".equals(key) || "passwordResetId".equals(key) || "diskusage".equals(key) || "diskusagetimestamp".equals(key) || UserConstants2.LAST_LOGIN_TIMESTAMP.equals(key) || UserConstants2.PASSWORD.equals(key)) {
 						// TODO: these top level keys need to change to properties
 						String value = null;
 						if (UserConstants2.OPENID.equals(key)) {
@@ -936,11 +936,11 @@ public class SimpleMetaStore implements IMetaStore {
 								value = jsonObject.getString("email_confirmation");
 								jsonObject.remove("email_confirmation");
 							}
-						} else if ("lastlogintimestamp".equals(key)) {
+						} else if (UserConstants2.LAST_LOGIN_TIMESTAMP.equals(key)) {
 							// TODO: these top level keys need to change to properties
-							if (jsonObject.has("lastlogintimestamp")) {
-								value = jsonObject.getString("lastlogintimestamp");
-								jsonObject.remove("lastlogintimestamp");
+							if (jsonObject.has(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
+								value = jsonObject.getString(UserConstants2.LAST_LOGIN_TIMESTAMP);
+								jsonObject.remove(UserConstants2.LAST_LOGIN_TIMESTAMP);
 							}
 						} else if ("diskusagetimestamp".equals(key)) {
 							// TODO: these top level keys need to change to properties
@@ -1030,10 +1030,10 @@ public class SimpleMetaStore implements IMetaStore {
 						// TODO: these top level keys need to change to properties
 						// diskusagetimestamp needs to be handled specifically since it is at he root of the JSONObject.
 						jsonObject.put("diskusagetimestamp", value);
-					} else if ("lastlogintimestamp".equals(key)) {
+					} else if (UserConstants2.LAST_LOGIN_TIMESTAMP.equals(key)) {
 						// TODO: these top level keys need to change to properties
 						// lastlogintimestamp needs to be handled specifically since it is at he root of the JSONObject.
-						jsonObject.put("lastlogintimestamp", value);
+						jsonObject.put(UserConstants2.LAST_LOGIN_TIMESTAMP, value);
 					} else {
 						properties.put(key, value);
 					}
