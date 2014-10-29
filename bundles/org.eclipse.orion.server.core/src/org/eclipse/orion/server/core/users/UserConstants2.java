@@ -79,6 +79,12 @@ public class UserConstants2 {
 	public static final String PASSWORD = "password"; //$NON-NLS-1$
 
 	/**
+	 * JSON representation key for a user's password reset id. The value's data type is a String.
+	 */
+	// TODO: Bug 444864 should be upper case PasswordResetId
+	public static final String PASSWORD_RESET_ID = "passwordResetId"; //$NON-NLS-1$
+	
+	/**
 	 * JSON representation key for a user's name, the login or short account name. The value's data type is a String.
 	 */
 	public static final String USER_NAME = "UserName"; //$NON-NLS-1$

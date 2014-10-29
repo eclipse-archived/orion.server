@@ -62,7 +62,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			return;
 		}
 
-		if (req.getParameter(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID) != null) {
+		if (req.getParameter(UserConstants2.PASSWORD_RESET_ID) != null) {
 			resetPassword(userInfo, req, resp);
 		} else {
 			confirmEmail(userInfo, req, resp);
@@ -71,12 +71,12 @@ public class EmailConfirmationServlet extends OrionServlet {
 	}
 
 	private void resetPassword(UserInfo userInfo, HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		if (userInfo.getProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID) == null || "".equals(userInfo.getProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID))) {
+		if (userInfo.getProperty(UserConstants2.PASSWORD_RESET_ID) == null || "".equals(userInfo.getProperty(UserConstants2.PASSWORD_RESET_ID))) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "You have not requested to reset your password or this password reset request was already completed");
 			return;
 		}
 
-		if (!userInfo.getProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID).equals(req.getParameter(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID))) {
+		if (!userInfo.getProperty(UserConstants2.PASSWORD_RESET_ID).equals(req.getParameter(UserConstants2.PASSWORD_RESET_ID))) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "This password reset request is out of date");
 			return;
 		}
@@ -84,7 +84,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 		String newPass = RandomPasswordGenerator.getRandomPassword();
 
 		userInfo.setProperty(UserConstants2.PASSWORD, newPass);
-		userInfo.setProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID, null);
+		userInfo.setProperty(UserConstants2.PASSWORD_RESET_ID, null);
 
 		try {
 			UserEmailUtil.getUtil().setPasswordResetEmail(userInfo);
@@ -255,7 +255,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 		}
 
 		try {
-			userInfo.setProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID, getUniqueEmailConfirmationId());
+			userInfo.setProperty(UserConstants2.PASSWORD_RESET_ID, getUniqueEmailConfirmationId());
 			OrionConfiguration.getMetaStore().updateUser(userInfo);
 		} catch (CoreException e) {
 			LogHelper.log(e);

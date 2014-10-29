@@ -644,10 +644,10 @@ public class SimpleMetaStore implements IMetaStore {
 								userPropertyCache.add(UserConstants2.OAUTH, value, userInfo.getUniqueId());
 							}
 						}
-						if (profileProperties.has("passwordResetId")) {
+						if (profileProperties.has(UserConstants2.PASSWORD_RESET_ID)) {
 							// TODO: these top level keys need to change to properties
-							String passwordResetId = profileProperties.getString("passwordResetId");
-							userInfo.setProperty("passwordResetId", passwordResetId);
+							String passwordResetId = profileProperties.getString(UserConstants2.PASSWORD_RESET_ID);
+							userInfo.setProperty(UserConstants2.PASSWORD_RESET_ID, passwordResetId);
 						}
 					}
 					if (jsonObject.has(UserConstants2.EMAIL)) {
@@ -897,7 +897,7 @@ public class SimpleMetaStore implements IMetaStore {
 					// delete the property
 					if (properties.has(key)) {
 						properties.remove(key);
-					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || UserConstants2.EMAIL.equals(key) || UserConstants2.BLOCKED.equals(key) ||UserConstants2.EMAIL_CONFIRMATION.equals(key) || "passwordResetId".equals(key) || UserConstants2.DISK_USAGE.equals(key) || UserConstants2.DISK_USAGE_TIMESTAMP.equals(key) || UserConstants2.LAST_LOGIN_TIMESTAMP.equals(key) || UserConstants2.PASSWORD.equals(key)) {
+					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || UserConstants2.EMAIL.equals(key) || UserConstants2.BLOCKED.equals(key) ||UserConstants2.EMAIL_CONFIRMATION.equals(key) || UserConstants2.PASSWORD_RESET_ID.equals(key) || UserConstants2.DISK_USAGE.equals(key) || UserConstants2.DISK_USAGE_TIMESTAMP.equals(key) || UserConstants2.LAST_LOGIN_TIMESTAMP.equals(key) || UserConstants2.PASSWORD.equals(key)) {
 						// TODO: these top level keys need to change to properties
 						String value = null;
 						if (UserConstants2.OPENID.equals(key)) {
@@ -954,12 +954,12 @@ public class SimpleMetaStore implements IMetaStore {
 								value = jsonObject.getString(UserConstants2.DISK_USAGE);
 								jsonObject.remove(UserConstants2.DISK_USAGE);
 							}
-						} else if ("passwordResetId".equals(key)) {
+						} else if (UserConstants2.PASSWORD_RESET_ID.equals(key)) {
 							// TODO: these top level keys need to change to properties
 							JSONObject profileProperties = jsonObject.getJSONObject("profileProperties");
-							if (profileProperties.has("passwordResetId")) {
-								value = profileProperties.getString("passwordResetId");
-								profileProperties.remove("passwordResetId");
+							if (profileProperties.has(UserConstants2.PASSWORD_RESET_ID)) {
+								value = profileProperties.getString(UserConstants2.PASSWORD_RESET_ID);
+								profileProperties.remove(UserConstants2.PASSWORD_RESET_ID);
 							}
 							if (profileProperties.length() == 0) {
 								jsonObject.remove("profileProperties");
@@ -987,7 +987,7 @@ public class SimpleMetaStore implements IMetaStore {
 						// UserRights needs to be handled specifically since it is a JSONObject and not a string.
 						JSONObject siteConfigurations = new JSONObject(value);
 						properties.put("SiteConfigurations", siteConfigurations);
-					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || "passwordResetId".equals(key)) {
+					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || UserConstants2.PASSWORD_RESET_ID.equals(key)) {
 						// openid needs to be handled specifically since it is within a profileProperties JSONObject.
 						JSONObject profileProperties;
 						if (jsonObject.has("profileProperties")) {

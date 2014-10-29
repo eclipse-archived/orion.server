@@ -1781,18 +1781,18 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		userInfo.setUserName(testUserLogin);
 		userInfo.setFullName(testUserLogin);
 		String passwordResetId = "1413302977602-0.2258318922458089";
-		userInfo.setProperty("passwordResetId", passwordResetId);
+		userInfo.setProperty(UserConstants2.PASSWORD_RESET_ID, passwordResetId);
 		metaStore.createUser(userInfo);
 
 		// read the user back again
 		UserInfo readUserInfo = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo);
 		assertEquals(testUserLogin, readUserInfo.getUserName());
-		assertEquals(passwordResetId, readUserInfo.getProperty("passwordResetId"));
+		assertEquals(passwordResetId, readUserInfo.getProperty(UserConstants2.PASSWORD_RESET_ID));
 
 		// update the UserInfo
 		passwordResetId = "1381865755658-0.34789953865892875";
-		userInfo.setProperty("passwordResetId", passwordResetId);
+		userInfo.setProperty(UserConstants2.PASSWORD_RESET_ID, passwordResetId);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -1801,21 +1801,21 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo2 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo2);
 		assertEquals(testUserLogin, readUserInfo2.getUserName());
-		assertEquals(passwordResetId, readUserInfo2.getProperty("passwordResetId"));
+		assertEquals(passwordResetId, readUserInfo2.getProperty(UserConstants2.PASSWORD_RESET_ID));
 
 		// delete the passwordResetId property and update the user
-		userInfo.setProperty("passwordResetId", null);
+		userInfo.setProperty(UserConstants2.PASSWORD_RESET_ID, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo3 = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo3);
 		assertEquals(readUserInfo3.getUniqueId(), userInfo.getUniqueId());
-		assertNull(readUserInfo3.getProperty("passwordResetId"));
+		assertNull(readUserInfo3.getProperty(UserConstants2.PASSWORD_RESET_ID));
 
 		// update the UserInfo again
 		passwordResetId = "1381865755658-0.34789953865892875";
-		userInfo.setProperty("passwordResetId", passwordResetId);
+		userInfo.setProperty(UserConstants2.PASSWORD_RESET_ID, passwordResetId);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -1824,7 +1824,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo4 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo4);
 		assertEquals(testUserLogin, readUserInfo4.getUserName());
-		assertEquals(passwordResetId, readUserInfo4.getProperty("passwordResetId"));
+		assertEquals(passwordResetId, readUserInfo4.getProperty(UserConstants2.PASSWORD_RESET_ID));
 	}
 
 	@Test
