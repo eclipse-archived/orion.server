@@ -206,7 +206,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 
 				JSONObject toPut = OrionServlet.readJSONRequest(request);
 				JSONArray value = toPut.optJSONArray(GitConstants.KEY_CONFIG_ENTRY_VALUE);
-				if (value == null)
+				if (value == null || (value.length() == 1 && value.isNull(0)))
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
 							"Config entry value must be provided", null));
 
