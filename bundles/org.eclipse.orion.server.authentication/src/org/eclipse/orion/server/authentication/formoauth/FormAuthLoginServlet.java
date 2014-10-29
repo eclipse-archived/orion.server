@@ -27,7 +27,7 @@ import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.resources.Base64;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;
@@ -118,7 +118,7 @@ public class FormAuthLoginServlet extends HttpServlet {
 			try {
 				// try to store the login timestamp in the user profile
 				UserInfo userInfo = OrionConfiguration.getMetaStore().readUser(user);
-				userInfo.setProperty(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
+				userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
 				OrionConfiguration.getMetaStore().updateUser(userInfo);
 			} catch (CoreException e) {
 				// just log that the login timestamp was not stored

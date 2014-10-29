@@ -86,7 +86,7 @@ public class FormAuthHelper {
 
 			try {
 				// try to store the login timestamp in the user profile
-				userInfo.setProperty(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
+				userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
 				OrionConfiguration.getMetaStore().updateUser(userInfo);
 			} catch (CoreException e) {
 				// just log that the login timestamp was not stored
@@ -154,9 +154,9 @@ public class FormAuthHelper {
 			obj.put(UserConstants.KEY_LOGIN, userInfo.getUserName());
 			obj.put(UserConstants.KEY_LOCATION, contextPath + '/' + UserConstants.KEY_USERS + '/' + uid);
 			obj.put(UserConstants2.FULL_NAME, userInfo.getFullName());
-			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP)) {
-				Long lastLoginTimestamp = Long.parseLong(userInfo.getProperty(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP));
-				obj.put(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP, lastLoginTimestamp);
+			if (userInfo.getProperties().containsKey(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
+				Long lastLoginTimestamp = Long.parseLong(userInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
+				obj.put(UserConstants2.LAST_LOGIN_TIMESTAMP, lastLoginTimestamp);
 			}
 			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP)) {
 				Long diskUsageTimestamp = Long.parseLong(userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP));

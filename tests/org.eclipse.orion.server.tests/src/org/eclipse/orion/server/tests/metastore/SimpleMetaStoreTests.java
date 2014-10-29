@@ -1841,7 +1841,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		String lastlogintimestamp = "1413360653600";
 		userInfo.setProperty("diskusage", diskusage);
 		userInfo.setProperty("diskusagetimestamp", diskusagetimestamp);
-		userInfo.setProperty("lastlogintimestamp", lastlogintimestamp);
+		userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, lastlogintimestamp);
 		metaStore.createUser(userInfo);
 
 		// read the user back again
@@ -1850,7 +1850,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		assertEquals(testUserLogin, readUserInfo.getUserName());
 		assertEquals(diskusage, readUserInfo.getProperty("diskusage"));
 		assertEquals(diskusagetimestamp, readUserInfo.getProperty("diskusagetimestamp"));
-		assertEquals(lastlogintimestamp, readUserInfo.getProperty("lastlogintimestamp"));
+		assertEquals(lastlogintimestamp, readUserInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
 
 		// update the UserInfo
 		diskusage = "10M";
@@ -1858,7 +1858,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		diskusagetimestamp = "1413360652080";
 		userInfo.setProperty("diskusage", diskusage);
 		userInfo.setProperty("diskusagetimestamp", diskusagetimestamp);
-		userInfo.setProperty("lastlogintimestamp", lastlogintimestamp);
+		userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, lastlogintimestamp);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -1869,12 +1869,12 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		assertEquals(testUserLogin, readUserInfo2.getUserName());
 		assertEquals(diskusage, readUserInfo2.getProperty("diskusage"));
 		assertEquals(diskusagetimestamp, readUserInfo2.getProperty("diskusagetimestamp"));
-		assertEquals(lastlogintimestamp, readUserInfo2.getProperty("lastlogintimestamp"));
+		assertEquals(lastlogintimestamp, readUserInfo2.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
 
 		// delete the diskusage property and update the user
 		userInfo.setProperty("diskusage", null);
 		userInfo.setProperty("diskusagetimestamp", null);
-		userInfo.setProperty("lastlogintimestamp", null);
+		userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
@@ -1883,7 +1883,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		assertEquals(readUserInfo3.getUniqueId(), userInfo.getUniqueId());
 		assertNull(readUserInfo3.getProperty("diskusage"));
 		assertNull(readUserInfo3.getProperty("diskusagetimestamp"));
-		assertNull(readUserInfo3.getProperty("lastlogintimestamp"));
+		assertNull(readUserInfo3.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
 
 		// update the UserInfo again
 		diskusage = "16M";
@@ -1891,7 +1891,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		lastlogintimestamp = "1413360653600";
 		userInfo.setProperty("diskusage", diskusage);
 		userInfo.setProperty("diskusagetimestamp", diskusagetimestamp);
-		userInfo.setProperty("lastlogintimestamp", lastlogintimestamp);
+		userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, lastlogintimestamp);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -1902,7 +1902,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		assertEquals(testUserLogin, readUserInfo4.getUserName());
 		assertEquals(diskusage, readUserInfo4.getProperty("diskusage"));
 		assertEquals(diskusagetimestamp, readUserInfo4.getProperty("diskusagetimestamp"));
-		assertEquals(lastlogintimestamp, readUserInfo4.getProperty("lastlogintimestamp"));
+		assertEquals(lastlogintimestamp, readUserInfo4.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
 	}
 
 	@Test

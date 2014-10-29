@@ -54,6 +54,7 @@ import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.core.resources.FileLocker;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -417,7 +418,7 @@ public class Indexer extends Job {
 	 * if there is any failure determining whether the user is active (user is assumed active until proven otherwise).
 	 */
 	private boolean isActiveUser(UserInfo userInfo) {
-		String prop = userInfo.getProperty("lastlogintimestamp"); //$NON-NLS-1$
+		String prop = userInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP); //$NON-NLS-1$
 		if (prop == null)
 			return true;
 		try {

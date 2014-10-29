@@ -533,7 +533,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 		json.put(UserConstants.KEY_PROPERTIES, properties);
 
-		json.put(UserConstants.KEY_LAST_LOGIN_TIMESTAMP, userInfo.getProperty(IOrionUserProfileConstants.LAST_LOGIN_TIMESTAMP));
+		json.put(UserConstants.KEY_LAST_LOGIN_TIMESTAMP, userInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
 		json.put(UserConstants.KEY_DISK_USAGE_TIMESTAMP, userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP));
 		json.put(UserConstants.KEY_DISK_USAGE, userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE));
 
