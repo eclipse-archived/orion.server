@@ -191,7 +191,7 @@ public class SimpleMetaStore implements IMetaStore {
 			try {
 				jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
 				jsonObject.put(MetadataInfo.UNIQUE_ID, userId);
-				jsonObject.put("UserName", userId);
+				jsonObject.put(UserConstants2.USER_NAME, userId);
 				jsonObject.put(UserConstants2.FULL_NAME, userInfo.getFullName());
 				jsonObject.put("WorkspaceIds", new JSONArray());
 				JSONObject properties = updateProperties(jsonObject, userInfo);
@@ -605,7 +605,7 @@ public class SimpleMetaStore implements IMetaStore {
 						jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
 					}
 					userInfo.setUniqueId(jsonObject.getString(MetadataInfo.UNIQUE_ID));
-					userInfo.setUserName(jsonObject.getString("UserName"));
+					userInfo.setUserName(jsonObject.getString(UserConstants2.USER_NAME));
 					if (jsonObject.has(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
 						userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, jsonObject.getString(UserConstants2.LAST_LOGIN_TIMESTAMP));
 					}
@@ -1141,7 +1141,7 @@ public class SimpleMetaStore implements IMetaStore {
 			}
 			try {
 				jsonObject.put(MetadataInfo.UNIQUE_ID, userInfo.getUniqueId());
-				jsonObject.put("UserName", userInfo.getUserName());
+				jsonObject.put(UserConstants2.USER_NAME, userInfo.getUserName());
 				jsonObject.put(UserConstants2.FULL_NAME, userInfo.getFullName());
 				JSONArray workspaceIds = new JSONArray(userInfo.getWorkspaceIds());
 				jsonObject.put("WorkspaceIds", workspaceIds);

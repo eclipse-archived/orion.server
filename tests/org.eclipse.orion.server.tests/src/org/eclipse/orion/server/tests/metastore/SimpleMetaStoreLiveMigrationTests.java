@@ -158,7 +158,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put(SimpleMetaStore.ORION_VERSION, version);
 		jsonObject.put(MetadataInfo.UNIQUE_ID, userId);
-		jsonObject.put("UserName", userId);
+		jsonObject.put(UserConstants2.USER_NAME, userId);
 		jsonObject.put(UserConstants2.FULL_NAME, userId);
 		String password = SimpleUserPasswordUtil.encryptPassword(userId);
 		jsonObject.put(UserConstants2.PASSWORD, password);
@@ -1152,8 +1152,8 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		assertEquals("OrionVersion is incorrect", SimpleMetaStore.VERSION, jsonObject.getInt(SimpleMetaStore.ORION_VERSION));
 		assertTrue(jsonObject.has(MetadataInfo.UNIQUE_ID));
 		assertEquals(userId, jsonObject.getString(MetadataInfo.UNIQUE_ID));
-		assertTrue(jsonObject.has("UserName"));
-		assertEquals(userId, jsonObject.getString("UserName"));
+		assertTrue(jsonObject.has(UserConstants2.USER_NAME));
+		assertEquals(userId, jsonObject.getString(UserConstants2.USER_NAME));
 		assertTrue(jsonObject.has(UserConstants2.FULL_NAME));
 		assertTrue(jsonObject.has("WorkspaceIds"));
 		JSONArray workspaceIdsFromJson = jsonObject.getJSONArray("WorkspaceIds");
@@ -1232,7 +1232,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		assertNotNull("No workspace information in response", responseObject);
 		String userId = responseObject.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(userId);
-		assertEquals(testUserId, responseObject.optString("UserName"));
+		assertEquals(testUserId, responseObject.optString(UserConstants2.USER_NAME));
 		JSONArray workspaces = responseObject.optJSONArray("Workspaces");
 		assertNotNull(workspaces);
 		assertEquals(workspaceIds.size(), workspaces.length());
