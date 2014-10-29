@@ -607,9 +607,13 @@ public class GitPushTest extends GitTest {
 
 		// clone2: push
 		pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false);
-		assertEquals(IStatus.WARNING, pushStatus.getSeverity());
+		JSONObject jo = pushStatus.getJsonData();
+		assertEquals("Error", jo.get("Severity"));
 
-		Status pushResult = Status.valueOf(pushStatus.getMessage());
+		JSONArray up = (JSONArray) jo.get("Updates");
+		assertEquals(1, up.length());
+
+		Status pushResult = Status.valueOf((String) ((JSONObject) up.get(0)).get("Result"));
 		assertEquals(Status.REJECTED_NONFASTFORWARD, pushResult);
 	}
 
@@ -649,15 +653,16 @@ public class GitPushTest extends GitTest {
 		FileUtils.delete(new File(gitDir, Constants.DOT_GIT + "/objects/pack/"), FileUtils.RECURSIVE);
 
 		pushStatus = push(gitRemoteUri, 1, 0, Constants.MASTER, Constants.HEAD, false);
-		assertEquals(IStatus.WARNING, pushStatus.getSeverity());
-		Status pushResult = Status.valueOf(pushStatus.getMessage());
+		JSONObject jo = pushStatus.getJsonData();
+
+		JSONArray up = (JSONArray) jo.get("Updates");
+		assertEquals(1, up.length());
+
+		assertEquals("Error", jo.get("Severity"));
+		Status pushResult = Status.valueOf((String) ((JSONObject) up.get(0)).get("Result"));
 		assertEquals(Status.REJECTED_OTHER_REASON, pushResult);
-		JSONObject jsonResult = pushStatus.toJSON();
-		if (jsonResult.has("JsonData")) {
-			jsonResult = jsonResult.getJSONObject("JsonData");
-		}
-		assertTrue(jsonResult.toString(), jsonResult.has("DetailedMessage"));
-		assertTrue(jsonResult.getString("DetailedMessage"), jsonResult.getString("DetailedMessage").matches("^object [\\da-f]+ missing$"));
+
+		assertTrue(((JSONObject) up.get(0)).getString("Message"), ((JSONObject) up.get(0)).getString("Message").matches("^object [\\da-f]+ missing$"));
 	}
 
 	@Test
@@ -731,13 +736,21 @@ public class GitPushTest extends GitTest {
 
 			// clone2: push
 			pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false);
-			assertEquals(IStatus.WARNING, pushStatus.getSeverity());
-			Status pushResult = Status.valueOf(pushStatus.getMessage());
+			JSONObject jo = pushStatus.getJsonData();
+
+			JSONArray up = (JSONArray) jo.get("Updates");
+			assertEquals(1, up.length());
+
+			assertEquals("Error", jo.get("Severity"));
+			Status pushResult = Status.valueOf((String) ((JSONObject) up.get(0)).get("Result"));
 			assertEquals(Status.REJECTED_NONFASTFORWARD, pushResult);
 
 			// clone2: forced push
 			pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false, true);
-			assertTrue(pushStatus.toJSON().toString(), pushStatus.isOK());
+			jo = pushStatus.getJsonData();
+			up = (JSONArray) jo.get("Updates");
+			assertEquals(1, up.length());
+			assertEquals("OK", ((JSONObject) up.get(0)).get("Result"));
 		}
 	}
 

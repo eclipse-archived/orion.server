@@ -19,7 +19,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
@@ -586,13 +585,21 @@ public class GitFetchTest extends GitTest {
 
 			// clone2: push
 			pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false);
-			assertEquals(IStatus.WARNING, pushStatus.getSeverity());
-			Status pushResult = Status.valueOf(pushStatus.getMessage());
+			JSONObject jo = pushStatus.getJsonData();
+
+			JSONArray up = (JSONArray) jo.get("Updates");
+			assertEquals(1, up.length());
+
+			assertEquals("Error", jo.get("Severity"));
+			Status pushResult = Status.valueOf((String) ((JSONObject) up.get(0)).get("Result"));
 			assertEquals(Status.REJECTED_NONFASTFORWARD, pushResult);
 
 			// clone2: forced push
 			pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false, true);
-			assertTrue(pushStatus.toJSON().toString(), pushStatus.isOK());
+			jo = pushStatus.getJsonData();
+			up = (JSONArray) jo.get("Updates");
+			assertEquals(1, up.length());
+			assertEquals("OK", ((JSONObject) up.get(0)).get("Result"));
 
 			// clone1: fetch master
 			JSONObject details = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);
