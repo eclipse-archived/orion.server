@@ -43,7 +43,6 @@ import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.orion.server.useradmin.UserEmailUtil;
 import org.eclipse.osgi.util.NLS;
@@ -534,8 +533,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		json.put(UserConstants.KEY_PROPERTIES, properties);
 
 		json.put(UserConstants.KEY_LAST_LOGIN_TIMESTAMP, userInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
-		json.put(UserConstants.KEY_DISK_USAGE_TIMESTAMP, userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP));
-		json.put(UserConstants.KEY_DISK_USAGE, userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE));
+		json.put(UserConstants.KEY_DISK_USAGE_TIMESTAMP, userInfo.getProperty(UserConstants2.DISK_USAGE_TIMESTAMP));
+		json.put(UserConstants.KEY_DISK_USAGE, userInfo.getProperty(UserConstants2.DISK_USAGE));
 
 		JSONArray plugins = new JSONArray();
 		try {
