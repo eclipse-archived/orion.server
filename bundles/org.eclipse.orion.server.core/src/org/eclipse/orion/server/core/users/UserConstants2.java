@@ -36,17 +36,24 @@ public class UserConstants2 {
 	 */
 	// TODO: Bug 444864 should be upper case DiskUsageTimestamp
 	public static final String DISK_USAGE_TIMESTAMP = "diskusagetimestamp";
-	
+
 	/**
 	 * JSON representation key for a user's email address. The value's data type is a String.
 	 */
 	// TODO: Bug 444864 should be upper case Email
 	public static final String EMAIL = "email"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for a user's email address confirmation. The value's data type is a String.
+	 */
+	// TODO: Bug 444864 should be upper case EmailConfirmation
+	public static final String EMAIL_CONFIRMATION = "email_confirmation"; //$NON-NLS-1$
+	
 	/**
 	 * JSON representation key for a user's full name. The value's data type is a String.
 	 */
 	public static final String FULL_NAME = "FullName"; //$NON-NLS-1$
-	
+
 	/**
 	 * JSON representation key for a user's last login timestamp. The value's data type is a String.
 	 */
@@ -58,23 +65,22 @@ public class UserConstants2 {
 	 */
 	// TODO: Bug 444864 should be upper case OAuth
 	public static final String OAUTH = "oauth"; //$NON-NLS-1$
-	
+
 	/**
 	 * JSON representation key for a user's openid. The value's data type is a String.
 	 */
 	// TODO: Bug 444864 should be upper case OpenId
 	public static final String OPENID = "openid"; //$NON-NLS-1$
-	
+
 	/**
 	 * JSON representation key for a user's password. The value's data type is a String.
 	 */
 	// TODO: Bug 444864 should be upper case Password
 	public static final String PASSWORD = "password"; //$NON-NLS-1$
-	
+
 	/**
 	 * JSON representation key for a user's name, the login or short account name. The value's data type is a String.
 	 */
 	public static final String USER_NAME = "UserName"; //$NON-NLS-1$
-	
 
 }
