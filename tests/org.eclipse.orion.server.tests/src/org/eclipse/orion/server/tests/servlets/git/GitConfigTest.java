@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.ArrayList;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -247,7 +248,7 @@ public class GitConfigTest extends GitTest {
 			for (int i = 0; i < configEntries.length(); i++) {
 				JSONObject configEntry = configEntries.getJSONObject(i);
 				if (ENTRY_KEY.equals(configEntry.getString(GitConstants.KEY_CONFIG_ENTRY_KEY))) {
-					assertConfigOption(configEntry, ENTRY_KEY, ENTRY_VALUE);
+					assertMultiConfigOption(configEntry, ENTRY_KEY, new String[] {ENTRY_VALUE});
 					break;
 				}
 			}
@@ -286,7 +287,7 @@ public class GitConfigTest extends GitTest {
 			String entryLocation = configResponse.getString(ProtocolConstants.KEY_LOCATION);
 
 			JSONObject configEntry = listConfigEntries(entryLocation);
-			assertConfigOption(configEntry, ENTRY_KEY, ENTRY_VALUE);
+			assertMultiConfigOption(configEntry, ENTRY_KEY, new String[] {ENTRY_VALUE});
 		}
 	}
 
@@ -323,12 +324,12 @@ public class GitConfigTest extends GitTest {
 
 			request = getPostGitConfigRequest(gitConfigUri, ENTRY_KEY, NEW_ENTRY_VALUE);
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_CONFLICT, response.getResponseCode());
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 			// get value of config entry
 			JSONObject configEntry = listConfigEntries(entryLocation);
 			// assert unchanged
-			assertConfigOption(configEntry, ENTRY_KEY, ENTRY_VALUE);
+			assertMultiConfigOption(configEntry, ENTRY_KEY, new String[] {ENTRY_VALUE, NEW_ENTRY_VALUE});
 		}
 	}
 
@@ -368,7 +369,7 @@ public class GitConfigTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			JSONObject configEntry = listConfigEntries(entryLocation);
-			assertConfigOption(configEntry, ENTRY_KEY, NEW_ENTRY_VALUE);
+			assertMultiConfigOption(configEntry, ENTRY_KEY, new String[] {NEW_ENTRY_VALUE});
 		}
 	}
 
@@ -597,7 +598,9 @@ public class GitConfigTest extends GitTest {
 	static WebRequest getPutGitConfigRequest(String location, String value) throws JSONException, UnsupportedEncodingException {
 		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
-		body.put(GitConstants.KEY_CONFIG_ENTRY_VALUE, value);
+		JSONArray array = new JSONArray();
+		array.put(value);
+		body.put(GitConstants.KEY_CONFIG_ENTRY_VALUE, array);
 		WebRequest request = new PutMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
@@ -648,6 +651,23 @@ public class GitConfigTest extends GitTest {
 	private void assertConfigOption(final JSONObject cfg, final String k, final String v) throws JSONException, CoreException, IOException {
 		assertEquals(k, cfg.getString(GitConstants.KEY_CONFIG_ENTRY_KEY));
 		assertEquals(v, cfg.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
+		assertConfigUri(cfg.getString(ProtocolConstants.KEY_LOCATION));
+		assertCloneUri(cfg.getString(GitConstants.KEY_CLONE));
+	}
+
+	private void assertMultiConfigOption(final JSONObject cfg, final String k, final String[] v) throws JSONException, CoreException, IOException {
+		assertEquals(k, cfg.getString(GitConstants.KEY_CONFIG_ENTRY_KEY));
+
+		ArrayList<String> list = new ArrayList<String>();
+		JSONArray jsonArray = cfg.getJSONArray(GitConstants.KEY_CONFIG_ENTRY_VALUE);;
+		if (jsonArray != null) {
+			for (int i = 0; i < jsonArray.length(); i++) {
+				list.add(jsonArray.get(i).toString());
+			}
+		}
+		String[] compare = new String[list.size()];
+		compare = list.toArray(compare);
+		assertArrayEquals(v, compare);
 		assertConfigUri(cfg.getString(ProtocolConstants.KEY_LOCATION));
 		assertCloneUri(cfg.getString(GitConstants.KEY_CLONE));
 	}

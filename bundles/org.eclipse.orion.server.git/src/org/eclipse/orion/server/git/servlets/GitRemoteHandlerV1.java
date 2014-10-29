@@ -227,7 +227,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		JSONObject toPut = OrionServlet.readJSONRequest(request);
 		String remoteName = toPut.optString(GitConstants.KEY_REMOTE_NAME, null);
 		// remoteName is required
-		if (remoteName == null || remoteName.isEmpty()) {
+		if (remoteName == null || remoteName.isEmpty() || remoteName.contains(" ")) { //$NON-NLS-1$
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
 					"Remote name must be provided", null));
 		}

@@ -158,7 +158,7 @@ public class GitStashTest extends GitTest {
 
 		JSONObject stashChange = stash.getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0);
 		assertTrue(stashChange.has(GitConstants.KEY_COMMIT_DIFFS));
-		assertEquals(2, stashChange.getJSONArray(GitConstants.KEY_COMMIT_DIFFS).length());
+		assertEquals(2, ((JSONObject) stashChange.get(GitConstants.KEY_COMMIT_DIFFS)).get("Length"));
 	}
 
 	@Test
