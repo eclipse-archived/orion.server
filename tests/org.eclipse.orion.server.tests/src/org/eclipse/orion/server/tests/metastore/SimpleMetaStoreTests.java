@@ -1915,28 +1915,28 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		userInfo.setUserName(testUserLogin);
 		userInfo.setFullName(testUserLogin);
 		String blocked = "true";
-		userInfo.setProperty("blocked", blocked);
+		userInfo.setProperty(UserConstants2.BLOCKED, blocked);
 		metaStore.createUser(userInfo);
 
 		// read the user back again
 		UserInfo readUserInfo = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo);
 		assertEquals(testUserLogin, readUserInfo.getUserName());
-		assertEquals(blocked, readUserInfo.getProperty("blocked"));
+		assertEquals(blocked, readUserInfo.getProperty(UserConstants2.BLOCKED));
 
 		// delete the blocked property and update the user
-		userInfo.setProperty("blocked", null);
+		userInfo.setProperty(UserConstants2.BLOCKED, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo3 = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo3);
 		assertEquals(readUserInfo3.getUniqueId(), userInfo.getUniqueId());
-		assertNull(readUserInfo3.getProperty("blocked"));
+		assertNull(readUserInfo3.getProperty(UserConstants2.BLOCKED));
 
 		// update the UserInfo again
 		blocked = "true";
-		userInfo.setProperty("blocked", blocked);
+		userInfo.setProperty(UserConstants2.BLOCKED, blocked);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -1945,7 +1945,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo4 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo4);
 		assertEquals(testUserLogin, readUserInfo4.getUserName());
-		assertEquals(blocked, readUserInfo4.getProperty("blocked"));
+		assertEquals(blocked, readUserInfo4.getProperty(UserConstants2.BLOCKED));
 	}
 
 	@Test

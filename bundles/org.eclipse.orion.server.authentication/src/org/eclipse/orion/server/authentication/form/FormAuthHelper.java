@@ -64,7 +64,7 @@ public class FormAuthHelper {
 		UserInfo userInfo = getUserForCredentials(login, req.getParameter(UserConstants2.PASSWORD));
 
 		if (userInfo != null) {
-			if (userInfo.getProperties().containsKey("blocked")) {
+			if (userInfo.getProperties().containsKey(UserConstants2.BLOCKED)) {
 				return LoginResult.BLOCKED;
 			}
 			String userId = userInfo.getUniqueId();

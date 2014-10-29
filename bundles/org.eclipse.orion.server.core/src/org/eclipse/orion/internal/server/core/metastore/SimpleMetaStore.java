@@ -658,10 +658,10 @@ public class SimpleMetaStore implements IMetaStore {
 							userPropertyCache.add(UserConstants2.EMAIL, email, userInfo.getUniqueId());
 						}
 					}
-					if (jsonObject.has("blocked")) {
+					if (jsonObject.has(UserConstants2.BLOCKED)) {
 						// TODO: these top level keys need to change to properties
-						String blocked = jsonObject.getString("blocked");
-						userInfo.setProperty("blocked", blocked);
+						String blocked = jsonObject.getString(UserConstants2.BLOCKED);
+						userInfo.setProperty(UserConstants2.BLOCKED, blocked);
 					}
 					if (jsonObject.has("email_confirmation")) {
 						// TODO: these top level keys need to change to properties
@@ -897,7 +897,7 @@ public class SimpleMetaStore implements IMetaStore {
 					// delete the property
 					if (properties.has(key)) {
 						properties.remove(key);
-					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || UserConstants2.EMAIL.equals(key) || "blocked".equals(key) ||"email_confirmation".equals(key) || "passwordResetId".equals(key) || UserConstants2.DISK_USAGE.equals(key) || UserConstants2.DISK_USAGE_TIMESTAMP.equals(key) || UserConstants2.LAST_LOGIN_TIMESTAMP.equals(key) || UserConstants2.PASSWORD.equals(key)) {
+					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || UserConstants2.EMAIL.equals(key) || UserConstants2.BLOCKED.equals(key) ||"email_confirmation".equals(key) || "passwordResetId".equals(key) || UserConstants2.DISK_USAGE.equals(key) || UserConstants2.DISK_USAGE_TIMESTAMP.equals(key) || UserConstants2.LAST_LOGIN_TIMESTAMP.equals(key) || UserConstants2.PASSWORD.equals(key)) {
 						// TODO: these top level keys need to change to properties
 						String value = null;
 						if (UserConstants2.OPENID.equals(key)) {
@@ -924,11 +924,11 @@ public class SimpleMetaStore implements IMetaStore {
 								value = jsonObject.getString(UserConstants2.EMAIL);
 								jsonObject.remove(UserConstants2.EMAIL);
 							}
-						} else if ("blocked".equals(key)) {
+						} else if (UserConstants2.BLOCKED.equals(key)) {
 							// TODO: these top level keys need to change to properties
-							if (jsonObject.has("blocked")) {
-								value = jsonObject.getString("blocked");
-								jsonObject.remove("blocked");
+							if (jsonObject.has(UserConstants2.BLOCKED)) {
+								value = jsonObject.getString(UserConstants2.BLOCKED);
+								jsonObject.remove(UserConstants2.BLOCKED);
 							}
 						} else if ("email_confirmation".equals(key)) {
 							// TODO: these top level keys need to change to properties
@@ -1014,10 +1014,10 @@ public class SimpleMetaStore implements IMetaStore {
 						// password needs to be handled specifically since it is at he root of the JSONObject.
 						String encryptedPassword = SimpleUserPasswordUtil.encryptPassword(value);
 						jsonObject.put(UserConstants2.PASSWORD, encryptedPassword);
-					} else if ("blocked".equals(key)) {
+					} else if (UserConstants2.BLOCKED.equals(key)) {
 						// TODO: these top level keys need to change to properties
 						// blocked needs to be handled specifically since it is at he root of the JSONObject.
-						jsonObject.put("blocked", value);
+						jsonObject.put(UserConstants2.BLOCKED, value);
 					} else if ("email_confirmation".equals(key)) {
 						// TODO: these top level keys need to change to properties
 						// email_confirmation needs to be handled specifically since it is at he root of the JSONObject.
