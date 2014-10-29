@@ -170,7 +170,7 @@ public class UserEmailUtil {
 		}
 		String confirmURL = baseURI.toURL().toString();
 		confirmURL += "/" + userInfo.getUniqueId();
-		confirmURL += "?" + UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID + "=" + userInfo.getProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID);
+		confirmURL += "?" + UserConstants2.PASSWORD_RESET_ID + "=" + userInfo.getProperty(UserConstants2.PASSWORD_RESET_ID);
 		sendEmail(confirmationResetPassEmail.getTitle(), confirmationResetPassEmail.getContent().replaceAll(EMAIL_URL_LINK, confirmURL).replaceAll(EMAIL_USER_LINK, userInfo.getUniqueId()), userInfo.getProperty(UserConstants2.EMAIL));
 	}
 
