@@ -22,12 +22,14 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.authentication.Activator;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.events.IEventService;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.users.UserConstants2;
-import org.eclipse.orion.server.user.profile.*;
-import org.eclipse.orion.server.useradmin.*;
+import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.BundleContext;
@@ -158,13 +160,13 @@ public class FormAuthHelper {
 				Long lastLoginTimestamp = Long.parseLong(userInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
 				obj.put(UserConstants2.LAST_LOGIN_TIMESTAMP, lastLoginTimestamp);
 			}
-			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP)) {
-				Long diskUsageTimestamp = Long.parseLong(userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP));
-				obj.put(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, diskUsageTimestamp);
+			if (userInfo.getProperties().containsKey(UserConstants2.DISK_USAGE_TIMESTAMP)) {
+				Long diskUsageTimestamp = Long.parseLong(userInfo.getProperty(UserConstants2.DISK_USAGE_TIMESTAMP));
+				obj.put(UserConstants2.DISK_USAGE_TIMESTAMP, diskUsageTimestamp);
 			}
-			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.DISK_USAGE)) {
-				String diskUsage = userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE);
-				obj.put(IOrionUserProfileConstants.DISK_USAGE, diskUsage);
+			if (userInfo.getProperties().containsKey(UserConstants2.DISK_USAGE)) {
+				String diskUsage = userInfo.getProperty(UserConstants2.DISK_USAGE);
+				obj.put(UserConstants2.DISK_USAGE, diskUsage);
 			}
 		} catch (IllegalArgumentException e) {
 			LogHelper.log(e);

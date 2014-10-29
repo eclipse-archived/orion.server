@@ -22,7 +22,6 @@ import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -55,13 +54,13 @@ public class BasicAuthenticationServlet extends OrionServlet {
 				Long lastLogin = Long.parseLong(userInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
 				obj.put(UserConstants2.LAST_LOGIN_TIMESTAMP, lastLogin);
 			}
-			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP)) {
-				Long lastLogin = Long.parseLong(userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP));
-				obj.put(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP, lastLogin);
+			if (userInfo.getProperties().containsKey(UserConstants2.DISK_USAGE_TIMESTAMP)) {
+				Long lastLogin = Long.parseLong(userInfo.getProperty(UserConstants2.DISK_USAGE_TIMESTAMP));
+				obj.put(UserConstants2.DISK_USAGE_TIMESTAMP, lastLogin);
 			}
-			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.DISK_USAGE)) {
-				Long lastLogin = Long.parseLong(userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE));
-				obj.put(IOrionUserProfileConstants.DISK_USAGE, lastLogin);
+			if (userInfo.getProperties().containsKey(UserConstants2.DISK_USAGE)) {
+				Long lastLogin = Long.parseLong(userInfo.getProperty(UserConstants2.DISK_USAGE));
+				obj.put(UserConstants2.DISK_USAGE, lastLogin);
 			}
 		} catch (IllegalArgumentException e) {
 			LogHelper.log(e);

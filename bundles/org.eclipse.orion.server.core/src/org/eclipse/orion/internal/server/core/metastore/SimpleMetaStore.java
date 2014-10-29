@@ -668,15 +668,15 @@ public class SimpleMetaStore implements IMetaStore {
 						String email_confirmation = jsonObject.getString("email_confirmation");
 						userInfo.setProperty("email_confirmation", email_confirmation);
 					}
-					if (jsonObject.has("diskusage")) {
+					if (jsonObject.has(UserConstants2.DISK_USAGE)) {
 						// TODO: these top level keys need to change to properties
-						String diskusage = jsonObject.getString("diskusage");
-						userInfo.setProperty("diskusage", diskusage);
+						String diskusage = jsonObject.getString(UserConstants2.DISK_USAGE);
+						userInfo.setProperty(UserConstants2.DISK_USAGE, diskusage);
 					}
-					if (jsonObject.has("diskusagetimestamp")) {
+					if (jsonObject.has(UserConstants2.DISK_USAGE_TIMESTAMP)) {
 						// TODO: these top level keys need to change to properties
-						String diskusagetimestamp = jsonObject.getString("diskusagetimestamp");
-						userInfo.setProperty("diskusagetimestamp", diskusagetimestamp);
+						String diskusagetimestamp = jsonObject.getString(UserConstants2.DISK_USAGE_TIMESTAMP);
+						userInfo.setProperty(UserConstants2.DISK_USAGE_TIMESTAMP, diskusagetimestamp);
 					}
 					if (jsonObject.has(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
 						// TODO: these top level keys need to change to properties
@@ -897,7 +897,7 @@ public class SimpleMetaStore implements IMetaStore {
 					// delete the property
 					if (properties.has(key)) {
 						properties.remove(key);
-					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || UserConstants2.EMAIL.equals(key) || "blocked".equals(key) ||"email_confirmation".equals(key) || "passwordResetId".equals(key) || "diskusage".equals(key) || "diskusagetimestamp".equals(key) || UserConstants2.LAST_LOGIN_TIMESTAMP.equals(key) || UserConstants2.PASSWORD.equals(key)) {
+					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || UserConstants2.EMAIL.equals(key) || "blocked".equals(key) ||"email_confirmation".equals(key) || "passwordResetId".equals(key) || UserConstants2.DISK_USAGE.equals(key) || UserConstants2.DISK_USAGE_TIMESTAMP.equals(key) || UserConstants2.LAST_LOGIN_TIMESTAMP.equals(key) || UserConstants2.PASSWORD.equals(key)) {
 						// TODO: these top level keys need to change to properties
 						String value = null;
 						if (UserConstants2.OPENID.equals(key)) {
@@ -942,17 +942,17 @@ public class SimpleMetaStore implements IMetaStore {
 								value = jsonObject.getString(UserConstants2.LAST_LOGIN_TIMESTAMP);
 								jsonObject.remove(UserConstants2.LAST_LOGIN_TIMESTAMP);
 							}
-						} else if ("diskusagetimestamp".equals(key)) {
+						} else if (UserConstants2.DISK_USAGE_TIMESTAMP.equals(key)) {
 							// TODO: these top level keys need to change to properties
-							if (jsonObject.has("diskusagetimestamp")) {
-								value = jsonObject.getString("diskusagetimestamp");
-								jsonObject.remove("diskusagetimestamp");
+							if (jsonObject.has(UserConstants2.DISK_USAGE_TIMESTAMP)) {
+								value = jsonObject.getString(UserConstants2.DISK_USAGE_TIMESTAMP);
+								jsonObject.remove(UserConstants2.DISK_USAGE_TIMESTAMP);
 							}
-						} else if ("diskusage".equals(key)) {
+						} else if (UserConstants2.DISK_USAGE.equals(key)) {
 							// TODO: these top level keys need to change to properties
-							if (jsonObject.has("diskusage")) {
-								value = jsonObject.getString("diskusage");
-								jsonObject.remove("diskusage");
+							if (jsonObject.has(UserConstants2.DISK_USAGE)) {
+								value = jsonObject.getString(UserConstants2.DISK_USAGE);
+								jsonObject.remove(UserConstants2.DISK_USAGE);
 							}
 						} else if ("passwordResetId".equals(key)) {
 							// TODO: these top level keys need to change to properties
@@ -1022,14 +1022,14 @@ public class SimpleMetaStore implements IMetaStore {
 						// TODO: these top level keys need to change to properties
 						// email_confirmation needs to be handled specifically since it is at he root of the JSONObject.
 						jsonObject.put("email_confirmation", value);
-					} else if ("diskusage".equals(key)) {
+					} else if (UserConstants2.DISK_USAGE.equals(key)) {
 						// TODO: these top level keys need to change to properties
 						// diskusage needs to be handled specifically since it is at he root of the JSONObject.
-						jsonObject.put("diskusage", value);
-					} else if ("diskusagetimestamp".equals(key)) {
+						jsonObject.put(UserConstants2.DISK_USAGE, value);
+					} else if (UserConstants2.DISK_USAGE_TIMESTAMP.equals(key)) {
 						// TODO: these top level keys need to change to properties
 						// diskusagetimestamp needs to be handled specifically since it is at he root of the JSONObject.
-						jsonObject.put("diskusagetimestamp", value);
+						jsonObject.put(UserConstants2.DISK_USAGE_TIMESTAMP, value);
 					} else if (UserConstants2.LAST_LOGIN_TIMESTAMP.equals(key)) {
 						// TODO: these top level keys need to change to properties
 						// lastlogintimestamp needs to be handled specifically since it is at he root of the JSONObject.

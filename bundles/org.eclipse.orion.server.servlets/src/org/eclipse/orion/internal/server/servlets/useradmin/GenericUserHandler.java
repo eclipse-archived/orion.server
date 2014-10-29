@@ -21,7 +21,6 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.users.UserConstants2;
-import org.eclipse.orion.server.user.profile.IOrionUserProfileConstants;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -60,13 +59,13 @@ public class GenericUserHandler extends ServletResourceHandler<String> {
 				String lastLoginTimestamp = userInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP);
 				writer.println(UserConstants2.LAST_LOGIN_TIMESTAMP + " : " + lastLoginTimestamp + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
-			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.DISK_USAGE)) {
-				String diskUsage = userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE);
-				writer.println(IOrionUserProfileConstants.DISK_USAGE + " : " + diskUsage + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+			if (userInfo.getProperties().containsKey(UserConstants2.DISK_USAGE)) {
+				String diskUsage = userInfo.getProperty(UserConstants2.DISK_USAGE);
+				writer.println(UserConstants2.DISK_USAGE + " : " + diskUsage + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
-			if (userInfo.getProperties().containsKey(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP)) {
-				String diskUsageTimestamp = userInfo.getProperty(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP);
-				writer.println(IOrionUserProfileConstants.DISK_USAGE_TIMESTAMP + " : " + diskUsageTimestamp + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+			if (userInfo.getProperties().containsKey(UserConstants2.DISK_USAGE_TIMESTAMP)) {
+				String diskUsageTimestamp = userInfo.getProperty(UserConstants2.DISK_USAGE_TIMESTAMP);
+				writer.println(UserConstants2.DISK_USAGE_TIMESTAMP + " : " + diskUsageTimestamp + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 
 			writer.println("<hr>"); //$NON-NLS-1$

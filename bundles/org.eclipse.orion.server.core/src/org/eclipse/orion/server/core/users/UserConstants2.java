@@ -20,11 +20,22 @@ package org.eclipse.orion.server.core.users;
 public class UserConstants2 {
 
 	/**
+	 * JSON representation key for a user's disk usage. The value's data type is a String.
+	 */
+	// TODO: Bug 444864 should be upper case DiskUsage
+	public static final String DISK_USAGE = "diskusage";
+
+	/**
+	 * JSON representation key for a user's disk usage timestamp. The value's data type is a String.
+	 */
+	// TODO: Bug 444864 should be upper case DiskUsageTimestamp
+	public static final String DISK_USAGE_TIMESTAMP = "diskusagetimestamp";
+	
+	/**
 	 * JSON representation key for a user's email address. The value's data type is a String.
 	 */
 	// TODO: Bug 444864 should be upper case Email
 	public static final String EMAIL = "email"; //$NON-NLS-1$
-
 	/**
 	 * JSON representation key for a user's full name. The value's data type is a String.
 	 */
@@ -35,7 +46,7 @@ public class UserConstants2 {
 	 */
 	// TODO: Bug 444864 should be upper case LastLoginTimestamp
 	public static final String LAST_LOGIN_TIMESTAMP = "lastlogintimestamp";
-	
+
 	/**
 	 * JSON representation key for a user's OAuth 2.0 Id. The value's data type is a String.
 	 */
