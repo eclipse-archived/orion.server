@@ -518,7 +518,9 @@ public class GitLogTest extends GitTest {
 		assertEquals(log.getString(GitConstants.KEY_REPOSITORY_PATH), jsonObject.getString(GitConstants.KEY_REPOSITORY_PATH));
 		assertNull(jsonObject.optString(GitConstants.KEY_LOG_TO_REF, null));
 		assertNull(jsonObject.optString(GitConstants.KEY_LOG_FROM_REF, null));
-		assertThat(jsonObject.getJSONArray(ProtocolConstants.KEY_CHILDREN), isJSONArrayEqual(log.getJSONArray(ProtocolConstants.KEY_CHILDREN)));
+		JSONArray a1 = jsonObject.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		JSONArray a2 = log.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+		assertThat(a1, isJSONArrayEqual(a2));
 
 		// check second commit		
 		commit = commitsArray.getJSONObject(1);
@@ -597,8 +599,9 @@ public class GitLogTest extends GitTest {
 		assertEquals(commitMsg, commit.getString(GitConstants.KEY_COMMIT_MESSAGE));
 
 		// assert that there is one diff entry
-		JSONArray diffsArray = commit.getJSONArray(GitConstants.KEY_COMMIT_DIFFS);
-		assertEquals(1, diffsArray.length());
+		JSONObject diffs = (JSONObject) commit.get(GitConstants.KEY_COMMIT_DIFFS);
+		assertEquals(1, diffs.get("Length"));
+		JSONArray diffsArray = diffs.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 
 		// check the diff entry
 		JSONObject diff = diffsArray.getJSONObject(0);
@@ -693,11 +696,12 @@ public class GitLogTest extends GitTest {
 			assertEquals(2, commits.length());
 			JSONObject commit = commits.getJSONObject(0);
 			assertEquals("2nd commit", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
-			JSONArray diffs = commit.getJSONArray(GitConstants.KEY_COMMIT_DIFFS);
-			assertEquals(1, diffs.length());
+			JSONObject diffs = (JSONObject) commit.get(GitConstants.KEY_COMMIT_DIFFS);
+			assertEquals(1, diffs.get("Length"));
+			JSONArray diffsArray = diffs.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 
-			// check diff object
-			JSONObject diff = diffs.getJSONObject(0);
+			// check the diff entry
+			JSONObject diff = diffsArray.getJSONObject(0);
 			assertEquals("test.txt", diff.getString(GitConstants.KEY_COMMIT_DIFF_NEWPATH));
 			assertEquals("test.txt", diff.getString(GitConstants.KEY_COMMIT_DIFF_OLDPATH));
 			assertEquals(Diff.TYPE, diff.getString(ProtocolConstants.KEY_TYPE));

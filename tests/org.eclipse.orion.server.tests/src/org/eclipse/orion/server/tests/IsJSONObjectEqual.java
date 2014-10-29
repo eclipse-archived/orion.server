@@ -58,6 +58,16 @@ public class IsJSONObjectEqual extends TypeSafeMatcher<JSONObject> {
 						Long l2 = (Long) v2;
 						if (!l1.equals(l2))
 							return false;
+					} else if (v1 instanceof Integer && v2 instanceof Integer) {
+						Integer l1 = (Integer) v1;
+						Integer l2 = (Integer) v2;
+						if (!l1.equals(l2))
+							return false;
+					} else if (v1 instanceof JSONObject && v2 instanceof JSONObject) {
+						JSONObject jv1 = (JSONObject) v1;
+						JSONObject jv2 = (JSONObject) v2;
+						if (!new IsJSONObjectEqual(jv1).matchesSafely(jv2))
+							return false;
 					} else {
 						return false;
 					}
