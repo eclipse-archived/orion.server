@@ -122,7 +122,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 
 		try {
 			userInfo.setProperty(UserConstants.KEY_EMAIL_CONFIRMATION, null);
-			userInfo.setProperty(UserConstants.KEY_BLOCKED, null);
+			userInfo.setProperty(UserConstants2.BLOCKED, null);
 			OrionConfiguration.getMetaStore().updateUser(userInfo);
 		} catch (CoreException e) {
 			LogHelper.log(e);

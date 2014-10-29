@@ -284,7 +284,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			userInfo.setProperty(UserConstants2.EMAIL, email);
 		}
 		if (isEmailRequired) {
-			userInfo.setProperty(UserConstants.KEY_BLOCKED, "true");
+			userInfo.setProperty(UserConstants2.BLOCKED, "true");
 			userInfo.setProperty(UserConstants.KEY_EMAIL_CONFIRMATION, getUniqueEmailConfirmationId());
 		}
 

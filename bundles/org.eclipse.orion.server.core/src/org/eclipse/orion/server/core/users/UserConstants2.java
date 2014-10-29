@@ -20,6 +20,12 @@ package org.eclipse.orion.server.core.users;
 public class UserConstants2 {
 
 	/**
+	 * JSON representation key for a blocked property that blocks user login. The value's data type is a boolean String.
+	 */
+	// TODO: Bug 444864 should be upper case Blocked
+	public static final String BLOCKED = "blocked";
+
+	/**
 	 * JSON representation key for a user's disk usage. The value's data type is a String.
 	 */
 	// TODO: Bug 444864 should be upper case DiskUsage
