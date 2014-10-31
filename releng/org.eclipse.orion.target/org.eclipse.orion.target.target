@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?><?pde version="3.8"?><target name="org.eclipse.orion" sequenceNumber="11">
+<?xml version="1.0" encoding="UTF-8"?><?pde version="3.8"?><target name="org.eclipse.orion" sequenceNumber="12">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.jgit" version="3.4.0.201406110918-r"/>
@@ -190,7 +190,7 @@
 <unit id="org.eclipse.ui.workbench.texteditor" version="0.0.0"/>
 <unit id="org.eclipse.platform.feature.group" version="0.0.0"/>
 <unit id="org.eclipse.rcp.feature.group" version="0.0.0"/>
-<repository location="http://download.eclipse.org/eclipse/updates/4.4"/>
+<repository location="http://download.eclipse.org/eclipse/updates/4.4/R-4.4-201406061215"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.jetty.bundles.f.feature.group" version="8.1.15.201404181548"/>
