@@ -49,7 +49,8 @@ public class OAuthClientResponseFactory {
         return resp;
     }
 
-    public static <T extends OAuthClientResponse> T createCustomResponse(String body, String contentType,
+	@SuppressWarnings("unchecked")
+	public static <T extends OAuthClientResponse> T createCustomResponse(String body, String contentType,
                                                                          int responseCode,
                                                                          Class<T> clazz)
         throws OAuthSystemException, OAuthProblemException {
