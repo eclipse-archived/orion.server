@@ -267,12 +267,8 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		if (isReadonly != null && isExecutable != null) {
 			JSONObject attributes = dirObject.getJSONObject(ProtocolConstants.KEY_ATTRIBUTES);
 			assertNotNull("Expected Attributes section in directory metadata", attributes);
-			if (isReadonly != null) {
-				assertEquals("Ibvalid directory readonly attribute", isReadonly, attributes.getBoolean(ProtocolConstants.KEY_ATTRIBUTE_READ_ONLY));
-			}
-			if (isExecutable != null) {
-				assertEquals("Invalid directory executable attribute", isExecutable, attributes.getBoolean(ProtocolConstants.KEY_ATTRIBUTE_EXECUTABLE));
-			}
+			assertEquals("Ibvalid directory readonly attribute", isReadonly, attributes.getBoolean(ProtocolConstants.KEY_ATTRIBUTE_READ_ONLY));
+			assertEquals("Invalid directory executable attribute", isExecutable, attributes.getBoolean(ProtocolConstants.KEY_ATTRIBUTE_EXECUTABLE));
 		}
 	}
 
