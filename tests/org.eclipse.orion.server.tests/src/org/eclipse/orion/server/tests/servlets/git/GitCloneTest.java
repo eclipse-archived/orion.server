@@ -873,7 +873,7 @@ public class GitCloneTest extends GitTest {
 		String requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Clone.RESOURCE + '/';
 		if (workspaceId != null) {
 			requestURI += "workspace/" + workspaceId;
-		} else {
+		} else if (path != null) {
 			requestURI += "path" + (path.isAbsolute() ? path : path.makeAbsolute());
 		}
 		WebRequest request = new GetMethodWebRequest(requestURI);

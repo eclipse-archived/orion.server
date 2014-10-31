@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2013 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -37,10 +37,15 @@ public class ReflectionUtils {
 			}
 		}
 		if (method == null) {
-			throw ex;
+			if (ex != null) {
+				throw ex;
+			}
 		}
-		method.setAccessible(true);
-		Object ret = method.invoke(object, args);
+		Object ret = null;
+		if (method != null) {
+			method.setAccessible(true);
+			ret = method.invoke(object, args);
+		}
 		return ret;
 	}
 
@@ -67,7 +72,9 @@ public class ReflectionUtils {
 			clazz = clazz.getSuperclass();
 		}
 		if (newInstance == null) {
-			throw ex;
+			if (ex != null) {
+				throw ex;
+			}
 		}
 		return newInstance;
 	}

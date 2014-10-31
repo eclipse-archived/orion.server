@@ -77,7 +77,9 @@ public class GitRevertTest extends GitTest {
 
 			String revertMessage = commit.optString(GitConstants.KEY_COMMIT_MESSAGE);
 			assertEquals(true, revertMessage != null);
-			assertEquals(true, revertMessage.startsWith("Revert \"lines in test.txt\""));
+			if (revertMessage != null) {
+				assertEquals(true, revertMessage.startsWith("Revert \"lines in test.txt\""));
+			}
 		}
 	}
 
@@ -127,7 +129,9 @@ public class GitRevertTest extends GitTest {
 
 			String revertMessage = commit.optString(GitConstants.KEY_COMMIT_MESSAGE);
 			assertEquals(true, revertMessage != null);
-			assertEquals(false, revertMessage.startsWith("Revert \"lines in test.txt\""));
+			if (revertMessage != null) {
+				assertEquals(false, revertMessage.startsWith("Revert \"lines in test.txt\""));
+			}
 		}
 	}
 
