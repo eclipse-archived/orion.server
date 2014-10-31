@@ -19,7 +19,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.StashApplyCommand;
 import org.eclipse.jgit.api.StashCreateCommand;
 import org.eclipse.jgit.api.StashDropCommand;
 import org.eclipse.jgit.api.StashListCommand;
@@ -32,6 +31,7 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
+import org.eclipse.orion.server.git.jobs.StashApplyCommand;
 import org.eclipse.orion.server.git.objects.StashPage;
 import org.eclipse.orion.server.git.objects.StashRef;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -148,7 +148,7 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.WARNING, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 			}
 
-			StashApplyCommand applyCommand = git.stashApply();
+			StashApplyCommand applyCommand = new StashApplyCommand(db);
 
 			if (stashRev != null) {
 
