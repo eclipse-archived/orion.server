@@ -635,31 +635,11 @@ public class GitConfigTest extends GitTest {
 		return request;
 	}
 
-	/*
-	// TODO: should be moved to User tests as a static method
-	private WebRequest getPutUserRequest() throws JSONException, UnsupportedEncodingException {
-		String requestURI = SERVER_LOCATION + "/users/" + testUserId;
-		JSONObject body = new JSONObject();
-		body.put(GitConstants.KEY_NAME, GIT_NAME);
-		body.put(GitConstants.KEY_MAIL, GIT_MAIL);
-		WebRequest request = new PutMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "UTF-8");
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		return request;
-	}
-	*/
-	private void assertConfigOption(final JSONObject cfg, final String k, final String v) throws JSONException, CoreException, IOException {
-		assertEquals(k, cfg.getString(GitConstants.KEY_CONFIG_ENTRY_KEY));
-		assertEquals(v, cfg.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
-		assertConfigUri(cfg.getString(ProtocolConstants.KEY_LOCATION));
-		assertCloneUri(cfg.getString(GitConstants.KEY_CLONE));
-	}
-
 	private void assertMultiConfigOption(final JSONObject cfg, final String k, final String[] v) throws JSONException, CoreException, IOException {
 		assertEquals(k, cfg.getString(GitConstants.KEY_CONFIG_ENTRY_KEY));
 
 		ArrayList<String> list = new ArrayList<String>();
-		JSONArray jsonArray = cfg.getJSONArray(GitConstants.KEY_CONFIG_ENTRY_VALUE);;
+		JSONArray jsonArray = cfg.getJSONArray(GitConstants.KEY_CONFIG_ENTRY_VALUE);
 		if (jsonArray != null) {
 			for (int i = 0; i < jsonArray.length(); i++) {
 				list.add(jsonArray.get(i).toString());
