@@ -104,14 +104,14 @@ public class AboutHandler extends ServletResourceHandler<String> {
 		}
 
 		buf.append("<table>"); //$NON-NLS-1$
-		List plugins = new ArrayList();
+		List<PluginDetails> plugins = new ArrayList<PluginDetails>();
 
 		Bundle[] bundles = Activator.getDefault().getContext().getBundles();
 		for (int k = 0; k < bundles.length; k++) {
 			plugins.add(pluginDetails(bundles[k]));
 		}
 
-		Comparator pluginComparator = new PluginComparator(sortColumn);
+		Comparator<PluginDetails> pluginComparator = new PluginComparator(sortColumn);
 		Collections.sort(plugins, pluginComparator);
 		String[] headerColumns = new String[] {"Provider", //$NON-NLS-1$
 				"PluginName", //$NON-NLS-1$
@@ -120,7 +120,7 @@ public class AboutHandler extends ServletResourceHandler<String> {
 		};
 		PluginDetails header = new PluginDetails(headerColumns);
 		buf.append(headerRowFor(header));
-		for (Iterator iter = plugins.iterator(); iter.hasNext();) {
+		for (Iterator<PluginDetails> iter = plugins.iterator(); iter.hasNext();) {
 			PluginDetails details = (PluginDetails) iter.next();
 			buf.append(tableRowFor(details));
 		}
@@ -160,7 +160,7 @@ public class AboutHandler extends ServletResourceHandler<String> {
 		return row;
 	}
 
-	protected Object pluginDetails(Bundle bundle) {
+	protected PluginDetails pluginDetails(Bundle bundle) {
 		String[] values = new String[] {getResourceString(bundle, Constants.BUNDLE_VENDOR), getResourceString(bundle, Constants.BUNDLE_NAME), getResourceString(bundle, Constants.BUNDLE_VERSION), bundle.getSymbolicName()};
 		PluginDetails details = new PluginDetails(values);
 

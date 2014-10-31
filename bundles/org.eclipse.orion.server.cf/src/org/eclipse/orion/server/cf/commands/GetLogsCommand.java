@@ -82,7 +82,8 @@ public class GetLogsCommand extends AbstractCFCommand {
 			}
 
 			JSONObject runningInstances = getStatus.getJsonData();
-			for (Iterator<String> iterator = runningInstances.keys(); iterator.hasNext();) {
+			for (@SuppressWarnings("unchecked")
+			Iterator<String> iterator = runningInstances.keys(); iterator.hasNext();) {
 				JSONArray logsJSON = new JSONArray();
 				String runningInstanceNo = iterator.next();
 				ServerStatus prepareJSONStatus = prepareJSONResp(logsJSON, runningInstanceNo, appUrl);

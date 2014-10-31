@@ -251,7 +251,7 @@ public final class OAuthUtils {
     /**
      * Construct a &-separated list of the given values, percentEncoded.
      */
-    public static String percentEncode(Iterable values) {
+    public static String percentEncode(Iterable<String> values) {
         StringBuilder p = new StringBuilder();
         for (Object v : values) {
             String stringValue = toString(v);
