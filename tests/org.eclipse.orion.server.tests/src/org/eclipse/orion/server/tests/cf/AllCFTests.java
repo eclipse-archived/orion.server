@@ -17,5 +17,5 @@ import org.junit.runners.Suite.SuiteClasses;
 @RunWith(Suite.class)
 @SuiteClasses({ManifestParserTest.class, ManifestUtilsTest.class, PackagerTest.class, ManifestParseTreeTest.class})
 public class AllCFTests {
-
+	// Junit does not require anything here.
 }
