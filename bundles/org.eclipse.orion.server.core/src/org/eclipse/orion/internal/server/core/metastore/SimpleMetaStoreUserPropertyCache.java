@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core.metastore;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -50,7 +49,7 @@ public class SimpleMetaStoreUserPropertyCache {
 			if (cacheMap.containsKey(propertyKey)) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStoreUserPropertyCache.registerUserProperty: property " + propertyKey + "is already registered", null));
 			}
-			Map<String, String> cache = new HashMap<String, String>();
+			Map<String, String> cache = new ConcurrentHashMap<String, String>();
 			cacheMap.put(propertyKey, cache);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Created user cache for the " + propertyKey + " property"); //$NON-NLS-1$
