@@ -457,13 +457,13 @@ public abstract class FileSystemTest extends AbstractServerTest {
 		return request;
 	}
 
-	protected WebRequest getCreateProjectRequest(URI workspaceLocation, String projectName, String projectLocation) throws JSONException, IOException {
-		workspaceLocation = addSchemeHostPort(workspaceLocation);
+	protected WebRequest getCreateProjectRequest(URI workspaceLocationURI, String projectName, String projectLocation) throws JSONException, IOException {
+		workspaceLocationURI = addSchemeHostPort(workspaceLocationURI);
 		JSONObject body = new JSONObject();
 		if (projectLocation != null)
 			body.put(ProtocolConstants.KEY_CONTENT_LOCATION, projectLocation);
 		InputStream in = IOUtilities.toInputStream(body.toString());
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), in, "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocationURI.toString(), in, "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
