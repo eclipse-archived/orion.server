@@ -197,13 +197,13 @@ public abstract class GitTest extends FileSystemTest {
 		return createProjectOrLink(workspaceLocation, projectName, contentLocation);
 	}
 
-	protected JSONObject createProjectOrLink(URI workspaceLocation, String projectName, String contentLocation) throws JSONException, IOException, SAXException {
+	protected JSONObject createProjectOrLink(URI workspaceLocationURI, String projectName, String contentLocation) throws JSONException, IOException, SAXException {
 		JSONObject body = new JSONObject();
 		if (contentLocation != null) {
 			body.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
 			ServletTestingSupport.allowedPrefixes = contentLocation;
 		}
-		WebRequest request = new PostMethodWebRequest(workspaceLocation.toString(), IOUtilities.toInputStream(body.toString()), "UTF-8");
+		WebRequest request = new PostMethodWebRequest(workspaceLocationURI.toString(), IOUtilities.toInputStream(body.toString()), "UTF-8");
 		if (projectName != null)
 			request.setHeaderField(ProtocolConstants.HEADER_SLUG, projectName);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
@@ -218,7 +218,7 @@ public abstract class GitTest extends FileSystemTest {
 		assertEquals(projectName, project.getString(ProtocolConstants.KEY_NAME));
 		String projectId = project.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(projectId);
-		IPath workspacePath = new Path(workspaceLocation.getPath());
+		IPath workspacePath = new Path(workspaceLocationURI.getPath());
 		String workspaceId = workspacePath.segment(workspacePath.segmentCount() - 1);
 		testProjectBaseLocation = "/" + workspaceId + '/' + projectName;
 		testProjectLocalFileLocation = "/" + project.optString(ProtocolConstants.KEY_ID, null);
@@ -1514,8 +1514,8 @@ public abstract class GitTest extends FileSystemTest {
 		return clones.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 	}
 
-	protected String workspaceIdFromLocation(URI workspaceLocation) {
-		IPath path = new Path(workspaceLocation.getPath());
+	protected String workspaceIdFromLocation(URI workspaceLocationURI) {
+		IPath path = new Path(workspaceLocationURI.getPath());
 		return path.segment(path.segmentCount() - 1);
 	}
 
@@ -1527,14 +1527,14 @@ public abstract class GitTest extends FileSystemTest {
 	 * not actually create the git clones.
 	 * @throws CoreException 
 	 */
-	protected IPath[] createTestProjects(URI workspaceLocation) throws JSONException, IOException, SAXException, CoreException {
-		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+	protected IPath[] createTestProjects(URI workspaceLocationURI) throws JSONException, IOException, SAXException, CoreException {
+		String workspaceId = workspaceIdFromLocation(workspaceLocationURI);
 		WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
 		assertNotNull(workspace);
 		String name = testName.getMethodName();
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, name.concat("-top"), null);
+		JSONObject projectTop = createProjectOrLink(workspaceLocationURI, name.concat("-top"), null);
 		IPath clonePathTop = getClonePath(workspaceId, projectTop);
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, name.concat("-folder"), null);
+		JSONObject projectFolder = createProjectOrLink(workspaceLocationURI, name.concat("-folder"), null);
 		IPath clonePathFolder = getClonePath(workspaceId, projectFolder).append("folder").makeAbsolute();
 
 		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
@@ -1547,27 +1547,27 @@ public abstract class GitTest extends FileSystemTest {
 	 *  - In second pair, both clones are in folders below the project root
 	 *  - In third pair, one clone is at the root and the other clone is within a child folder
 	 */
-	protected IPath[][] createTestClonePairs(URI workspaceLocation) throws IOException, SAXException, JSONException, CoreException {
-		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+	protected IPath[][] createTestClonePairs(URI workspaceLocationURI) throws IOException, SAXException, JSONException, CoreException {
+		String workspaceId = workspaceIdFromLocation(workspaceLocationURI);
 		WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
 		assertNotNull(workspace);
 		String name = testName.getMethodName();
-		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, name.concat("-top1"), null);
+		JSONObject projectTop1 = createProjectOrLink(workspaceLocationURI, name.concat("-top1"), null);
 		IPath clonePathTop1 = getClonePath(workspaceId, projectTop1);
 
-		JSONObject projectTop2 = createProjectOrLink(workspaceLocation, name.concat("-top2"), null);
+		JSONObject projectTop2 = createProjectOrLink(workspaceLocationURI, name.concat("-top2"), null);
 		IPath clonePathTop2 = getClonePath(workspaceId, projectTop2);
 
-		JSONObject projectFolder1 = createProjectOrLink(workspaceLocation, name.concat("-folder1"), null);
+		JSONObject projectFolder1 = createProjectOrLink(workspaceLocationURI, name.concat("-folder1"), null);
 		IPath clonePathFolder1 = getClonePath(workspaceId, projectFolder1).append("folder1").makeAbsolute();
 
-		JSONObject projectFolder2 = createProjectOrLink(workspaceLocation, name.concat("-folder2"), null);
+		JSONObject projectFolder2 = createProjectOrLink(workspaceLocationURI, name.concat("-folder2"), null);
 		IPath clonePathFolder2 = getClonePath(workspaceId, projectFolder2).append("folder2").makeAbsolute();
 
-		JSONObject projectTop3 = createProjectOrLink(workspaceLocation, name.concat("-top3"), null);
+		JSONObject projectTop3 = createProjectOrLink(workspaceLocationURI, name.concat("-top3"), null);
 		IPath clonePathTop3 = getClonePath(workspaceId, projectTop3);
 
-		JSONObject projectFolder3 = createProjectOrLink(workspaceLocation, name.concat("-folder3"), null);
+		JSONObject projectFolder3 = createProjectOrLink(workspaceLocationURI, name.concat("-folder3"), null);
 		IPath clonePathFolder3 = getClonePath(workspaceId, projectFolder3).append("folder1").makeAbsolute();
 
 		IPath[] clonePathsTop = new IPath[] {clonePathTop1, clonePathTop2};
