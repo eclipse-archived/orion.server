@@ -33,7 +33,8 @@ import org.apache.oltu.oauth2.common.utils.OAuthUtils;
  */
 public class OAuthProblemException extends Exception {
 
-    private String error;
+	private static final long serialVersionUID = 277976059164037614L;
+	private String error;
     private String description;
     private String uri;
     private String state;

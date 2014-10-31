@@ -27,7 +27,8 @@ package org.apache.oltu.oauth2.common.exception;
  */
 public class OAuthSystemException extends Exception {
 
-    public OAuthSystemException() {
+	private static final long serialVersionUID = -6364626766018546845L;
+	public OAuthSystemException() {
         super();
     }
 

@@ -23,7 +23,10 @@ package org.apache.oltu.oauth2.common.exception;
 /**
  */
 public class OAuthRuntimeException extends RuntimeException {
-    public OAuthRuntimeException() {
+
+	private static final long serialVersionUID = -571478244717693865L;
+
+	public OAuthRuntimeException() {
         super();
     }
 
