@@ -15,6 +15,7 @@ import org.eclipse.orion.server.tests.metastore.ProjectInfoTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreConcurrencyTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreLiveMigrationTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreTests;
+import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreUserPropertyCacheTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreUtilTest;
 import org.eclipse.orion.server.tests.metastore.SimpleUserPasswordUtilTests;
 import org.eclipse.orion.server.tests.metastore.UserInfoTests;
@@ -51,6 +52,7 @@ import org.junit.runners.Suite.SuiteClasses;
 		SimpleMetaStoreConcurrencyTests.class, //
 		SimpleMetaStoreLiveMigrationTests.class, //
 		SimpleMetaStoreTests.class, //
+		SimpleMetaStoreUserPropertyCacheTests.class, //
 		SimpleMetaStoreUtilTest.class, //
 		SimpleUserPasswordUtilTests.class, //
 		TransferTest.class, //
