@@ -63,6 +63,9 @@ public class SimpleMetaStoreUserPropertyCache {
 
 	public void add(String propertyKey, String value, String userId) {
 		Map<String, String> cache = cacheMap.get(propertyKey);
+		if (cache == null) {
+			return;
+		}
 		if (cache.containsValue(userId)) {
 			String key = null;
 			for (Entry<String, String> entry : cache.entrySet()) {
