@@ -91,6 +91,7 @@ public class FormAuthLoginServlet extends HttpServlet {
 		if (pathInfo.startsWith("/oauth")) {
 			try {
 				manageOAuthServlet.handleGetAndLogin(req, resp);
+				resp.setStatus(HttpServletResponse.SC_OK);
 			} catch (OAuthException e) {
 				displayError(e.getMessage(), req, resp);
 			}
@@ -114,7 +115,7 @@ public class FormAuthLoginServlet extends HttpServlet {
 			user = authenticationService.getAuthenticatedUser(req, resp);
 		}
 
-		if (user != null) {
+		if (user != null && ! pathInfo.startsWith("/oauth")) {
 			try {
 				// try to store the login timestamp in the user profile
 				UserInfo userInfo = OrionConfiguration.getMetaStore().readUser(user);
@@ -127,7 +128,9 @@ public class FormAuthLoginServlet extends HttpServlet {
 
 			resp.setStatus(HttpServletResponse.SC_OK);
 			try {
-				resp.getWriter().print(FormAuthHelper.getUserJson(user, req.getContextPath()));
+				JSONObject jsonResp = FormAuthHelper.getUserJson(user, req.getContextPath());
+				resp.setContentType("application/json");
+				resp.getWriter().print(jsonResp);
 			} catch (JSONException e) {
 				displayError("An error occured when creating JSON object for logged in user", req, resp);
 			}

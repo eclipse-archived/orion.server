@@ -151,7 +151,12 @@ public class OAuthHelper {
 			return;
 		}
 
-		req.getSession().setAttribute("user", userInfo.getUniqueId()); //$NON-NLS-1$
+		String login = userInfo.getUniqueId();
+		req.getSession().setAttribute("user", login); //$NON-NLS-1$
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
+		if (logger.isInfoEnabled()) {
+			logger.info("Login success: " + login + " oauth " + oauthConsumer.getIdentifier()); //$NON-NLS-1$ 
+		}
 
 		if (getEventService() != null) {
 			JSONObject message = new JSONObject();
