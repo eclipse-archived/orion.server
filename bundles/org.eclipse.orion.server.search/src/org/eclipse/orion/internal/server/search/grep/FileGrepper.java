@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2014 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.orion.internal.server.search.grep;
 
 import java.io.File;
@@ -17,12 +27,14 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.LineIterator;
 import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.useradmin.IOrionCredentialsService;
-import org.eclipse.orion.server.useradmin.User;
-import org.eclipse.orion.server.useradmin.UserConstants;
-import org.eclipse.orion.server.useradmin.UserServiceHelper;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 
+/**
+ * @author Aidan Redpath
+ */
 public class FileGrepper extends DirectoryWalker<File> {
 
 	private Pattern pattern;
@@ -134,8 +146,9 @@ public class FileGrepper extends DirectoryWalker<File> {
 	 * Set the scope of the search to the user home if the scope was not given.
 	 * @param req The HTTP request to the servlet.
 	 * @param resp The HTTP response from the servlet.
+	 * @throws GrepException 
 	 */
-	private void setScope(HttpServletRequest req, HttpServletResponse resp) {
+	private void setScope(HttpServletRequest req, HttpServletResponse resp) throws GrepException {
 		// Check if a scope was specified
 		if (options.getScope() != null) {
 			scope = options.getScope();
@@ -143,9 +156,13 @@ public class FileGrepper extends DirectoryWalker<File> {
 		}
 		// Get the home dir of the user
 		String login = req.getRemoteUser();
-		IOrionCredentialsService userAdmin = UserServiceHelper.getDefault().getUserStore();
-		User user = userAdmin.getUser(UserConstants.KEY_LOGIN, login);
-		IFileStore defaultFileStore = OrionConfiguration.getMetaStore().getUserHome(user.getUid());
+		IFileStore defaultFileStore;
+		try {
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, login, false, false);
+			defaultFileStore = OrionConfiguration.getMetaStore().getUserHome(userInfo.getUniqueId());
+		} catch (CoreException e) {
+			throw (new GrepException(e));
+		}
 		scope = new File(defaultFileStore.toURI());
 	}
 }

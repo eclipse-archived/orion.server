@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2014 IBM Corporation and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *     IBM Corporation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.orion.internal.server.search.grep;
 
 import java.io.File;
@@ -7,6 +17,9 @@ import java.net.URLDecoder;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+/**
+ * @author Aidan Redpath
+ */
 public class SearchOptions {
 
 	private static final String[] FIELD_NAMES = {"Name", "Location", "RegEx", "CaseSensitive"}; //$NON-NLS-1$
