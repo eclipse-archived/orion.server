@@ -128,6 +128,8 @@ class GenericFileHandler extends ServletResourceHandler<IFileStore> {
 				case GET :
 					response.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
 					break;
+				case DELETE :
+					return false;
 				default :
 					response.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
 					break;
