@@ -29,6 +29,7 @@ Export-Package: org.eclipse.orion.internal.server.servlets;
    org.eclipse.orion.server.docker,
    org.eclipse.orion.server.cf",
  org.eclipse.orion.internal.server.servlets.about;x-internal:=true,
+ org.eclipse.orion.internal.server.servlets.metrics;x-internal:=true,
  org.eclipse.orion.internal.server.servlets.file;
   x-friends:="org.eclipse.orion.server.npm,
    org.eclipse.orion.server.hosting,
