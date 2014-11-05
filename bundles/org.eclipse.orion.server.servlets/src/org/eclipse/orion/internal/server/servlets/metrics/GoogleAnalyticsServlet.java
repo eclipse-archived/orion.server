@@ -26,8 +26,8 @@ import org.json.JSONObject;
  */
 public class GoogleAnalyticsServlet extends OrionServlet {
 
-	private static final String TID_KEY = "orion.analytics.google.tid";
-	private static final String SITESPEEDSAMPLERATE_KEY = "orion.analytics.google.sitespeed.sample";
+	private static final String TID_KEY = "orion.metrics.google.tid";
+	private static final String SITESPEEDSAMPLERATE_KEY = "orion.metrics.google.sitespeed.sample";
 	private static final long serialVersionUID = -76336740020069623L;
 
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
