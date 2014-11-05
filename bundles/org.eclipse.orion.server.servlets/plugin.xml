@@ -46,6 +46,10 @@
             alias="/about"
             class="org.eclipse.orion.internal.server.servlets.about.AboutServlet">
       </servlet>
+      <servlet
+            alias="/metrics"
+            class="org.eclipse.orion.internal.server.servlets.metrics.GoogleAnalyticsServlet">
+      </servlet>
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.filters">
