@@ -27,7 +27,7 @@ import org.json.*;
 public class CFLauncherDeploymentPackager implements IDeploymentPackager {
 
 	protected static final String CF_LAUNCHER = "cf-launcher"; //$NON-NLS-1$
-	protected static final String CF_LAUNCHER_VERSION = "0.0.13"; //$NON-NLS-1$
+	protected static final String CF_LAUNCHER_VERSION = "0.0.x"; //$NON-NLS-1$
 
 	@Override
 	public String getId() {
