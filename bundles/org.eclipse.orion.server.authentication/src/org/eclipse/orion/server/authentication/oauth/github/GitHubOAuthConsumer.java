@@ -91,7 +91,8 @@ public class GitHubOAuthConsumer extends OAuthConsumer{
 
 	@Override
 	public String getUsername() {
-		return username;
+		// github allows a dash in the username, so remove any dashes
+		return username.replaceAll("-", "");
 	}
 
 	@Override
