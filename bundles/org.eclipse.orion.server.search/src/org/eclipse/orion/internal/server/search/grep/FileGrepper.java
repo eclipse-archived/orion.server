@@ -28,8 +28,13 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.LineIterator;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.core.users.UserConstants2;
 
 /**
@@ -39,7 +44,7 @@ public class FileGrepper extends DirectoryWalker<File> {
 
 	private Pattern pattern;
 	private Matcher matcher;
-	private File scope;
+	private List<File> scopes;
 
 	private SearchOptions options;
 
@@ -49,12 +54,14 @@ public class FileGrepper extends DirectoryWalker<File> {
 	 * @param resp The HTTP response from the servlet.
 	 * @throws GrepException If there was a syntax error with the search term.
 	 */
-	public FileGrepper(HttpServletRequest req, HttpServletResponse resp) throws GrepException {
+	public FileGrepper(HttpServletRequest req, HttpServletResponse resp, SearchOptions options) throws GrepException {
 		super();
-		options = new SearchOptions(req, resp);
-		pattern = buildSearchPattern();
-		matcher = pattern.matcher("");
-		setScope(req, resp);
+		this.options = options;
+		if (options.isFileSearch()) {
+			pattern = buildSearchPattern();
+			matcher = pattern.matcher("");
+		}
+		setScopes(req, resp);
 	}
 
 	/**
@@ -65,7 +72,9 @@ public class FileGrepper extends DirectoryWalker<File> {
 	public List<File> search() throws GrepException {
 		List<File> files = new LinkedList<File>();
 		try {
-			super.walk(scope, files);
+			for (File scope : scopes) {
+				super.walk(scope, files);
+			}
 		} catch (IOException e) {
 			throw (new GrepException(e));
 		}
@@ -79,21 +88,32 @@ public class FileGrepper extends DirectoryWalker<File> {
 		// Check if the path is acceptable
 		if (!acceptFilePath(file.getPath()))
 			return;
+		// Add if it is a filename search or search the file contents.
+		if (!options.isFileSearch() || searchFile(file))
+			results.add(file);
+	}
 
+	/**
+	 * Searches the contents of a file
+	 * @param file The file to search
+	 * @return returns whether the search was successful
+	 * @throws IOException thrown if there is an error reading the file
+	 */
+	private boolean searchFile(File file) throws IOException {
 		LineIterator lineIterator = FileUtils.lineIterator(file);
 		try {
 			while (lineIterator.hasNext()) {
 				String line = lineIterator.nextLine();
 				matcher.reset(line);
 				if (matcher.find()) {
-					results.add(file);
-					return;
+					return true;
 				}
 			}
 		} finally {
 			if (lineIterator != null)
 				lineIterator.close();
 		}
+		return false;
 	}
 
 	/**
@@ -102,10 +122,10 @@ public class FileGrepper extends DirectoryWalker<File> {
 	 * @return True is the file passes all the filename patterns (with wildcards)
 	 */
 	private boolean acceptFilePath(String path) {
-		if (options.getFileNamePatterns() == null)
+		if (options.getFilenamePatterns() == null)
 			return true;
-		for (int i = 0; i < options.getFileNamePatterns().length; i++) {
-			if (!FilenameUtils.wildcardMatch(path, options.getFileNamePatterns()[i])) {
+		for (int i = 0; i < options.getFilenamePatterns().length; i++) {
+			if (!FilenameUtils.wildcardMatch(path, options.getFilenamePatterns()[i])) {
 				return false;
 			}
 		}
@@ -148,21 +168,34 @@ public class FileGrepper extends DirectoryWalker<File> {
 	 * @param resp The HTTP response from the servlet.
 	 * @throws GrepException 
 	 */
-	private void setScope(HttpServletRequest req, HttpServletResponse resp) throws GrepException {
-		// Check if a scope was specified
-		if (options.getScope() != null) {
-			scope = options.getScope();
-			return;
+	private void setScopes(HttpServletRequest req, HttpServletResponse resp) throws GrepException {
+		scopes = new LinkedList<File>();
+		String pathInfo = options.getScope();
+
+		if (pathInfo != null) {
+			pathInfo = pathInfo.replaceFirst("/file", "");
 		}
-		// Get the home dir of the user
-		String login = req.getRemoteUser();
-		IFileStore defaultFileStore;
-		try {
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, login, false, false);
-			defaultFileStore = OrionConfiguration.getMetaStore().getUserHome(userInfo.getUniqueId());
-		} catch (CoreException e) {
-			throw (new GrepException(e));
+		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
+		IFileStore file = NewFileServlet.getFileStore(req, path);
+		if (file == null) {
+			// Get the directories of the projects.
+			String login = req.getRemoteUser();
+			try {
+				UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, login, false, false);
+				List<String> workspaceIds = userInfo.getWorkspaceIds();
+				for (String workspaceId : workspaceIds) {
+					WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
+					List<String> projectnames = workspace.getProjectNames();
+					for (String projectName : projectnames) {
+						ProjectInfo projectInfo = OrionConfiguration.getMetaStore().readProject(workspaceId, projectName);
+						scopes.add(new File(projectInfo.getContentLocation()));
+					}
+				}
+			} catch (CoreException e) {
+				throw (new GrepException(e));
+			}
+		} else {
+			scopes.add(new File(file.toURI()));
 		}
-		scope = new File(defaultFileStore.toURI());
 	}
 }

@@ -41,7 +41,7 @@ import com.meterware.httpunit.WebResponse;
 
 public class GrepSearchTest extends FileSystemTest {
 
-	private static final String SEARCH_LOCATION = toAbsoluteURI("grepsearch?q=");
+	private static final String SEARCH_LOCATION = toAbsoluteURI("grepsearch");
 
 	@BeforeClass
 	public static void setupWorkspace() {
@@ -134,10 +134,10 @@ public class GrepSearchTest extends FileSystemTest {
 	 */
 	@Test
 	public void testPartialWord() throws Exception {
-		JSONObject searchResult = doSearch("ErrorMess");
-		JSONArray arr = searchResult.getJSONArray("files");
+		JSONObject searchResult = doSearch("?q=ErrorMess");
+		JSONArray arr = searchResult.getJSONArray("docs");
 		assertEquals(1, arr.length());
-		assertTrue(arr.getString(0).endsWith("script.js"));
+		assertTrue(arr.getJSONObject(0).getString("Name").endsWith("script.js"));
 	}
 
 }
