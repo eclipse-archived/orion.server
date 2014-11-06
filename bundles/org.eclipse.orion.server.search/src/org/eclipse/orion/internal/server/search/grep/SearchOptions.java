@@ -29,6 +29,7 @@ public class SearchOptions {
 
 	private boolean caseSensitive;
 	private boolean regEx;
+	private boolean fileSearch;
 
 	private File scope;
 
@@ -52,7 +53,6 @@ public class SearchOptions {
 				} catch (UnsupportedEncodingException e) {
 
 				}
-				searchTerm = term;
 				continue;
 			}
 			if (term.startsWith("Name:")) { //$NON-NLS-1$
@@ -68,6 +68,7 @@ public class SearchOptions {
 			}
 		}
 		searchTerm = sb.toString();
+		fileSearch = sb.length() > 0;
 	}
 
 	/**
@@ -119,6 +120,13 @@ public class SearchOptions {
 	 */
 	public boolean isRegEx() {
 		return regEx;
+	}
+
+	/**
+	 * Returns if the search needs to search the file contents
+	 */
+	public boolean isFileSearch() {
+		return fileSearch;
 	}
 
 	/**

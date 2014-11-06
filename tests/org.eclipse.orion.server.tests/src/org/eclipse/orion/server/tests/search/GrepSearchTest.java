@@ -140,4 +140,15 @@ public class GrepSearchTest extends FileSystemTest {
 		assertTrue(arr.getString(0).endsWith("script.js"));
 	}
 
+	/**
+	 * Tests finding search results on a part of a word.
+	 */
+	@Test
+	public void testFileSearch() throws Exception {
+		JSONObject searchResult = doSearch("Name:*.js");
+		JSONArray arr = searchResult.getJSONArray("files");
+		assertEquals(1, arr.length());
+		assertTrue(arr.getString(0).endsWith("script.js"));
+	}
+
 }

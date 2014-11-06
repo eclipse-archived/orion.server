@@ -79,21 +79,32 @@ public class FileGrepper extends DirectoryWalker<File> {
 		// Check if the path is acceptable
 		if (!acceptFilePath(file.getPath()))
 			return;
+		// Add if it is a filename search or search the file contents.
+		if (!options.isFileSearch() || searchFile(file))
+			results.add(file);
+	}
 
+	/**
+	 * Searches the contents of a file
+	 * @param file The file to search
+	 * @return returns whether the search was successful
+	 * @throws IOException thrown if there is an error reading the file
+	 */
+	private boolean searchFile(File file) throws IOException {
 		LineIterator lineIterator = FileUtils.lineIterator(file);
 		try {
 			while (lineIterator.hasNext()) {
 				String line = lineIterator.nextLine();
 				matcher.reset(line);
 				if (matcher.find()) {
-					results.add(file);
-					return;
+					return true;
 				}
 			}
 		} finally {
 			if (lineIterator != null)
 				lineIterator.close();
 		}
+		return false;
 	}
 
 	/**
