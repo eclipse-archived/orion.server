@@ -32,6 +32,7 @@ import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.osgi.framework.log.FrameworkLog;
@@ -53,10 +54,13 @@ import org.slf4j.LoggerFactory;
  */
 public class Activator implements BundleActivator {
 
+	static final String ADMIN_LOGIN_VALUE = "admin"; //$NON-NLS-1$
+	static final String ADMIN_NAME_VALUE = "Administrative User"; //$NON-NLS-1$
+
 	private static volatile BundleContext bundleContext;
 
 	private static Activator singleton;
-	private	ServiceTracker<FrameworkLog, FrameworkLog> logTracker;
+	private ServiceTracker<FrameworkLog, FrameworkLog> logTracker;
 	private ServiceTracker<IPreferencesService, IPreferencesService> prefTracker;
 	private ServiceRegistration<ITaskService> taskServiceRegistration;
 	private ITaskService taskService;
@@ -104,11 +108,10 @@ public class Activator implements BundleActivator {
 			return null;
 		return tracker.getService();
 	}
-	
+
 	public ITaskService getTaskService() {
 		return taskService;
 	}
-	
 
 	public BundleContext getContext() {
 		return bundleContext;
@@ -166,7 +169,7 @@ public class Activator implements BundleActivator {
 
 	private void initializeMetaStore() {
 		try {
-			metastore =  new SimpleMetaStore(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null));
+			metastore = new SimpleMetaStore(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null));
 			List<String> keys = new ArrayList<String>();
 			keys.add(UserConstants2.USER_NAME);
 			metastore.registerUserProperties(keys);
@@ -175,8 +178,7 @@ public class Activator implements BundleActivator {
 		}
 		bundleContext.registerService(IMetaStore.class, metastore, null);
 	}
-	
-	
+
 	/*(non-Javadoc)
 	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
 	 */
@@ -186,6 +188,7 @@ public class Activator implements BundleActivator {
 		registerServices();
 		initializeFileSystem();
 		initializeMetaStore();
+		initializeAdminUser();
 	}
 
 	private void registerServices() {
@@ -244,6 +247,30 @@ public class Activator implements BundleActivator {
 		}
 	}
 
+	/**
+	 * Initialize the admin user on the server.
+	 */
+	private void initializeAdminUser() {
+		try {
+			// initialize the admin account in the IMetaStore
+			String adminDefaultPassword = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD);
+			UserInfo admin = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, ADMIN_LOGIN_VALUE, false, false);
+			if (admin == null && adminDefaultPassword != null) {
+				UserInfo userInfo = new UserInfo();
+				userInfo.setUserName(ADMIN_LOGIN_VALUE);
+				userInfo.setFullName(ADMIN_NAME_VALUE);
+				userInfo.setProperty(UserConstants2.PASSWORD, adminDefaultPassword);
+				OrionConfiguration.getMetaStore().createUser(userInfo);
+				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
+				if (logger.isInfoEnabled()) {
+					logger.info("Account created: " + ADMIN_LOGIN_VALUE); //$NON-NLS-1$
+				}
+			}
+		} catch (CoreException e) {
+			LogHelper.log(e);
+		}
+	}
+
 	private void initializeFileSystem() {
 		IPath location = getFileSystemLocation();
 		if (location == null)
@@ -257,7 +284,7 @@ public class Activator implements BundleActivator {
 			throw new RuntimeException("Instance location is read only: " + rootStore, e); //$NON-NLS-1$
 		}
 	}
-	
+
 	private IPath getFileSystemLocation() {
 		// Make sure the registry is started so the preferences work correctly.
 		// Lots of bundles access the file system location, and some of them start early
@@ -285,7 +312,7 @@ public class Activator implements BundleActivator {
 	public URI getRootLocationURI() {
 		return rootStoreURI;
 	}
-	
+
 	private void ensureBundleStarted(String symbolicName) {
 		Bundle bundle = getBundle(symbolicName);
 		if (bundle != null) {
@@ -295,7 +322,7 @@ public class Activator implements BundleActivator {
 				} catch (BundleException e) {
 					Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.core"); //$NON-NLS-1$
 					logger.error("Could not start bundle " + symbolicName, e);
-					
+
 				}
 			}
 		}
@@ -309,7 +336,7 @@ public class Activator implements BundleActivator {
 		}
 		return null;
 	}
-	
+
 	Location getInstanceLocation() {
 		if (instanceLocationTracker == null) {
 			Filter filter;
