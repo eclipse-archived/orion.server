@@ -10,16 +10,17 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.ParseManifestCommand;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.objects.Manifest;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
+import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
@@ -40,6 +41,10 @@ public class ManifestsHandlerV1 extends AbstractRESTHandler<Manifest> {
 	@Override
 	protected CFJob handleGet(Manifest manifest, HttpServletRequest request, HttpServletResponse response, final String path) {
 
+		/* if true, forces to parse the given manifest and *not* to assume a default 'manifest.yml' in parents folder */
+		String strictString = IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_STRICT);
+		final boolean strict = strictString != null ? Boolean.parseBoolean(strictString) : false;
+
 		return new CFJob(request, false) {
 
 			@Override
@@ -47,6 +52,8 @@ public class ManifestsHandlerV1 extends AbstractRESTHandler<Manifest> {
 				try {
 
 					ParseManifestCommand parseManifestCommand = new ParseManifestCommand(null, userId, path);
+					parseManifestCommand.setStrict(strict);
+
 					IStatus status = parseManifestCommand.doIt();
 					if (!status.isOK())
 						return status;

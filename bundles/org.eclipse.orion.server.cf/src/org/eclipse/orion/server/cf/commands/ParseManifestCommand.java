@@ -40,13 +40,19 @@ public class ParseManifestCommand extends AbstractCFCommand {
 	private IFileStore appStore;
 
 	private Analyzer applicationAnalyzer;
+	private boolean strict;
 
 	public ParseManifestCommand(Target target, String userId, String contentLocation) {
 		super(target);
 		this.userId = userId;
 		this.contentLocation = contentLocation;
 		this.applicationAnalyzer = null;
+		this.strict = false;
 		this.commandName = NLS.bind("Parse application manifest: {0}", contentLocation);
+	}
+
+	public void setStrict(boolean force) {
+		this.strict = force;
 	}
 
 	public void setApplicationAnalyzer(Analyzer applicationAnalyzer) {
@@ -91,7 +97,7 @@ public class ParseManifestCommand extends AbstractCFCommand {
 				return accessStatus;
 
 			IFileStore fileStore = NewFileServlet.getFileStore(null, contentPath);
-			if (!fileStore.fetchInfo().isDirectory()) {
+			if (!fileStore.fetchInfo().isDirectory() && !strict) {
 				fileStore = fileStore.getParent();
 				contentPath = contentPath.removeLastSegments(1);
 			}
@@ -100,7 +106,7 @@ public class ParseManifestCommand extends AbstractCFCommand {
 				return cannotFindManifest(contentPath);
 
 			/* lookup the manifest description */
-			IFileStore manifestStore = fileStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
+			IFileStore manifestStore = strict ? fileStore : fileStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
 			if (!manifestStore.fetchInfo().exists())
 				return cannotFindManifest(contentPath);
 
