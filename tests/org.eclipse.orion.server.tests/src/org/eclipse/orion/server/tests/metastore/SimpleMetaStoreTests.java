@@ -1723,19 +1723,19 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo userInfo = new UserInfo();
 		userInfo.setUserName(testUserLogin);
 		userInfo.setFullName(testUserLogin);
-		String email_confirmation = "1413302977602-0.2258318922458089";
-		userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION, email_confirmation);
+		String emailConfirmationId = "1413302977602-0.2258318922458089";
+		userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION_ID, emailConfirmationId);
 		metaStore.createUser(userInfo);
 
 		// read the user back again
 		UserInfo readUserInfo = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo);
 		assertEquals(testUserLogin, readUserInfo.getUserName());
-		assertEquals(email_confirmation, readUserInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION));
+		assertEquals(emailConfirmationId, readUserInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID));
 
 		// update the UserInfo
-		email_confirmation = "1381865755658-0.34789953865892875";
-		userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION, email_confirmation);
+		emailConfirmationId = "1381865755658-0.34789953865892875";
+		userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION_ID, emailConfirmationId);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -1744,22 +1744,22 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo2 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo2);
 		assertEquals(testUserLogin, readUserInfo2.getUserName());
-		String readEmail_confirmation = readUserInfo2.getProperty(UserConstants2.EMAIL_CONFIRMATION);
-		assertEquals(email_confirmation, readEmail_confirmation);
+		String readEmail_confirmation = readUserInfo2.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID);
+		assertEquals(emailConfirmationId, readEmail_confirmation);
 
 		// delete the email_confirmation property and update the user
-		userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION, null);
+		userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION_ID, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo3 = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo3);
 		assertEquals(readUserInfo3.getUniqueId(), userInfo.getUniqueId());
-		assertNull(readUserInfo3.getProperty(UserConstants2.EMAIL_CONFIRMATION));
+		assertNull(readUserInfo3.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID));
 
 		// update the UserInfo again
-		email_confirmation = "1381865755658-0.34789953865892875";
-		userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION, email_confirmation);
+		emailConfirmationId = "1381865755658-0.34789953865892875";
+		userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION_ID, emailConfirmationId);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -1768,7 +1768,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo4 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo4);
 		assertEquals(testUserLogin, readUserInfo4.getUserName());
-		assertEquals(email_confirmation, readUserInfo4.getProperty(UserConstants2.EMAIL_CONFIRMATION));
+		assertEquals(emailConfirmationId, readUserInfo4.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID));
 	}
 
 	@Test

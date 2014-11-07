@@ -186,7 +186,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 
 	private boolean handleUserReset(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
-		String password = req.getParameter(UserConstants2.PASSWORD);
+		// TODO: Bug 444864 should be "Password"
+		String password = req.getParameter("password");
 
 		if (login == null || login.length() == 0)
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User login not specified.", null));
@@ -220,8 +221,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, CoreException {
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
 		String name = req.getParameter(UserConstants2.FULL_NAME);
-		String email = req.getParameter(UserConstants2.EMAIL);
-		String password = req.getParameter(UserConstants2.PASSWORD);
+		// TODO: Bug 444864 should be "Email"
+		String email = req.getParameter("email");
+		// TODO: Bug 444864 should be "Password"
+		String password = req.getParameter("password");
 		String identifier = req.getParameter("identifier");
 
 		boolean isEmailRequired = Boolean.TRUE.toString().equalsIgnoreCase(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_USER_CREATION_FORCE_EMAIL));
@@ -285,7 +288,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 		if (isEmailRequired) {
 			userInfo.setProperty(UserConstants2.BLOCKED, "true");
-			userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION, getUniqueEmailConfirmationId());
+			userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION_ID, getUniqueEmailConfirmationId());
 		}
 
 		try {
@@ -394,18 +397,20 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (userInfo == null) {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userId + " could not be found.", null));
 		}
-		String emailConfirmationid = userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION);
+		String emailConfirmationid = userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID);
 
 		//users other than admin have to know the old password to set a new one
 		if (!isAdmin(req.getRemoteUser())) {
-			if (data.has(UserConstants2.PASSWORD) && userInfo.getProperty(UserConstants2.PASSWORD) != null && (!data.has(UserConstants.KEY_OLD_PASSWORD) || !userInfo.getProperty(UserConstants2.PASSWORD).equals(data.getString(UserConstants.KEY_OLD_PASSWORD)))) {
+			// TODO: Bug 444864 should be "Password"
+			if (data.has("password") && userInfo.getProperty(UserConstants2.PASSWORD) != null && (!data.has(UserConstants.KEY_OLD_PASSWORD) || !userInfo.getProperty(UserConstants2.PASSWORD).equals(data.getString(UserConstants.KEY_OLD_PASSWORD)))) {
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Invalid old password", null));
 			}
 		}
 
 		String newPassword = null;
-		if (data.has(UserConstants2.PASSWORD)) {
-			newPassword = data.getString(UserConstants2.PASSWORD);
+		// TODO: Bug 444864 should be "Password"
+		if (data.has("password")) {
+			newPassword = data.getString("password");
 		}
 		String passwordMsg = validatePassword(newPassword);
 		if (data.has(UserConstants.KEY_OLD_PASSWORD) && passwordMsg != null) {
@@ -418,11 +423,13 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (data.has(UserConstants2.FULL_NAME)) {
 			userInfo.setFullName(data.getString(UserConstants2.FULL_NAME));
 		}
-		if (data.has(UserConstants2.PASSWORD)) {
-			userInfo.setProperty(UserConstants2.PASSWORD, data.getString(UserConstants2.PASSWORD));
+		// TODO: Bug 444864 should be "Password"
+		if (data.has("password")) {
+			userInfo.setProperty(UserConstants2.PASSWORD, data.getString("password"));
 		}
-		if (data.has(UserConstants2.EMAIL)) {
-			userInfo.setProperty(UserConstants2.EMAIL, data.getString(UserConstants2.EMAIL));
+		// TODO: Bug 444864 should be "Email"
+		if (data.has("email")) {
+			userInfo.setProperty(UserConstants2.EMAIL, data.getString("email"));
 		}
 
 		if (data.has(UserConstants.KEY_PROPERTIES)) {
@@ -441,7 +448,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
 		}
 
-		if (userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION) != null && !userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION).equals(emailConfirmationid)) {
+		if (userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID) != null && !userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID).equals(emailConfirmationid)) {
 			try {
 				UserEmailUtil.getUtil().sendEmailConfirmation(req, userInfo);
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been sent to " + userInfo.getProperty(UserConstants2.EMAIL), null));
@@ -518,17 +525,20 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		json.put(UserConstants2.FULL_NAME, userInfo.getFullName());
 		json.put(UserConstants.KEY_LOGIN, userInfo.getUserName());
 		String email = userInfo.getProperty(UserConstants2.EMAIL);
-		json.put(UserConstants2.EMAIL, email);
-		boolean emailConfirmed = (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION) == null : false;
+		// TODO: Bug 444864 should be "Email"
+		json.put("email", email);
+		boolean emailConfirmed = (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID) == null : false;
 		json.put(UserConstants.KEY_EMAIL_CONFIRMED, emailConfirmed);
 		json.put(UserConstants.KEY_HAS_PASSWORD, userInfo.getProperty(UserConstants2.PASSWORD) == null ? false : true);
 
 		JSONObject properties = new JSONObject();
 		if (userInfo.getProperty(UserConstants2.OAUTH) != null) {
-			properties.put(UserConstants2.OAUTH, userInfo.getProperty(UserConstants2.OAUTH));
+			// TODO: Bug 444864 should be "OAuth"
+			properties.put("oauth", userInfo.getProperty(UserConstants2.OAUTH));
 		}
 		if (userInfo.getProperty(UserConstants2.OPENID) != null) {
-			properties.put(UserConstants2.OPENID, userInfo.getProperty(UserConstants2.OPENID));
+			// TODO: Bug 444864 should be "OpenId"
+			properties.put("openid", userInfo.getProperty(UserConstants2.OPENID));
 		}
 		json.put(UserConstants.KEY_PROPERTIES, properties);
 

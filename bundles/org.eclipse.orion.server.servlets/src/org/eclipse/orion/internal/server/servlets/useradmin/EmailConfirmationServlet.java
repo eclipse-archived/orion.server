@@ -109,19 +109,19 @@ public class EmailConfirmationServlet extends OrionServlet {
 	}
 
 	private void confirmEmail(UserInfo userInfo, HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		if (userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION) == null) {
+		if (userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID) == null) {
 			resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
 			resp.getWriter().write("<html><body><p>Your email address has already been confirmed. Thank you!</p></body></html>");
 			return;
 		}
 
-		if (req.getParameter(UserConstants.KEY_CONFIRMATION_ID) == null || !req.getParameter(UserConstants.KEY_CONFIRMATION_ID).equals(userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION))) {
+		if (req.getParameter(UserConstants.KEY_CONFIRMATION_ID) == null || !req.getParameter(UserConstants.KEY_CONFIRMATION_ID).equals(userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID))) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Email could not be confirmed.");
 			return;
 		}
 
 		try {
-			userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION, null);
+			userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION_ID, null);
 			userInfo.setProperty(UserConstants2.BLOCKED, null);
 			OrionConfiguration.getMetaStore().updateUser(userInfo);
 		} catch (CoreException e) {
@@ -273,7 +273,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 
 	public boolean isEmailConfirmed(UserInfo userInfo) {
 		String email = userInfo.getProperty(UserConstants2.EMAIL);
-		return (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION) == null : false;
+		return (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID) == null : false;
 	}
 
 	private static String getUniqueEmailConfirmationId() {

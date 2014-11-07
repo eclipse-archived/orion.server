@@ -61,7 +61,8 @@ public class FormAuthHelper {
 	public static LoginResult performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
 		String login = req.getParameter(UserConstants.KEY_LOGIN);
-		UserInfo userInfo = getUserForCredentials(login, req.getParameter(UserConstants2.PASSWORD));
+		// TODO: Bug 444864 should be "Password"
+		UserInfo userInfo = getUserForCredentials(login, req.getParameter("password"));
 
 		if (userInfo != null) {
 			if (userInfo.getProperties().containsKey(UserConstants2.BLOCKED)) {
