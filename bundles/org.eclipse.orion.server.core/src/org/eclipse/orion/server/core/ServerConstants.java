@@ -55,6 +55,13 @@ public class ServerConstants {
 	public static final String CONFIG_AUTH_USER_CREATION = "orion.auth.user.creation"; //$NON-NLS-1$
 
 	/**
+	 * The name of a configuration property specifying a comma-separated list of users
+	 * that are allowed to access the logs service. If unspecified, then no users can
+	 * access the logs service.
+	 */
+	public static final String CONFIG_AUTH_LOG_SERVICE = "orion.auth.log.service"; //$NON-NLS-1$
+
+	/**
 	 * The name of a configuration property specifying is user email is mandatory while user creation.
 	 * If <code>true</code> user will be forced to add email while creating account. Account will be blocked
 	 * until user email is confirmed.
