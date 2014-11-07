@@ -164,7 +164,8 @@ public class EmailConfirmationServlet extends OrionServlet {
 		String userLogin;
 		try {
 			JSONObject data = OrionServlet.readJSONRequest(req);
-			userEmail = data.getString(UserConstants2.EMAIL);
+			// TODO: Bug 444864 should be "Email"
+			userEmail = data.getString("email");
 			userLogin = data.getString(UserConstants.KEY_LOGIN);
 		} catch (JSONException e) {
 			getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not parse json request", e));
