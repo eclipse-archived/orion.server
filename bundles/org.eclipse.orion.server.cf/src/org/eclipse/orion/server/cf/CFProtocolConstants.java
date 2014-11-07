@@ -60,6 +60,8 @@ public class CFProtocolConstants {
 
 	public static final String KEY_FORCE = "Force"; //$NON-NLS-1$
 
+	public static final String KEY_STRICT = "Strict"; //$NON-NLS-1$
+
 	public static final String KEY_HOST = "Host"; //$NON-NLS-1$
 
 	public static final String KEY_DOMAIN_NAME = "DomainName"; //$NON-NLS-1$
