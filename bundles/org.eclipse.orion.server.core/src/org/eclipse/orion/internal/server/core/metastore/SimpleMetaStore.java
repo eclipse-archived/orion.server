@@ -110,8 +110,9 @@ public class SimpleMetaStore implements IMetaStore {
 	/**
 	 * Create an instance of a SimpleMetaStore under the provided folder.
 	 * @param rootLocation The root location for storing content and metadata on this server.
+	 * @throws CoreException
 	 */
-	public SimpleMetaStore(File rootLocation) {
+	public SimpleMetaStore(File rootLocation) throws CoreException {
 		super();
 		this.rootLocation = rootLocation;
 		initializeMetaStore(rootLocation);
@@ -461,8 +462,9 @@ public class SimpleMetaStore implements IMetaStore {
 	/**
 	 * Initialize the simple meta store.
 	 * @param rootLocation The root location, a folder on the server.
+	 * @throws CoreException
 	 */
-	protected void initializeMetaStore(File rootLocation) {
+	protected void initializeMetaStore(File rootLocation) throws CoreException {
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 		if (!SimpleMetaStoreUtil.isMetaFile(rootLocation, SimpleMetaStore.ROOT)) {
 			// the root metastore.json file does not exist, create a new root metastore.json file
@@ -484,7 +486,8 @@ public class SimpleMetaStore implements IMetaStore {
 			// Verify we have a valid MetaStore with the right version
 			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(rootLocation, SimpleMetaStore.ROOT);
 			try {
-				if (jsonObject == null || jsonObject.getInt(SimpleMetaStore.ORION_VERSION) != VERSION) {
+				int version = jsonObject.getInt(SimpleMetaStore.ORION_VERSION);
+				if (version < VERSION) {
 					// the root metastore.json file is an older version, update the root metastore.json file
 					jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
 					jsonObject.put(SimpleMetaStore.ORION_DESCRIPTION, DESCRIPTION);
@@ -494,6 +497,9 @@ public class SimpleMetaStore implements IMetaStore {
 					if (logger.isDebugEnabled()) {
 						logger.debug("Updated simple metadata store to a new version (version " + VERSION + ")."); //$NON-NLS-1$
 					}
+				} else if (version > VERSION) {
+					// we are running an old server on metadata that is at a newer version
+					throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.initializeMetaStore: cannot run an old server (version " + SimpleMetaStore.VERSION + ") on metadata that is at a newer version (version " + version + ")", null));
 				}
 			} catch (JSONException e) {
 				logger.error("SimpleMetaStore.initializeMetaStore: JSON error.", e);

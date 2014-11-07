@@ -14,6 +14,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.MetadataInfo;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -93,14 +97,18 @@ public class SimpleMetaStoreMigration {
 	 * @param jsonObject the Orion metadata in JSON format.
 	 * @return true if migration is required.
 	 * @throws JSONException
+	 * @throws CoreException
 	 */
-	public boolean isMigrationRequired(JSONObject jsonObject) throws JSONException {
+	public boolean isMigrationRequired(JSONObject jsonObject) throws JSONException, CoreException {
 		if (!jsonObject.has(SimpleMetaStore.ORION_VERSION)) {
 			return true;
 		}
 		int version = jsonObject.getInt(SimpleMetaStore.ORION_VERSION);
-		if (version != SimpleMetaStore.VERSION) {
+		if (version < SimpleMetaStore.VERSION) {
 			return true;
+		} else if (version > SimpleMetaStore.VERSION) {
+			// we are running an old server on metadata that is at a newer version
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStoreMigration.isMigrationRequired: cannot run an old server (version " + SimpleMetaStore.VERSION + ") on metadata that is at a newer version (version " + version + ")", null));
 		}
 		return false;
 	}
