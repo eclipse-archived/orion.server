@@ -22,32 +22,27 @@ public class UserConstants2 {
 	/**
 	 * JSON representation key for a blocked property that blocks user login. The value's data type is a boolean String.
 	 */
-	// TODO: Bug 444864 should be upper case Blocked
-	public static final String BLOCKED = "blocked";
+	public static final String BLOCKED = "Blocked"; //$NON-NLS-1$
 
 	/**
 	 * JSON representation key for a user's disk usage. The value's data type is a String.
 	 */
-	// TODO: Bug 444864 should be upper case DiskUsage
-	public static final String DISK_USAGE = "diskusage";
+	public static final String DISK_USAGE = "DiskUsage"; //$NON-NLS-1$
 
 	/**
 	 * JSON representation key for a user's disk usage timestamp. The value's data type is a String.
 	 */
-	// TODO: Bug 444864 should be upper case DiskUsageTimestamp
-	public static final String DISK_USAGE_TIMESTAMP = "diskusagetimestamp";
+	public static final String DISK_USAGE_TIMESTAMP = "DiskUsageTimestamp"; //$NON-NLS-1$
 
 	/**
 	 * JSON representation key for a user's email address. The value's data type is a String.
 	 */
-	// TODO: Bug 444864 should be upper case Email
-	public static final String EMAIL = "email"; //$NON-NLS-1$
+	public static final String EMAIL = "Email"; //$NON-NLS-1$
 
 	/**
 	 * JSON representation key for a user's email address confirmation. The value's data type is a String.
 	 */
-	// TODO: Bug 444864 should be upper case EmailConfirmation
-	public static final String EMAIL_CONFIRMATION = "email_confirmation"; //$NON-NLS-1$
+	public static final String EMAIL_CONFIRMATION_ID = "EmailConfirmationId"; //$NON-NLS-1$
 	
 	/**
 	 * JSON representation key for a user's full name. The value's data type is a String.
@@ -57,32 +52,27 @@ public class UserConstants2 {
 	/**
 	 * JSON representation key for a user's last login timestamp. The value's data type is a String.
 	 */
-	// TODO: Bug 444864 should be upper case LastLoginTimestamp
-	public static final String LAST_LOGIN_TIMESTAMP = "lastlogintimestamp";
+	public static final String LAST_LOGIN_TIMESTAMP = "LastLoginTimestamp";
 
 	/**
 	 * JSON representation key for a user's OAuth 2.0 Id. The value's data type is a String.
 	 */
-	// TODO: Bug 444864 should be upper case OAuth
-	public static final String OAUTH = "oauth"; //$NON-NLS-1$
+	public static final String OAUTH = "OAuth"; //$NON-NLS-1$
 
 	/**
 	 * JSON representation key for a user's openid. The value's data type is a String.
 	 */
-	// TODO: Bug 444864 should be upper case OpenId
-	public static final String OPENID = "openid"; //$NON-NLS-1$
+	public static final String OPENID = "OpenId"; //$NON-NLS-1$
 
 	/**
 	 * JSON representation key for a user's password. The value's data type is a String.
 	 */
-	// TODO: Bug 444864 should be upper case Password
-	public static final String PASSWORD = "password"; //$NON-NLS-1$
+	public static final String PASSWORD = "Password"; //$NON-NLS-1$
 
 	/**
 	 * JSON representation key for a user's password reset id. The value's data type is a String.
 	 */
-	// TODO: Bug 444864 should be upper case PasswordResetId
-	public static final String PASSWORD_RESET_ID = "passwordResetId"; //$NON-NLS-1$
+	public static final String PASSWORD_RESET_ID = "PasswordResetId"; //$NON-NLS-1$
 	
 	/**
 	 * JSON representation key for a user's name, the login or short account name. The value's data type is a String.

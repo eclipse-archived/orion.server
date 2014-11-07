@@ -19,6 +19,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.MetadataInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,14 +35,24 @@ import org.slf4j.LoggerFactory;
 public class SimpleMetaStoreMigration {
 
 	/**
+	 * Remove old password reset ids that are more than a week old
+	 */
+	private static final long OLD_PASSWORD_RESET_ID_THRESHOLD = 1000L * 60L * 60L * 24L * 7L;//seven days
+
+	/**
 	 * The first version of the Simple Meta Store was version 4 introduced for Orion 4.0.
 	 */
 	public final static int VERSION4 = 4;
 
 	/**
-	 * The second version of the Simple Meta Store was version 6 introduced for Orion 4.0.
+	 * The second version of the Simple Meta Store was version 6 introduced for Orion 6.0.
 	 */
 	public final static int VERSION6 = 6;
+
+	/**
+	 * The third version of the Simple Meta Store was version 7 introduced for Orion 7.0.
+	 */
+	public final static int VERSION7 = 7;
 
 	private Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 
@@ -64,12 +75,14 @@ public class SimpleMetaStoreMigration {
 				if (next.equals(userMetaFile)) {
 					// skip the user.json
 					continue;
-				} else if (oldVersion == VERSION6 && next.getName().endsWith(SimpleMetaStoreUtil.METAFILE_EXTENSION)) {
+				} else if ((oldVersion == VERSION6 || oldVersion == VERSION7) && next.getName().endsWith(SimpleMetaStoreUtil.METAFILE_EXTENSION)) {
 					// process a {workspaceId}.json or {projectName}.json
 					File parent = next.getParentFile();
 					String name = next.getName().substring(0, next.getName().length() - SimpleMetaStoreUtil.METAFILE_EXTENSION.length());
 					updateOrionVersion(parent, name);
-					updateProjectContentLocation(parent, name);
+					if (oldVersion == VERSION6) {
+						updateProjectContentLocation(parent, name);
+					}
 				} else {
 					// User folder contains invalid metadata: orphan file
 					SimpleMetaStoreUtil.archive(rootLocation, next);
@@ -88,6 +101,7 @@ public class SimpleMetaStoreMigration {
 		if ((oldVersion == VERSION4 || oldVersion == VERSION6) && directoryCount > 1) {
 			mergeMultipleWorkspaces(directoryCount, userMetaFolder);
 		}
+		updateOrionProperties(userMetaFolder);
 		updateOrionVersion(userMetaFolder, SimpleMetaStore.USER);
 		logger.info("Migration: Finished migrating user " + userId);
 	}
@@ -225,10 +239,102 @@ public class SimpleMetaStoreMigration {
 	}
 
 	/**
+	 * Update the Orion properties in user.json file in the provided folder.
+	 * @param parent The parent folder containing the metadata (user.json) file.
+	 * @throws JSONException 
+	 */
+	private void updateOrionProperties(File parent) throws JSONException {
+		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(parent, SimpleMetaStore.USER);
+		JSONObject properties = jsonObject.getJSONObject("Properties");
+		if (jsonObject.has("profileProperties")) {
+			JSONObject profileProperties = jsonObject.getJSONObject("profileProperties");
+			if (profileProperties.has("openid")) {
+				String openid = profileProperties.getString("openid");
+				// if openid is empty then remove
+				if (!openid.replaceAll("\n", "").equals("")) {
+					properties.put(UserConstants2.OPENID, openid);
+				}
+				profileProperties.remove("openid");
+			}
+			if (profileProperties.has("oauth")) {
+				String oauth = profileProperties.getString("oauth");
+				properties.put(UserConstants2.OAUTH, oauth);
+				profileProperties.remove("oauth");
+			}
+			if (profileProperties.has("passwordResetId")) {
+				String passwordResetId = profileProperties.getString("passwordResetId");
+				try {
+					String timestampStr = passwordResetId.substring(0, passwordResetId.indexOf('-'));
+					long lastLogin = Long.parseLong(timestampStr);
+					boolean isRecent = (System.currentTimeMillis() - lastLogin < OLD_PASSWORD_RESET_ID_THRESHOLD);
+					if (isRecent) {
+						// only add recently created password reset requests
+						properties.put(UserConstants2.PASSWORD_RESET_ID, passwordResetId);
+					}
+				} catch (Exception e) {
+					// just ignore the password reset id then
+				}
+				profileProperties.remove("passwordResetId");
+			}
+			if (profileProperties.length() == 0) {
+				jsonObject.remove("profileProperties");
+			}
+		}
+		if (jsonObject.has("email")) {
+			String email = jsonObject.getString("email");
+			properties.put(UserConstants2.EMAIL, email);
+			jsonObject.remove("email");
+		}
+		if (jsonObject.has("blocked")) {
+			String blocked = jsonObject.getString("blocked");
+			properties.put(UserConstants2.BLOCKED, blocked);
+			jsonObject.remove("blocked");
+		}
+		if (jsonObject.has("email_confirmation")) {
+			String email_confirmation = jsonObject.getString("email_confirmation");
+			properties.put(UserConstants2.EMAIL_CONFIRMATION_ID, email_confirmation);
+			jsonObject.remove("email_confirmation");
+		}
+		if (jsonObject.has("diskusage")) {
+			String diskusage = jsonObject.getString("diskusage");
+			properties.put(UserConstants2.DISK_USAGE, diskusage);
+			jsonObject.remove("diskusage");
+		}
+		if (jsonObject.has("diskusagetimestamp")) {
+			String diskusagetimestamp = jsonObject.getString("diskusagetimestamp");
+			properties.put(UserConstants2.DISK_USAGE_TIMESTAMP, diskusagetimestamp);
+			jsonObject.remove("diskusagetimestamp");
+		}
+		if (jsonObject.has("lastlogintimestamp")) {
+			String lastlogintimestamp = jsonObject.getString("lastlogintimestamp");
+			properties.put(UserConstants2.LAST_LOGIN_TIMESTAMP, lastlogintimestamp);
+			jsonObject.remove("lastlogintimestamp");
+		}
+		if (jsonObject.has("password")) {
+			String password = jsonObject.getString("password");
+			properties.put(UserConstants2.PASSWORD, password);
+			jsonObject.remove("password");
+		}
+		if (jsonObject.has("GitName") && jsonObject.has("GitMail") && !properties.has("git/config/userInfo")) {
+			String gitName = jsonObject.getString("GitName");
+			String gitMail = jsonObject.getString("GitMail");
+			properties.put("git/config/userInfo", "{\"GitName\":\"" + gitName + "\",\"GitMail\":\"" + gitMail + "\"}");
+		}
+		if (jsonObject.has("GitName")) {
+			jsonObject.remove("GitName");
+		}
+		if (jsonObject.has("GitMail")) {
+			jsonObject.remove("GitMail");
+		}
+		SimpleMetaStoreUtil.updateMetaFile(parent, SimpleMetaStore.USER, jsonObject);
+		File metaFile = SimpleMetaStoreUtil.retrieveMetaFile(parent, SimpleMetaStore.USER);
+		logger.info("Migration: Updated Orion properties to version " + SimpleMetaStore.VERSION + " in metadata file: " + metaFile.toString());
+	}
+
+	/**
 	 * Update the Orion version in the provided file and folder.
 	 * @param parent The parent folder containing the metadata (JSON) file.
 	 * @param name The name of the file without the ".json" extension.
-	 * @return The previous version that was in the metadata file.
 	 * @throws JSONException 
 	 */
 	private void updateOrionVersion(File parent, String name) throws JSONException {

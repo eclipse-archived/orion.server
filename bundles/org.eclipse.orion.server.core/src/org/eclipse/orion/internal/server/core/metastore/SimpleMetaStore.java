@@ -85,7 +85,7 @@ public class SimpleMetaStore implements IMetaStore {
 	/**
 	 * The current version of the Simple Meta Store.
 	 */
-	public final static int VERSION = 7;
+	public final static int VERSION = 8;
 
 	/**
 	 * The root of the workspace folder has the workspace.json metadata file. (only for OrionVersion 4).
@@ -439,6 +439,10 @@ public class SimpleMetaStore implements IMetaStore {
 				// UserRights needs to be handled specifically since it is a JSONObject and not a string.
 				JSONObject siteConfigurations = new JSONObject(value);
 				jsonObject.put("SiteConfigurations", siteConfigurations);
+			} else if (UserConstants2.PASSWORD.equals(key)) {
+				// password needs to be handled specifically since it needs to be decrypted.
+				String password = SimpleUserPasswordUtil.encryptPassword(value);
+				jsonObject.put(key, password);
 			} else {
 				jsonObject.put(key, value);
 			}
@@ -612,9 +616,6 @@ public class SimpleMetaStore implements IMetaStore {
 					}
 					userInfo.setUniqueId(jsonObject.getString(MetadataInfo.UNIQUE_ID));
 					userInfo.setUserName(jsonObject.getString(UserConstants2.USER_NAME));
-					if (jsonObject.has(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
-						userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, jsonObject.getString(UserConstants2.LAST_LOGIN_TIMESTAMP));
-					}
 					if (jsonObject.isNull(UserConstants2.FULL_NAME)) {
 						userInfo.setFullName("Unnamed User");
 					} else {
@@ -634,67 +635,6 @@ public class SimpleMetaStore implements IMetaStore {
 						logger.warn("SimpleMetaStore.readUser: user id " + userInfo.getUniqueId() + " has a multiple workspace conflict: workspace: " + userInfo.getWorkspaceIds().get(0) + " and workspace: " + userInfo.getWorkspaceIds().get(1));
 					}
 					setProperties(userInfo, jsonObject.getJSONObject("Properties"));
-					if (jsonObject.has("profileProperties")) {
-						JSONObject profileProperties = jsonObject.getJSONObject("profileProperties");
-						if (profileProperties.has(UserConstants2.OPENID)) {
-							String value = profileProperties.get(UserConstants2.OPENID).toString();
-							userInfo.setProperty(UserConstants2.OPENID, value);
-							if (userPropertyCache.isRegistered(UserConstants2.OPENID)) {
-								userPropertyCache.add(UserConstants2.OPENID, value, userInfo.getUniqueId());
-							}
-						}
-						if (profileProperties.has(UserConstants2.OAUTH)) {
-							String value = profileProperties.get(UserConstants2.OAUTH).toString();
-							userInfo.setProperty(UserConstants2.OAUTH, value);
-							if (userPropertyCache.isRegistered(UserConstants2.OAUTH)) {
-								userPropertyCache.add(UserConstants2.OAUTH, value, userInfo.getUniqueId());
-							}
-						}
-						if (profileProperties.has(UserConstants2.PASSWORD_RESET_ID)) {
-							// TODO: these top level keys need to change to properties
-							String passwordResetId = profileProperties.getString(UserConstants2.PASSWORD_RESET_ID);
-							userInfo.setProperty(UserConstants2.PASSWORD_RESET_ID, passwordResetId);
-						}
-					}
-					if (jsonObject.has(UserConstants2.EMAIL)) {
-						// TODO: these top level keys need to change to properties
-						String email = jsonObject.getString(UserConstants2.EMAIL);
-						userInfo.setProperty(UserConstants2.EMAIL, email);
-						if (userPropertyCache.isRegistered(UserConstants2.EMAIL)) {
-							userPropertyCache.add(UserConstants2.EMAIL, email, userInfo.getUniqueId());
-						}
-					}
-					if (jsonObject.has(UserConstants2.BLOCKED)) {
-						// TODO: these top level keys need to change to properties
-						String blocked = jsonObject.getString(UserConstants2.BLOCKED);
-						userInfo.setProperty(UserConstants2.BLOCKED, blocked);
-					}
-					if (jsonObject.has(UserConstants2.EMAIL_CONFIRMATION)) {
-						// TODO: these top level keys need to change to properties
-						String email_confirmation = jsonObject.getString(UserConstants2.EMAIL_CONFIRMATION);
-						userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION, email_confirmation);
-					}
-					if (jsonObject.has(UserConstants2.DISK_USAGE)) {
-						// TODO: these top level keys need to change to properties
-						String diskusage = jsonObject.getString(UserConstants2.DISK_USAGE);
-						userInfo.setProperty(UserConstants2.DISK_USAGE, diskusage);
-					}
-					if (jsonObject.has(UserConstants2.DISK_USAGE_TIMESTAMP)) {
-						// TODO: these top level keys need to change to properties
-						String diskusagetimestamp = jsonObject.getString(UserConstants2.DISK_USAGE_TIMESTAMP);
-						userInfo.setProperty(UserConstants2.DISK_USAGE_TIMESTAMP, diskusagetimestamp);
-					}
-					if (jsonObject.has(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
-						// TODO: these top level keys need to change to properties
-						String lastlogintimestamp = jsonObject.getString(UserConstants2.LAST_LOGIN_TIMESTAMP);
-						userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, lastlogintimestamp);
-					}
-					if (jsonObject.has(UserConstants2.PASSWORD)) {
-						// TODO: these top level keys need to change to properties
-						String encryptedPassword = jsonObject.getString(UserConstants2.PASSWORD);
-						String password = SimpleUserPasswordUtil.decryptPassword(encryptedPassword);
-						userInfo.setProperty(UserConstants2.PASSWORD, password);
-					}
 					userInfo.flush();
 				} catch (JSONException e) {
 					throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.readUser: could not read user " + userId, e));
@@ -781,7 +721,14 @@ public class SimpleMetaStore implements IMetaStore {
 		if (properties != null) {
 			for (String key : properties) {
 				String value = jsonObject.get(key).toString();
-				metadataInfo.setProperty(key, value);
+				if (key.equals(UserConstants2.PASSWORD)) {
+					// password needs to be handled specifically since it needs to be decrypted.
+					String encryptedPassword = value;
+					String password = SimpleUserPasswordUtil.decryptPassword(encryptedPassword);
+					metadataInfo.setProperty(key, password);
+				} else {
+					metadataInfo.setProperty(key, value);
+				}
 				if (metadataInfo instanceof UserInfo && userPropertyCache.isRegistered(key)) {
 					cachedProperties.put(key, value);
 				}
@@ -902,81 +849,8 @@ public class SimpleMetaStore implements IMetaStore {
 				if (MetadataInfo.OperationType.DELETE.equals(operation)) {
 					// delete the property
 					if (properties.has(key)) {
+						String value = properties.getString(key);
 						properties.remove(key);
-					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || UserConstants2.EMAIL.equals(key) || UserConstants2.BLOCKED.equals(key) ||UserConstants2.EMAIL_CONFIRMATION.equals(key) || UserConstants2.PASSWORD_RESET_ID.equals(key) || UserConstants2.DISK_USAGE.equals(key) || UserConstants2.DISK_USAGE_TIMESTAMP.equals(key) || UserConstants2.LAST_LOGIN_TIMESTAMP.equals(key) || UserConstants2.PASSWORD.equals(key)) {
-						// TODO: these top level keys need to change to properties
-						String value = null;
-						if (UserConstants2.OPENID.equals(key)) {
-							JSONObject profileProperties = jsonObject.getJSONObject("profileProperties");
-							if (profileProperties.has(UserConstants2.OPENID)) {
-								value = profileProperties.getString(UserConstants2.OPENID);
-								profileProperties.remove(UserConstants2.OPENID);
-							}
-							if (profileProperties.length() == 0) {
-								jsonObject.remove("profileProperties");
-							}
-						} else if (UserConstants2.OAUTH.equals(key)) {
-							JSONObject profileProperties = jsonObject.getJSONObject("profileProperties");
-							if (profileProperties.has(UserConstants2.OAUTH)) {
-								value = profileProperties.getString(UserConstants2.OAUTH);
-								profileProperties.remove(UserConstants2.OAUTH);
-							}
-							if (profileProperties.length() == 0) {
-								jsonObject.remove("profileProperties");
-							}
-						} else if (UserConstants2.EMAIL.equals(key)) {
-							// TODO: these top level keys need to change to properties
-							if (jsonObject.has(UserConstants2.EMAIL)) {
-								value = jsonObject.getString(UserConstants2.EMAIL);
-								jsonObject.remove(UserConstants2.EMAIL);
-							}
-						} else if (UserConstants2.BLOCKED.equals(key)) {
-							// TODO: these top level keys need to change to properties
-							if (jsonObject.has(UserConstants2.BLOCKED)) {
-								value = jsonObject.getString(UserConstants2.BLOCKED);
-								jsonObject.remove(UserConstants2.BLOCKED);
-							}
-						} else if (UserConstants2.EMAIL_CONFIRMATION.equals(key)) {
-							// TODO: these top level keys need to change to properties
-							if (jsonObject.has(UserConstants2.EMAIL_CONFIRMATION)) {
-								value = jsonObject.getString(UserConstants2.EMAIL_CONFIRMATION);
-								jsonObject.remove(UserConstants2.EMAIL_CONFIRMATION);
-							}
-						} else if (UserConstants2.LAST_LOGIN_TIMESTAMP.equals(key)) {
-							// TODO: these top level keys need to change to properties
-							if (jsonObject.has(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
-								value = jsonObject.getString(UserConstants2.LAST_LOGIN_TIMESTAMP);
-								jsonObject.remove(UserConstants2.LAST_LOGIN_TIMESTAMP);
-							}
-						} else if (UserConstants2.DISK_USAGE_TIMESTAMP.equals(key)) {
-							// TODO: these top level keys need to change to properties
-							if (jsonObject.has(UserConstants2.DISK_USAGE_TIMESTAMP)) {
-								value = jsonObject.getString(UserConstants2.DISK_USAGE_TIMESTAMP);
-								jsonObject.remove(UserConstants2.DISK_USAGE_TIMESTAMP);
-							}
-						} else if (UserConstants2.DISK_USAGE.equals(key)) {
-							// TODO: these top level keys need to change to properties
-							if (jsonObject.has(UserConstants2.DISK_USAGE)) {
-								value = jsonObject.getString(UserConstants2.DISK_USAGE);
-								jsonObject.remove(UserConstants2.DISK_USAGE);
-							}
-						} else if (UserConstants2.PASSWORD_RESET_ID.equals(key)) {
-							// TODO: these top level keys need to change to properties
-							JSONObject profileProperties = jsonObject.getJSONObject("profileProperties");
-							if (profileProperties.has(UserConstants2.PASSWORD_RESET_ID)) {
-								value = profileProperties.getString(UserConstants2.PASSWORD_RESET_ID);
-								profileProperties.remove(UserConstants2.PASSWORD_RESET_ID);
-							}
-							if (profileProperties.length() == 0) {
-								jsonObject.remove("profileProperties");
-							}
-						} else if (UserConstants2.PASSWORD.equals(key)) {
-							// TODO: these top level keys need to change to properties
-							if (jsonObject.has(UserConstants2.PASSWORD)) {
-								value = jsonObject.getString(UserConstants2.PASSWORD);
-								jsonObject.remove(UserConstants2.PASSWORD);
-							}
-						}
 						// update the user cache
 						if (metadataInfo instanceof UserInfo && userPropertyCache.isRegistered(key)) {
 							userPropertyCache.delete(key, value, metadataInfo.getUniqueId());
@@ -993,55 +867,15 @@ public class SimpleMetaStore implements IMetaStore {
 						// UserRights needs to be handled specifically since it is a JSONObject and not a string.
 						JSONObject siteConfigurations = new JSONObject(value);
 						properties.put("SiteConfigurations", siteConfigurations);
-					} else if (UserConstants2.OPENID.equals(key) || UserConstants2.OAUTH.equals(key) || UserConstants2.PASSWORD_RESET_ID.equals(key)) {
-						// openid needs to be handled specifically since it is within a profileProperties JSONObject.
-						JSONObject profileProperties;
-						if (jsonObject.has("profileProperties")) {
-							profileProperties = jsonObject.getJSONObject("profileProperties");
-						} else {
-							profileProperties = new JSONObject();
-						}
-						profileProperties.put(key, value);
-						jsonObject.put("profileProperties", profileProperties);
-						// update the user cache
-						if (metadataInfo instanceof UserInfo && userPropertyCache.isRegistered(key)) {
-							userPropertyCache.add(key, value, metadataInfo.getUniqueId());
-						}
-					} else if (UserConstants2.EMAIL.equals(key)) {
-						// TODO: these top level keys need to change to properties
-						// email needs to be handled specifically since it is at he root of the JSONObject.
-						jsonObject.put(UserConstants2.EMAIL, value);
-						// update the user cache
-						if (metadataInfo instanceof UserInfo && userPropertyCache.isRegistered(key)) {
-							userPropertyCache.add(key, value, metadataInfo.getUniqueId());
-						}
 					} else if (UserConstants2.PASSWORD.equals(key)) {
-						// TODO: these top level keys need to change to properties
-						// password needs to be handled specifically since it is at he root of the JSONObject.
+						// password needs to be handled specifically since it is encrypted.
 						String encryptedPassword = SimpleUserPasswordUtil.encryptPassword(value);
-						jsonObject.put(UserConstants2.PASSWORD, encryptedPassword);
-					} else if (UserConstants2.BLOCKED.equals(key)) {
-						// TODO: these top level keys need to change to properties
-						// blocked needs to be handled specifically since it is at he root of the JSONObject.
-						jsonObject.put(UserConstants2.BLOCKED, value);
-					} else if (UserConstants2.EMAIL_CONFIRMATION.equals(key)) {
-						// TODO: these top level keys need to change to properties
-						// email_confirmation needs to be handled specifically since it is at he root of the JSONObject.
-						jsonObject.put(UserConstants2.EMAIL_CONFIRMATION, value);
-					} else if (UserConstants2.DISK_USAGE.equals(key)) {
-						// TODO: these top level keys need to change to properties
-						// diskusage needs to be handled specifically since it is at he root of the JSONObject.
-						jsonObject.put(UserConstants2.DISK_USAGE, value);
-					} else if (UserConstants2.DISK_USAGE_TIMESTAMP.equals(key)) {
-						// TODO: these top level keys need to change to properties
-						// diskusagetimestamp needs to be handled specifically since it is at he root of the JSONObject.
-						jsonObject.put(UserConstants2.DISK_USAGE_TIMESTAMP, value);
-					} else if (UserConstants2.LAST_LOGIN_TIMESTAMP.equals(key)) {
-						// TODO: these top level keys need to change to properties
-						// lastlogintimestamp needs to be handled specifically since it is at he root of the JSONObject.
-						jsonObject.put(UserConstants2.LAST_LOGIN_TIMESTAMP, value);
+						properties.put(UserConstants2.PASSWORD, encryptedPassword);
 					} else {
 						properties.put(key, value);
+						if (metadataInfo instanceof UserInfo && userPropertyCache.isRegistered(key)) {
+							userPropertyCache.add(key, value, metadataInfo.getUniqueId());
+						}
 					}
 				}
 			}

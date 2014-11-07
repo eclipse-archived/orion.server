@@ -65,6 +65,9 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	 */
 	protected static final List<String> EMPTY_LIST = Collections.emptyList();
 
+	private final static String TIMESTAMP = new Long(System.currentTimeMillis()).toString();
+	private final static String CONFIRMATION_ID = System.currentTimeMillis() + "-" + Math.random();
+
 	@BeforeClass
 	public static void initializeRootFileStorePrefixLocation() {
 		initializeWorkspaceLocation();
@@ -161,8 +164,12 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		jsonObject.put(UserConstants2.USER_NAME, userId);
 		jsonObject.put(UserConstants2.FULL_NAME, userId);
 		String password = SimpleUserPasswordUtil.encryptPassword(userId);
-		jsonObject.put(UserConstants2.PASSWORD, password);
 		JSONObject properties = new JSONObject();
+		if (version == SimpleMetaStoreMigration.VERSION4 || version == SimpleMetaStoreMigration.VERSION6 || version == SimpleMetaStoreMigration.VERSION7) {
+			jsonObject.put("password", password);
+		} else {
+			properties.put(UserConstants2.PASSWORD, password);
+		}
 		properties.put("UserRightsVersion", "3");
 		JSONArray userRights = new JSONArray();
 		JSONObject userRight = new JSONObject();
@@ -198,20 +205,34 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		}
 		jsonObject.put("WorkspaceIds", workspaceIdsJson);
 		properties.put("UserRights", userRights);
-		jsonObject.put("Properties", properties);
-		if (version == SimpleMetaStoreMigration.VERSION4 || version == SimpleMetaStoreMigration.VERSION6 || version == SimpleMetaStore.VERSION) {
-			jsonObject.put(UserConstants2.BLOCKED, "true");
-			jsonObject.put(UserConstants2.DISK_USAGE, "74M");
-			jsonObject.put(UserConstants2.DISK_USAGE_TIMESTAMP, "1414613142309");
-			jsonObject.put(UserConstants2.EMAIL, userId + "@example.com");
-			jsonObject.put(UserConstants2.EMAIL_CONFIRMATION, "1382712950778-0.7170133049530362");
-			jsonObject.put(UserConstants2.LAST_LOGIN_TIMESTAMP, "1414089330754");
+		String email = userId + "@example.com";
+		if (version == SimpleMetaStoreMigration.VERSION4 || version == SimpleMetaStoreMigration.VERSION6 || version == SimpleMetaStoreMigration.VERSION7) {
+			jsonObject.put("blocked", "true");
+			jsonObject.put("diskusage", "74M");
+			jsonObject.put("diskusagetimestamp", TIMESTAMP);
+			jsonObject.put("email", email);
+			jsonObject.put("email_confirmation", CONFIRMATION_ID);
+			jsonObject.put("lastlogintimestamp", TIMESTAMP);
 			JSONObject profileProperties = new JSONObject();
-			profileProperties.put(UserConstants2.OAUTH, "https://api.github.com/users/ahunter-orion/4500523");
-			profileProperties.put(UserConstants2.OPENID, "https://www.google.com/accounts/o8/id?id=AItOawkTs8dYMgHG0tlvW8PE7RmNZwDlOWlWIU8");
-			profileProperties.put(UserConstants2.PASSWORD_RESET_ID, "1382712210708-0.6296026603269941");
+			profileProperties.put("oauth", "https://api.github.com/users/ahunter-orion/4500523");
+			profileProperties.put("openid", "https://www.google.com/accounts/o8/id?id=AItOawkTs8dYMgHG0tlvW8PE7RmNZwDlOWlWIU8");
+			profileProperties.put("passwordResetId", CONFIRMATION_ID);
 			jsonObject.put("profileProperties", profileProperties);
+			jsonObject.put("GitName", userId);
+			jsonObject.put("GitMail", email);
+		} else {
+			properties.put(UserConstants2.BLOCKED, "true");
+			properties.put(UserConstants2.DISK_USAGE, "74M");
+			properties.put(UserConstants2.DISK_USAGE_TIMESTAMP, TIMESTAMP);
+			properties.put(UserConstants2.EMAIL, email);
+			properties.put(UserConstants2.EMAIL_CONFIRMATION_ID, CONFIRMATION_ID);
+			properties.put(UserConstants2.LAST_LOGIN_TIMESTAMP, TIMESTAMP);
+			properties.put(UserConstants2.OAUTH, "https://api.github.com/users/ahunter-orion/4500523");
+			properties.put(UserConstants2.OPENID, "https://www.google.com/accounts/o8/id?id=AItOawkTs8dYMgHG0tlvW8PE7RmNZwDlOWlWIU8");
+			properties.put(UserConstants2.PASSWORD_RESET_ID, CONFIRMATION_ID);
+			properties.put("git/config/userInfo", "{\"GitName\":\"" + userId + "\",\"GitMail\":\"" + email + "\"}");
 		}
+		jsonObject.put("Properties", properties);
 		return jsonObject;
 	}
 
@@ -364,6 +385,15 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	@Test
 	public void testArchiveInvalidMetaDataFileVersionFour() throws Exception {
 		testArchiveInvalidMetaDataFile(SimpleMetaStoreMigration.VERSION4);
+	}
+
+	/**
+	 * Archive invalid metadata file test for SimpleMetaStore version 7 format.
+	 * @throws Exception
+	 */
+	@Test
+	public void testArchiveInvalidMetaDataFileVersionSeven() throws Exception {
+		testArchiveInvalidMetaDataFile(SimpleMetaStoreMigration.VERSION7);
 	}
 
 	/**
@@ -609,6 +639,63 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	}
 
 	/**
+	 * A user with Bug 433443 that has an orphan openid property
+	 * @throws Exception
+	 */
+	@Test
+	public void testUserWithBug433443() throws Exception {
+		// create metadata on disk
+		testUserId = testName.getMethodName();
+		JSONObject newUserJSON = createUserJson(SimpleMetaStoreMigration.VERSION7, testUserId, EMPTY_LIST);
+
+		// add the json for Bug 433433
+		JSONObject profileProperties = newUserJSON.getJSONObject("profileProperties");
+		profileProperties.put("openid", "\n\n");
+		createUserMetaData(newUserJSON, testUserId);
+
+		// since we modified files on disk directly, force user cache update by reading all users
+		OrionConfiguration.getMetaStore().readAllUsers();
+
+		// verify web requests
+		verifyWorkspaceRequest(EMPTY_LIST);
+
+		// verify metadata on disk
+		verifyUserMetaData(testUserId, EMPTY_LIST);
+	}
+
+	/**
+	 * A user with Bug 447759 that has an old passwordResetId property that needs to be removed
+	 * @throws Exception
+	 */
+	@Test
+	public void testUserWithBug447759() throws Exception {
+		// create metadata on disk
+		testUserId = testName.getMethodName();
+		JSONObject newUserJSON = createUserJson(SimpleMetaStoreMigration.VERSION7, testUserId, EMPTY_LIST);
+
+		// add the json for Bug 433433, reset id of from Nov 12 2012
+		JSONObject profileProperties = newUserJSON.getJSONObject("profileProperties");
+		profileProperties.put("passwordResetId", "1352742517746-0.02828520676443591");
+		createUserMetaData(newUserJSON, testUserId);
+
+		// since we modified files on disk directly, force user cache update by reading all users
+		OrionConfiguration.getMetaStore().readAllUsers();
+
+		// verify web requests
+		verifyWorkspaceRequest(EMPTY_LIST);
+
+		// verify metadata on disk
+		verifyUserMetaData(testUserId, EMPTY_LIST);
+
+		// verify the old reset id has been removed
+		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getWorkspaceRoot(), testUserId);
+		assertTrue(SimpleMetaStoreUtil.isMetaFile(userMetaFolder, SimpleMetaStore.USER));
+		JSONObject userJSON = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
+		assertFalse(userJSON.has("passwordResetId"));
+		assertFalse(userJSON.has(UserConstants2.EMAIL_CONFIRMATION_ID));
+	}
+
+	/**
 	 * A user with no workspaces.
 	 * @param version The SimpleMetaStore version 
 	 * @throws Exception
@@ -668,6 +755,15 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	}
 
 	/**
+	 * A user with no workspaces in SimpleMetaStore version 8 format.
+	 * @throws Exception
+	 */
+	@Test
+	public void testUserWithNoWorkspacesVersionEight() throws Exception {
+		testUserWithNoWorkspaces(SimpleMetaStore.VERSION);
+	}
+
+	/**
 	 * A user with no workspaces in SimpleMetaStore version 4 format.
 	 * @throws Exception
 	 */
@@ -682,7 +778,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	 */
 	@Test
 	public void testUserWithNoWorkspacesVersionSeven() throws Exception {
-		testUserWithNoWorkspaces(SimpleMetaStore.VERSION);
+		testUserWithNoWorkspaces(SimpleMetaStoreMigration.VERSION7);
 	}
 
 	/**
@@ -745,6 +841,15 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	}
 
 	/**
+	 * A user with one workspace and no projects in SimpleMetaStore version 8 format.
+	 * @throws Exception
+	 */
+	@Test
+	public void testUserWithOneWorkspaceNoProjectsVersionEight() throws Exception {
+		testUserWithOneWorkspaceNoProjects(SimpleMetaStore.VERSION);
+	}
+
+	/**
 	* A user with one workspace and no projects in SimpleMetaStore version 4 format.
 	* @throws Exception
 	*/
@@ -759,7 +864,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	 */
 	@Test
 	public void testUserWithOneWorkspaceNoProjectsVersionSeven() throws Exception {
-		testUserWithOneWorkspaceNoProjects(SimpleMetaStore.VERSION);
+		testUserWithOneWorkspaceNoProjects(SimpleMetaStoreMigration.VERSION7);
 	}
 
 	/**
@@ -843,6 +948,15 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	}
 
 	/**
+	 * A user with one workspace and one project in SimpleMetaStore version 8 format.
+	 * @throws Exception
+	 */
+	@Test
+	public void testUserWithOneWorkspaceOneProjectVersionEight() throws Exception {
+		testUserWithOneWorkspaceOneProject(SimpleMetaStore.VERSION, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+	}
+
+	/**
 	* A user with one workspace and one project in SimpleMetaStore version 4 format.
 	* @throws Exception
 	*/
@@ -857,7 +971,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	 */
 	@Test
 	public void testUserWithOneWorkspaceOneProjectVersionSeven() throws Exception {
-		testUserWithOneWorkspaceOneProject(SimpleMetaStore.VERSION, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		testUserWithOneWorkspaceOneProject(SimpleMetaStoreMigration.VERSION7, SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 	}
 
 	/**
@@ -916,6 +1030,15 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	}
 
 	/**
+	 * A user with one workspace and two projects in SimpleMetaStore version 8 format.
+	 * @throws Exception
+	 */
+	@Test
+	public void testUserWithOneWorkspaceTwoProjectsVersionEight() throws Exception {
+		testUserWithOneWorkspaceTwoProjects(SimpleMetaStore.VERSION);
+	}
+
+	/**
 	* A user with one workspace and two projects in SimpleMetaStore version 4 format.
 	* @throws Exception
 	*/
@@ -930,7 +1053,7 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 	 */
 	@Test
 	public void testUserWithOneWorkspaceTwoProjectsVersionSeven() throws Exception {
-		testUserWithOneWorkspaceTwoProjects(SimpleMetaStore.VERSION);
+		testUserWithOneWorkspaceTwoProjects(SimpleMetaStoreMigration.VERSION7);
 	}
 
 	/**
@@ -1174,42 +1297,47 @@ public class SimpleMetaStoreLiveMigrationTests extends FileSystemTest {
 		for (String workspaceId : workspaceIds) {
 			verifyValueExistsInJsonArray(workspaceIdsFromJson, workspaceId);
 		}
-		assertTrue(jsonObject.has(UserConstants2.PASSWORD));
 		assertTrue(jsonObject.has("Properties"));
 		JSONObject properties = jsonObject.getJSONObject("Properties");
 		assertTrue(properties.has("UserRightsVersion"));
 		assertTrue(properties.has("UserRights"));
+		assertTrue(properties.has(UserConstants2.PASSWORD));
 
-		if (jsonObject.has(UserConstants2.BLOCKED)) {
-			assertEquals(jsonObject.getString(UserConstants2.BLOCKED), "true");
+		String email = userId + "@example.com";
+
+		if (properties.has(UserConstants2.BLOCKED)) {
+			assertEquals(properties.getString(UserConstants2.BLOCKED), "true");
 		}
-		if (jsonObject.has(UserConstants2.DISK_USAGE)) {
-			assertEquals(jsonObject.getString(UserConstants2.DISK_USAGE), "74M");
+		if (properties.has(UserConstants2.DISK_USAGE)) {
+			assertEquals(properties.getString(UserConstants2.DISK_USAGE), "74M");
 		}
-		if (jsonObject.has(UserConstants2.DISK_USAGE_TIMESTAMP)) {
-			assertEquals(jsonObject.getString(UserConstants2.DISK_USAGE_TIMESTAMP), "1414613142309");
+		if (properties.has(UserConstants2.DISK_USAGE_TIMESTAMP)) {
+			assertEquals(properties.getString(UserConstants2.DISK_USAGE_TIMESTAMP), TIMESTAMP);
 		}
-		if (jsonObject.has(UserConstants2.EMAIL)) {
-			assertEquals(jsonObject.getString(UserConstants2.EMAIL), userId + "@example.com");
+		if (properties.has(UserConstants2.EMAIL)) {
+			assertEquals(properties.getString(UserConstants2.EMAIL), email);
 		}
-		if (jsonObject.has(UserConstants2.EMAIL_CONFIRMATION)) {
-			assertEquals(jsonObject.getString(UserConstants2.EMAIL_CONFIRMATION), "1382712950778-0.7170133049530362");
+		if (properties.has(UserConstants2.EMAIL_CONFIRMATION_ID)) {
+			assertEquals(properties.getString(UserConstants2.EMAIL_CONFIRMATION_ID), CONFIRMATION_ID);
 		}
-		if (jsonObject.has(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
-			assertEquals(jsonObject.getString(UserConstants2.LAST_LOGIN_TIMESTAMP), "1414089330754");
+		if (properties.has(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
+			assertEquals(properties.getString(UserConstants2.LAST_LOGIN_TIMESTAMP), TIMESTAMP);
 		}
-		if (jsonObject.has("profileProperties")) {
-			JSONObject profileProperties = jsonObject.getJSONObject("profileProperties");
-			if (profileProperties.has(UserConstants2.OAUTH)) {
-				assertEquals(profileProperties.getString(UserConstants2.OAUTH), "https://api.github.com/users/ahunter-orion/4500523");
-			}
-			if (profileProperties.has(UserConstants2.OPENID)) {
-				assertEquals(profileProperties.getString(UserConstants2.OPENID), "https://www.google.com/accounts/o8/id?id=AItOawkTs8dYMgHG0tlvW8PE7RmNZwDlOWlWIU8");
-			}
-			if (profileProperties.has(UserConstants2.PASSWORD_RESET_ID)) {
-				assertEquals(profileProperties.getString(UserConstants2.PASSWORD_RESET_ID), "1382712210708-0.6296026603269941");
-			}
+		if (properties.has(UserConstants2.OAUTH)) {
+			assertEquals(properties.getString(UserConstants2.OAUTH), "https://api.github.com/users/ahunter-orion/4500523");
 		}
+		if (properties.has(UserConstants2.OPENID)) {
+			assertEquals(properties.getString(UserConstants2.OPENID), "https://www.google.com/accounts/o8/id?id=AItOawkTs8dYMgHG0tlvW8PE7RmNZwDlOWlWIU8");
+		}
+		if (properties.has(UserConstants2.PASSWORD_RESET_ID)) {
+			assertEquals(properties.getString(UserConstants2.PASSWORD_RESET_ID), CONFIRMATION_ID);
+		}
+		if (properties.has("git/config/userInfo")) {
+			assertEquals(properties.getString("git/config/userInfo"), "{\"GitName\":\"" + userId + "\",\"GitMail\":\"" + email + "\"}");
+		}
+		assertFalse(jsonObject.has("profileProperties"));
+		assertFalse(jsonObject.has("GitName"));
+		assertFalse(jsonObject.has("GitMail"));
 	}
 
 	protected void verifyUserMetaData(String userId, List<String> workspaceIds) throws Exception {
