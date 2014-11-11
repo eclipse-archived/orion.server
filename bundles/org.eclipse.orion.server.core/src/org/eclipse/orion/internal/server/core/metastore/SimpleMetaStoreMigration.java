@@ -108,12 +108,15 @@ public class SimpleMetaStoreMigration {
 
 	/**
 	 * Determine if migration for the provided metadata is required.
+	 * @param rootLocation The root location of the metadata store.
 	 * @param jsonObject the Orion metadata in JSON format.
 	 * @return true if migration is required.
 	 * @throws JSONException
 	 * @throws CoreException
 	 */
-	public boolean isMigrationRequired(JSONObject jsonObject) throws JSONException, CoreException {
+	public boolean isMigrationRequired(File rootLocation, String userId) throws JSONException, CoreException {
+		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, userId);
+		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
 		if (!jsonObject.has(SimpleMetaStore.ORION_VERSION)) {
 			return true;
 		}

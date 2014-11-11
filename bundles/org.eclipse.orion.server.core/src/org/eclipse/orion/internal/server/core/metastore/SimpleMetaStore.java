@@ -15,10 +15,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -95,8 +95,8 @@ public class SimpleMetaStore implements IMetaStore {
 	/**
 	 * A map of read write locks keyed by userId.
 	 */
-	private Map<String, ReadWriteLock> lockMap = new ConcurrentHashMap<String, ReadWriteLock>();
-
+	private final Map<String, ReadWriteLock> lockMap = Collections.synchronizedMap(new HashMap<String, ReadWriteLock>());
+	
 	/**
 	 * The root location of this Simple Meta Store.
 	 */
@@ -602,16 +602,23 @@ public class SimpleMetaStore implements IMetaStore {
 				UserInfo userInfo = new UserInfo();
 				try {
 					SimpleMetaStoreMigration migration = new SimpleMetaStoreMigration();
-					if (migration.isMigrationRequired(jsonObject)) {
+					if (migration.isMigrationRequired(getRootLocation(), userId)) {
+						Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+						logger.info("Migration: Migration required for user " + userId + " to the latest (version " + SimpleMetaStore.VERSION + ")");
 						// Migration to the latest version is required for this user
 						lock.readLock().unlock();
 						lock.writeLock().lock();
 						try {
-							migration.doMigration(getRootLocation(), userMetaFolder);
-							lock.readLock().lock();
+							// Bug 451012: since we now have locked for write, check if we need to migrate again 
+							if (migration.isMigrationRequired(getRootLocation(), userId)) {
+								migration.doMigration(getRootLocation(), userMetaFolder);
+							} else {
+								logger.info("Migration: Migration no longer required for user " + userId + ", completed in other thread");
+							}
 						} finally {
 							lock.writeLock().unlock();
 						}
+						lock.readLock().lock();
 						jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
 					}
 					userInfo.setUniqueId(jsonObject.getString(MetadataInfo.UNIQUE_ID));
