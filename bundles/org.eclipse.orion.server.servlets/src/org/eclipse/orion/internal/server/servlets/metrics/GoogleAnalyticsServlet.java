@@ -54,5 +54,6 @@ public class GoogleAnalyticsServlet extends OrionServlet {
 			}
 		}
 		writeJSONResponse(req, resp, result, null);
+		resp.setHeader("Cache-Control", "public, max-age=86400, must-revalidate"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 }
