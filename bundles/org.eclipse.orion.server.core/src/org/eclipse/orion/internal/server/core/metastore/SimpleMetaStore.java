@@ -96,7 +96,7 @@ public class SimpleMetaStore implements IMetaStore {
 	 * A map of read write locks keyed by userId.
 	 */
 	private final Map<String, ReadWriteLock> lockMap = Collections.synchronizedMap(new HashMap<String, ReadWriteLock>());
-	
+
 	/**
 	 * The root location of this Simple Meta Store.
 	 */
@@ -394,11 +394,14 @@ public class SimpleMetaStore implements IMetaStore {
 	}
 
 	private ReadWriteLock getLockForUser(String userId) {
-		if (!lockMap.containsKey(userId)) {
-			ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-			lockMap.put(userId, lock);
+		synchronized (lockMap) {
+			if (!lockMap.containsKey(userId)) {
+				ReadWriteLock lock = new ReentrantReadWriteLock();
+				lockMap.put(userId, lock);
+				return lock;
+			}
+			return lockMap.get(userId);
 		}
-		return lockMap.get(userId);
 	}
 
 	/**
@@ -602,15 +605,16 @@ public class SimpleMetaStore implements IMetaStore {
 				UserInfo userInfo = new UserInfo();
 				try {
 					SimpleMetaStoreMigration migration = new SimpleMetaStoreMigration();
-					if (migration.isMigrationRequired(getRootLocation(), userId)) {
+					if (migration.isMigrationRequired(jsonObject)) {
 						Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 						logger.info("Migration: Migration required for user " + userId + " to the latest (version " + SimpleMetaStore.VERSION + ")");
 						// Migration to the latest version is required for this user
 						lock.readLock().unlock();
 						lock.writeLock().lock();
 						try {
-							// Bug 451012: since we now have locked for write, check if we need to migrate again 
-							if (migration.isMigrationRequired(getRootLocation(), userId)) {
+							// Bug 451012: since we now have locked for write, check again if we need to migrate
+							jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
+							if (migration.isMigrationRequired(jsonObject)) {
 								migration.doMigration(getRootLocation(), userMetaFolder);
 							} else {
 								logger.info("Migration: Migration no longer required for user " + userId + ", completed in other thread");
