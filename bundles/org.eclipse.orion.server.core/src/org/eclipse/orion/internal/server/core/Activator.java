@@ -32,7 +32,6 @@ import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
-import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.osgi.framework.log.FrameworkLog;
@@ -53,9 +52,6 @@ import org.slf4j.LoggerFactory;
  * Activator for the server core bundle.
  */
 public class Activator implements BundleActivator {
-
-	static final String ADMIN_LOGIN_VALUE = "admin"; //$NON-NLS-1$
-	static final String ADMIN_NAME_VALUE = "Administrative User"; //$NON-NLS-1$
 
 	private static volatile BundleContext bundleContext;
 
@@ -188,7 +184,6 @@ public class Activator implements BundleActivator {
 		registerServices();
 		initializeFileSystem();
 		initializeMetaStore();
-		initializeAdminUser();
 	}
 
 	private void registerServices() {
@@ -244,30 +239,6 @@ public class Activator implements BundleActivator {
 			return new Path(root.toExternalForm().substring(5));
 		} finally {
 			context.ungetService(ref);
-		}
-	}
-
-	/**
-	 * Initialize the admin user on the server.
-	 */
-	private void initializeAdminUser() {
-		try {
-			// initialize the admin account in the IMetaStore
-			String adminDefaultPassword = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD);
-			UserInfo admin = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, ADMIN_LOGIN_VALUE, false, false);
-			if (admin == null && adminDefaultPassword != null) {
-				UserInfo userInfo = new UserInfo();
-				userInfo.setUserName(ADMIN_LOGIN_VALUE);
-				userInfo.setFullName(ADMIN_NAME_VALUE);
-				userInfo.setProperty(UserConstants2.PASSWORD, adminDefaultPassword);
-				OrionConfiguration.getMetaStore().createUser(userInfo);
-				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
-				if (logger.isInfoEnabled()) {
-					logger.info("Account created: " + ADMIN_LOGIN_VALUE); //$NON-NLS-1$
-				}
-			}
-		} catch (CoreException e) {
-			LogHelper.log(e);
 		}
 	}
 

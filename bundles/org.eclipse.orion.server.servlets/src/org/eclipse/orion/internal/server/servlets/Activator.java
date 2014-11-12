@@ -15,13 +15,21 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Properties;
 
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
 import org.eclipse.orion.server.authentication.IAuthenticationService;
 import org.eclipse.orion.server.authentication.NoneAuthenticationService;
 import org.eclipse.orion.server.core.IWebResourceDecorator;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Filter;
@@ -30,12 +38,17 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.util.tracker.ServiceTracker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Activator for the server servlet bundle. Responsible for tracking required services
  * and registering/unregistering servlets.
  */
 public class Activator implements BundleActivator {
+
+	private static final String ADMIN_LOGIN_VALUE = "admin"; //$NON-NLS-1$
+	private static final String ADMIN_NAME_VALUE = "Administrative User"; //$NON-NLS-1$
 
 	public static volatile BundleContext bundleContext;
 
@@ -102,6 +115,7 @@ public class Activator implements BundleActivator {
 		registerServices();
 		authServiceTracker = new AuthServiceTracker(context);
 		authServiceTracker.open();
+		initializeAdminUser();
 	}
 
 	public void stop(BundleContext context) throws Exception {
@@ -180,4 +194,37 @@ public class Activator implements BundleActivator {
 			return authService;
 		}
 	}
+
+	/**
+	 * Initialize the admin user on the server.
+	 */
+	private void initializeAdminUser() {
+		try {
+			// initialize the admin account in the IMetaStore
+			String adminDefaultPassword = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD);
+			Boolean adminUserFolderExists = SimpleMetaStoreUtil.readMetaUserFolder(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null), ADMIN_LOGIN_VALUE).exists();
+			if (!adminUserFolderExists && adminDefaultPassword != null) {
+				UserInfo userInfo = new UserInfo();
+				userInfo.setUserName(ADMIN_LOGIN_VALUE);
+				userInfo.setFullName(ADMIN_NAME_VALUE);
+				userInfo.setProperty(UserConstants2.PASSWORD, adminDefaultPassword);
+				OrionConfiguration.getMetaStore().createUser(userInfo);
+
+				try {
+					AuthorizationService.addUserRight(ADMIN_LOGIN_VALUE, "/users");
+					AuthorizationService.addUserRight(ADMIN_LOGIN_VALUE, "/users/*"); //$NON-NLS-1$
+				} catch (CoreException e) {
+					LogHelper.log(e);
+				}
+
+				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
+				if (logger.isInfoEnabled()) {
+					logger.info("Account created: " + ADMIN_LOGIN_VALUE); //$NON-NLS-1$
+				}
+			}
+		} catch (CoreException e) {
+			LogHelper.log(e);
+		}
+	}
+
 }
