@@ -12,9 +12,6 @@ package org.eclipse.orion.server.authentication.oauth;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -28,19 +25,13 @@ import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.utils.OAuthUtils;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.orion.server.authentication.Activator;
 import org.eclipse.orion.server.authentication.form.FormAuthHelper;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.events.IEventService;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.users.UserConstants2;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,8 +46,6 @@ public class OAuthHelper {
 	public static final String REDIRECT_TYPE = "redirect_type"; //$NON-NLS-1$
 	static final String OAUTH_IDENTIFIER = "oauth_identifier"; //$NON-NLS-1$
 	static final String OAUTH_DISC = "oauth-disc"; //$NON-NLS-1$
-
-	private static IEventService eventService;
 
 	/**
 	 * Redirects the user to the appropriate oauth token provider authentication page.
@@ -156,20 +145,6 @@ public class OAuthHelper {
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
 		if (logger.isInfoEnabled()) {
 			logger.info("Login success: " + login + " oauth " + oauthConsumer.getIdentifier()); //$NON-NLS-1$ 
-		}
-
-		if (getEventService() != null) {
-			JSONObject message = new JSONObject();
-			try {
-				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
-				Date date = new Date(System.currentTimeMillis());
-				message.put("event", "login");
-				message.put("published", format.format(date));
-				message.put("user", userInfo.getUniqueId());
-			} catch (JSONException e1) {
-				LogHelper.log(e1);
-			}
-			getEventService().publish("orion/login", message);
 		}
 
 		try {
@@ -272,23 +247,6 @@ public class OAuthHelper {
 
 	public static String getAuthType() {
 		return OAUTH; //$NON-NLS-1$
-	}
-
-	private static IEventService getEventService() {
-		if (eventService == null) {
-			BundleContext context = Activator.getBundleContext();
-			ServiceReference<IEventService> eventServiceRef = context.getServiceReference(IEventService.class);
-			if (eventServiceRef == null) {
-				// Event service not available
-				return null;
-			}
-			eventService = context.getService(eventServiceRef);
-			if (eventService == null) {
-				// Event service not available
-				return null;
-			}
-		}
-		return eventService;
 	}
 
 	/**
