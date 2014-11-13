@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.tests;
 
 import org.eclipse.orion.server.tests.cf.AllCFTests;
+import org.eclipse.orion.server.tests.events.FileChangeNotificationServiceTests;
 import org.eclipse.orion.server.tests.metastore.ProjectInfoTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreConcurrencyTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreLiveMigrationConcurrencyTests;
@@ -46,6 +47,7 @@ import org.junit.runners.Suite.SuiteClasses;
 		Base64Test.class, //
 		BasicUsersTest.class, //
 		CoreFilesTest.class, //
+		FileChangeNotificationServiceTests.class, //
 		MetaStoreTest.class, //
 		PreferenceTest.class, //
 		ProjectInfoTests.class, //
