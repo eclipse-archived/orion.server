@@ -144,4 +144,42 @@ public class MultiServerStatus extends ServerStatus {
 		else
 			return super.toJSON();
 	}
+
+	public String toString() {
+		StringBuffer buf = new StringBuffer();
+		buf.append("Status "); //$NON-NLS-1$
+		int severity = getSeverity();
+		if (severity == OK) {
+			buf.append("OK"); //$NON-NLS-1$
+		} else if (severity == ERROR) {
+			buf.append("ERROR"); //$NON-NLS-1$
+		} else if (severity == WARNING) {
+			buf.append("WARNING"); //$NON-NLS-1$
+		} else if (severity == INFO) {
+			buf.append("INFO"); //$NON-NLS-1$
+		} else if (severity == CANCEL) {
+			buf.append("CANCEL"); //$NON-NLS-1$
+		} else {
+			buf.append("severity="); //$NON-NLS-1$
+			buf.append(severity);
+		}
+		buf.append(": "); //$NON-NLS-1$
+		buf.append(getPlugin());
+		buf.append(" code="); //$NON-NLS-1$
+		buf.append(getCode());
+		buf.append(' ');
+		buf.append(getMessage());
+		buf.append(' ');
+		buf.append(getException());
+
+		buf.append(" children=["); //$NON-NLS-1$
+		for (int i = 0; i < statuses.size(); i++) {
+			if (i != 0) {
+				buf.append(" "); //$NON-NLS-1$
+			}
+			buf.append(statuses.get(i).toString());
+		}
+		buf.append("]"); //$NON-NLS-1$
+		return buf.toString();
+	}
 }
