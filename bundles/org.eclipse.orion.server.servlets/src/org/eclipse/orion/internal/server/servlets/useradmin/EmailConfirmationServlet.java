@@ -115,7 +115,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			return;
 		}
 
-		if (req.getParameter(UserConstants.KEY_CONFIRMATION_ID) == null || !req.getParameter(UserConstants.KEY_CONFIRMATION_ID).equals(userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID))) {
+		if (req.getParameter(UserConstants2.EMAIL_CONFIRMATION_ID) == null || !req.getParameter(UserConstants2.EMAIL_CONFIRMATION_ID).equals(userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID))) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Email could not be confirmed.");
 			return;
 		}
@@ -164,8 +164,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 		String userLogin;
 		try {
 			JSONObject data = OrionServlet.readJSONRequest(req);
-			// TODO: Bug 444864 should be "Email"
-			userEmail = data.getString("email");
+			userEmail = data.getString(UserConstants2.EMAIL);
 			userLogin = data.getString(UserConstants.KEY_LOGIN);
 		} catch (JSONException e) {
 			getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not parse json request", e));

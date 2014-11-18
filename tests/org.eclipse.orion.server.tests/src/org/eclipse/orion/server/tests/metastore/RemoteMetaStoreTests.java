@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.tests.metastore;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,22 +43,14 @@ import com.meterware.httpunit.WebResponse;
 /**
  * Create a data set on a remote Orion server by creating users, workspaces, projects, 
  * site configurations and operations. The end result is a set of data that can be used to test
- * migration.  
- * This test is not intended to be added to the nightly Orion JUnit tests, 
+ * migration and observe Orion metadata store operations.
+ *   
+ * This test is not intended to be added to the nightly Orion JUnit tests. 
  *  
  * @author Anthony Hunter
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RemoteMetaStoreTests {
-
-	/**
-	 * The historical versions of Orion metadata, with orion.conf settings in parentheses:
-	 * Orion 3.0 (orion.core.metastore=legacy)
-	 * Orion 4.0 (orion.core.metastore=simple)
-	 * Orion 6.0 (orion.core.metastore=simple2)
-	 * Orion 7.0 (only one version supported so no longer an orion.conf setting.)
-	 */
-	protected static int orionMetastoreVersion = 7;
 
 	protected static String orionTestName = null;
 
@@ -354,15 +347,12 @@ public class RemoteMetaStoreTests {
 	}
 
 	/**
-	 * Get the workspace id based on the login name. The legacy metastore uses the login name, the
+	 * Get the workspace id based on the login name. the
 	 * simple metastore uses the login name and workspace name.
 	 * @param login
 	 * @return
 	 */
 	protected String getWorkspaceId(String login, String workspaceName) {
-		if (RemoteMetaStoreTests.orionMetastoreVersion == 3) {
-			return login;
-		}
 		return login.concat("-").concat(workspaceName.replace(" ", "").replace("#", ""));
 	}
 
@@ -398,6 +388,20 @@ public class RemoteMetaStoreTests {
 	public void testACreateUser() throws URISyntaxException, IOException, JSONException, SAXException {
 		WebConversation webConversation = new WebConversation();
 		assertEquals(HttpURLConnection.HTTP_OK, createUser(webConversation, getOrionTestName(), getOrionTestName()));
+	}
+
+	/**
+	 * Update a test user on the Orion server.
+	 * 
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 * @throws JSONException
+	 * @throws SAXException 
+	 */
+	@Test
+	public void testAUpdateUser() throws URISyntaxException, IOException, JSONException, SAXException {
+		WebConversation webConversation = new WebConversation();
+		assertEquals(HttpURLConnection.HTTP_OK, updateUser(webConversation, getOrionTestName(), getOrionTestName(), "Test User"));
 	}
 
 	/**
@@ -642,6 +646,32 @@ public class RemoteMetaStoreTests {
 	}
 
 	/**
+	 * Test search against the newly created project. This test fails every time as you need to wait five minutes for the Indexer to
+	 * run before you can search on a file you just saved.
+	 * 
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws JSONException
+	 */
+	public void testSearch() throws URISyntaxException, IOException, SAXException, JSONException {
+		WebConversation webConversation = new WebConversation();
+		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, getOrionTestName(), getOrionTestName()));
+
+		String query = "?sort=Path%20asc&rows=10000&start=0&q=ahunter+Location:/file/" + getOrionTestName() + "-OrionContent/ahunter-orion.github.com/*";
+		WebRequest request = new GetMethodWebRequest(getOrionServerURI("/filesearch") + query);
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		JSONObject jsonObject = new JSONObject(response.getText());
+		assertTrue(jsonObject.has("response"));
+		JSONObject responseJson = jsonObject.getJSONObject("response");
+		assertTrue(responseJson.has("numFound"));
+		assertEquals("No results found as the indexer has not run yet", 3, responseJson.getInt("numFound"));
+	}
+
+	/**
 	 * Create additional users, workspaces and projects to test migration.
 	 * 
 	 * @throws IOException
@@ -649,23 +679,26 @@ public class RemoteMetaStoreTests {
 	 * @throws JSONException
 	 * @throws SAXException 
 	 */
-	@Test
+	//@Test
 	public void testZCreateMigrationContent() throws IOException, URISyntaxException, JSONException, SAXException {
 		// a user with no workspace or projects
-		String none = "n" + getOrionTestName();
+		String none = "tnow" + System.currentTimeMillis();
 		WebConversation webConversation = new WebConversation();
 		assertEquals(HttpURLConnection.HTTP_OK, createUser(webConversation, none, none));
+		assertEquals(HttpURLConnection.HTTP_OK, updateUser(webConversation, none, none, "Test User No Workspace or Projects"));
 
 		// a user with no projects
-		String noprojects = "np" + getOrionTestName();
+		String noprojects = "twnp" + System.currentTimeMillis();
 		webConversation = new WebConversation();
 		assertEquals(HttpURLConnection.HTTP_OK, createUser(webConversation, noprojects, noprojects));
+		assertEquals(HttpURLConnection.HTTP_OK, updateUser(webConversation, noprojects, noprojects, "Test User Workspace and No Projects"));
 		assertEquals(HttpURLConnection.HTTP_OK, createWorkspace(webConversation, noprojects, noprojects, "Orion Content"));
 
 		// a user with two projects
-		String twoprojects = "tp" + getOrionTestName();
+		String twoprojects = "tpto" + System.currentTimeMillis();
 		webConversation = new WebConversation();
 		assertEquals(HttpURLConnection.HTTP_OK, createUser(webConversation, twoprojects, twoprojects));
+		assertEquals(HttpURLConnection.HTTP_OK, updateUser(webConversation, twoprojects, twoprojects, "Test User Two Projects"));
 		assertEquals(HttpURLConnection.HTTP_OK, createWorkspace(webConversation, twoprojects, twoprojects, "Orion Content"));
 		assertEquals(HttpURLConnection.HTTP_CREATED, createProject(webConversation, twoprojects, twoprojects, "Orion Content", "Project One"));
 		assertEquals(HttpURLConnection.HTTP_CREATED, createFolder(webConversation, twoprojects, twoprojects, "Orion Content", "Project One"));
@@ -675,21 +708,54 @@ public class RemoteMetaStoreTests {
 		assertEquals(HttpURLConnection.HTTP_OK, createFile(webConversation, twoprojects, twoprojects, "Orion Content", "Project Two"));
 
 		// a user with a project with two sites
-		String twosites = "ts" + getOrionTestName();
+		String twosites = "tsto" + System.currentTimeMillis();
 		webConversation = new WebConversation();
 		assertEquals(HttpURLConnection.HTTP_OK, createUser(webConversation, twosites, twosites));
+		assertEquals(HttpURLConnection.HTTP_OK, updateUser(webConversation, twosites, twosites, "Test User Two Sites"));
 		assertEquals(HttpURLConnection.HTTP_OK, createWorkspace(webConversation, twosites, twosites, "Orion Content"));
 		assertEquals(HttpURLConnection.HTTP_CREATED, createProject(webConversation, twosites, twosites, "Orion Content", "Project"));
 		assertEquals(HttpURLConnection.HTTP_CREATED, createSite(webConversation, twosites, twosites, "Orion Content", "Site One"));
 		assertEquals(HttpURLConnection.HTTP_CREATED, createSite(webConversation, twosites, twosites, "Orion Content", "Site Two"));
 
 		// a user with a project with two workspaces
-		String twoworkspaces = "tw" + getOrionTestName();
-		webConversation = new WebConversation();
-		assertEquals(HttpURLConnection.HTTP_OK, createUser(webConversation, twoworkspaces, twoworkspaces));
-		assertEquals(HttpURLConnection.HTTP_OK, createWorkspace(webConversation, twoworkspaces, twoworkspaces, "Orion Content"));
-		assertEquals(HttpURLConnection.HTTP_OK, createWorkspace(webConversation, twoworkspaces, twoworkspaces, "Second Workspace"));
-		assertEquals(HttpURLConnection.HTTP_CREATED, createProject(webConversation, twoworkspaces, twoworkspaces, "Orion Content", "Project"));
-		assertEquals(HttpURLConnection.HTTP_CREATED, createProject(webConversation, twoworkspaces, twoworkspaces, "Second Workspace", "Second Project"));
+		// do not currently support two workspaces
+		//String twoworkspaces = "twto" + System.currentTimeMillis();
+		//webConversation = new WebConversation();
+		//assertEquals(HttpURLConnection.HTTP_OK, updateUser(webConversation, twoworkspaces, twoworkspaces, "Test User Two Sites"));
+		//assertEquals(HttpURLConnection.HTTP_OK, createUser(webConversation, twoworkspaces, twoworkspaces));
+		//assertEquals(HttpURLConnection.HTTP_OK, createWorkspace(webConversation, twoworkspaces, twoworkspaces, "Orion Content"));
+		//assertEquals(HttpURLConnection.HTTP_OK, createWorkspace(webConversation, twoworkspaces, twoworkspaces, "Second Workspace"));
+		//assertEquals(HttpURLConnection.HTTP_CREATED, createProject(webConversation, twoworkspaces, twoworkspaces, "Orion Content", "Project"));
+		//assertEquals(HttpURLConnection.HTTP_CREATED, createProject(webConversation, twoworkspaces, twoworkspaces, "Second Workspace", "Second Project"));
+	}
+
+	/**
+	 * Update the user with a email address and provided full name
+	 * 
+	 * @param webConversation
+	 * @param login
+	 * @param password
+	 * @param fullName
+	 * @return
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws JSONException
+	 */
+	protected int updateUser(WebConversation webConversation, String login, String password, String fullName) throws URISyntaxException, IOException, SAXException, JSONException {
+		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, login, password));
+
+		String email = login + "@example.com";
+		JSONObject json = new JSONObject();
+		json.put("email", email);
+		json.put("FullName", fullName);
+		WebRequest request = new PutMethodWebRequest(getOrionServerURI("/users/" + login), IOUtilities.toInputStream(json.toString()), "application/json");
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+		System.out.println("Updated User: " + login + " with email: " + email);
+		return response.getResponseCode();
+
 	}
 }
