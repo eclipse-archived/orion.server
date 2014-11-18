@@ -83,9 +83,7 @@ public class BasicUsersTest extends UsersTest {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "testDupUser");
 		params.put(UserConstants2.FULL_NAME, "username_testCreateDuplicateUser");
-
-		// TODO: Bug 444864 should be "Password"
-		params.put("password", "pass_" + System.currentTimeMillis());
+		params.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
 		WebRequest request = getPostUsersRequest("", params, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -104,10 +102,8 @@ public class BasicUsersTest extends UsersTest {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "testDupEmail");
 		params.put(UserConstants2.FULL_NAME, "username_testCreateUserDuplicateEmail");
-		// TODO: Bug 444864 should be "Password"
-		params.put("password", "pass_" + System.currentTimeMillis());
-		// TODO: Bug 444864 should be "Email"
-		params.put("email", "username@example.com");
+		params.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
+		params.put(UserConstants2.EMAIL, "username@example.com");
 		WebRequest request = getPostUsersRequest("", params, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -128,17 +124,14 @@ public class BasicUsersTest extends UsersTest {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "testCaseEmail");
 		params.put(UserConstants2.FULL_NAME, "username_testCreateUserEmailDifferentCase");
-		// TODO: Bug 444864 should be "Password"
-		params.put("password", "pass_" + System.currentTimeMillis());
-		// TODO: Bug 444864 should be "Email"
-		params.put("email", "duplicateemail@example.com");
+		params.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
+		params.put(UserConstants2.EMAIL, "duplicateemail@example.com");
 		WebRequest request = getPostUsersRequest("", params, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		//try creating another user with same email address but different case
-		// TODO: Bug 444864 should be "Email"
-		params.put("email", "DUPLICATEEMAIL@example.com");
+		params.put(UserConstants2.EMAIL, "DUPLICATEEMAIL@example.com");
 		params.put(UserConstants.KEY_LOGIN, "testCaseEmail2");
 		request = getPostUsersRequest("", params, true);
 		response = webConversation.getResponse(request);
@@ -165,9 +158,7 @@ public class BasicUsersTest extends UsersTest {
 			Map<String, String> params = new HashMap<String, String>();
 			params.put(UserConstants.KEY_LOGIN, name);
 			params.put(UserConstants2.FULL_NAME, "Tom");
-
-			// TODO: Bug 444864 should be "Password"
-			params.put("password", "pass_" + System.currentTimeMillis());
+			params.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
 			WebRequest request = getPostUsersRequest("", params, true);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals("Should fail with name: " + name, HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
@@ -184,9 +175,7 @@ public class BasicUsersTest extends UsersTest {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "user" + System.currentTimeMillis());
 		params.put(UserConstants2.FULL_NAME, "username_" + System.currentTimeMillis());
-
-		// TODO: Bug 444864 should be "Password"
-		params.put("password", "pass_" + System.currentTimeMillis());
+		params.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
 		WebRequest request = getPostUsersRequest("", params, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -204,8 +193,7 @@ public class BasicUsersTest extends UsersTest {
 		responseObject = new JSONObject(response.getText());
 		assertEquals("Invalid user login", params.get(UserConstants.KEY_LOGIN), responseObject.getString(UserConstants.KEY_LOGIN));
 		assertEquals("Invalid user name", params.get(UserConstants2.FULL_NAME), responseObject.getString(UserConstants2.FULL_NAME));
-		// TODO: Bug 444864 should be "Password"
-		assertFalse("Response shouldn't contain password", responseObject.has("password"));
+		assertFalse("Response shouldn't contain password", responseObject.has(UserConstants2.PASSWORD));
 
 		// check if user can authenticate
 		request = getGetUsersRequest("", true);
@@ -248,8 +236,7 @@ public class BasicUsersTest extends UsersTest {
 
 		// delete user
 		request = getAuthenticatedRequest(location, METHOD_DELETE, true);
-		// TODO: Bug 444864 should be "Password"
-		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), params.get("password"));
+		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), params.get(UserConstants2.PASSWORD));
 		response = webConversation.getResponse(request);
 		assertEquals("User could not delete his own account, response: " + response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
@@ -263,11 +250,9 @@ public class BasicUsersTest extends UsersTest {
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, "testCrDelRights");
 		params.put(UserConstants2.FULL_NAME, "username_" + System.currentTimeMillis());
-		// TODO: Bug 444864 should be "Email"
-		params.put("email", "test@test_" + System.currentTimeMillis());
+		params.put(UserConstants2.EMAIL, "test@test_" + System.currentTimeMillis());
 		params.put("workspace", "workspace_" + System.currentTimeMillis());
-		// TODO: Bug 444864 should be "Password"
-		params.put("password", "pass_" + System.currentTimeMillis());
+		params.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
 		WebRequest request = getPostUsersRequest("", params, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -280,8 +265,7 @@ public class BasicUsersTest extends UsersTest {
 
 		// check if user can authenticate
 		request = getGetUsersRequest("", true);
-		// TODO: Bug 444864 should be "Password"
-		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), params.get("password"));
+		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), params.get(UserConstants2.PASSWORD));
 		response = webConversation.getResponse(request);
 		assertEquals("User with no roles has admin privileges", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
 		// add admin rights
@@ -291,8 +275,7 @@ public class BasicUsersTest extends UsersTest {
 
 		// check if user can authenticate
 		request = getGetUsersRequest("", true);
-		// TODO: Bug 444864 should be "Password"
-		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), params.get("password"));
+		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), params.get(UserConstants2.PASSWORD));
 		response = webConversation.getResponse(request);
 		assertEquals("User tried to use his admin role but did not get the valid response: " + response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -302,8 +285,7 @@ public class BasicUsersTest extends UsersTest {
 
 		// check if user can authenticate
 		request = getGetUsersRequest("", true);
-		// TODO: Bug 444864 should be "Password"
-		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), params.get("password"));
+		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), params.get(UserConstants2.PASSWORD));
 		response = webConversation.getResponse(request);
 		assertEquals("User with no roles has admin privileges", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
 
@@ -324,8 +306,7 @@ public class BasicUsersTest extends UsersTest {
 		params.put(UserConstants2.FULL_NAME, "username_" + System.currentTimeMillis());
 		params.put("roles", "admin");
 		String oldPass = "pass_" + System.currentTimeMillis();
-		// TODO: Bug 444864 should be "Password"
-		params.put("password", oldPass);
+		params.put(UserConstants2.PASSWORD, oldPass);
 		WebRequest request = getPostUsersRequest("", params, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -340,8 +321,7 @@ public class BasicUsersTest extends UsersTest {
 		JSONObject updateBody = new JSONObject();
 		updateBody.put(UserConstants2.FULL_NAME, "usernameUpdate_" + System.currentTimeMillis());
 		updateBody.put("oldPassword", oldPass);
-		// TODO: Bug 444864 should be "Password"
-		updateBody.put("password", "passUpdate_" + System.currentTimeMillis());
+		updateBody.put(UserConstants2.PASSWORD, "passUpdate_" + System.currentTimeMillis());
 		updateBody.put("roles", "");
 
 		request = getAuthenticatedRequest(location, METHOD_PUT, true, null, updateBody);
@@ -356,13 +336,11 @@ public class BasicUsersTest extends UsersTest {
 		responseObject = new JSONObject(response.getText());
 		assertEquals("Invalid user login", params.get(UserConstants.KEY_LOGIN), responseObject.getString(UserConstants.KEY_LOGIN));
 		assertEquals("Invalid user name", updateBody.getString(UserConstants2.FULL_NAME), responseObject.getString(UserConstants2.FULL_NAME));
-		// TODO: Bug 444864 should be "Password"
-		assertFalse("Response shouldn't contain password", responseObject.has("password"));
+		assertFalse("Response shouldn't contain password", responseObject.has(UserConstants2.PASSWORD));
 
 		// check if user can authenticate and does not have admin role
 		request = getGetUsersRequest("", true);
-		// TODO: Bug 444864 should be "Password"
-		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), updateBody.getString("password"));
+		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), updateBody.getString(UserConstants2.PASSWORD));
 		response = webConversation.getResponse(request);
 		assertEquals("User with no roles has admin privilegges", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
 
@@ -384,8 +362,7 @@ public class BasicUsersTest extends UsersTest {
 		params.put(UserConstants2.FULL_NAME, "username" + System.currentTimeMillis());
 		params.put("roles", "admin");
 		String oldPass = "pass_" + System.currentTimeMillis();
-		// TODO: Bug 444864 should be "Password"
-		params.put("password", oldPass);
+		params.put(UserConstants2.PASSWORD, oldPass);
 		WebRequest request = getPostUsersRequest("", params, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
@@ -400,8 +377,7 @@ public class BasicUsersTest extends UsersTest {
 		String newPass = "passUpdate_" + System.currentTimeMillis();
 		params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, username);
-		// TODO: Bug 444864 should be "Password"
-		params.put("password", newPass);
+		params.put(UserConstants2.PASSWORD, newPass);
 		params.put(UserConstants.KEY_RESET, "true");
 		request = getPostUsersRequest("", params, true);
 		response = webConversation.getResponse(request);
@@ -430,8 +406,7 @@ public class BasicUsersTest extends UsersTest {
 		// create user
 		Map<String, String> params = new HashMap<String, String>();
 		params.put(UserConstants.KEY_LOGIN, login1);
-		// TODO: Bug 444864 should be "Password"
-		params.put("password", password);
+		params.put(UserConstants2.PASSWORD, password);
 		WebRequest request = getPostUsersRequest("", params, true);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());

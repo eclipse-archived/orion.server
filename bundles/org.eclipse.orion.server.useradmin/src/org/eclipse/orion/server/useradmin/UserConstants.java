@@ -48,12 +48,4 @@ public interface UserConstants {
 	public static final String KEY_PLUGIN_LOCATION = "Url"; //$NON-NLS-1$
 
 	public static final String KEY_RESET = "reset"; //$NON-NLS-1$
-	
-	public static final String KEY_LAST_LOGIN_TIMESTAMP = "LastLogInTimestamp"; //$NON-NLS-1$
-
-	public static final String KEY_DISK_USAGE = "diskUsage";
-	
-	public static final String KEY_DISK_USAGE_TIMESTAMP = "diskUsageTimestamp";
-
-	public static final String KEY_CONFIRMATION_ID = "confirmationId"; //$NON-NLS-1$
 }
