@@ -38,7 +38,7 @@ public class LoggregatorClient {
 
 			client.connect(socket, loggregatorUri, request);
 			logger.debug(NLS.bind("Connecting to: {0}", loggregatorUri));
-			socket.awaitClose(5, TimeUnit.SECONDS);
+			socket.awaitClose(25, TimeUnit.SECONDS);
 		} finally {
 			client.stop();
 		}

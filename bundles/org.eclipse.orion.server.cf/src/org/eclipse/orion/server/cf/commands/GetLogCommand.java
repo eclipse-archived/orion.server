@@ -10,17 +10,21 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.commands;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.fileupload.MultipartStream;
+import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.server.cf.objects.Log;
+import org.eclipse.orion.server.cf.loggregator.LoggregatorListener;
+import org.eclipse.orion.server.cf.loggregator.LoggregatorMessage;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,78 +33,77 @@ public class GetLogCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-	private String appName;
-	private String instanceNo;
-	private String logName;
-	private String baseRequestLocation;
+	private String appId;
+	private String loggingEndpoint;
+	private LoggregatorListener listener;
 
-	public GetLogCommand(Target target, String appName, String instanceNo, String logName, String baseRequestLocation) {
+	public GetLogCommand(Target target, String loggingEndpoint, String appId, LoggregatorListener listener) {
 		super(target);
 		this.commandName = "Get App Log"; //$NON-NLS-1$
-		this.appName = appName;
-		this.instanceNo = instanceNo;
-		this.logName = logName;
-		this.baseRequestLocation = baseRequestLocation;
+		this.loggingEndpoint = loggingEndpoint;
+		this.appId = appId;
+		this.listener = listener;
 	}
 
 	public ServerStatus _doIt() {
 		try {
-			URI targetURI = URIUtil.toURI(target.getUrl());
+			if (this.loggingEndpoint.startsWith("wss://"))
+				this.loggingEndpoint = this.loggingEndpoint.replace("wss://", "https://");
+			else if (this.loggingEndpoint.startsWith("ws://"))
+				this.loggingEndpoint = this.loggingEndpoint.replace("ws://", "http://");
 
-			// Find the app
-			GetAppCommand getAppCommand = new GetAppCommand(target, this.appName);
-			IStatus getAppStatus = getAppCommand.doIt();
-			if (!getAppStatus.isOK())
-				return (ServerStatus) getAppStatus;
+			URI infoURI = URIUtil.toURI(new URL(loggingEndpoint)).resolve("/recent?app=" + this.appId);
 
-			String appUrl = getAppCommand.getApp().getAppJSON().getString("url");
+			GetMethod getLogMethod = new GetMethod(infoURI.toString());
 
-			// check if crash log
-			String computedInstanceNo = instanceNo;
-			if ("Last Crash".equals(instanceNo)) {
-				String crashedInstancesUrl = appUrl + "/crashes";
-				URI crashedInstancesURI = targetURI.resolve(crashedInstancesUrl);
+			getLogMethod.addRequestHeader(new Header("Content-Type", "multipart/form-data"));
+			if (target.getCloud().getAccessToken() != null)
+				getLogMethod.addRequestHeader(new Header("Authorization", "bearer " + target.getCloud().getAccessToken().getString("access_token")));
 
-				GetMethod getCrashedInstancesMethod = new GetMethod(crashedInstancesURI.toString());
-				HttpUtil.configureHttpMethod(getCrashedInstancesMethod, target);
+			ServerStatus getLogStatus = HttpUtil.executeMethod(getLogMethod);
+			if (!getLogStatus.isOK())
+				return getLogStatus;
 
-				ServerStatus getStatus = HttpUtil.executeMethod(getCrashedInstancesMethod);
-				if (!getStatus.isOK()) {
-					return getStatus;
-				}
+			Header contentType = getLogMethod.getResponseHeader("Content-Type");
+			String contentTypeValue = contentType.getValue();
+			String[] values = contentTypeValue.split(";");
 
-				String response = getStatus.getJsonData().getString("response");
-				JSONArray crashedInstances = new JSONArray(response);
-				if (crashedInstances.length() > 0) {
-					JSONObject crashedInstance = crashedInstances.getJSONObject(crashedInstances.length() - 1);
-					computedInstanceNo = crashedInstance.getString("instance");
+			String boundary = null;
+			for (int i = 0; i < values.length; i++) {
+				if (values[i].trim().startsWith("boundary")) {
+					boundary = values[i].split("=")[1];
+					break;
 				}
 			}
 
-			String instanceLogsAppUrl = appUrl + "/instances/" + computedInstanceNo + "/files/logs";
-			if (logName != null) {
-				instanceLogsAppUrl += ("/" + logName);
+			if (boundary == null) {
+				String msg = NLS.bind("An error occured when performing operation {0}. Boundary in response header not found.", commandName); //$NON-NLS-1$
+				logger.error(msg);
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, null);
+			}
+			byte[] buffer = boundary.getBytes();
+
+			InputStream responseStream = getLogMethod.getResponseBodyAsStream();
+			MultipartStream multipartStream = new MultipartStream(responseStream, buffer, 1024);
+
+			boolean nextPart = multipartStream.skipPreamble();
+			while (nextPart) {
+				try {
+					multipartStream.readHeaders();
+
+					ByteArrayOutputStream bb = new ByteArrayOutputStream();
+					multipartStream.readBodyData(bb);
+
+					LoggregatorMessage.Message message = LoggregatorMessage.Message.parseFrom(bb.toByteArray());
+					listener.add(message.getMessage().toStringUtf8());
+				} catch (Exception ex) {
+					logger.error("Problem while reading logs", ex);
+				}
+
+				nextPart = multipartStream.readBoundary();
 			}
 
-			URI instanceLogsAppURI = targetURI.resolve(instanceLogsAppUrl);
-
-			GetMethod getInstanceLogMethod = new GetMethod(instanceLogsAppURI.toString());
-			HttpUtil.configureHttpMethod(getInstanceLogMethod, target);
-
-			ServerStatus getInstanceLogStatus = HttpUtil.executeMethod(getInstanceLogMethod);
-			if (!getInstanceLogStatus.isOK()) {
-				return getInstanceLogStatus;
-			}
-
-			String response = getInstanceLogStatus.getJsonData().optString("response");
-
-			JSONObject jsonResp = new JSONObject();
-			Log log = new Log(appName, logName);
-			log.setContents(response);
-			log.setLocation(new URI(baseRequestLocation));
-			jsonResp.put(instanceNo, log.toJSON());
-
-			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, jsonResp);
+			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);

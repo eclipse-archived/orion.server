@@ -26,7 +26,6 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 	private ServletResourceHandler<String> targetHandlerV1;
 	private ServletResourceHandler<String> infoHandlerV1;
 	private ServletResourceHandler<String> appsHandlerV1;
-	private ServletResourceHandler<String> logsHandlerV1;
 	private ServletResourceHandler<String> orgsHandlerV1;
 	private ServletResourceHandler<String> spacesHandlerV1;
 	private ServletResourceHandler<String> routesHandlerV1;
@@ -39,7 +38,6 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 		targetHandlerV1 = new TargetHandlerV1(statusHandler);
 		infoHandlerV1 = new InfoHandlerV1(statusHandler);
 		appsHandlerV1 = new AppsHandlerV1(statusHandler);
-		logsHandlerV1 = new LogsHandlerV1(statusHandler);
 		orgsHandlerV1 = new OrgsHandlerV1(statusHandler);
 		spacesHandlerV1 = new SpacesHandlerV1(statusHandler);
 		routesHandlerV1 = new RoutesHandlerV1(statusHandler);
@@ -71,8 +69,6 @@ public class CFHandlerV1 extends ServletResourceHandler<String> {
 			return infoHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(App.RESOURCE)) {
 			return appsHandlerV1.handleRequest(request, response, pathString);
-		} else if (infoParts[1].equals(Log.RESOURCE)) {
-			return logsHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(Org.RESOURCE)) {
 			return orgsHandlerV1.handleRequest(request, response, pathString);
 		} else if (infoParts[1].equals(Route.RESOURCE)) {

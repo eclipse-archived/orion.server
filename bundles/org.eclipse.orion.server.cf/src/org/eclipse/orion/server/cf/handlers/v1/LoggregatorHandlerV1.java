@@ -71,12 +71,18 @@ public class LoggregatorHandlerV1 extends AbstractRESTHandler<Log> {
 						return getInfoStatus;
 
 					logger.debug(NLS.bind("Cloud info: {0}", getInfoStatus.getJsonData().toString()));
-
 					String loggingEndpoint = getInfoStatus.getJsonData().getString("logging_endpoint");
-					LoggregatorListener listener = new LoggregatorListener();
-					new LoggregatorClient().start(target, loggingEndpoint + "/dump/?app=" + app.getAppJSON().get("guid"), listener);
 
 					JSONObject messages = new JSONObject();
+					LoggregatorListener listener = new LoggregatorListener();
+
+					GetLogCommand getLogCommand = new GetLogCommand(target, loggingEndpoint, app.getAppJSON().getString("guid"), listener);
+					IStatus getLogStatus = getLogCommand.doIt();
+
+					if (!getLogStatus.isOK()) {
+						new LoggregatorClient().start(target, loggingEndpoint + "/dump/?app=" + app.getAppJSON().get("guid"), listener);
+					}
+
 					messages.put("Messages", listener.getMessagesJSON());
 
 					return new ServerStatus(IStatus.OK, HttpServletResponse.SC_OK, null, messages, null);
