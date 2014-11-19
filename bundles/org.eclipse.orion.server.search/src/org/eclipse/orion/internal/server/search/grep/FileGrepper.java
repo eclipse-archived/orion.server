@@ -26,11 +26,11 @@ import org.apache.commons.io.DirectoryWalker;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.LineIterator;
+import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
@@ -40,11 +40,11 @@ import org.eclipse.orion.server.core.users.UserConstants2;
 /**
  * @author Aidan Redpath
  */
-public class FileGrepper extends DirectoryWalker<File> {
+public class FileGrepper extends DirectoryWalker<GrepResult> {
 
 	private Pattern pattern;
 	private Matcher matcher;
-	private List<File> scopes;
+	private List<GrepResult> scopes;
 
 	private SearchOptions options;
 
@@ -64,16 +64,27 @@ public class FileGrepper extends DirectoryWalker<File> {
 		setScopes(req, resp);
 	}
 
+	private WorkspaceInfo workspace;
+	private ProjectInfo project;
+
 	/**
 	 * Performs the search from the HTTP request
 	 * @return A list of files which contain the search term, and pass the filename patterns.
 	 * @throws GrepException If there is a problem accessing any of the files.
 	 */
-	public List<File> search() throws GrepException {
-		List<File> files = new LinkedList<File>();
+	public List<GrepResult> search() throws GrepException {
+		List<GrepResult> files = new LinkedList<GrepResult>();
 		try {
-			for (File scope : scopes) {
-				super.walk(scope, files);
+			for (GrepResult scope : scopes) {
+				workspace = scope.getWorkspace();
+				project = scope.getProject();
+				File file = scope.getFile();
+				if (!file.isDirectory()) {
+					options.addFilenamePatterns(file.getAbsolutePath());
+					file = file.getParentFile();
+				}
+
+				super.walk(file, files);
 			}
 		} catch (IOException e) {
 			throw (new GrepException(e));
@@ -84,13 +95,20 @@ public class FileGrepper extends DirectoryWalker<File> {
 	/**
 	 * Handles each file in the file walk.
 	 */
-	protected void handleFile(File file, int depth, Collection<File> results) throws IOException {
+	protected void handleFile(File file, int depth, Collection<GrepResult> results) throws IOException {
 		// Check if the path is acceptable
 		if (!acceptFilePath(file.getPath()))
 			return;
 		// Add if it is a filename search or search the file contents.
-		if (!options.isFileSearch() || searchFile(file))
-			results.add(file);
+		if (!options.isFileSearch() || searchFile(file)) {
+			IFileStore fileStore;
+			try {
+				fileStore = EFS.getStore(file.toURI());
+			} catch (CoreException e) {
+				throw new IOException(e);
+			}
+			results.add(new GrepResult(fileStore, workspace, project));
+		}
 	}
 
 	/**
@@ -122,10 +140,10 @@ public class FileGrepper extends DirectoryWalker<File> {
 	 * @return True is the file passes all the filename patterns (with wildcards)
 	 */
 	private boolean acceptFilePath(String path) {
-		if (options.getFilenamePatterns() == null)
+		if (options.getFilenamePatterns().size() <= 0)
 			return true;
-		for (int i = 0; i < options.getFilenamePatterns().length; i++) {
-			if (!FilenameUtils.wildcardMatch(path, options.getFilenamePatterns()[i])) {
+		for (String filename : options.getFilenamePatterns()) {
+			if (!FilenameUtils.wildcardMatch(path, filename)) {
 				return false;
 			}
 		}
@@ -169,33 +187,97 @@ public class FileGrepper extends DirectoryWalker<File> {
 	 * @throws GrepException 
 	 */
 	private void setScopes(HttpServletRequest req, HttpServletResponse resp) throws GrepException {
-		scopes = new LinkedList<File>();
-		String pathInfo = options.getScope();
-
-		if (pathInfo != null) {
-			pathInfo = pathInfo.replaceFirst("/file", "");
+		//NewFileServlet.getFileStore(req, path);
+		scopes = new LinkedList<GrepResult>();
+		if (!setScopeFromRequest(req, resp)) {
+			setDefaultScopes(req, resp);
 		}
-		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
-		IFileStore file = NewFileServlet.getFileStore(req, path);
-		if (file == null) {
-			// Get the directories of the projects.
-			String login = req.getRemoteUser();
-			try {
-				UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, login, false, false);
-				List<String> workspaceIds = userInfo.getWorkspaceIds();
-				for (String workspaceId : workspaceIds) {
-					WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
-					List<String> projectnames = workspace.getProjectNames();
-					for (String projectName : projectnames) {
-						ProjectInfo projectInfo = OrionConfiguration.getMetaStore().readProject(workspaceId, projectName);
-						scopes.add(new File(projectInfo.getContentLocation()));
-					}
-				}
-			} catch (CoreException e) {
-				throw (new GrepException(e));
+	}
+
+	private boolean setScopeFromRequest(HttpServletRequest req, HttpServletResponse resp) {
+		try {
+			String pathInfo = options.getScope();
+			// Remove the file servlet prefix
+			if (pathInfo != null) {
+				pathInfo = pathInfo.replaceFirst("/file", "");
 			}
-		} else {
-			scopes.add(new File(file.toURI()));
+			IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
+			// prevent path canonicalization hacks
+			if (pathInfo != null && !pathInfo.equals(path.toString())) {
+				return false;
+			}
+			// don't allow anyone to mess with metadata
+			if (path.segmentCount() > 0 && ".metadata".equals(path.segment(0))) { //$NON-NLS-1$
+				return false;
+			}
+			// Must have a path
+			if (path.segmentCount() == 0) {
+				return false;
+			}
+
+			WorkspaceInfo workspaceInfo = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+			if (workspaceInfo == null || workspaceInfo.getUniqueId() == null) {
+				return false;
+			}
+			if (path.segmentCount() == 1) {
+				// Bug 415700: handle path format /workspaceId 
+				if (workspaceInfo != null && workspaceInfo.getUniqueId() != null) {
+					addProjectToScope(workspaceInfo);
+					return true;
+				}
+
+				return false;
+			}
+			//path format is /workspaceId/projectName/[suffix]
+			ProjectInfo projectInfo = OrionConfiguration.getMetaStore().readProject(workspaceInfo.getUniqueId(), path.segment(1));
+			if (projectInfo != null) {
+				IFileStore projectStore = projectInfo.getProjectStore();
+				IFileStore scopeStore = projectStore.getFileStore(path.removeFirstSegments(2));
+				GrepResult scope = new GrepResult(scopeStore, workspaceInfo, projectInfo);
+				scopes.add(scope);
+				return true;
+			}
+			// Bug 415700: handle path format /workspaceId/[file] 
+			if (path.segmentCount() == 2) {
+				IFileStore workspaceStore = OrionConfiguration.getMetaStore().getWorkspaceContentLocation(workspaceInfo.getUniqueId());
+				IFileStore scopeStore = workspaceStore.getChild(path.segment(1));
+				GrepResult scope = new GrepResult(scopeStore, workspaceInfo, null);
+				scopes.add(scope);
+				return true;
+			}
+
+			return false;
+		} catch (CoreException e) {
+			return false;
+		}
+	}
+
+	/**
+	 * Sets the scopes to the location of each project.
+	 * @param req The request from the servlet.
+	 * @param res The response to the servlet.
+	 * @throws GrepException Thrown if there is an error reading a file.
+	 */
+	private void setDefaultScopes(HttpServletRequest req, HttpServletResponse resp) throws GrepException {
+		String login = req.getRemoteUser();
+		try {
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, login, false, false);
+			List<String> workspaceIds = userInfo.getWorkspaceIds();
+			for (String workspaceId : workspaceIds) {
+				WorkspaceInfo workspaceInfo = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
+				addProjectToScope(workspaceInfo);
+			}
+		} catch (CoreException e) {
+			throw (new GrepException(e));
+		}
+	}
+
+	private void addProjectToScope(WorkspaceInfo workspaceInfo) throws CoreException {
+		List<String> projectnames = workspaceInfo.getProjectNames();
+		for (String projectName : projectnames) {
+			ProjectInfo projectInfo = OrionConfiguration.getMetaStore().readProject(workspaceInfo.getUniqueId(), projectName);
+			GrepResult scope = new GrepResult(projectInfo.getProjectStore(), workspaceInfo, projectInfo);
+			scopes.add(scope);
 		}
 	}
 }

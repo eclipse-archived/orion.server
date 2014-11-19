@@ -12,6 +12,8 @@ package org.eclipse.orion.internal.server.search.grep;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -22,7 +24,7 @@ import javax.servlet.http.HttpServletResponse;
 public class SearchOptions {
 
 	private String searchTerm;
-	private String[] filenames;
+	private List<String> filenames;
 
 	private boolean caseSensitive;
 	private boolean regEx;
@@ -31,6 +33,7 @@ public class SearchOptions {
 	private String scope;
 
 	public SearchOptions() {
+		filenames = new LinkedList<String>();
 	}
 
 	/**
@@ -42,6 +45,7 @@ public class SearchOptions {
 	 */
 	public SearchOptions(HttpServletRequest req, HttpServletResponse resp) throws GrepException {
 		try {
+			filenames = new LinkedList<String>();
 			String queryString = req.getParameter("q");
 			if (queryString != null)
 				searchTerm = URLDecoder.decode(queryString, "UTF-8");
@@ -49,8 +53,12 @@ public class SearchOptions {
 			fileSearch = searchTerm != null && !searchTerm.isEmpty();
 
 			queryString = req.getParameter("qf");
-			if (queryString != null)
-				filenames = URLDecoder.decode(queryString, "UTF-8").split(",");
+			if (queryString != null) {
+				String[] tempNames = URLDecoder.decode(queryString, "UTF-8").split(",");
+				for (int i = 0; i < tempNames.length; i++) {
+					filenames.add(tempNames[i]);
+				}
+			}
 
 			queryString = req.getParameter("qs");
 			if (queryString != null)
@@ -82,12 +90,12 @@ public class SearchOptions {
 	/**
 	 * Returns the list of filename patterns
 	 */
-	public String[] getFilenamePatterns() {
+	public List<String> getFilenamePatterns() {
 		return filenames;
 	}
 
-	public void setFilenamePatterns(String[] filenames) {
-		this.filenames = filenames;
+	public void addFilenamePatterns(String filename) {
+		filenames.add(filename);
 	}
 
 	/**

@@ -10,10 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search.grep;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.solr.common.params.CommonParams;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -43,7 +44,7 @@ public class GrepServlet extends OrionServlet {
 		try {
 			SearchOptions options = buildSearchOptions(req, resp);
 			FileGrepper grepper = new FileGrepper(req, resp, options);
-			List<File> files = grepper.search();
+			List<GrepResult> files = grepper.search();
 			writeResponse(req, resp, files);
 		} catch (GrepException e) {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
@@ -127,7 +128,7 @@ public class GrepServlet extends OrionServlet {
 		return false;
 	}
 
-	private void writeResponse(HttpServletRequest req, HttpServletResponse resp, List<File> files) {
+	private void writeResponse(HttpServletRequest req, HttpServletResponse resp, List<GrepResult> files) {
 		try {
 			JSONObject json = convertListToJson(files);
 			PrintWriter writer = resp.getWriter();
@@ -137,27 +138,29 @@ public class GrepServlet extends OrionServlet {
 		}
 	}
 
-	private JSONObject convertListToJson(List<File> files) {
-		JSONObject json = new JSONObject();
+	private JSONObject convertListToJson(List<GrepResult> files) {
+		JSONObject resultsJSON = new JSONObject();
+		JSONObject responseJSON = new JSONObject();
 		try {
-			json.put("numFound", files.size());
-			json.put("start", 0);
+			resultsJSON.put("numFound", files.size());
+			resultsJSON.put("start", 0);
 
 			JSONArray docs = new JSONArray();
-			for (File file : files) {
-				JSONObject doc = new JSONObject();
-				doc.put("Name", file.getName());
-				doc.put("Length", file.length());
-				doc.put("Directory", file.isDirectory());
-				doc.put("LastModified", file.lastModified());
-				doc.put("Location", file.getAbsolutePath());
-				doc.put("Path", file.getAbsolutePath());
-				docs.put(doc);
+			for (GrepResult file : files) {
+				docs.put(file.toJSON());
 			}
-			json.put("docs", docs);
+			resultsJSON.put("docs", docs);
+			// Add to parent JSON
+			responseJSON.put("responseHeader", "");
+			responseJSON.put("response", resultsJSON);
 		} catch (JSONException e) {
 			e.printStackTrace();
+		} catch (CoreException e) {
+
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
 		}
-		return json;
+		return responseJSON;
 	}
+
 }

@@ -60,8 +60,9 @@ public class SearchServlet extends OrionServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 
-		if (PreferenceHelper.getString(ServerConstants.CONFIG_GREP_SEARCH_ENABLED) == "true") {
+		if (PreferenceHelper.getString(ServerConstants.CONFIG_GREP_SEARCH_ENABLED, "false").equals("true")) {
 			grepServlet.doGet(req, resp);
+			return;
 		}
 
 		SolrQuery query = buildSolrQuery(req);
