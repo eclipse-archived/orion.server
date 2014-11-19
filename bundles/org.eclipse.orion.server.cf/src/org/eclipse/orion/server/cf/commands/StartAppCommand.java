@@ -22,7 +22,6 @@ import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
-import org.eclipse.orion.server.cf.utils.MultiServerStatus;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
@@ -52,7 +51,6 @@ public class StartAppCommand extends AbstractCFCommand {
 
 	public ServerStatus _doIt() {
 		/* multi server status */
-		MultiServerStatus result = new MultiServerStatus();
 
 		try {
 			URI targetURI = URIUtil.toURI(target.getUrl());
@@ -71,9 +69,8 @@ public class StartAppCommand extends AbstractCFCommand {
 			startMethod.setRequestEntity(requestEntity);
 
 			ServerStatus startStatus = HttpUtil.executeMethod(startMethod);
-			result.add(startStatus);
-			if (!result.isOK())
-				return result;
+			if (!startStatus.isOK())
+				return startStatus;
 
 			if (timeout < 0) {
 				/* extract user defined timeout if present */
@@ -87,7 +84,7 @@ public class StartAppCommand extends AbstractCFCommand {
 			int attemptsLeft = timeout / 2;
 
 			String msg = NLS.bind("Can not start the application", commandName); //$NON-NLS-1$
-			ServerStatus getInstancesStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
+			ServerStatus checkAppStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 
 			while (attemptsLeft > 0) {
 
@@ -101,13 +98,13 @@ public class StartAppCommand extends AbstractCFCommand {
 				GetMethod getInstancesMethod = new GetMethod(appInstancesURI.toString());
 				HttpUtil.configureHttpMethod(getInstancesMethod, target);
 
-				getInstancesStatus = HttpUtil.executeMethod(getInstancesMethod);
-				if (!getInstancesStatus.isOK()) {
+				checkAppStatus = HttpUtil.executeMethod(getInstancesMethod);
+				if (!checkAppStatus.isOK()) {
 					--attemptsLeft;
 					continue;
 				}
 
-				JSONObject appInstancesJSON = getInstancesStatus.getJsonData();
+				JSONObject appInstancesJSON = checkAppStatus.getJsonData();
 
 				int instancesNo = appInstancesJSON.length();
 				int runningInstanceNo = 0;
@@ -123,17 +120,24 @@ public class StartAppCommand extends AbstractCFCommand {
 						flappingInstanceNo++;
 				};
 
-				if (runningInstanceNo == instancesNo)
+				if (runningInstanceNo == instancesNo) {
 					break;
+				}
 
-				if (flappingInstanceNo > 0)
+				if (flappingInstanceNo > 0) {
+					msg = NLS.bind("Can not start the application", commandName); //$NON-NLS-1$
+					checkAppStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, checkAppStatus.getJsonData(), null);
 					break;
+				}
 
 				--attemptsLeft;
+				if (attemptsLeft == 0) {
+					msg = NLS.bind("Can not start the application", commandName); //$NON-NLS-1$
+					checkAppStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, checkAppStatus.getJsonData(), null);
+				}
 			}
 
-			result.add(getInstancesStatus);
-			return result;
+			return checkAppStatus;
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);

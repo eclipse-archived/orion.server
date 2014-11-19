@@ -31,4 +31,13 @@ public class LoggregatorListener {
 			}
 		return messagesJSON;
 	}
+
+	public String getString() {
+		StringBuffer buff = new StringBuffer();
+		if (messages != null)
+			for (Iterator<String> iterator = messages.iterator(); iterator.hasNext();) {
+				buff.append(iterator.next()).append("\n");
+			}
+		return buff.toString();
+	}
 }

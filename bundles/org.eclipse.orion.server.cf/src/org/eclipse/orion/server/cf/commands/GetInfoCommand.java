@@ -28,7 +28,7 @@ public class GetInfoCommand extends AbstractCFCommand {
 
 	private String commandName;
 
-	public GetInfoCommand(String userId, Cloud cloud) {
+	public GetInfoCommand(Cloud cloud) {
 		super(cloud);
 		this.commandName = "Get Info";
 	}

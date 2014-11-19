@@ -66,7 +66,7 @@ public class InfoHandlerV1 extends AbstractRESTHandler<Info> {
 						return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
 					}
 
-					return new GetInfoCommand(this.userId, target.getCloud()).doIt();
+					return new GetInfoCommand(target.getCloud()).doIt();
 				} catch (Exception e) {
 					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);

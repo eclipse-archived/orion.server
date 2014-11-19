@@ -96,11 +96,12 @@ public class GetLogCommand extends AbstractCFCommand {
 
 					LoggregatorMessage.Message message = LoggregatorMessage.Message.parseFrom(bb.toByteArray());
 					listener.add(message.getMessage().toStringUtf8());
+
+					nextPart = multipartStream.readBoundary();
 				} catch (Exception ex) {
+					nextPart = false;
 					logger.error("Problem while reading logs", ex);
 				}
-
-				nextPart = multipartStream.readBoundary();
 			}
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
