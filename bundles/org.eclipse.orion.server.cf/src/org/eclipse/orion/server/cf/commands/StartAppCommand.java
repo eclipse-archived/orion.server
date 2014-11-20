@@ -83,7 +83,7 @@ public class StartAppCommand extends AbstractCFCommand {
 			timeout = Math.min(timeout, ManifestConstants.MAX_TIMEOUT);
 			int attemptsLeft = timeout / 2;
 
-			String msg = NLS.bind("Can not start the application", commandName); //$NON-NLS-1$
+			String msg = NLS.bind("An error occurred during application startup", commandName); //$NON-NLS-1$
 			ServerStatus checkAppStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null);
 
 			while (attemptsLeft > 0) {
@@ -125,14 +125,14 @@ public class StartAppCommand extends AbstractCFCommand {
 				}
 
 				if (flappingInstanceNo > 0) {
-					msg = NLS.bind("Can not start the application", commandName); //$NON-NLS-1$
+					msg = NLS.bind("An error occurred during application startup", commandName); //$NON-NLS-1$
 					checkAppStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, checkAppStatus.getJsonData(), null);
 					break;
 				}
 
 				--attemptsLeft;
 				if (attemptsLeft == 0) {
-					msg = NLS.bind("Can not start the application", commandName); //$NON-NLS-1$
+					msg = NLS.bind("An error occurred during application startup", commandName); //$NON-NLS-1$
 					checkAppStatus = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, checkAppStatus.getJsonData(), null);
 				}
 			}
