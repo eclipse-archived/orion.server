@@ -12,19 +12,21 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.io.IOException;
 import java.net.URI;
-
+import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.servlets.*;
+import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.metastore.*;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Servlet for accessing workspace metadata.
@@ -34,11 +36,16 @@ public class WorkspaceServlet extends OrionServlet {
 	 * Version number of java serialization.
 	 */
 	private static final long serialVersionUID = 1L;
+	private final Logger logger;
+
+	//used for logging first workspace access per server instance
+	private final Set<String> activeUsers = Collections.synchronizedSet(new HashSet<String>());
 
 	private ServletResourceHandler<WorkspaceInfo> workspaceResourceHandler;
 
 	public WorkspaceServlet() {
 		workspaceResourceHandler = new WorkspaceResourceHandler(getStatusHandler());
+		this.logger = LoggerFactory.getLogger("org.eclipse.orion.server.workspace"); //$NON-NLS-1$
 	}
 
 	/**
@@ -51,6 +58,9 @@ public class WorkspaceServlet extends OrionServlet {
 			handleException(response, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "User name not specified"), HttpServletResponse.SC_FORBIDDEN);
 			return false;
 		}
+		//if this is the first access for this user, log it
+		if (logger != null && logger.isInfoEnabled() && activeUsers.add(userId))
+			logger.info("FirstAccess: " + userId); //$NON-NLS-1$
 		return true;
 	}
 

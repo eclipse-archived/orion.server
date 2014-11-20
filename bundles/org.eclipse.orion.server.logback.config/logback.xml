@@ -23,6 +23,9 @@
   <!-- Prints successful and failed logins -->
   <logger name="org.eclipse.orion.server.login" level="INFO"/>
 
+  <!-- Prints access to workspace -->
+  <!-- <logger name="org.eclipse.orion.server.workspace" level="INFO"/> -->
+
   <!-- Prints user account creations and deletions -->
   <logger name="org.eclipse.orion.server.account" level="INFO"/>
 
