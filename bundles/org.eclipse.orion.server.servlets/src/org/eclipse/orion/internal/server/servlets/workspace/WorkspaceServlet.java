@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2013 IBM Corporation and others.
+ * Copyright (c) 2010, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,7 +12,6 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.*;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -38,9 +37,6 @@ public class WorkspaceServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
 	private final Logger logger;
 
-	//used for logging first workspace access per server instance
-	private final Set<String> activeUsers = Collections.synchronizedSet(new HashSet<String>());
-
 	private ServletResourceHandler<WorkspaceInfo> workspaceResourceHandler;
 
 	public WorkspaceServlet() {
@@ -59,8 +55,8 @@ public class WorkspaceServlet extends OrionServlet {
 			return false;
 		}
 		//if this is the first access for this user, log it
-		if (logger != null && logger.isInfoEnabled() && activeUsers.add(userId))
-			logger.info("FirstAccess: " + userId); //$NON-NLS-1$
+		if (logger != null && logger.isInfoEnabled())
+			logger.info("WorkspaceAccess: " + userId); //$NON-NLS-1$
 		return true;
 	}
 
