@@ -69,15 +69,6 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 	}
 
 	@Override
-	protected boolean handleDirectory(File directory, int depth, Collection<File> results) throws IOException {
-		if (directory.getName().equals(".git")) {
-			return false;
-		} else {
-			return true;
-		}
-	}
-
-	@Override
 	protected void handleFile(final File file, final int depth, final Collection<File> results) throws IOException {
 		results.add(file);
 	}
