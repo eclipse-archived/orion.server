@@ -63,10 +63,10 @@ public class FileChangeListener implements IFileChangeListener {
 		try {
 			long time = System.currentTimeMillis();
 
-			IFileStore folder = null;
+			IFileStore folder = file;
 			IFileStore project = null;
 			String path = file.getName();
-			while ((folder = file.getParent()) != null && project == null) {
+			while ((folder = folder.getParent()) != null && project == null) {
 				String[] childNames = folder.childNames(EFS.NONE, null);
 				for (int i = 0; i < childNames.length; i++) {
 					if (childNames[i].equals("project.json")) {
@@ -125,14 +125,18 @@ public class FileChangeListener implements IFileChangeListener {
 	}
 
 	private byte[] getContent(InputStream responseStream) throws IOException {
-		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		int readBytes;
-		byte[] data = new byte[1024];
-		while ((readBytes = responseStream.read(data, 0, data.length)) != -1) {
-			buffer.write(data, 0, readBytes);
-		}
+		try {
+			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+			int readBytes;
+			byte[] data = new byte[1024];
+			while ((readBytes = responseStream.read(data, 0, data.length)) != -1) {
+				buffer.write(data, 0, readBytes);
+			}
 
-		byte[] content = buffer.toByteArray();
-		return content;
+			byte[] content = buffer.toByteArray();
+			return content;
+		} finally {
+			responseStream.close();
+		}
 	}
 }
