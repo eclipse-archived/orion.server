@@ -17,3 +17,4 @@ Bundle-ClassPath: lib/mqtt-client-0.4.0.jar,
  .
 Service-Component: OSGI-INF/*.xml
 Bundle-ActivationPolicy: lazy
+Export-Package: org.eclipse.orion.internal.server.events

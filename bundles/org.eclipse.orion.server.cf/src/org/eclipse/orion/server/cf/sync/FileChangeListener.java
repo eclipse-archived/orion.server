@@ -48,5 +48,6 @@ public class FileChangeListener implements IFileChangeListener {
 	@Override
 	public void fileUpdated(IFileStore file) {
 		// TODO Auto-generated method stub
+		System.out.println(file);
 	}
 }
