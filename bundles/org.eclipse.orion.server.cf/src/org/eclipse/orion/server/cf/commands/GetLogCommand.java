@@ -10,12 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.commands;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.fileupload.MultipartStream;
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
@@ -23,6 +21,7 @@ import org.eclipse.orion.server.cf.loggregator.LoggregatorListener;
 import org.eclipse.orion.server.cf.loggregator.LoggregatorMessage;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
+import org.eclipse.orion.server.cf.utils.MultipartMessageReader;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
@@ -81,27 +80,21 @@ public class GetLogCommand extends AbstractCFCommand {
 				logger.error(msg);
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, null);
 			}
-			byte[] buffer = boundary.getBytes();
 
 			InputStream responseStream = getLogMethod.getResponseBodyAsStream();
-			MultipartStream multipartStream = new MultipartStream(responseStream, buffer, 1024);
-
-			boolean nextPart = multipartStream.skipPreamble();
-			while (nextPart) {
-				try {
-					multipartStream.readHeaders();
-
-					ByteArrayOutputStream bb = new ByteArrayOutputStream();
-					multipartStream.readBodyData(bb);
-
-					LoggregatorMessage.Message message = LoggregatorMessage.Message.parseFrom(bb.toByteArray());
-					listener.add(message.getMessage().toStringUtf8());
-
-					nextPart = multipartStream.readBoundary();
-				} catch (Exception ex) {
-					nextPart = false;
-					logger.error("Problem while reading logs", ex);
+			try {
+				byte[] messageBody = getMessageBody(responseStream);
+				MultipartMessageReader multipartReader = new MultipartMessageReader(boundary, messageBody);
+				while (multipartReader.readNextPart()) {
+					try {
+						LoggregatorMessage.Message message = LoggregatorMessage.Message.parseFrom(multipartReader.getPart());
+						listener.add(message.getMessage().toStringUtf8());
+					} catch (Exception ex) {
+						logger.error("Problem while reading logs", ex);
+					}
 				}
+			} finally {
+				responseStream.close();
 			}
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
@@ -110,5 +103,17 @@ public class GetLogCommand extends AbstractCFCommand {
 			logger.error(msg, e);
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 		}
+	}
+
+	private byte[] getMessageBody(InputStream responseStream) throws IOException {
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		int readBytes;
+		byte[] data = new byte[1024];
+		while ((readBytes = responseStream.read(data, 0, data.length)) != -1) {
+			buffer.write(data, 0, readBytes);
+		}
+
+		byte[] messageBody = buffer.toByteArray();
+		return messageBody;
 	}
 }
