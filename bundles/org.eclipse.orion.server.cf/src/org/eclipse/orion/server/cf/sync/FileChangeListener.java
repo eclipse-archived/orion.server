@@ -12,41 +12,42 @@ package org.eclipse.orion.server.cf.sync;
 
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.orion.server.core.events.IFileChangeListener;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
 
 public class FileChangeListener implements IFileChangeListener {
 
 	@Override
-	public void directoryCreated(IFileStore directory) {
+	public void directoryCreated(IFileStore directory, ProjectInfo projectInfo) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void directoryDeleted(IFileStore directory) {
+	public void directoryDeleted(IFileStore directory, ProjectInfo projectInfo) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void directoryUpdated(IFileStore directory) {
+	public void directoryUpdated(IFileStore directory, ProjectInfo projectInfo) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void fileCreated(IFileStore file) {
+	public void fileCreated(IFileStore file, ProjectInfo projectInfo) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void fileDeleted(IFileStore file) {
+	public void fileDeleted(IFileStore file, ProjectInfo projectInfo) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void fileUpdated(IFileStore file) {
+	public void fileUpdated(IFileStore file, ProjectInfo projectInfo) {
 		// TODO Auto-generated method stub
 		System.out.println(file);
 	}
