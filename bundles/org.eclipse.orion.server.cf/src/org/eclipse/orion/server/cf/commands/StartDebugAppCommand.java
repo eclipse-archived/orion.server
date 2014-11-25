@@ -34,27 +34,35 @@ public class StartDebugAppCommand extends AbstractCFCommand {
 
 	private String commandName;
 	private App app;
-	private int timeout;
+	private String url;
 
 	public StartDebugAppCommand(Target target, App app) {
 		super(target);
 		this.commandName = "Start App"; //$NON-NLS-1$
 		this.app = app;
-		this.timeout = -1;
+	}
+
+	public StartDebugAppCommand(String url) {
+		super((Target) null);
+		this.commandName = "Start App"; //$NON-NLS-1$
+		this.url = url;
 	}
 
 	public ServerStatus _doIt() {
 		try {
-			JSONArray routes = app.getSummaryJSON().optJSONArray("routes");
-			if (routes == null) {
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "No routes", null);
+			if (url == null) {
+				JSONArray routes = app.getSummaryJSON().optJSONArray("routes");
+				if (routes == null) {
+					return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "No routes", null);
+				}
+
+				JSONObject route = routes.getJSONObject(0);
+				String host = route.getString("host");
+				String domain = route.getJSONObject("domain").getString("name");
+				url = host + "." + domain;
 			}
 
-			JSONObject route = routes.getJSONObject(0);
-			String host = route.getString("host");
-			String domain = route.getJSONObject("domain").getString("name");
-
-			String appUrl = "http://" + host + "." + domain + "/launcher/apps/target";
+			String appUrl = "http://" + url + "/launcher/apps/target";
 			URI appURI = URIUtil.toURI(new URL(appUrl));
 
 			PutMethod startMethod = new PutMethod(appURI.toString());

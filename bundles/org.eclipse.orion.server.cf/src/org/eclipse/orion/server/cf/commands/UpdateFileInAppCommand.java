@@ -21,7 +21,6 @@ import org.apache.commons.httpclient.methods.PutMethod;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFActivator;
-import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -38,14 +37,13 @@ public class UpdateFileInAppCommand extends AbstractCFCommand {
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
-	private App application;
 	private String uri; // TODO get route from app
 	private String path;
 	private byte[] contents;
 
 	private String cfLauncherPrefix = "/launcher"; // FIXME hardcoded
 	private String cfLauncherUsername = "vcap"; // FIXME hardcoded
-	private String cfLauncherPassword = "hi"; // FIXME hardcoded
+	private String cfLauncherPassword = "holydiver"; // FIXME hardcoded
 	private String cfLauncherAuth;
 
 	/**
@@ -56,10 +54,9 @@ public class UpdateFileInAppCommand extends AbstractCFCommand {
 	 * @param path The path of the file to be updated, relative to the app store. Should NOT have a leading "/"
 	 * @param contents File contents.
 	 */
-	public UpdateFileInAppCommand(Target target, App app, String uri, String path, byte contents[]) {
-		super(target);
+	public UpdateFileInAppCommand(String uri, String path, byte contents[]) {
+		super((Target) null);
 		this.commandName = "Update file in app";
-		this.application = app;
 		this.uri = uri;
 		this.path = path;
 		this.contents = contents;

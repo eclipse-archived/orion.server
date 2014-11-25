@@ -35,6 +35,7 @@ public class StopDebugAppCommand extends AbstractCFCommand {
 
 	private String commandName;
 	private App app;
+	private String url;
 
 	public StopDebugAppCommand(Target target, App app) {
 		super(target);
@@ -42,18 +43,27 @@ public class StopDebugAppCommand extends AbstractCFCommand {
 		this.app = app;
 	}
 
+	public StopDebugAppCommand(String url) {
+		super((Target) null);
+		this.commandName = "Stop Debug App"; //$NON-NLS-1$
+		this.url = url;
+	}
+
 	public ServerStatus _doIt() {
 		try {
-			JSONArray routes = app.getSummaryJSON().optJSONArray("routes");
-			if (routes == null) {
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "No routes", null);
+			if (url == null) {
+				JSONArray routes = app.getSummaryJSON().optJSONArray("routes");
+				if (routes == null) {
+					return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "No routes", null);
+				}
+
+				JSONObject route = routes.getJSONObject(0);
+				String host = route.getString("host");
+				String domain = route.getJSONObject("domain").getString("name");
+				url = host + "." + domain;
 			}
 
-			JSONObject route = routes.getJSONObject(0);
-			String host = route.getString("host");
-			String domain = route.getJSONObject("domain").getString("name");
-
-			String appUrl = "http://" + host + "." + domain + "/launcher/apps/target";
+			String appUrl = "http://" + url + "/launcher/apps/target";
 			URI appURI = URIUtil.toURI(new URL(appUrl));
 
 			PutMethod stopMethod = new PutMethod(appURI.toString());
