@@ -10,14 +10,20 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf;
 
+import org.eclipse.orion.server.cf.sync.FileChangeListener;
+
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.orion.server.core.events.IFileChangeListener;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.orion.server.core.events.IFileChangeListener;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.params.HttpClientParams;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.eclipse.orion.server.cf.ds.*;
 import org.eclipse.orion.server.cf.utils.TargetRegistry;
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
+import org.eclipse.orion.server.core.events.IFileChangeNotificationService;
+import org.osgi.framework.*;
 import org.osgi.util.tracker.ServiceTracker;
 
 /**
@@ -52,6 +58,18 @@ public class CFActivator implements BundleActivator {
 		DeploymentServiceTracker customer = new DeploymentServiceTracker(context);
 		serviceTracker = new ServiceTracker<DeploymentService, IDeploymentService>(context, DeploymentService.class.getName(), customer);
 		serviceTracker.open();
+
+		ServiceReference<IFileChangeNotificationService> serviceRef = context.getServiceReference(IFileChangeNotificationService.class);
+		if (serviceRef == null) {
+			return;
+		}
+
+		IFileChangeNotificationService fileChangeNotificationService = context.getService(serviceRef);
+		if (fileChangeNotificationService == null) {
+			return;
+		}
+		
+		fileChangeNotificationService.addListener(new FileChangeListener());
 	}
 
 	/*
