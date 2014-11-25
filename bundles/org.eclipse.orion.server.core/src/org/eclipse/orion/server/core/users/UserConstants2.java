@@ -43,6 +43,11 @@ public class UserConstants2 {
 	 * JSON representation key for a user's email address confirmation. The value's data type is a String.
 	 */
 	public static final String EMAIL_CONFIRMATION_ID = "EmailConfirmationId"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for whether a user has a confirmed email address. The value's data type is a Boolean.
+	 */
+	public static final String EMAIL_CONFIRMED = "EmailConfirmed"; //$NON-NLS-1$
 	
 	/**
 	 * JSON representation key for a user's full name. The value's data type is a String.
@@ -50,14 +55,34 @@ public class UserConstants2 {
 	public static final String FULL_NAME = "FullName"; //$NON-NLS-1$
 
 	/**
+	 * JSON representation key for whether a user has a password. The value's data type is a Boolean.
+	 */
+	public static final String HAS_PASSWORD = "HasPassword"; //$NON-NLS-1$
+
+	/**
 	 * JSON representation key for a user's last login timestamp. The value's data type is a String.
 	 */
 	public static final String LAST_LOGIN_TIMESTAMP = "LastLoginTimestamp";
 
 	/**
+	 * JSON representation key for the URL for a user's profile. The value's data type is a String.
+	 */
+	public static final String LOCATION = "Location"; //$NON-NLS-1$
+
+	/**
+	 * The root location of the users servlet.
+	 */
+	public static final String LOCATION_USERS_SERVLET = "/users"; //$NON-NLS-1$
+
+	/**
 	 * JSON representation key for a user's OAuth 2.0 Id. The value's data type is a String.
 	 */
 	public static final String OAUTH = "OAuth"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for a user's old password. The value's data type is a String.
+	 */
+	public static final String OLD_PASSWORD = "OldPassword"; //$NON-NLS-1$
 
 	/**
 	 * JSON representation key for a user's openid. The value's data type is a String.
@@ -73,10 +98,14 @@ public class UserConstants2 {
 	 * JSON representation key for a user's password reset id. The value's data type is a String.
 	 */
 	public static final String PASSWORD_RESET_ID = "PasswordResetId"; //$NON-NLS-1$
-	
+
+	/**
+	 * JSON representation key to request a user's password to be reset. The value's data type is a Boolean.
+	 */
+	public static final String RESET = "Reset"; //$NON-NLS-1$
+
 	/**
 	 * JSON representation key for a user's name, the login or short account name. The value's data type is a String.
 	 */
 	public static final String USER_NAME = "UserName"; //$NON-NLS-1$
-
 }

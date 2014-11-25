@@ -18,20 +18,17 @@ import static org.junit.Assert.fail;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.internal.server.servlets.useradmin.UserHandlerV1;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.core.users.UserConstants2;
-import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -53,9 +50,18 @@ public class BasicUsersTest extends UsersTest {
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		JSONObject responseObject = new JSONObject(response.getText());
-		assertTrue("Invalid format of response.", responseObject.has(UserConstants.KEY_USERS));
-		JSONArray usersArray = responseObject.getJSONArray(UserConstants.KEY_USERS);
+		assertTrue("Invalid format of response.", responseObject.has(UserHandlerV1.USERS));
+		JSONArray usersArray = responseObject.getJSONArray(UserHandlerV1.USERS);
 		assertTrue("Too small number of users returned", usersArray.length() > 1);
+		assertTrue(responseObject.has(UserHandlerV1.USERS_START));
+		assertTrue(responseObject.has(UserHandlerV1.USERS_ROWS));
+		assertTrue(responseObject.has(UserHandlerV1.USERS_LENGTH));
+		assertEquals(0, responseObject.getInt(UserHandlerV1.USERS_START));
+		if (usersArray.length() <= 20) {
+			assertEquals(usersArray.length(), responseObject.getInt(UserHandlerV1.USERS_LENGTH));
+		} else {
+			assertTrue(responseObject.getInt(UserHandlerV1.USERS_LENGTH) > 20);
+		}
 	}
 
 	@Test
@@ -75,18 +81,18 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Test
-	public void testCreateDuplicateUser() throws IOException, SAXException {
+	public void testCreateDuplicateUser() throws IOException, SAXException, JSONException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
 		// create user
-		Map<String, String> params = new HashMap<String, String>();
-		params.put(UserConstants.KEY_LOGIN, "testDupUser");
-		params.put(UserConstants2.FULL_NAME, "username_testCreateDuplicateUser");
-		params.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
-		WebRequest request = getPostUsersRequest("", params, true);
+		JSONObject json = new JSONObject();
+		json.put(UserConstants2.USER_NAME, "testDupUser");
+		json.put(UserConstants2.FULL_NAME, "username_testCreateDuplicateUser");
+		json.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
+		WebRequest request = getPostUsersRequest("", json, true);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 		//try creating same user again
 		response = webConversation.getResponse(request);
@@ -94,46 +100,46 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Test
-	public void testCreateUserDuplicateEmail() throws IOException, SAXException {
+	public void testCreateUserDuplicateEmail() throws IOException, SAXException, JSONException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
 		// create user
-		Map<String, String> params = new HashMap<String, String>();
-		params.put(UserConstants.KEY_LOGIN, "testDupEmail");
-		params.put(UserConstants2.FULL_NAME, "username_testCreateUserDuplicateEmail");
-		params.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
-		params.put(UserConstants2.EMAIL, "username@example.com");
-		WebRequest request = getPostUsersRequest("", params, true);
+		JSONObject json = new JSONObject();
+		json.put(UserConstants2.USER_NAME, "testDupEmail");
+		json.put(UserConstants2.FULL_NAME, "username_testCreateUserDuplicateEmail");
+		json.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
+		json.put(UserConstants2.EMAIL, "username@example.com");
+		WebRequest request = getPostUsersRequest("", json, true);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 		//try creating another user with same email address
-		params.put(UserConstants.KEY_LOGIN, "usertestCreateUserDuplicateEmail2");
-		request = getPostUsersRequest("", params, true);
+		json.put(UserConstants2.USER_NAME, "usertestCreateUserDuplicateEmail2");
+		request = getPostUsersRequest("", json, true);
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
 
 	@Test
-	public void testCreateUserEmailDifferentCase() throws IOException, SAXException {
+	public void testCreateUserEmailDifferentCase() throws IOException, SAXException, JSONException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
 		// create user
-		Map<String, String> params = new HashMap<String, String>();
-		params.put(UserConstants.KEY_LOGIN, "testCaseEmail");
-		params.put(UserConstants2.FULL_NAME, "username_testCreateUserEmailDifferentCase");
-		params.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
-		params.put(UserConstants2.EMAIL, "duplicateemail@example.com");
-		WebRequest request = getPostUsersRequest("", params, true);
+		JSONObject json = new JSONObject();
+		json.put(UserConstants2.USER_NAME, "testCaseEmail");
+		json.put(UserConstants2.FULL_NAME, "username_testCreateUserEmailDifferentCase");
+		json.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
+		json.put(UserConstants2.EMAIL, "duplicateemail@example.com");
+		WebRequest request = getPostUsersRequest("", json, true);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 		//try creating another user with same email address but different case
-		params.put(UserConstants2.EMAIL, "DUPLICATEEMAIL@example.com");
-		params.put(UserConstants.KEY_LOGIN, "testCaseEmail2");
-		request = getPostUsersRequest("", params, true);
+		json.put(UserConstants2.EMAIL, "DUPLICATEEMAIL@example.com");
+		json.put(UserConstants2.USER_NAME, "testCaseEmail2");
+		request = getPostUsersRequest("", json, true);
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 	}
@@ -152,16 +158,16 @@ public class BasicUsersTest extends UsersTest {
 		//restrict to alphanumeric characters
 		String invalidChars = " !@#$%^&*()-=_+[]{}\";':\\/><.,`~";
 		for (int i = 0; i < invalidChars.length(); i++) {
-			String name = "bad" + invalidChars.charAt(i) + "name";
+			String username = "bad" + invalidChars.charAt(i) + "name";
 
 			// create user
-			Map<String, String> params = new HashMap<String, String>();
-			params.put(UserConstants.KEY_LOGIN, name);
-			params.put(UserConstants2.FULL_NAME, "Tom");
-			params.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
-			WebRequest request = getPostUsersRequest("", params, true);
+			JSONObject json = new JSONObject();
+			json.put(UserConstants2.USER_NAME, username);
+			json.put(UserConstants2.FULL_NAME, "Tom");
+			json.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
+			WebRequest request = getPostUsersRequest("", json, true);
 			WebResponse response = webConversation.getResponse(request);
-			assertEquals("Should fail with name: " + name, HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
+			assertEquals("Should fail with name: " + username, HttpURLConnection.HTTP_BAD_REQUEST, response.getResponseCode());
 
 		}
 	}
@@ -172,27 +178,27 @@ public class BasicUsersTest extends UsersTest {
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
 		// create user
-		Map<String, String> params = new HashMap<String, String>();
-		params.put(UserConstants.KEY_LOGIN, "user" + System.currentTimeMillis());
-		params.put(UserConstants2.FULL_NAME, "username_" + System.currentTimeMillis());
-		params.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
-		WebRequest request = getPostUsersRequest("", params, true);
+		JSONObject json = new JSONObject();
+		json.put(UserConstants2.USER_NAME, "user" + System.currentTimeMillis());
+		json.put(UserConstants2.FULL_NAME, "username_" + System.currentTimeMillis());
+		json.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
+		WebRequest request = getPostUsersRequest("", json, true);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 		JSONObject responseObject = new JSONObject(response.getText());
 
-		assertTrue("Response should contain user location", responseObject.has(UserConstants.KEY_LOCATION));
+		assertTrue("Response should contain user location", responseObject.has(UserConstants2.LOCATION));
 
 		// check user details
-		String location = responseObject.getString(UserConstants.KEY_LOCATION);
+		String location = responseObject.getString(UserConstants2.LOCATION);
 
-		request = getAuthenticatedRequest(location, METHOD_GET, true);
+		request = getGetUsersRequest(location, true);
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
-		assertEquals("Invalid user login", params.get(UserConstants.KEY_LOGIN), responseObject.getString(UserConstants.KEY_LOGIN));
-		assertEquals("Invalid user name", params.get(UserConstants2.FULL_NAME), responseObject.getString(UserConstants2.FULL_NAME));
+		assertEquals("Invalid user login", json.getString(UserConstants2.USER_NAME), responseObject.getString(UserConstants2.USER_NAME));
+		assertEquals("Invalid user name", json.getString(UserConstants2.FULL_NAME), responseObject.getString(UserConstants2.FULL_NAME));
 		assertFalse("Response shouldn't contain password", responseObject.has(UserConstants2.PASSWORD));
 
 		// check if user can authenticate
@@ -200,7 +206,7 @@ public class BasicUsersTest extends UsersTest {
 
 		// create some project contents to test that delete user also deletes all project contents
 		try {
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUser(params.get(UserConstants.KEY_LOGIN));
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUser(json.getString(UserConstants2.USER_NAME));
 			String workspaceName = "Orion Content";
 			WorkspaceInfo workspaceInfo = new WorkspaceInfo();
 			workspaceInfo.setFullName(workspaceName);
@@ -235,8 +241,8 @@ public class BasicUsersTest extends UsersTest {
 		}
 
 		// delete user
-		request = getAuthenticatedRequest(location, METHOD_DELETE, true);
-		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), params.get(UserConstants2.PASSWORD));
+		request = getDeleteUsersRequest(location, true);
+		setAuthentication(request, json.getString(UserConstants2.USER_NAME), json.getString(UserConstants2.PASSWORD));
 		response = webConversation.getResponse(request);
 		assertEquals("User could not delete his own account, response: " + response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
@@ -247,50 +253,51 @@ public class BasicUsersTest extends UsersTest {
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
 		// create user
-		Map<String, String> params = new HashMap<String, String>();
-		params.put(UserConstants.KEY_LOGIN, "testCrDelRights");
-		params.put(UserConstants2.FULL_NAME, "username_" + System.currentTimeMillis());
-		params.put(UserConstants2.EMAIL, "test@test_" + System.currentTimeMillis());
-		params.put("workspace", "workspace_" + System.currentTimeMillis());
-		params.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
-		WebRequest request = getPostUsersRequest("", params, true);
+		JSONObject json = new JSONObject();
+		json.put(UserConstants2.USER_NAME, "testCrDelRights");
+		json.put(UserConstants2.FULL_NAME, "username_" + System.currentTimeMillis());
+		json.put(UserConstants2.EMAIL, "test@test_" + System.currentTimeMillis());
+		json.put("workspace", "workspace_" + System.currentTimeMillis());
+		json.put(UserConstants2.PASSWORD, "pass_" + System.currentTimeMillis());
+		WebRequest request = getPostUsersRequest("", json, true);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 		JSONObject responseObject = new JSONObject(response.getText());
 
-		assertTrue("Response should contian user uid", responseObject.has(UserConstants.KEY_UID));
+		assertTrue("Response should container user name", responseObject.has(UserConstants2.USER_NAME));
 
-		String uid = responseObject.getString(UserConstants.KEY_UID);
+		String username = responseObject.getString(UserConstants2.USER_NAME);
+		String location = responseObject.getString(UserConstants2.LOCATION);
 
 		// check if user can authenticate
 		request = getGetUsersRequest("", true);
-		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), params.get(UserConstants2.PASSWORD));
+		setAuthentication(request, json.getString(UserConstants2.USER_NAME), json.getString(UserConstants2.PASSWORD));
 		response = webConversation.getResponse(request);
-		assertEquals("User with no roles has admin privileges", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
+		assertEquals("User has no admin privileges", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
+
 		// add admin rights
-
-		AuthorizationService.addUserRight(uid, "/users");
-		AuthorizationService.addUserRight(uid, "/users/*");
+		AuthorizationService.addUserRight(username, "/users");
+		AuthorizationService.addUserRight(username, "/users/*");
 
 		// check if user can authenticate
 		request = getGetUsersRequest("", true);
-		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), params.get(UserConstants2.PASSWORD));
+		setAuthentication(request, json.getString(UserConstants2.USER_NAME), json.getString(UserConstants2.PASSWORD));
 		response = webConversation.getResponse(request);
-		assertEquals("User tried to use his admin role but did not get the valid response: " + response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals("User has no admin privileges", HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// delete admin rights
-		AuthorizationService.removeUserRight(uid, "/users");
-		AuthorizationService.removeUserRight(uid, "/users/*");
+		AuthorizationService.removeUserRight(username, "/users");
+		AuthorizationService.removeUserRight(username, "/users/*");
 
 		// check if user can authenticate
 		request = getGetUsersRequest("", true);
-		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), params.get(UserConstants2.PASSWORD));
+		setAuthentication(request, json.getString(UserConstants2.USER_NAME), json.getString(UserConstants2.PASSWORD));
 		response = webConversation.getResponse(request);
-		assertEquals("User with no roles has admin privileges", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
+		assertEquals("User has no admin privileges", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
 
 		// delete user
-		request = getDeleteUsersRequest(uid, true);
+		request = getDeleteUsersRequest(location, true);
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
@@ -301,51 +308,49 @@ public class BasicUsersTest extends UsersTest {
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
 		// create user
-		Map<String, String> params = new HashMap<String, String>();
-		params.put(UserConstants.KEY_LOGIN, "user" + System.currentTimeMillis());
-		params.put(UserConstants2.FULL_NAME, "username_" + System.currentTimeMillis());
-		params.put("roles", "admin");
+		JSONObject json = new JSONObject();
+		json.put(UserConstants2.USER_NAME, "user" + System.currentTimeMillis());
+		json.put(UserConstants2.FULL_NAME, "username_" + System.currentTimeMillis());
 		String oldPass = "pass_" + System.currentTimeMillis();
-		params.put(UserConstants2.PASSWORD, oldPass);
-		WebRequest request = getPostUsersRequest("", params, true);
+		json.put(UserConstants2.PASSWORD, oldPass);
+		WebRequest request = getPostUsersRequest("", json, true);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 		JSONObject responseObject = new JSONObject(response.getText());
 
-		assertTrue("Response should contian user location", responseObject.has(UserConstants.KEY_LOCATION));
+		assertTrue("Response should contain user location", responseObject.has(UserConstants2.LOCATION));
 
-		String location = responseObject.getString(UserConstants.KEY_LOCATION);
+		String location = responseObject.getString(UserConstants2.LOCATION);
 
 		// update user
 		JSONObject updateBody = new JSONObject();
 		updateBody.put(UserConstants2.FULL_NAME, "usernameUpdate_" + System.currentTimeMillis());
-		updateBody.put("oldPassword", oldPass);
+		updateBody.put(UserConstants2.OLD_PASSWORD, oldPass);
 		updateBody.put(UserConstants2.PASSWORD, "passUpdate_" + System.currentTimeMillis());
-		updateBody.put("roles", "");
 
-		request = getAuthenticatedRequest(location, METHOD_PUT, true, null, updateBody);
+		request = getPutUsersRequest(location, updateBody, true);
 
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// check user details
-		request = getAuthenticatedRequest(location, METHOD_GET, true);
+		request = getGetUsersRequest(location, true);
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseObject = new JSONObject(response.getText());
-		assertEquals("Invalid user login", params.get(UserConstants.KEY_LOGIN), responseObject.getString(UserConstants.KEY_LOGIN));
+		assertEquals("Invalid user login", json.get(UserConstants2.USER_NAME), responseObject.getString(UserConstants2.USER_NAME));
 		assertEquals("Invalid user name", updateBody.getString(UserConstants2.FULL_NAME), responseObject.getString(UserConstants2.FULL_NAME));
 		assertFalse("Response shouldn't contain password", responseObject.has(UserConstants2.PASSWORD));
 
 		// check if user can authenticate and does not have admin role
 		request = getGetUsersRequest("", true);
-		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), updateBody.getString(UserConstants2.PASSWORD));
+		setAuthentication(request, json.getString(UserConstants2.USER_NAME), updateBody.getString(UserConstants2.PASSWORD));
 		response = webConversation.getResponse(request);
 		assertEquals("User with no roles has admin privilegges", HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
 
 		// delete user
-		request = getAuthenticatedRequest(location, METHOD_DELETE, true);
+		request = getDeleteUsersRequest(location, true);
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
@@ -356,87 +361,113 @@ public class BasicUsersTest extends UsersTest {
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
 		// create user
-		Map<String, String> params = new HashMap<String, String>();
+		JSONObject json = new JSONObject();
 		String username = "user" + System.currentTimeMillis();
-		params.put(UserConstants.KEY_LOGIN, username);
-		params.put(UserConstants2.FULL_NAME, "username" + System.currentTimeMillis());
-		params.put("roles", "admin");
+		json.put(UserConstants2.USER_NAME, username);
+		json.put(UserConstants2.FULL_NAME, "username" + System.currentTimeMillis());
+		json.put("roles", "admin");
 		String oldPass = "pass_" + System.currentTimeMillis();
-		params.put(UserConstants2.PASSWORD, oldPass);
-		WebRequest request = getPostUsersRequest("", params, true);
+		json.put(UserConstants2.PASSWORD, oldPass);
+		WebRequest request = getPostUsersRequest("", json, true);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 		JSONObject responseObject = new JSONObject(response.getText());
 
-		assertTrue("Response should contian user location", responseObject.has(UserConstants.KEY_LOCATION));
+		assertTrue("Response should contian user location", responseObject.has(UserConstants2.LOCATION));
 
-		String location = responseObject.getString(UserConstants.KEY_LOCATION);
+		String location = responseObject.getString(UserConstants2.LOCATION);
 
 		//reset password
 		String newPass = "passUpdate_" + System.currentTimeMillis();
-		params = new HashMap<String, String>();
-		params.put(UserConstants.KEY_LOGIN, username);
-		params.put(UserConstants2.PASSWORD, newPass);
-		params.put(UserConstants.KEY_RESET, "true");
-		request = getPostUsersRequest("", params, true);
+		json = new JSONObject();
+		json.put(UserConstants2.USER_NAME, username);
+		json.put(UserConstants2.PASSWORD, newPass);
+		json.put(UserConstants2.RESET, "true");
+		request = getPostUsersRequest(location, json, true);
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// check if user can authenticate
-		request = getAuthenticatedRequest(location, METHOD_GET, true);
-		setAuthentication(request, params.get(UserConstants.KEY_LOGIN), newPass);
+		request = getGetUsersRequest(location, true);
+		setAuthentication(request, json.getString(UserConstants2.USER_NAME), newPass);
 		response = webConversation.getResponse(request);
 		assertEquals("User cannot log in with new credentials", HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// delete user
-		request = getAuthenticatedRequest(location, METHOD_DELETE, true);
+		request = getDeleteUsersRequest(location, true);
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 	}
 
 	@Test
-	public void testChangeUserLogin() throws JSONException, IOException, SAXException {
+	public void testCreateUser() throws JSONException, IOException, SAXException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
-		String login1 = "login1" + System.currentTimeMillis();
+		String username1 = "user1" + System.currentTimeMillis();
 		String password = "pass" + System.currentTimeMillis();
 
 		// create user
-		Map<String, String> params = new HashMap<String, String>();
-		params.put(UserConstants.KEY_LOGIN, login1);
-		params.put(UserConstants2.PASSWORD, password);
-		WebRequest request = getPostUsersRequest("", params, true);
+		JSONObject json = new JSONObject();
+		json.put(UserConstants2.USER_NAME, username1);
+		json.put(UserConstants2.PASSWORD, password);
+		WebRequest request = getPostUsersRequest("", json, true);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 		JSONObject responseObject = new JSONObject(response.getText());
 
-		assertTrue("Response should contian user location", responseObject.has(UserConstants.KEY_LOCATION));
+		assertTrue(responseObject.has(UserConstants2.LOCATION));
+		assertEquals("/users/" + username1, responseObject.getString(UserConstants2.LOCATION));
+		assertTrue(responseObject.getBoolean(UserConstants2.HAS_PASSWORD));
+		assertFalse(responseObject.getBoolean(UserConstants2.EMAIL_CONFIRMED));
+		assertTrue(responseObject.has(UserConstants2.USER_NAME));
+		assertEquals(username1, responseObject.getString(UserConstants2.USER_NAME));
+		assertTrue(responseObject.has(UserConstants2.FULL_NAME));
+		assertEquals(username1, responseObject.getString(UserConstants2.FULL_NAME));
+	}
 
-		String location = responseObject.getString(UserConstants.KEY_LOCATION);
+	@Test
+	public void testChangeUserName() throws JSONException, IOException, SAXException {
+		WebConversation webConversation = new WebConversation();
+		webConversation.setExceptionsThrownOnErrorStatus(false);
 
-		String login2 = "login2" + System.currentTimeMillis();
+		String username1 = "user1" + System.currentTimeMillis();
+		String password = "pass" + System.currentTimeMillis();
+
+		// create user
+		JSONObject json = new JSONObject();
+		json.put(UserConstants2.USER_NAME, username1);
+		json.put(UserConstants2.PASSWORD, password);
+		WebRequest request = getPostUsersRequest("", json, true);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		JSONObject responseObject = new JSONObject(response.getText());
+
+		assertTrue("Response should contian user location", responseObject.has(UserConstants2.LOCATION));
+
+		String location = responseObject.getString(UserConstants2.LOCATION);
+
+		String username2 = "user2" + System.currentTimeMillis();
 		JSONObject updateBody = new JSONObject();
-		updateBody.put(UserConstants.KEY_LOGIN, login2);
+		updateBody.put(UserConstants2.USER_NAME, username2);
 
-		request = getAuthenticatedRequest(location, METHOD_PUT, true, null, updateBody);
+		request = getPutUsersRequest(location, updateBody, true);
 		response = webConversation.getResponse(request);
 		assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-		if (OrionConfiguration.getMetaStore() instanceof SimpleMetaStore) {
-			// When you rename the user, the location becomes /users/{newUser}
-			location = "/users/" + login2;
-		}
+		// When you rename the user, the location becomes /users/{newUser}
+		location = "/users/" + username2;
 
-		request = getAuthenticatedRequest(location, METHOD_GET, true);
-		setAuthentication(request, login2, password);
+		request = getGetUsersRequest(location, true);
+		setAuthentication(request, username2, password);
 		response = webConversation.getResponse(request);
 		assertEquals("User could not authenticate with new login" + response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		responseObject = new JSONObject(response.getText());
-		assertEquals("New login wasn't returned in user details", login2, responseObject.get(UserConstants.KEY_LOGIN));
+		assertEquals("New login wasn't returned in user details", username2, responseObject.get(UserConstants2.USER_NAME));
 	}
 
 	/**

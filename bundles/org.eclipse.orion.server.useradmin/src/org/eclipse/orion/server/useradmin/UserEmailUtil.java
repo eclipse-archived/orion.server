@@ -121,7 +121,7 @@ public class UserEmailUtil {
 	}
 
 	public boolean isEmailConfigured() {
-		return PreferenceHelper.getString("mail.from", null) != null;
+		return PreferenceHelper.getString("mail.smtp.host", null) != null;
 	}
 
 	public void sendEmail(String subject, String messageText, String emailAddress) throws URISyntaxException, IOException, CoreException {

@@ -31,7 +31,6 @@ import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.user.profile.RandomPasswordGenerator;
-import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.orion.server.useradmin.UserEmailUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -151,7 +150,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 		if (userPathInfoParts.length > 1 && userPathInfoParts[1] != null && "cansendemails".equalsIgnoreCase(userPathInfoParts[1])) {
 			JSONObject jsonResp = new JSONObject();
 			try {
-				jsonResp.put("emailConfigured", UserEmailUtil.getUtil().isEmailConfigured());
+				jsonResp.put("EmailConfigured", UserEmailUtil.getUtil().isEmailConfigured());
 				writeJSONResponse(req, resp, jsonResp);
 			} catch (JSONException e) {
 				//this should never happen
@@ -160,12 +159,16 @@ public class EmailConfirmationServlet extends OrionServlet {
 			return;
 		}
 
-		String userEmail;
-		String userLogin;
+		String userEmail = null;
+		String userName = null;
 		try {
-			JSONObject data = OrionServlet.readJSONRequest(req);
-			userEmail = data.getString(UserConstants2.EMAIL);
-			userLogin = data.getString(UserConstants.KEY_LOGIN);
+			JSONObject json = OrionServlet.readJSONRequest(req);
+			if (json.has(UserConstants2.EMAIL)) {
+				userEmail = json.getString(UserConstants2.EMAIL);
+			}
+			if (json.has(UserConstants2.USER_NAME)) {
+				userName = json.getString(UserConstants2.USER_NAME);
+			}
 		} catch (JSONException e) {
 			getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not parse json request", e));
 			return;
@@ -173,11 +176,11 @@ public class EmailConfirmationServlet extends OrionServlet {
 
 		List<UserInfo> users = new ArrayList<UserInfo>();
 
-		if (userLogin != null && userLogin.trim().length() > 0) {
+		if (userName != null && userName.trim().length() > 0) {
 			//reset using login
 			UserInfo userInfo = null;
 			try {
-				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, userLogin.trim(), false, false);
+				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, userName.trim(), false, false);
 			} catch (CoreException e) {
 				LogHelper.log(e);
 				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
@@ -185,16 +188,16 @@ public class EmailConfirmationServlet extends OrionServlet {
 			}
 
 			if (userInfo == null) {
-				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userLogin + " not found.");
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userName + " not found.");
 				return;
 			}
 			if (userEmail != null && userEmail.trim().length() > 0) {
 				if (!isEmailConfirmed(userInfo)) {
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User " + userLogin + " email has not been yet confirmed." + " Please follow the instructions from the confirmation email in your inbox and then request a password reset again.");
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User " + userName + " email has not been yet confirmed." + " Please follow the instructions from the confirmation email in your inbox and then request a password reset again.");
 					return;
 				}
 				if (!userEmail.equals(userInfo.getProperty(UserConstants2.EMAIL))) {
-					resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userLogin + " with email " + userEmail + " does not exist.");
+					resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userName + " with email " + userEmail + " does not exist.");
 					return;
 				}
 			}
@@ -217,7 +220,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 				if (userInfo == null) {
 					resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User with email " + userEmail + " not found.");
 				} else {
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Email " + userLogin + " has not been yet confirmed." + " Please follow the instructions from the confirmation email in your inbox and then request a password reset again.");
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Email " + userName + " has not been yet confirmed." + " Please follow the instructions from the confirmation email in your inbox and then request a password reset again.");
 				}
 				return;
 			}
@@ -271,7 +274,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 		}
 	}
 
-	public boolean isEmailConfirmed(UserInfo userInfo) {
+	private boolean isEmailConfirmed(UserInfo userInfo) {
 		String email = userInfo.getProperty(UserConstants2.EMAIL);
 		return (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID) == null : false;
 	}

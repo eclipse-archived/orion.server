@@ -25,7 +25,6 @@ import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.users.UserConstants2;
-import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -41,10 +40,9 @@ public class FormAuthHelper {
 	}
 
 	/**
-	 * Authenticates user by credentials send in <code>login</code> and
+	 * Authenticates user by credentials send in <code>username</code> and
 	 * <code>password</password> request parameters. If user credentials are correct session attribute <code>user</code>
-	 * is set. If user cannot be logged in
-	 * {@link HttpServletResponse#SC_UNAUTHORIZED} error is send.
+	 * is set. If user cannot be logged in {@link HttpServletResponse#SC_UNAUTHORIZED} error is send.
 	 * 
 	 * @param req
 	 * @param resp
@@ -52,17 +50,16 @@ public class FormAuthHelper {
 	 */
 	public static LoginResult performAuthentication(HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
-		String login = req.getParameter(UserConstants.KEY_LOGIN);
-		UserInfo userInfo = getUserForCredentials(login, req.getParameter(UserConstants2.PASSWORD));
+		String username = req.getParameter(UserConstants2.USER_NAME.toLowerCase());
+		UserInfo userInfo = getUserForCredentials(username, req.getParameter(UserConstants2.PASSWORD.toLowerCase()));
 
 		if (userInfo != null) {
 			if (userInfo.getProperties().containsKey(UserConstants2.BLOCKED)) {
 				return LoginResult.BLOCKED;
 			}
-			String userId = userInfo.getUniqueId();
 			if (logger.isInfoEnabled())
-				logger.info("Login success: " + login); //$NON-NLS-1$ 
-			req.getSession().setAttribute("user", userId); //$NON-NLS-1$
+				logger.info("Login success: " + username); //$NON-NLS-1$ 
+			req.getSession().setAttribute("user", username); //$NON-NLS-1$
 
 			try {
 				// try to store the login timestamp in the user profile
@@ -75,17 +72,17 @@ public class FormAuthHelper {
 			return LoginResult.OK;
 		}
 		//don't bother tracing malformed login attempts
-		if (login != null)
-			logger.info("Login failed: " + login); //$NON-NLS-1$
+		if (username != null)
+			logger.info("Login failed: " + username); //$NON-NLS-1$
 		return LoginResult.FAIL;
 	}
 
-	private static UserInfo getUserForCredentials(String login, String password) {
+	private static UserInfo getUserForCredentials(String username, String password) {
 		try {
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, login, false, false);
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, username, false, false);
 			if (userInfo != null && userInfo.getProperty(UserConstants2.PASSWORD) != null) {
 				String userPassword = userInfo.getProperty(UserConstants2.PASSWORD);
-				if (password.equals(userPassword)) {
+				if (userPassword.equals(password)) {
 					return userInfo;
 				} else {
 					// password verification failed
@@ -122,37 +119,46 @@ public class FormAuthHelper {
 		return PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_REGISTRATION_URI, null);
 	}
 
-	public static JSONObject getUserJson(String uid, String contextPath) throws JSONException {
-		JSONObject obj = new JSONObject();
-		obj.put(UserConstants.KEY_LOGIN, uid);
+	/**
+	 * Get the standard JSON to be returned for a user account.
+	 * @param username The username
+	 * @param contextPath The context path for the user location
+	 * @return the JSON object
+	 * @throws JSONException
+	 */
+	public static JSONObject getUserJson(String username, String contextPath) throws JSONException {
+		JSONObject json = new JSONObject();
 		try {
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, uid, false, false);
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, username, false, false);
 			if (userInfo == null) {
 				return null;
 			}
-			obj.put(UserConstants.KEY_UID, uid);
-			obj.put(UserConstants.KEY_LOGIN, userInfo.getUserName());
-			obj.put(UserConstants.KEY_LOCATION, contextPath + '/' + UserConstants.KEY_USERS + '/' + uid);
-			obj.put(UserConstants2.FULL_NAME, userInfo.getFullName());
-			if (userInfo.getProperties().containsKey(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
-				Long lastLoginTimestamp = Long.parseLong(userInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
-				obj.put(UserConstants2.LAST_LOGIN_TIMESTAMP, lastLoginTimestamp);
+			json.put(UserConstants2.FULL_NAME, userInfo.getFullName());
+			json.put(UserConstants2.USER_NAME, userInfo.getUserName());
+			json.put(UserConstants2.LOCATION, contextPath + UserConstants2.LOCATION_USERS_SERVLET + '/' + userInfo.getUserName());
+			String email = userInfo.getProperty(UserConstants2.EMAIL);
+			json.put(UserConstants2.EMAIL, email);
+			boolean emailConfirmed = (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID) == null : false;
+			json.put(UserConstants2.EMAIL_CONFIRMED, emailConfirmed);
+			json.put(UserConstants2.HAS_PASSWORD, userInfo.getProperty(UserConstants2.PASSWORD) == null ? false : true);
+
+			if (userInfo.getProperty(UserConstants2.OAUTH) != null) {
+				json.put(UserConstants2.OAUTH, userInfo.getProperty(UserConstants2.OAUTH));
 			}
-			if (userInfo.getProperties().containsKey(UserConstants2.DISK_USAGE_TIMESTAMP)) {
-				Long diskUsageTimestamp = Long.parseLong(userInfo.getProperty(UserConstants2.DISK_USAGE_TIMESTAMP));
-				obj.put(UserConstants2.DISK_USAGE_TIMESTAMP, diskUsageTimestamp);
+			if (userInfo.getProperty(UserConstants2.OPENID) != null) {
+				json.put(UserConstants2.OPENID, userInfo.getProperty(UserConstants2.OPENID));
 			}
-			if (userInfo.getProperties().containsKey(UserConstants2.DISK_USAGE)) {
-				String diskUsage = userInfo.getProperty(UserConstants2.DISK_USAGE);
-				obj.put(UserConstants2.DISK_USAGE, diskUsage);
-			}
+
+			json.put(UserConstants2.LAST_LOGIN_TIMESTAMP, userInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
+			json.put(UserConstants2.DISK_USAGE_TIMESTAMP, userInfo.getProperty(UserConstants2.DISK_USAGE_TIMESTAMP));
+			json.put(UserConstants2.DISK_USAGE, userInfo.getProperty(UserConstants2.DISK_USAGE));
 		} catch (IllegalArgumentException e) {
 			LogHelper.log(e);
 		} catch (CoreException e) {
 			LogHelper.log(e);
 		}
 
-		return obj;
+		return json;
 
 	}
 }

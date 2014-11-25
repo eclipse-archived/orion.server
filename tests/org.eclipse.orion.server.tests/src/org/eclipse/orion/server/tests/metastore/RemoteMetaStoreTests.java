@@ -24,7 +24,6 @@ import org.eclipse.orion.internal.server.hosting.SiteConfigurationConstants;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.users.UserConstants2;
-import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -273,14 +272,15 @@ public class RemoteMetaStoreTests {
 	 * @throws JSONException
 	 */
 	protected int createUser(WebConversation webConversation, String login, String password) throws IOException, URISyntaxException, SAXException, JSONException {
-		WebRequest request = new PostMethodWebRequest(getOrionServerURI("/users"));
+		JSONObject jsonObject = new JSONObject();
+		jsonObject.put(UserConstants2.USER_NAME, login);
+		jsonObject.put(UserConstants2.PASSWORD, password);
+		WebRequest request = new PostMethodWebRequest(getOrionServerURI("/users"), IOUtilities.toInputStream(jsonObject.toString()), "application/json");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		request.setParameter(UserConstants.KEY_LOGIN, login);
-		request.setParameter(UserConstants2.PASSWORD, password);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
-		JSONObject jsonObject = new JSONObject(response.getText());
+		jsonObject = new JSONObject(response.getText());
 		String location = jsonObject.getString("Location");
 		System.out.println("Created User: " + login + " at Location: " + location);
 		return response.getResponseCode();
@@ -370,8 +370,8 @@ public class RemoteMetaStoreTests {
 	protected int login(WebConversation webConversation, String login, String password) throws URISyntaxException, IOException, SAXException {
 		WebRequest request = new PostMethodWebRequest(getOrionServerURI("/login/form"));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		request.setParameter(UserConstants.KEY_LOGIN, login);
-		request.setParameter(UserConstants2.PASSWORD, password);
+		request.setParameter(UserConstants2.USER_NAME.toLowerCase(), login);
+		request.setParameter(UserConstants2.PASSWORD.toLowerCase(), password);
 		WebResponse response = webConversation.getResponse(request);
 		return response.getResponseCode();
 	}
@@ -387,7 +387,7 @@ public class RemoteMetaStoreTests {
 	@Test
 	public void testACreateUser() throws URISyntaxException, IOException, JSONException, SAXException {
 		WebConversation webConversation = new WebConversation();
-		assertEquals(HttpURLConnection.HTTP_OK, createUser(webConversation, getOrionTestName(), getOrionTestName()));
+		assertEquals(HttpURLConnection.HTTP_CREATED, createUser(webConversation, getOrionTestName(), getOrionTestName()));
 	}
 
 	/**
@@ -747,8 +747,8 @@ public class RemoteMetaStoreTests {
 
 		String email = login + "@example.com";
 		JSONObject json = new JSONObject();
-		json.put("email", email);
-		json.put("FullName", fullName);
+		json.put(UserConstants2.EMAIL, email);
+		json.put(UserConstants2.FULL_NAME, fullName);
 		WebRequest request = new PutMethodWebRequest(getOrionServerURI("/users/" + login), IOUtilities.toInputStream(json.toString()), "application/json");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		WebResponse response = webConversation.getResponse(request);

@@ -22,7 +22,6 @@ import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.useradmin.UserConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -37,38 +36,32 @@ public class BasicAuthenticationServlet extends OrionServlet {
 		this.authService = authService;
 	}
 
-	private JSONObject getUserJson(String uid) throws JSONException {
-		JSONObject obj = new JSONObject();
-		obj.put(UserConstants.KEY_LOGIN, uid);
-
+	private JSONObject getUserJson(String username) throws JSONException {
+		JSONObject json = new JSONObject();
 		try {
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, uid, false, false);
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, username, false, false);
 			if (userInfo == null) {
 				return null;
 			}
-			obj.put(UserConstants.KEY_UID, uid);
-			obj.put(UserConstants.KEY_LOGIN, userInfo.getUserName());
-			obj.put(UserConstants.KEY_LOCATION, '/' + UserConstants.KEY_USERS + '/' + uid);
-			obj.put(UserConstants2.FULL_NAME, userInfo.getFullName());
-			if (userInfo.getProperties().containsKey(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
-				Long lastLogin = Long.parseLong(userInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
-				obj.put(UserConstants2.LAST_LOGIN_TIMESTAMP, lastLogin);
-			}
-			if (userInfo.getProperties().containsKey(UserConstants2.DISK_USAGE_TIMESTAMP)) {
-				Long lastLogin = Long.parseLong(userInfo.getProperty(UserConstants2.DISK_USAGE_TIMESTAMP));
-				obj.put(UserConstants2.DISK_USAGE_TIMESTAMP, lastLogin);
-			}
-			if (userInfo.getProperties().containsKey(UserConstants2.DISK_USAGE)) {
-				Long lastLogin = Long.parseLong(userInfo.getProperty(UserConstants2.DISK_USAGE));
-				obj.put(UserConstants2.DISK_USAGE, lastLogin);
-			}
+			json.put(UserConstants2.USER_NAME, userInfo.getUserName());
+			json.put(UserConstants2.FULL_NAME, userInfo.getFullName());
+			json.put(UserConstants2.LOCATION, UserConstants2.LOCATION_USERS_SERVLET + '/' + username);
+			String email = userInfo.getProperty(UserConstants2.EMAIL);
+			json.put(UserConstants2.EMAIL, email);
+			boolean emailConfirmed = (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID) == null : false;
+			json.put(UserConstants2.EMAIL_CONFIRMED, emailConfirmed);
+			json.put(UserConstants2.HAS_PASSWORD, userInfo.getProperty(UserConstants2.PASSWORD) == null ? false : true);
+
+			json.put(UserConstants2.LAST_LOGIN_TIMESTAMP, userInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
+			json.put(UserConstants2.DISK_USAGE_TIMESTAMP, userInfo.getProperty(UserConstants2.DISK_USAGE_TIMESTAMP));
+			json.put(UserConstants2.DISK_USAGE, userInfo.getProperty(UserConstants2.DISK_USAGE));
 		} catch (IllegalArgumentException e) {
 			LogHelper.log(e);
 		} catch (CoreException e) {
 			LogHelper.log(e);
 		}
 
-		return obj;
+		return json;
 	}
 
 	@Override

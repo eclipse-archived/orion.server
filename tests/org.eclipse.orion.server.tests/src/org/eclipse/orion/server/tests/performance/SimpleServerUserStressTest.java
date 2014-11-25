@@ -14,8 +14,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
 import org.eclipse.core.runtime.CoreException;
@@ -26,6 +24,8 @@ import org.eclipse.orion.server.tests.servlets.users.UsersTest;
 import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.test.performance.Performance;
 import org.eclipse.test.performance.PerformanceMeter;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
@@ -71,7 +71,7 @@ public class SimpleServerUserStressTest extends UsersTest {
 	}
 
 	@Test
-	public void testCreateUsers() throws IOException, SAXException {
+	public void testCreateUsers() throws IOException, SAXException, JSONException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 
@@ -85,14 +85,14 @@ public class SimpleServerUserStressTest extends UsersTest {
 			long current_start = System.currentTimeMillis();
 
 			// create a user
-			Map<String, String> params = new HashMap<String, String>();
+			JSONObject json = new JSONObject();
 			String login = getRandomName();
-			params.put(UserConstants.KEY_LOGIN, login);
-			params.put(UserConstants2.FULL_NAME, getRandomName() + " " + getRandomName());
-			params.put(UserConstants2.EMAIL, login + "@example.com");
-			params.put(UserConstants2.PASSWORD, getRandomName() + System.currentTimeMillis());
+			json.put(UserConstants.KEY_LOGIN, login);
+			json.put(UserConstants2.FULL_NAME, getRandomName() + " " + getRandomName());
+			json.put(UserConstants2.EMAIL, login + "@example.com");
+			json.put(UserConstants2.PASSWORD, getRandomName() + System.currentTimeMillis());
 
-			WebRequest request = getPostUsersRequest("", params, true);
+			WebRequest request = getPostUsersRequest("", json, true);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 

@@ -31,8 +31,9 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 // POST /users/ creates a new user
 // GET /users/ gets list of users
@@ -49,6 +50,25 @@ public class UserServlet extends OrionServlet {
 	private List<String> authorizedAccountCreators;
 	private ServletResourceHandler<String> userSerializer;
 
+	/**
+	 * Checks whether the given path may be accessed by the user.
+	 * @param login the user
+	 * @param req the request
+	 * @return
+	 */
+	private boolean canAccess(String login, HttpServletRequest req) {
+		try {
+			String requestPath = req.getServletPath() + (req.getPathInfo() == null ? "" : req.getPathInfo());
+			if (!AuthorizationService.checkRights(login, requestPath, req.getMethod())) {
+				return false;
+			}
+		} catch (CoreException e) {
+			return false;
+		}
+
+		return true;
+	}
+
 	@Override
 	public void init() throws ServletException {
 		userSerializer = new ServletUserHandler(getStatusHandler());
@@ -62,10 +82,22 @@ public class UserServlet extends OrionServlet {
 	@Override
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String login = req.getRemoteUser();
+		JSONObject json = null;
+		try {
+			json = OrionServlet.readJSONRequest(req);
+		} catch (JSONException e1) {
+			// just fall through
+		}
 		if ("POST".equals(req.getMethod())) { //$NON-NLS-1$
-			if (req.getParameter(UserConstants.KEY_RESET) == null) {
+			if (json != null && !json.has(UserConstants2.RESET)) {
 				// either everyone can create users, or only the specific list
 				if (authorizedAccountCreators != null && !authorizedAccountCreators.contains(login)) {
+					resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+					return;
+				}
+			} else {
+				// only admin users or the account owner can reset their password
+				if (!canAccess(login, req)) {
 					resp.sendError(HttpServletResponse.SC_FORBIDDEN);
 					return;
 				}
@@ -76,14 +108,8 @@ public class UserServlet extends OrionServlet {
 				return;
 			}
 
-			try {
-				String requestPath = req.getServletPath() + (req.getPathInfo() == null ? "" : req.getPathInfo());
-				if (!AuthorizationService.checkRights(login, requestPath, req.getMethod())) {
-					resp.sendError(HttpServletResponse.SC_FORBIDDEN);
-					return;
-				}
-			} catch (CoreException e) {
-				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			if (!canAccess(login, req)) {
+				resp.sendError(HttpServletResponse.SC_FORBIDDEN);
 				return;
 			}
 		}

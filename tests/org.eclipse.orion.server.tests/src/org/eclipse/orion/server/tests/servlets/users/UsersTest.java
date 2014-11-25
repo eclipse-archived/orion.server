@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.tests.servlets.users;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Map;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.core.IOUtilities;
@@ -83,65 +82,30 @@ public abstract class UsersTest extends AbstractServerTest {
 		return "test";
 	}
 
-	protected WebRequest getPostUsersRequest(String uri, Map<String, String> params, boolean admin) {
-
-		try {
-			return getAuthenticatedRequest(SERVER_LOCATION + "/users" + (uri.equals("") ? "" : ("/" + uri)), METHOD_POST, admin, params, new JSONObject());
-		} catch (UnsupportedEncodingException e) {
-			// this should never happen
-			e.printStackTrace();
-			return null;
-		}
-
+	protected WebRequest getPostUsersRequest(String uri, JSONObject json, boolean admin) throws UnsupportedEncodingException {
+		return getAuthenticatedUsersRequest(uri, METHOD_POST, admin, json);
 	}
 
-	protected WebRequest getDeleteUsersRequest(String uri, boolean admin) {
-		return getAuthenticatedRequest(SERVER_LOCATION + "/users" + (uri.equals("") ? "" : ("/" + uri)), METHOD_DELETE, admin);
+	protected WebRequest getDeleteUsersRequest(String uri, boolean admin) throws UnsupportedEncodingException {
+		return getAuthenticatedUsersRequest(uri, METHOD_DELETE, admin, null);
 	}
 
-	protected WebRequest getDeleteUsersRequest(String uri, Map<String, String> params, boolean admin) {
-
-		try {
-			return getAuthenticatedRequest(SERVER_LOCATION + "/users" + (uri.equals("") ? "" : ("/" + uri)), METHOD_DELETE, admin, params, new JSONObject());
-		} catch (UnsupportedEncodingException e) {
-			// this should never happen
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	protected WebRequest getAuthenticatedRequest(String uri, int method, boolean admin) {
-		try {
-			return getAuthenticatedRequest(uri, method, admin, null, new JSONObject());
-		} catch (UnsupportedEncodingException e) {
-			// this should never happen
-			e.printStackTrace();
-			return null;
-		}
-	}
-
-	protected WebRequest getAuthenticatedRequest(String uri, int method, boolean admin, Map<String, String> params, JSONObject body) throws UnsupportedEncodingException {
-		uri = toAbsoluteURI(uri);
+	protected WebRequest getAuthenticatedUsersRequest(String reqUri, int method, boolean admin, JSONObject json) throws UnsupportedEncodingException {
+		String uri = SERVER_LOCATION + (reqUri.equals("") ? "users" : reqUri.substring(1));
 		WebRequest request;
 		switch (method) {
 			case METHOD_DELETE :
 				request = new DeleteMethodWebRequest(uri);
 				break;
 			case METHOD_POST :
-				request = new PostMethodWebRequest(uri);
+				request = new PostMethodWebRequest(uri, IOUtilities.toInputStream(json.toString()), "application/json");
 				break;
 			case METHOD_PUT :
-				request = new PutMethodWebRequest(uri, IOUtilities.toInputStream(body.toString()), "text/plain");
+				request = new PutMethodWebRequest(uri, IOUtilities.toInputStream(json.toString()), "application/json");
 				break;
 			default :
 				request = new GetMethodWebRequest(uri);
 		}
-
-		if (params != null)
-			for (String key : params.keySet()) {
-				request.setParameter(key, params.get(key));
-			}
-
 		request.setHeaderField("Orion-Version", "1");
 		if (admin) {
 			setAuthenticationAdmin(request);
@@ -152,11 +116,11 @@ public abstract class UsersTest extends AbstractServerTest {
 
 	}
 
-	protected WebRequest getGetUsersRequest(String uri, boolean admin) {
-		return getAuthenticatedRequest(SERVER_LOCATION + "/users" + (uri.equals("") ? "" : ("/" + uri)), METHOD_GET, admin);
+	protected WebRequest getGetUsersRequest(String uri, boolean admin) throws UnsupportedEncodingException {
+		return getAuthenticatedUsersRequest(uri, METHOD_GET, admin, null);
 	}
 
-	protected WebRequest getPutUsersRequest(String uri, JSONObject body, boolean admin) throws UnsupportedEncodingException {
-		return getAuthenticatedRequest(SERVER_LOCATION + "/users/" + uri, METHOD_PUT, admin, null, body);
+	protected WebRequest getPutUsersRequest(String uri, JSONObject json, boolean admin) throws UnsupportedEncodingException {
+		return getAuthenticatedUsersRequest(uri, METHOD_PUT, admin, json);
 	}
 }

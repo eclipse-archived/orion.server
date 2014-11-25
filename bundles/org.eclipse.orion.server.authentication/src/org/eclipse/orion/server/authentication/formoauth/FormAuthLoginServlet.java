@@ -75,7 +75,7 @@ public class FormAuthLoginServlet extends HttpServlet {
 					JSONObject userJson;
 					try {
 						userJson = FormAuthHelper.getUserJson(uid, req.getContextPath());
-						writer.print(userJson);
+						writer.print(userJson.toString(2));
 						resp.setContentType("application/json"); //$NON-NLS-1$
 					} catch (JSONException e) {/* ignore */
 					}
