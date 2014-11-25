@@ -22,6 +22,8 @@ import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +42,16 @@ public class GetDebugAppCommand extends AbstractCFCommand {
 
 	public ServerStatus _doIt() {
 		try {
-			String appUrl = "http://sbrandys-----2111diorocksdebug.mybluemix.net/launcher/apps/target"; //$NON-NLS-1$
+			JSONArray routes = app.getSummaryJSON().optJSONArray("routes");
+			if (routes == null) {
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "No routes", null);
+			}
+
+			JSONObject route = routes.getJSONObject(0);
+			String host = route.getString("host");
+			String domain = route.getJSONObject("domain").getString("name");
+
+			String appUrl = "http://" + host + "." + domain + "/launcher/apps/target";
 			URI appURI = URIUtil.toURI(new URL(appUrl));
 
 			GetMethod getMethod = new GetMethod(appURI.toString());

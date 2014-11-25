@@ -76,12 +76,12 @@ public class GetAppCommand extends AbstractCFCommand {
 
 			JSONObject summaryJSON = getStatus.getJsonData();
 
-			GetDebugAppCommand getDebugAppCommand = new GetDebugAppCommand(target, app);
-			ServerStatus getDebugStatus = (ServerStatus) getDebugAppCommand.doIt();
-
 			this.app = new App();
 			this.app.setAppJSON(appJSON);
 			this.app.setSummaryJSON(summaryJSON);
+
+			GetDebugAppCommand getDebugAppCommand = new GetDebugAppCommand(target, app);
+			ServerStatus getDebugStatus = (ServerStatus) getDebugAppCommand.doIt();
 
 			JSONObject totalAppJSON = this.app.toJSON();
 			if (getDebugStatus.isOK())
