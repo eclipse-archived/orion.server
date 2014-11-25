@@ -44,7 +44,7 @@ public class GetDebugAppCommand extends AbstractCFCommand {
 			URI appURI = URIUtil.toURI(new URL(appUrl));
 
 			GetMethod getMethod = new GetMethod(appURI.toString());
-			getMethod.addRequestHeader("Authorization", "Basic " + new String(Base64.encodeBase64(("vcap:yoyoyo").getBytes())));
+			getMethod.addRequestHeader("Authorization", "Basic " + new String(Base64.encodeBase64(("vcap:holydiver").getBytes())));
 
 			ServerStatus getStatus = HttpUtil.executeMethod(getMethod);
 			return getStatus;

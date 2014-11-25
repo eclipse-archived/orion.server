@@ -58,7 +58,7 @@ public class StartDebugAppCommand extends AbstractCFCommand {
 			URI appURI = URIUtil.toURI(new URL(appUrl));
 
 			PutMethod startMethod = new PutMethod(appURI.toString());
-			startMethod.addRequestHeader("Authorization", "Basic " + new String(Base64.encodeBase64(("vcap:password123").getBytes())));
+			startMethod.addRequestHeader("Authorization", "Basic " + new String(Base64.encodeBase64(("vcap:holydiver").getBytes())));
 
 			JSONObject startCommand = new JSONObject();
 			startCommand.put("state", "debug"); //$NON-NLS-1$ //$NON-NLS-2$

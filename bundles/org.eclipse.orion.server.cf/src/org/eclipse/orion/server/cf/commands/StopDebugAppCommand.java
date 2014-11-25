@@ -57,7 +57,7 @@ public class StopDebugAppCommand extends AbstractCFCommand {
 			URI appURI = URIUtil.toURI(new URL(appUrl));
 
 			PutMethod stopMethod = new PutMethod(appURI.toString());
-			stopMethod.addRequestHeader("Authorization", "Basic " + new String(Base64.encodeBase64(("vcap:password123").getBytes())));
+			stopMethod.addRequestHeader("Authorization", "Basic " + new String(Base64.encodeBase64(("vcap:holydiver").getBytes())));
 
 			JSONObject stopCommand = new JSONObject();
 			stopCommand.put("state", "stop"); //$NON-NLS-1$ //$NON-NLS-2$
