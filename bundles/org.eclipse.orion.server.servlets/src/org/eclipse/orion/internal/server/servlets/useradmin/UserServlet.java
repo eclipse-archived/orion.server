@@ -21,6 +21,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
@@ -92,24 +94,24 @@ public class UserServlet extends OrionServlet {
 			if (json != null && !json.has(UserConstants2.RESET)) {
 				// either everyone can create users, or only the specific list
 				if (authorizedAccountCreators != null && !authorizedAccountCreators.contains(login)) {
-					resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+					handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Forbidden access"), HttpServletResponse.SC_FORBIDDEN);
 					return;
 				}
 			} else {
 				// only admin users or the account owner can reset their password
-				if (!canAccess(login, req)) {
-					resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+				if (login == null || !canAccess(login, req)) {
+					handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Forbidden access"), HttpServletResponse.SC_FORBIDDEN);
 					return;
 				}
 			}
 		} else {
 			if (login == null) {
-				resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+				handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Forbidden access"), HttpServletResponse.SC_FORBIDDEN);
 				return;
 			}
 
 			if (!canAccess(login, req)) {
-				resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+				handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Forbidden access"), HttpServletResponse.SC_FORBIDDEN);
 				return;
 			}
 		}
