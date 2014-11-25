@@ -49,37 +49,37 @@ public class FileChangeNotificationServiceTests extends AbstractServerTest {
 		private List<String> fileChangeNotifications = new ArrayList<String>();
 
 		@Override
-		public void directoryCreated(IFileStore directory) {
+		public void directoryCreated(IFileStore directory, ProjectInfo projectInfo) {
 			String directoryString = getFileString(directory);
 			fileChangeNotifications.add("CREATED " + directoryString);
 		}
 
 		@Override
-		public void directoryDeleted(IFileStore directory) {
+		public void directoryDeleted(IFileStore directory, ProjectInfo projectInfo) {
 			String directoryString = getFileString(directory);
 			fileChangeNotifications.add("DELETED " + directoryString);
 		}
 
 		@Override
-		public void directoryUpdated(IFileStore directory) {
+		public void directoryUpdated(IFileStore directory, ProjectInfo projectInfo) {
 			String directoryString = getFileString(directory);
 			fileChangeNotifications.add("UPDATED " + directoryString);
 		}
 
 		@Override
-		public void fileCreated(IFileStore file) {
+		public void fileCreated(IFileStore file, ProjectInfo projectInfo) {
 			String fileString = getFileString(file);
 			fileChangeNotifications.add("CREATED " + fileString);
 		}
 
 		@Override
-		public void fileDeleted(IFileStore file) {
+		public void fileDeleted(IFileStore file, ProjectInfo projectInfo) {
 			String fileString = getFileString(file);
 			fileChangeNotifications.add("DELETED " + fileString);
 		}
 
 		@Override
-		public void fileUpdated(IFileStore file) {
+		public void fileUpdated(IFileStore file, ProjectInfo projectInfo) {
 			String fileString = getFileString(file);
 			fileChangeNotifications.add("UPDATED " + fileString);
 		}
@@ -168,9 +168,9 @@ public class FileChangeNotificationServiceTests extends AbstractServerTest {
 		String expectedFileCreatedNotification = "CREATED " + getFileString(file);
 
 		// wait a maximum of twelve seconds for the file change notification service to complete
-		long elevenSecondsFromNow = System.currentTimeMillis() + (1000L * 12);
+		long twelveSecondsFromNow = System.currentTimeMillis() + (1000L * 12);
 
-		while (System.currentTimeMillis() < elevenSecondsFromNow) {
+		while (System.currentTimeMillis() < twelveSecondsFromNow) {
 			if (listener.getFileChangeNotifications().contains(expectedFileCreatedNotification) && listener.getFileChangeNotifications().contains(expectedFolderCreatedNotification)) {
 				// successfully received both create notifications for the file and folder 
 				return;

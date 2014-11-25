@@ -20,13 +20,18 @@ import org.apache.commons.io.monitor.FileAlterationObserver;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.events.IFileChangeListener;
 import org.eclipse.orion.server.core.events.IFileChangeNotificationService;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +44,7 @@ import org.slf4j.LoggerFactory;
  */
 public class FileChangeNotificationService implements IFileChangeNotificationService {
 
-	private Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+	private Logger logger = LoggerFactory.getLogger(FileChangeNotificationService.class); //$NON-NLS-1$
 
 	private List<IFileChangeListener> fileChangeListeners;
 
@@ -56,60 +61,104 @@ public class FileChangeNotificationService implements IFileChangeNotificationSer
 		@Override
 		public void onDirectoryCreate(File directory) {
 			logger.info("file change notification service: Directory " + directory.getAbsolutePath() + " was created.");
-			IFileStore fileStore = getFileStore(directory);
-			for (IFileChangeListener fileChangeListener : fileChangeListeners) {
-				fileChangeListener.directoryCreated(fileStore);
+			ProjectInfo projectInfo = getProject(directory);
+			if (projectInfo != null) {
+				IFileStore fileStore = getFileStore(directory);
+				for (IFileChangeListener fileChangeListener : fileChangeListeners) {
+					fileChangeListener.directoryCreated(fileStore, projectInfo);
+				}
 			}
 		}
 
 		@Override
 		public void onDirectoryChange(File directory) {
 			logger.info("file change notification service: Directory " + directory.getAbsolutePath() + " was changed.");
-			IFileStore fileStore = getFileStore(directory);
-			for (IFileChangeListener fileChangeListener : fileChangeListeners) {
-				fileChangeListener.directoryUpdated(fileStore);
+			ProjectInfo projectInfo = getProject(directory);
+			if (projectInfo != null) {
+				IFileStore fileStore = getFileStore(directory);
+				for (IFileChangeListener fileChangeListener : fileChangeListeners) {
+					fileChangeListener.directoryUpdated(fileStore, projectInfo);
+				}
 			}
 		}
 
 		@Override
 		public void onDirectoryDelete(File directory) {
 			logger.info("file change notification service: Directory " + directory.getAbsolutePath() + " was deleted.");
-			IFileStore fileStore = getFileStore(directory);
-			for (IFileChangeListener fileChangeListener : fileChangeListeners) {
-				fileChangeListener.directoryDeleted(fileStore);
+			ProjectInfo projectInfo = getProject(directory);
+			if (projectInfo != null) {
+				IFileStore fileStore = getFileStore(directory);
+				for (IFileChangeListener fileChangeListener : fileChangeListeners) {
+					fileChangeListener.directoryDeleted(fileStore, projectInfo);
+				}
 			}
 		}
 
 		@Override
 		public void onFileCreate(File file) {
 			logger.info("file change notification service: File " + file.getAbsoluteFile() + " was created.");
-			IFileStore fileStore = getFileStore(file);
-			for (IFileChangeListener fileChangeListener : fileChangeListeners) {
-				fileChangeListener.fileCreated(fileStore);
+			ProjectInfo projectInfo = getProject(file);
+			if (projectInfo != null) {
+				IFileStore fileStore = getFileStore(file);
+				for (IFileChangeListener fileChangeListener : fileChangeListeners) {
+					fileChangeListener.fileCreated(fileStore, projectInfo);
+				}
 			}
 		}
 
 		@Override
 		public void onFileChange(File file) {
 			logger.info("file change notification service: File " + file.getAbsoluteFile() + " was changed.");
-			IFileStore fileStore = getFileStore(file);
-			for (IFileChangeListener fileChangeListener : fileChangeListeners) {
-				fileChangeListener.fileUpdated(fileStore);
+			ProjectInfo projectInfo = getProject(file);
+			if (projectInfo != null) {
+				IFileStore fileStore = getFileStore(file);
+				for (IFileChangeListener fileChangeListener : fileChangeListeners) {
+					fileChangeListener.fileUpdated(fileStore, projectInfo);
+				}
 			}
 		}
 
 		@Override
 		public void onFileDelete(File file) {
 			logger.info("file change notification service: File " + file.getAbsoluteFile() + " was deleted.");
-			IFileStore fileStore = getFileStore(file);
-			for (IFileChangeListener fileChangeListener : fileChangeListeners) {
-				fileChangeListener.fileDeleted(fileStore);
+			ProjectInfo projectInfo = getProject(file);
+			if (projectInfo != null) {
+				IFileStore fileStore = getFileStore(file);
+				for (IFileChangeListener fileChangeListener : fileChangeListeners) {
+					fileChangeListener.fileDeleted(fileStore, projectInfo);
+				}
 			}
+		}
+
+		private ProjectInfo getProject(File file) {
+			try {
+				IFileStore rootLocation = OrionConfiguration.getRootLocation();
+				File rootLocationFile = rootLocation.toLocalFile(EFS.NONE, null);
+				IPath path = new Path(file.getAbsolutePath().substring(rootLocationFile.getAbsolutePath().length() + 1));
+				int segmentCount = path.segmentCount();
+				if (segmentCount >= 5) {
+					String username = path.segment(1);
+					String projectName = path.segment(3);
+					UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, username, false, false);
+					if (userInfo != null && !userInfo.getWorkspaceIds().isEmpty()) {
+						String workspaceId = userInfo.getWorkspaceIds().get(0);
+						ProjectInfo projectInfo = OrionConfiguration.getMetaStore().readProject(workspaceId, projectName);
+						if (projectInfo != null) {
+							return projectInfo;
+						}
+					}
+				}
+				return null;
+			} catch (CoreException e) {
+				logger.error(e.getLocalizedMessage(), e);
+			}
+			return null;
 		}
 
 		private IFileStore getFileStore(File file) {
 			try {
-				return EFS.getStore(file.toURI());
+				IFileStore fileStore = EFS.getStore(file.toURI());
+				return fileStore;
 			} catch (CoreException e) {
 				logger.error(e.getLocalizedMessage(), e);
 			}
