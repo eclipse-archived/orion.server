@@ -11,7 +11,9 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+import java.net.URL;
 import javax.servlet.http.HttpServletResponse;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.eclipse.core.runtime.IStatus;
@@ -22,46 +24,52 @@ import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StopAppCommand extends AbstractCFCommand {
+public class StopDebugAppCommand extends AbstractCFCommand {
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
 	private App app;
 
-	public StopAppCommand(Target target, App app) {
+	public StopDebugAppCommand(Target target, App app) {
 		super(target);
-		this.commandName = "Stop App"; //$NON-NLS-1$
+		this.commandName = "Stop Debug App"; //$NON-NLS-1$
 		this.app = app;
 	}
 
 	public ServerStatus _doIt() {
 		try {
-			StopDebugAppCommand stopDebugAppCommand = new StopDebugAppCommand(target, app);
-			ServerStatus stopDebugAppStatus = (ServerStatus) stopDebugAppCommand.doIt();
-			if (stopDebugAppStatus.isOK())
-				return stopDebugAppStatus;
+			JSONArray routes = app.getSummaryJSON().optJSONArray("routes");
+			if (routes == null) {
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "No routes", null);
+			}
 
-			URI targetURI = URIUtil.toURI(target.getUrl());
+			JSONObject route = routes.getJSONObject(0);
+			String host = route.getString("host");
+			String domain = route.getJSONObject("domain").getString("name");
 
-			String appUrl = this.app.getAppJSON().getString("url");
-			URI appURI = targetURI.resolve(appUrl);
+			String appUrl = "http://" + host + "." + domain + "/launcher/apps/target";
+			URI appURI = URIUtil.toURI(new URL(appUrl));
 
 			PutMethod stopMethod = new PutMethod(appURI.toString());
-			HttpUtil.configureHttpMethod(stopMethod, target);
-			stopMethod.setQueryString("inline-relations-depth=1");
+			stopMethod.addRequestHeader("Authorization", "Basic " + new String(Base64.encodeBase64(("vcap:password123").getBytes())));
 
-			JSONObject stopComand = new JSONObject();
-			stopComand.put("console", true);
-			stopComand.put("state", "STOPPED");
-			StringRequestEntity requestEntity = new StringRequestEntity(stopComand.toString(), CFProtocolConstants.JSON_CONTENT_TYPE, "UTF-8");
+			JSONObject stopCommand = new JSONObject();
+			stopCommand.put("state", "stop"); //$NON-NLS-1$ //$NON-NLS-2$
+			StringRequestEntity requestEntity = new StringRequestEntity(stopCommand.toString(), CFProtocolConstants.JSON_CONTENT_TYPE, "UTF-8"); //$NON-NLS-1$
 			stopMethod.setRequestEntity(requestEntity);
 
-			return HttpUtil.executeMethod(stopMethod);
+			ServerStatus stopStatus = HttpUtil.executeMethod(stopMethod);
+			if (!stopStatus.getJsonData().has("state")) {
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "App is not in debug mode", null);
+			}
+
+			return stopStatus;
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);

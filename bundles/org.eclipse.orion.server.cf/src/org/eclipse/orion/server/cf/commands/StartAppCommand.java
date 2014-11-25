@@ -53,6 +53,11 @@ public class StartAppCommand extends AbstractCFCommand {
 		/* multi server status */
 
 		try {
+			StartDebugAppCommand startDebugAppCommand = new StartDebugAppCommand(target, app);
+			ServerStatus startDebugAppStatus = (ServerStatus) startDebugAppCommand.doIt();
+			if (startDebugAppStatus.isOK())
+				return startDebugAppStatus;
+
 			URI targetURI = URIUtil.toURI(target.getUrl());
 
 			String appUrl = this.app.getAppJSON().getString("url"); //$NON-NLS-1$

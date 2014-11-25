@@ -76,11 +76,18 @@ public class GetAppCommand extends AbstractCFCommand {
 
 			JSONObject summaryJSON = getStatus.getJsonData();
 
+			GetDebugAppCommand getDebugAppCommand = new GetDebugAppCommand(target, app);
+			ServerStatus getDebugStatus = (ServerStatus) getDebugAppCommand.doIt();
+
 			this.app = new App();
 			this.app.setAppJSON(appJSON);
 			this.app.setSummaryJSON(summaryJSON);
 
-			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, this.app.toJSON());
+			JSONObject totalAppJSON = this.app.toJSON();
+			if (getDebugStatus.isOK())
+				totalAppJSON.put("debug", getDebugStatus.getJsonData());
+
+			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, totalAppJSON);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
