@@ -224,4 +224,9 @@ public class ServerConstants {
 	 * The name of a configuration property to enable cross-site request forgery protection (XSRF - default is false).
 	 */
 	public static final String CONFIG_XSRF_PROTECTION_ENABLED = "orion.XSRFPreventionFilterEnabled"; //$NON-NLS-1$
+	
+ 	/**
+ 	 * The name of a configuration property to enable grep search instead of index search
+ 	 */
+ 	public static final String CONFIG_GREP_SEARCH_ENABLED = "orion.search.grep.enabled"; //$NON-NLS-1$
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2013 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -34,8 +34,11 @@ import org.apache.solr.request.LocalSolrQueryRequest;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.QueryResponseWriter;
 import org.apache.solr.response.SolrQueryResponse;
+import org.eclipse.orion.internal.server.search.grep.GrepServlet;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 
 /**
@@ -51,9 +54,17 @@ public class SearchServlet extends OrionServlet {
 	private static final String FIELD_NAMES = "Name,NameLower,Length,Directory,LastModified,Location,Path"; //$NON-NLS-1$
 	private static final List<String> FIELD_LIST = Arrays.asList(FIELD_NAMES.split(",")); //$NON-NLS-1$
 
+	private GrepServlet grepServlet = new GrepServlet();
+
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
+
+		if (PreferenceHelper.getString(ServerConstants.CONFIG_GREP_SEARCH_ENABLED, "false").equals("true")) {
+			grepServlet.doGet(req, resp);
+			return;
+		}
+
 		SolrQuery query = buildSolrQuery(req);
 		if (query == null) {
 			handleException(resp, "Invalid search request", null, HttpServletResponse.SC_BAD_REQUEST);

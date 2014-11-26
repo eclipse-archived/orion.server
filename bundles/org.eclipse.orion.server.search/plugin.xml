@@ -8,6 +8,11 @@
             class="org.eclipse.orion.internal.server.search.SearchServlet"
             httpcontextId="org.eclipse.orion.server.httpcontext.search">
       </servlet>
+      <servlet
+            alias="/grepsearch"
+            class="org.eclipse.orion.internal.server.search.grep.GrepServlet"
+            httpcontextId="org.eclipse.orion.server.httpcontext.search">
+      </servlet>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
       </serviceSelector>
@@ -16,6 +21,10 @@
          point="org.eclipse.equinox.http.registry.filters">
       <filter
             alias="/filesearch"
+            class="org.eclipse.orion.server.servlets.LoggedInUserFilter">
+      </filter>
+       <filter
+            alias="/grepsearch"
             class="org.eclipse.orion.server.servlets.LoggedInUserFilter">
       </filter>
       <serviceSelector
