@@ -216,7 +216,7 @@ public class FileChangeNotificationService implements IFileChangeNotificationSer
 		File serverworkspace = OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null);
 		fileAlterationObserver = new FileAlterationObserver(serverworkspace);
 		fileAlterationObserver.addListener(new LocalFileAlterationListener());
-		fileAlterationMonitor = new FileAlterationMonitor();
+		fileAlterationMonitor = new FileAlterationMonitor(1000L);
 		fileAlterationMonitor.addObserver(fileAlterationObserver);
 		fileAlterationMonitor.start();
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.core"); //$NON-NLS-1$
