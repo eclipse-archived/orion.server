@@ -41,11 +41,6 @@ public class StopAppCommand extends AbstractCFCommand {
 
 	public ServerStatus _doIt() {
 		try {
-			StopDebugAppCommand stopDebugAppCommand = new StopDebugAppCommand(target, app);
-			ServerStatus stopDebugAppStatus = (ServerStatus) stopDebugAppCommand.doIt();
-			if (stopDebugAppStatus.isOK())
-				return stopDebugAppStatus;
-
 			URI targetURI = URIUtil.toURI(target.getUrl());
 
 			String appUrl = this.app.getAppJSON().getString("url");

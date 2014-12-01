@@ -250,10 +250,22 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					if (CFProtocolConstants.KEY_STARTED.equals(state)) {
 						if (!status.isOK())
 							return status;
+
+						StartDebugAppCommand startDebugAppCommand = new StartDebugAppCommand(target, app);
+						ServerStatus startDebugAppStatus = (ServerStatus) startDebugAppCommand.doIt();
+						if (startDebugAppStatus.isOK())
+							return startDebugAppStatus;
+
 						return new StartAppCommand(target, app, timeout).doIt();
 					} else if (CFProtocolConstants.KEY_STOPPED.equals(state)) {
 						if (!status.isOK())
 							return status;
+
+						StopDebugAppCommand stopDebugAppCommand = new StopDebugAppCommand(target, app);
+						ServerStatus stopDebugAppStatus = (ServerStatus) stopDebugAppCommand.doIt();
+						if (stopDebugAppStatus.isOK())
+							return stopDebugAppStatus;
+
 						return new StopAppCommand(target, app).doIt();
 					} else {
 						if (manifest == null) {
