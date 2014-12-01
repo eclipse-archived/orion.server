@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others 
+ * Copyright (c) 2013, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,13 +14,16 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.params.HttpClientParams;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
-import org.eclipse.orion.internal.server.events.Activator;
 import org.eclipse.orion.server.cf.ds.*;
 import org.eclipse.orion.server.cf.sync.FileChangeListener;
 import org.eclipse.orion.server.cf.utils.TargetRegistry;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.events.IFileChangeNotificationService;
 import org.osgi.framework.*;
 import org.osgi.util.tracker.ServiceTracker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The activator class controls the plug-in life cycle
@@ -39,6 +42,12 @@ public class CFActivator implements BundleActivator {
 
 	private ServiceTracker<DeploymentService, IDeploymentService> serviceTracker;
 
+	private IFileChangeNotificationService fileChangeNotificationService;
+
+	private ServiceReference<IFileChangeNotificationService> fileChangeNotificationServiceRef;
+
+	private final Logger logger = LoggerFactory.getLogger(CFActivator.PI_CF); //$NON-NLS-1$
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -55,19 +64,40 @@ public class CFActivator implements BundleActivator {
 		serviceTracker = new ServiceTracker<DeploymentService, IDeploymentService>(context, DeploymentService.class.getName(), customer);
 		serviceTracker.open();
 
-		Activator.getDefault();
+		if (PreferenceHelper.getString(ServerConstants.CONFIG_CF_LIVEUPDATE_ENABLED, "false").equals("true")) {
+			fileChangeNotificationServiceRef = context.getServiceReference(IFileChangeNotificationService.class);
+			if (fileChangeNotificationServiceRef == null) {
 
-		ServiceReference<IFileChangeNotificationService> serviceRef = context.getServiceReference(IFileChangeNotificationService.class);
-		if (serviceRef == null) {
-			return;
+				this.bundleContext.addServiceListener(new ServiceListener() {
+
+					@SuppressWarnings("unchecked")
+					@Override
+					public void serviceChanged(ServiceEvent event) {
+						fileChangeNotificationServiceRef = (ServiceReference<IFileChangeNotificationService>) event.getServiceReference();
+						if (fileChangeNotificationServiceRef == null) {
+							return;
+						}
+						startFileChangeNotificationService();
+						bundleContext.removeServiceListener(this);
+					}
+				}, "(objectClass=" + IFileChangeNotificationService.class.getName() + ')');
+			} else {
+				startFileChangeNotificationService();
+			}
 		}
+	}
 
-		IFileChangeNotificationService fileChangeNotificationService = context.getService(serviceRef);
+	/**
+	 * Start the file change notification service that is used by the cf liveupdate feature.
+	 */
+	private void startFileChangeNotificationService() {
+		fileChangeNotificationService = bundleContext.getService(fileChangeNotificationServiceRef);
 		if (fileChangeNotificationService == null) {
+			logger.warn("No file change notification service available");
 			return;
 		}
-
 		fileChangeNotificationService.addListener(new FileChangeListener());
+		logger.debug("File change notification service started");
 	}
 
 	/*
