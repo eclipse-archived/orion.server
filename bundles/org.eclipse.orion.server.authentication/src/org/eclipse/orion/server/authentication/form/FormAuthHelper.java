@@ -129,9 +129,10 @@ public class FormAuthHelper {
 	public static JSONObject getUserJson(String username, String contextPath) throws JSONException {
 		JSONObject json = new JSONObject();
 		try {
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, username, false, false);
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUser(username);
 			if (userInfo == null) {
-				return null;
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_AUTHENTICATION_SERVLETS, 1, "An error occured when reading the user from the meta store: username is " + username, null));
+				return new JSONObject();
 			}
 			json.put(UserConstants2.FULL_NAME, userInfo.getFullName());
 			json.put(UserConstants2.USER_NAME, userInfo.getUserName());
