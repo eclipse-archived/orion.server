@@ -14,8 +14,6 @@ import java.io.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.orion.server.cf.CFActivator;
-import org.eclipse.orion.server.cf.commands.StartDebugAppCommand;
-import org.eclipse.orion.server.cf.commands.StopDebugAppCommand;
 import org.eclipse.orion.server.cf.sync.cflauncher.commands.*;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.events.IFileChangeListener;
@@ -132,17 +130,17 @@ public class FileChangeListener implements IFileChangeListener {
 	}
 
 	private void restartApp(String url) {
-		logger.debug("Sync: trying to restart the app at " + url);
-
-		StopDebugAppCommand stopDebug = new StopDebugAppCommand(url);
-		ServerStatus stopDebugStatus = (ServerStatus) stopDebug.doIt();
-		if (!stopDebugStatus.isOK())
-			logger.error("Sync: problem stopping the app at " + url);
-
-		StartDebugAppCommand startDebug = new StartDebugAppCommand(url);
-		ServerStatus startDebugStatus = (ServerStatus) startDebug.doIt();
-		if (!startDebugStatus.isOK())
-			logger.error("Sync: problem starting the app at " + url);
+		//		logger.debug("Sync: trying to restart the app at " + url);
+		//
+		//		StopDebugAppCommand stopDebug = new StopDebugAppCommand(url);
+		//		ServerStatus stopDebugStatus = (ServerStatus) stopDebug.doIt();
+		//		if (!stopDebugStatus.isOK())
+		//			logger.error("Sync: problem stopping the app at " + url);
+		//
+		//		StartDebugAppCommand startDebug = new StartDebugAppCommand(url);
+		//		ServerStatus startDebugStatus = (ServerStatus) startDebug.doIt();
+		//		if (!startDebugStatus.isOK())
+		//			logger.error("Sync: problem starting the app at " + url);
 	}
 
 	private Combo findLaunchConfiguration(IFileStore file) throws Exception {
