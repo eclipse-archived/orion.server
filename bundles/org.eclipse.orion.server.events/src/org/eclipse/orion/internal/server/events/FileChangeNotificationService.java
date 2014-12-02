@@ -14,6 +14,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;
 import org.apache.commons.io.monitor.FileAlterationMonitor;
 import org.apache.commons.io.monitor.FileAlterationObserver;
@@ -198,7 +200,7 @@ public class FileChangeNotificationService implements IFileChangeNotificationSer
 	public void shutdown() {
 		if (fileAlterationMonitor != null) {
 			try {
-				fileAlterationMonitor.stop();
+				fileAlterationMonitor.stop(2000L);
 				fileAlterationMonitor.removeObserver(fileAlterationObserver);
 				fileAlterationMonitor = null;
 				fileAlterationObserver.destroy();
@@ -214,7 +216,8 @@ public class FileChangeNotificationService implements IFileChangeNotificationSer
 	 */
 	private void startup() throws Exception {
 		File serverworkspace = OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null);
-		fileAlterationObserver = new FileAlterationObserver(serverworkspace);
+		IOFileFilter filter = FileFilterUtils.notFileFilter(FileFilterUtils.or(FileFilterUtils.prefixFileFilter(".metadata"), FileFilterUtils.prefixFileFilter(".archive")));
+		fileAlterationObserver = new FileAlterationObserver(serverworkspace, filter);
 		fileAlterationObserver.addListener(new LocalFileAlterationListener());
 		fileAlterationMonitor = new FileAlterationMonitor(1000L);
 		fileAlterationMonitor.addObserver(fileAlterationObserver);

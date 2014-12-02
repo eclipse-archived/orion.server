@@ -162,20 +162,51 @@ public class FileChangeNotificationServiceTests extends AbstractServerTest {
 			outputStream.write("<!doctype html>\n".getBytes());
 			outputStream.close();
 		} catch (IOException e) {
-			fail("Count not create a test file in the Orion Project:" + e.getLocalizedMessage());
+			fail("Could not create a test file in the Orion Project:" + e.getLocalizedMessage());
 		}
 		assertTrue("the file in the project folder should exist.", file.fetchInfo().exists());
 		String expectedFileCreatedNotification = "CREATED " + getFileString(file);
 
-		// wait a maximum of twelve seconds for the file change notification service to complete
-		long twelveSecondsFromNow = System.currentTimeMillis() + (1000L * 12);
+		// wait longer than the FileAlterationMonitor polling interval otherwise you miss some events
+		Thread.sleep(2000L);
 
-		while (System.currentTimeMillis() < twelveSecondsFromNow) {
-			if (listener.getFileChangeNotifications().contains(expectedFileCreatedNotification) && listener.getFileChangeNotifications().contains(expectedFolderCreatedNotification)) {
-				// successfully received both create notifications for the file and folder 
+		// update the file in the folder in the project
+		try {
+			OutputStream outputStream = file.openOutputStream(EFS.NONE, null);
+			outputStream.write("<!doctype html>\n<html>\n</html>/n".getBytes());
+			outputStream.close();
+		} catch (IOException e) {
+			fail("Could not update the test file in the Orion Project:" + e.getLocalizedMessage());
+		}
+		assertTrue("the file in the project folder should exist.", file.fetchInfo().exists());
+		String expectedFileUpdatedNotification = "UPDATED " + getFileString(file);
+
+		// wait longer than the FileAlterationMonitor polling interval otherwise you miss some events
+		Thread.sleep(2000L);
+
+		// delete the file in the folder in the project
+		file.delete(EFS.NONE, null);
+		assertFalse("the file in the project folder should not exist.", file.fetchInfo().exists());
+		String expectedFileDeletedNotification = "DELETED " + getFileString(file);
+
+		// delete the folder in the project
+		folder.delete(EFS.NONE, null);
+		assertFalse("the project folder should not exist.", folder.fetchInfo().exists());
+		String expectedFolderDeletedNotification = "DELETED " + getFileString(folder);
+
+		// wait a maximum of fifteen seconds for the file change notification service to complete
+		long fifteenSecondsFromNow = System.currentTimeMillis() + (1000L * 15);
+
+		while (System.currentTimeMillis() < fifteenSecondsFromNow) {
+			if (listener.getFileChangeNotifications().contains(expectedFileCreatedNotification) && //
+					listener.getFileChangeNotifications().contains(expectedFolderCreatedNotification) && //
+					listener.getFileChangeNotifications().contains(expectedFileUpdatedNotification) && //
+					listener.getFileChangeNotifications().contains(expectedFileDeletedNotification) && //
+					listener.getFileChangeNotifications().contains(expectedFolderDeletedNotification)) {
+				// successfully received the create, update and delete notifications for the file and folder 
 				return;
 			}
-			Thread.sleep(1000L);
+			Thread.sleep(2000L);
 		}
 		fail("We did not get create notifications for the file and folder");
 	}
