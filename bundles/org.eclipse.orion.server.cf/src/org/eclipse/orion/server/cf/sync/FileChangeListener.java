@@ -14,7 +14,10 @@ import java.io.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.orion.server.cf.CFActivator;
-import org.eclipse.orion.server.cf.commands.*;
+import org.eclipse.orion.server.cf.commands.StartDebugAppCommand;
+import org.eclipse.orion.server.cf.commands.StopDebugAppCommand;
+import org.eclipse.orion.server.cf.sync.cflauncher.commands.DeleteFileCommand;
+import org.eclipse.orion.server.cf.sync.cflauncher.commands.UpdateFileCommand;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.events.IFileChangeListener;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
@@ -29,31 +32,50 @@ public class FileChangeListener implements IFileChangeListener {
 	@Override
 	public void directoryCreated(IFileStore directory, ProjectInfo projectInfo) {
 		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void directoryDeleted(IFileStore directory, ProjectInfo projectInfo) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	public void directoryUpdated(IFileStore directory, ProjectInfo projectInfo) {
 		// TODO Auto-generated method stub
+	}
 
+	@Override
+	public void directoryDeleted(IFileStore directory, ProjectInfo projectInfo) {
+		this.fileDeleted(directory, projectInfo);
 	}
 
 	@Override
 	public void fileCreated(IFileStore file, ProjectInfo projectInfo) {
-		// TODO Auto-generated method stub
-
+		this.fileUpdated(file, projectInfo);
 	}
 
 	@Override
 	public void fileDeleted(IFileStore file, ProjectInfo projectInfo) {
-		// TODO Auto-generated method stub
+		logger.debug("Sync: deleting " + file.getName() + " in " + projectInfo.getFullName());
 
+		try {
+			long time = System.currentTimeMillis();
+
+			Combo combo = findLaunchConfiguration(file);
+			JSONObject launchConfiguration = combo.launchConfiguration;
+			String path = combo.path;
+			if (launchConfiguration == null || !launchConfiguration.has("Url"))
+				return;
+
+			String url = launchConfiguration.getString("Url").replace("http://", "");
+
+			DeleteFileCommand deleteFileCommand = new DeleteFileCommand(url, path);
+			ServerStatus updateFileStatus = (ServerStatus) deleteFileCommand.doIt();
+			if (updateFileStatus.isOK()) {
+				restartApp(url);
+			} else {
+				logger.error("Sync: problem deleting the file at " + url);
+			}
+
+			logger.debug("Sync: file delete took " + (System.currentTimeMillis() - time) + "ms");
+		} catch (Exception e) {
+			logger.error("Deleting file failed", e);
+		}
 	}
 
 	@Override
@@ -63,57 +85,77 @@ public class FileChangeListener implements IFileChangeListener {
 		try {
 			long time = System.currentTimeMillis();
 
-			IFileStore folder = file;
-			IFileStore project = null;
-			String path = file.getName();
-			while ((folder = folder.getParent()) != null && project == null) {
-				String[] childNames = folder.childNames(EFS.NONE, null);
-				for (int i = 0; i < childNames.length; i++) {
-					if (childNames[i].equals("project.json")) {
-						project = folder;
-						break;
-					}
-				}
-
-				if (project == null)
-					path = folder.getName() + "/" + path;
-			}
-
-			if (project == null)
-				return;
-
-			JSONObject launchConfiguration = getLaunchConfiguration(project.getChild("launchConfigurations"));
-			if (!launchConfiguration.has("Url"))
+			Combo combo = findLaunchConfiguration(file);
+			JSONObject launchConfiguration = combo.launchConfiguration;
+			String path = combo.path;
+			if (launchConfiguration == null || !launchConfiguration.has("Url"))
 				return;
 
 			String url = launchConfiguration.getString("Url").replace("http://", "");
 
 			byte[] content = getContent(file.openInputStream(EFS.NONE, null));
-			UpdateFileInAppCommand updateFileCommand = new UpdateFileInAppCommand(url, path, content);
+			UpdateFileCommand updateFileCommand = new UpdateFileCommand(url, path, content);
 			ServerStatus updateFileStatus = (ServerStatus) updateFileCommand.doIt();
 			if (updateFileStatus.isOK()) {
-				logger.debug("Sync: trying to restart the app at " + url);
-
-				StopDebugAppCommand stopDebug = new StopDebugAppCommand(url);
-				ServerStatus stopDebugStatus = (ServerStatus) stopDebug.doIt();
-				if (!stopDebugStatus.isOK())
-					logger.error("Sync: problem stopping the app at " + url);
-
-				StartDebugAppCommand startDebug = new StartDebugAppCommand(url);
-				ServerStatus startDebugStatus = (ServerStatus) startDebug.doIt();
-				if (!stopDebugStatus.isOK())
-					logger.error("Sync: problem starting the app at " + url);
+				restartApp(url);
 			} else {
-				logger.error("Sync: problem updating the app at " + url);
+				logger.error("Sync: problem updating the file at " + url);
 			}
 
 			logger.debug("Sync: file update took " + (System.currentTimeMillis() - time) + "ms");
-		} catch (Exception ex) {
-			ex.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Updating file failed", e);
 		}
 	}
 
-	private JSONObject getLaunchConfiguration(IFileStore launchConfStore) throws Exception {
+	private void restartApp(String url) {
+		logger.debug("Sync: trying to restart the app at " + url);
+
+		StopDebugAppCommand stopDebug = new StopDebugAppCommand(url);
+		ServerStatus stopDebugStatus = (ServerStatus) stopDebug.doIt();
+		if (!stopDebugStatus.isOK())
+			logger.error("Sync: problem stopping the app at " + url);
+
+		StartDebugAppCommand startDebug = new StartDebugAppCommand(url);
+		ServerStatus startDebugStatus = (ServerStatus) startDebug.doIt();
+		if (!startDebugStatus.isOK())
+			logger.error("Sync: problem starting the app at " + url);
+	}
+
+	private Combo findLaunchConfiguration(IFileStore file) throws Exception {
+		IFileStore folder = file;
+		IFileStore project = null;
+		String path = file.getName();
+		while ((folder = folder.getParent()) != null && project == null) {
+			String[] childNames = folder.childNames(EFS.NONE, null);
+			for (int i = 0; i < childNames.length; i++) {
+				if (childNames[i].equals("project.json")) {
+					project = folder;
+					break;
+				}
+			}
+
+			if (project == null)
+				path = folder.getName() + "/" + path;
+		}
+
+		if (project == null)
+			return null;
+
+		return new Combo(path, readLaunchConfiguration(project.getChild("launchConfigurations")));
+	}
+
+	private class Combo {
+		String path;
+		JSONObject launchConfiguration;
+
+		Combo(String path, JSONObject launchConfiguration) {
+			this.path = path;
+			this.launchConfiguration = launchConfiguration;
+		}
+	}
+
+	private JSONObject readLaunchConfiguration(IFileStore launchConfStore) throws Exception {
 		String[] childNames = launchConfStore.childNames(EFS.NONE, null);
 		for (int i = 0; i < childNames.length; i++) {
 			if (childNames[i].endsWith(".launch")) {
