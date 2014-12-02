@@ -16,7 +16,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.*;
-import org.apache.commons.httpclient.methods.DeleteMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFActivator;
@@ -31,7 +31,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DeleteFileCommand extends AbstractCFCommand {
+public class CreateFolderCommand extends AbstractCFCommand {
 	private static final String DAV_PATH = "/dav/"; //$NON-NLS-1$
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
@@ -47,12 +47,12 @@ public class DeleteFileCommand extends AbstractCFCommand {
 	 * @param target
 	 * @param app
 	 * @param uri The URI of the app. Hostname only, for example: "myapp.cfapps.io"
-	 * @param path The path of the file to be deleted, relative to the app store. Should NOT have a leading "/"
+	 * @param path The path of the folder to be created, relative to the app store. Should NOT have a leading "/"
 	 * @param contents File contents.
 	 */
-	public DeleteFileCommand(String uri, String path) {
+	public CreateFolderCommand(String uri, String path) {
 		super((Target) null);
-		this.commandName = "Delete file in app";
+		this.commandName = "Create folder in app";
 		this.uri = uri;
 		this.path = path;
 		try {
@@ -77,10 +77,16 @@ public class DeleteFileCommand extends AbstractCFCommand {
 			String path = CFLauncherConstants.cfLauncherPrefix + DAV_PATH + this.path; // launcher/dav/whatever.txt
 			URI fileUpdateURI = new URI("https", null, this.uri, 443, path, null, null);
 
-			DeleteMethod deleteFileMethod = new DeleteMethod(fileUpdateURI.toString());
-			configureHttpMethod(deleteFileMethod);
+			PostMethod createFolderMethod = new PostMethod(fileUpdateURI.toString()) {
+				@Override
+				public String getName() {
+					return "MKCOL";
+				}
+			};
 
-			ServerStatus status = executeMethod(deleteFileMethod);
+			configureHttpMethod(createFolderMethod);
+
+			ServerStatus status = executeMethod(createFolderMethod);
 			if (!status.isOK())
 				return status;
 

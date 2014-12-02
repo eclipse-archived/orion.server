@@ -16,8 +16,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.commands.StartDebugAppCommand;
 import org.eclipse.orion.server.cf.commands.StopDebugAppCommand;
-import org.eclipse.orion.server.cf.sync.cflauncher.commands.DeleteFileCommand;
-import org.eclipse.orion.server.cf.sync.cflauncher.commands.UpdateFileCommand;
+import org.eclipse.orion.server.cf.sync.cflauncher.commands.*;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.events.IFileChangeListener;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
@@ -31,12 +30,36 @@ public class FileChangeListener implements IFileChangeListener {
 
 	@Override
 	public void directoryCreated(IFileStore directory, ProjectInfo projectInfo) {
-		// TODO Auto-generated method stub
+		logger.debug("Sync: creating " + directory.getName() + " in " + projectInfo.getFullName());
+
+		try {
+			long time = System.currentTimeMillis();
+
+			Combo combo = findLaunchConfiguration(directory);
+			JSONObject launchConfiguration = combo.launchConfiguration;
+			String path = combo.path;
+			if (launchConfiguration == null || !launchConfiguration.has("Url"))
+				return;
+
+			String url = launchConfiguration.getString("Url").replace("http://", "");
+
+			CreateFolderCommand updateFileCommand = new CreateFolderCommand(url, path);
+			ServerStatus updateFileStatus = (ServerStatus) updateFileCommand.doIt();
+			if (updateFileStatus.isOK()) {
+				restartApp(url);
+			} else {
+				logger.error("Sync: problem creating folder at " + url);
+			}
+
+			logger.debug("Sync: folder create took " + (System.currentTimeMillis() - time) + "ms");
+		} catch (Exception e) {
+			logger.error("Sync: folder create failed", e);
+		}
 	}
 
 	@Override
 	public void directoryUpdated(IFileStore directory, ProjectInfo projectInfo) {
-		// TODO Auto-generated method stub
+		logger.error("Sync: directory updated event for " + directory.getName() + " in " + projectInfo.getFullName() + " NOT supported");
 	}
 
 	@Override
@@ -74,7 +97,7 @@ public class FileChangeListener implements IFileChangeListener {
 
 			logger.debug("Sync: file delete took " + (System.currentTimeMillis() - time) + "ms");
 		} catch (Exception e) {
-			logger.error("Deleting file failed", e);
+			logger.error("Sync: file delete failed", e);
 		}
 	}
 
@@ -104,7 +127,7 @@ public class FileChangeListener implements IFileChangeListener {
 
 			logger.debug("Sync: file update took " + (System.currentTimeMillis() - time) + "ms");
 		} catch (Exception e) {
-			logger.error("Updating file failed", e);
+			logger.error("Sync: file update failed", e);
 		}
 	}
 
