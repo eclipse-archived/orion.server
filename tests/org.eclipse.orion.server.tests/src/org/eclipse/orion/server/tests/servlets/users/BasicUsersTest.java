@@ -65,19 +65,15 @@ public class BasicUsersTest extends UsersTest {
 	}
 
 	@Test
-	public void testGetUsersForbidden() throws IOException, SAXException {
+	public void testGetUsersForbidden() throws IOException, SAXException, JSONException {
 		WebConversation webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		WebRequest request = getGetUsersRequest("", false);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_FORBIDDEN, response.getResponseCode());
-		boolean wasJson = true;
-		try {
-			new JSONObject(response.getText());
-		} catch (JSONException e) {
-			wasJson = false;
-		}
-		assertFalse("Returned a jsonObject in reponse where FORBIDDEN should be returned", wasJson);
+		JSONObject responseObject = new JSONObject(response.getText());
+		assertTrue(responseObject.has("HttpCode"));
+		assertEquals(HttpURLConnection.HTTP_FORBIDDEN, responseObject.getInt("HttpCode"));
 	}
 
 	@Test
