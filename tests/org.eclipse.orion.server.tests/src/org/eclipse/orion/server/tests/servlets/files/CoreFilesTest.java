@@ -332,6 +332,38 @@ public class CoreFilesTest extends FileSystemTest {
 
 	}
 
+	/**
+	 * Create a file with some DBCS characters in the name
+	 * https://bugs.eclipse.org/bugs/show_bug.cgi?id=454150
+	 */
+	@Test
+	public void testCreateFileDBCSName() throws CoreException, IOException, SAXException, JSONException {
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+		String fileName = "\u4f60\u597d\u4e16\u754c"; // U+4F60 U+597D U+4E16 U+754C
+
+		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
+		WebResponse response = webConversation.getResponse(request);
+
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+		assertTrue("Create file response was OK, but the file does not exist", checkFileExists(directoryPath + "/" + fileName));
+		assertEquals("Response should contain file metadata in JSON, but was " + response.getText(), "application/json", response.getContentType());
+		JSONObject responseObject = new JSONObject(response.getText());
+		assertNotNull("No file information in response", responseObject);
+		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null, null);
+
+		//should be able to perform GET on location header to obtain metadata
+		String location = response.getHeaderField("Location");
+		request = getGetRequest(location + "?parts=meta");
+		response = webConversation.getResource(request);
+		assertNotNull(location);
+		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		responseObject = new JSONObject(response.getText());
+		assertNotNull("No direcory information in response", responseObject);
+		checkFileMetadata(responseObject, fileName, null, null, null, null, null, null, null, null);
+
+	}
+
 	@Test
 	public void testCreateFileOverwrite() throws CoreException, IOException, SAXException, JSONException {
 		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
