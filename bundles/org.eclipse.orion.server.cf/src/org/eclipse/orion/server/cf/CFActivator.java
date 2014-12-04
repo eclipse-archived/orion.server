@@ -64,7 +64,7 @@ public class CFActivator implements BundleActivator {
 		serviceTracker = new ServiceTracker<DeploymentService, IDeploymentService>(context, DeploymentService.class.getName(), customer);
 		serviceTracker.open();
 
-		if (PreferenceHelper.getString(ServerConstants.CONFIG_CF_LIVEUPDATE_ENABLED, "false").equals("true")) {
+		if (PreferenceHelper.getString(ServerConstants.CONFIG_CF_LIVEUPDATE_ENABLED, "true").equals("true")) {
 			fileChangeNotificationServiceRef = context.getServiceReference(IFileChangeNotificationService.class);
 			if (fileChangeNotificationServiceRef == null) {
 
