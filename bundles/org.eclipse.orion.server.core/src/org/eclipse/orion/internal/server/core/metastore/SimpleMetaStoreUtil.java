@@ -92,11 +92,16 @@ public class SimpleMetaStoreUtil {
 		if (!archivedMetaFileParentFolder.exists()) {
 			archivedMetaFileParentFolder.mkdirs();
 		}
-		file.renameTo(archivedMetaFile);
-		if (archivedMetaFile.isDirectory()) {
-			logger.error("Meta File Error, root contains invalid metadata: folder " + file.toString() + " archived to " + archivedMetaFile.toString()); //$NON-NLS-1$
+		if (archivedMetaFile.exists() && file.isDirectory()) {
+			file.delete();
+			logger.error("Meta File Error, root contains invalid metadata: empty folder " + file.toString() + " deleted."); //$NON-NLS-1$
 		} else {
-			logger.error("Meta File Error, root contains invalid metadata: file " + file.toString() + " archived to " + archivedMetaFile.toString()); //$NON-NLS-1$
+			file.renameTo(archivedMetaFile);
+			if (archivedMetaFile.isDirectory()) {
+				logger.error("Meta File Error, root contains invalid metadata: folder " + file.toString() + " archived to " + archivedMetaFile.toString()); //$NON-NLS-1$
+			} else {
+				logger.error("Meta File Error, root contains invalid metadata: file " + file.toString() + " archived to " + archivedMetaFile.toString()); //$NON-NLS-1$
+			}
 		}
 	}
 
