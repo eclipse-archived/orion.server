@@ -65,18 +65,20 @@ public class CFActivator implements BundleActivator {
 		serviceTracker.open();
 
 		if (PreferenceHelper.getString(ServerConstants.CONFIG_CF_LIVEUPDATE_ENABLED, "true").equals("true")) {
+			logger.debug("Live Update enabled");
 			fileChangeNotificationServiceRef = context.getServiceReference(IFileChangeNotificationService.class);
 			if (fileChangeNotificationServiceRef == null) {
-
+				logger.debug("fileChangeNotificationServiceRef not found in bundle context");
 				this.bundleContext.addServiceListener(new ServiceListener() {
-
 					@SuppressWarnings("unchecked")
 					@Override
 					public void serviceChanged(ServiceEvent event) {
 						fileChangeNotificationServiceRef = (ServiceReference<IFileChangeNotificationService>) event.getServiceReference();
 						if (fileChangeNotificationServiceRef == null) {
+							logger.debug("fileChangeNotificationServiceRef still not found");
 							return;
 						}
+						logger.debug("fileChangeNotificationServiceRef found");
 						startFileChangeNotificationService();
 						bundleContext.removeServiceListener(this);
 					}
@@ -84,6 +86,8 @@ public class CFActivator implements BundleActivator {
 			} else {
 				startFileChangeNotificationService();
 			}
+		} else {
+			logger.debug("Live Update disabled");
 		}
 	}
 

@@ -36,7 +36,7 @@ public class GetDebugAppCommand extends AbstractCFCommand {
 
 	public GetDebugAppCommand(Target target, App app) {
 		super(target);
-		this.commandName = "Stop Debug App"; //$NON-NLS-1$
+		this.commandName = "Get Debug App"; //$NON-NLS-1$
 		this.app = app;
 	}
 
