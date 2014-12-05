@@ -10,15 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.resources;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
-
-import org.eclipse.orion.server.core.IOUtilities;
-import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -28,7 +23,7 @@ public class FileLocker {
 	private File lockFile;
 	private RandomAccessFile raFile = null;
 	private FileLock lock = null;
-	private boolean locking;
+	private static final boolean locking = Boolean.parseBoolean(PreferenceHelper.getString(ServerConstants.CONFIG_FILE_CONTENT_LOCKING));
 
 	/**
 	 * Create the locker.
@@ -37,7 +32,6 @@ public class FileLocker {
 	 * exist.
 	 */
 	public FileLocker(File toLock) {
-		locking = Boolean.parseBoolean(PreferenceHelper.getString(ServerConstants.CONFIG_FILE_CONTENT_LOCKING));
 		this.lockFile = toLock;
 	}
 
@@ -62,8 +56,7 @@ public class FileLocker {
 			lock = raFile.getChannel().tryLock(0, 1L, false);
 		} catch (IOException ioe) {
 			// produce a more specific message for clients
-			String specificMessage = NLS.bind("An error occurred while locking file \"{0}\": \"{1}\". A common reason is that the file system or Runtime Environment does not support file locking for that location.", 
-					new Object[] {lock, ioe.getMessage()}); 
+			String specificMessage = NLS.bind("An error occurred while locking file \"{0}\": \"{1}\". A common reason is that the file system or Runtime Environment does not support file locking for that location.", new Object[] {lock, ioe.getMessage()});
 			throw new IOException(specificMessage);
 		} catch (OverlappingFileLockException e) {
 			// handle it as null result
