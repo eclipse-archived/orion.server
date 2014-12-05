@@ -8,13 +8,14 @@
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.cf.sync;
+package org.eclipse.orion.server.cf.live;
+
+import org.eclipse.orion.server.cf.live.cflauncher.commands.*;
 
 import java.io.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.orion.server.cf.CFActivator;
-import org.eclipse.orion.server.cf.sync.cflauncher.commands.*;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.events.IFileChangeListener;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;

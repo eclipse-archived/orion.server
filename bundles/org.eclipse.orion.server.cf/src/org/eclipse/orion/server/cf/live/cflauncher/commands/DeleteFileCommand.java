@@ -9,7 +9,7 @@
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
 
-package org.eclipse.orion.server.cf.sync.cflauncher.commands;
+package org.eclipse.orion.server.cf.live.cflauncher.commands;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -20,8 +20,7 @@ import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFActivator;
-import org.eclipse.orion.server.cf.commands.AbstractCFCommand;
-import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.commands.ICFCommand;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.Base64;
@@ -31,7 +30,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DeleteFileCommand extends AbstractCFCommand {
+public class DeleteFileCommand implements ICFCommand {
 	private static final String DAV_PATH = "/dav/"; //$NON-NLS-1$
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
@@ -51,7 +50,6 @@ public class DeleteFileCommand extends AbstractCFCommand {
 	 * @param contents File contents.
 	 */
 	public DeleteFileCommand(String uri, String path) {
-		super((Target) null);
 		this.commandName = "Delete file in app";
 		this.uri = uri;
 		this.path = path;
@@ -71,7 +69,7 @@ public class DeleteFileCommand extends AbstractCFCommand {
 	}
 
 	@Override
-	protected ServerStatus _doIt() {
+	public IStatus doIt() {
 		try {
 			/* Construct WebDAV request to update the file. */
 			String path = CFLauncherConstants.cfLauncherPrefix + DAV_PATH + this.path; // launcher/dav/whatever.txt

@@ -8,7 +8,7 @@
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.cf.commands;
+package org.eclipse.orion.server.cf.live.cflauncher.commands;
 
 import java.net.URI;
 import java.net.URL;
@@ -19,8 +19,8 @@ import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.commands.ICFCommand;
 import org.eclipse.orion.server.cf.objects.App;
-import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
@@ -29,7 +29,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class StopDebugAppCommand extends AbstractCFCommand {
+public class StopDebugAppCommand implements ICFCommand {
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
@@ -37,19 +37,18 @@ public class StopDebugAppCommand extends AbstractCFCommand {
 	private App app;
 	private String url;
 
-	public StopDebugAppCommand(Target target, App app) {
-		super(target);
+	public StopDebugAppCommand(App app) {
 		this.commandName = "Stop Debug App"; //$NON-NLS-1$
 		this.app = app;
 	}
 
 	public StopDebugAppCommand(String url) {
-		super((Target) null);
 		this.commandName = "Stop Debug App"; //$NON-NLS-1$
 		this.url = url;
 	}
 
-	public ServerStatus _doIt() {
+	@Override
+	public IStatus doIt() {
 		try {
 			if (url == null) {
 				JSONArray routes = app.getSummaryJSON().optJSONArray("routes");

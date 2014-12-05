@@ -10,12 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf;
 
+import org.eclipse.orion.server.cf.live.FileChangeListener;
+
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.params.HttpClientParams;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.eclipse.orion.server.cf.ds.*;
-import org.eclipse.orion.server.cf.sync.FileChangeListener;
 import org.eclipse.orion.server.cf.utils.TargetRegistry;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;

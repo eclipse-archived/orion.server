@@ -9,19 +9,19 @@
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
 
-package org.eclipse.orion.server.cf.sync.cflauncher.commands;
+package org.eclipse.orion.server.cf.live.cflauncher.commands;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.*;
-import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.ByteArrayRequestEntity;
+import org.apache.commons.httpclient.methods.PutMethod;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFActivator;
-import org.eclipse.orion.server.cf.commands.AbstractCFCommand;
-import org.eclipse.orion.server.cf.objects.Target;
+import org.eclipse.orion.server.cf.commands.ICFCommand;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.Base64;
@@ -31,7 +31,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CreateFolderCommand extends AbstractCFCommand {
+public class UpdateFileCommand implements ICFCommand {
 	private static final String DAV_PATH = "/dav/"; //$NON-NLS-1$
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
@@ -39,6 +39,7 @@ public class CreateFolderCommand extends AbstractCFCommand {
 	private String commandName;
 	private String uri;
 	private String path;
+	private byte[] contents;
 
 	private String cfLauncherAuth;
 
@@ -47,14 +48,14 @@ public class CreateFolderCommand extends AbstractCFCommand {
 	 * @param target
 	 * @param app
 	 * @param uri The URI of the app. Hostname only, for example: "myapp.cfapps.io"
-	 * @param path The path of the folder to be created, relative to the app store. Should NOT have a leading "/"
+	 * @param path The path of the file to be updated, relative to the app store. Should NOT have a leading "/"
 	 * @param contents File contents.
 	 */
-	public CreateFolderCommand(String uri, String path) {
-		super((Target) null);
-		this.commandName = "Create folder in app";
+	public UpdateFileCommand(String uri, String path, byte contents[]) {
+		this.commandName = "Update file in app";
 		this.uri = uri;
 		this.path = path;
+		this.contents = contents;
 		try {
 			// ISO-8859-1 see http://stackoverflow.com/a/703341/3394770
 			byte[] credentials = (CFLauncherConstants.cfLauncherUsername + ":" + CFLauncherConstants.cfLauncherPassword).getBytes("ISO-8859-1");
@@ -71,22 +72,19 @@ public class CreateFolderCommand extends AbstractCFCommand {
 	}
 
 	@Override
-	protected ServerStatus _doIt() {
+	public IStatus doIt() {
 		try {
 			/* Construct WebDAV request to update the file. */
 			String path = CFLauncherConstants.cfLauncherPrefix + DAV_PATH + this.path; // launcher/dav/whatever.txt
 			URI fileUpdateURI = new URI("https", null, this.uri, 443, path, null, null);
 
-			PostMethod createFolderMethod = new PostMethod(fileUpdateURI.toString()) {
-				@Override
-				public String getName() {
-					return "MKCOL";
-				}
-			};
+			PutMethod updateFileMethod = new PutMethod(fileUpdateURI.toString());
+			configureHttpMethod(updateFileMethod);
 
-			configureHttpMethod(createFolderMethod);
+			/* set request body */
+			updateFileMethod.setRequestEntity(new ByteArrayRequestEntity(this.contents));
 
-			ServerStatus status = executeMethod(createFolderMethod);
+			ServerStatus status = executeMethod(updateFileMethod);
 			if (!status.isOK())
 				return status;
 

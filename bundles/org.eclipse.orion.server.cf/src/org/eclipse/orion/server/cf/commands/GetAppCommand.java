@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.commands;
 
+import org.eclipse.orion.server.cf.live.cflauncher.commands.GetDebugAppCommand;
+
 import java.net.URI;
 import java.net.URLEncoder;
 import javax.servlet.http.HttpServletResponse;

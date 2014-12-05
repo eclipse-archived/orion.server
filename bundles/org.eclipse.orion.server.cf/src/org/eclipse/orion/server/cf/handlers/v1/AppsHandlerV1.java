@@ -25,6 +25,8 @@ import org.eclipse.orion.server.cf.commands.*;
 import org.eclipse.orion.server.cf.ds.IDeploymentPackager;
 import org.eclipse.orion.server.cf.ds.IDeploymentService;
 import org.eclipse.orion.server.cf.jobs.CFJob;
+import org.eclipse.orion.server.cf.live.cflauncher.commands.StartDebugAppCommand;
+import org.eclipse.orion.server.cf.live.cflauncher.commands.StopDebugAppCommand;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
@@ -251,7 +253,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						if (!status.isOK())
 							return status;
 
-						StartDebugAppCommand startDebugAppCommand = new StartDebugAppCommand(target, app);
+						StartDebugAppCommand startDebugAppCommand = new StartDebugAppCommand(app);
 						ServerStatus startDebugAppStatus = (ServerStatus) startDebugAppCommand.doIt();
 						if (startDebugAppStatus.isOK())
 							return startDebugAppStatus;
@@ -261,7 +263,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 						if (!status.isOK())
 							return status;
 
-						StopDebugAppCommand stopDebugAppCommand = new StopDebugAppCommand(target, app);
+						StopDebugAppCommand stopDebugAppCommand = new StopDebugAppCommand(app);
 						ServerStatus stopDebugAppStatus = (ServerStatus) stopDebugAppCommand.doIt();
 						if (stopDebugAppStatus.isOK())
 							return stopDebugAppStatus;

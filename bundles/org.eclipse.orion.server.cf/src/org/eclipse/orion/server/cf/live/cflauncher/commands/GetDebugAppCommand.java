@@ -8,7 +8,7 @@
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.server.cf.commands;
+package org.eclipse.orion.server.cf.live.cflauncher.commands;
 
 import java.net.URI;
 import java.net.URL;
@@ -17,6 +17,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.orion.server.cf.commands.ICFCommand;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -27,7 +28,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GetDebugAppCommand extends AbstractCFCommand {
+public class GetDebugAppCommand implements ICFCommand {
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
@@ -35,12 +36,12 @@ public class GetDebugAppCommand extends AbstractCFCommand {
 	private App app;
 
 	public GetDebugAppCommand(Target target, App app) {
-		super(target);
 		this.commandName = "Get Debug App"; //$NON-NLS-1$
 		this.app = app;
 	}
 
-	public ServerStatus _doIt() {
+	@Override
+	public IStatus doIt() {
 		try {
 			JSONArray routes = app.getSummaryJSON().optJSONArray("routes");
 			if (routes == null) {
