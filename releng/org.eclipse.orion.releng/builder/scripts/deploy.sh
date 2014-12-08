@@ -1,5 +1,6 @@
+#!/bin/bash
 #******************************************************************************
-# Copyright (c) 2010, 2012 IBM Corporation and others.
+# Copyright (c) 2010, 2014 IBM Corporation and others.
 # All rights reserved. This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License v1.0
 # which accompanies this distribution, and is available at
@@ -8,18 +9,15 @@
 # Contributors:
 #     IBM Corporation - initial API and implementation
 #*******************************************************************************
-#!/bin/bash
 #
 # This script deploys a new Orion build to an orion server
 # Usage: deploy -archive <archive> <host>
-
-serverHome=/home/admin/current
 
 while [ $# -gt 0 ]
 do
         case "$1" in
                 "-archive")
-                        archive="$2"; shift;;
+                        ARCHIVE="$2"; shift;;
 
                  *) break;;      # terminate while loop
         esac
@@ -27,28 +25,30 @@ do
 done
 
 #default to using orion.eclipse.org
-host=${1-"orion.eclipse.org"}
+HOST=${1-"orion.eclipse.org"}
+SERVERHOME=/home/admin/${HOST}/current
+
 
 currDate=`date`
 echo "----------------- $currDate ----------------"
 
-if [ "$archive" ]
+if [ "$ARCHIVE" ]
 then
-        echo "Deploying $archive to $host"
+        echo "Deploying ${ARCHIVE} to ${HOST}"
 else
         echo 'Usage: deploy.sh -archive <archive-name> [<host>]'
         exit
 fi
 
-echo "Copying build to $host"
-scp $archive admin@$host:$serverHome
+echo "Copying build to ${HOST}"
+scp ${ARCHIVE} admin@${HOST}:${SERVERHOME}
 if [ $? -gt 0 ]
 then
-        echo "Copy failed"
+        echo "Copy failed: scp ${ARCHIVE} admin@${HOST}:${SERVERHOME}"
         exit
 fi
-archiveFile=`basename $archive`
-echo "Invoking upgrade script on $host with archive file $archiveFile"
-ssh -l admin $host /home/admin/current/upgrade.sh -archive $archiveFile
+ARCHIVEFILE=`basename ${ARCHIVE}`
+echo "Invoking upgrade script on ${HOST} with archive file ${ARCHIVEFILE}"
+ssh -l admin ${HOST} /home/admin/${HOST}/current/upgrade.sh -archive ${ARCHIVEFILE}
 echo "Deploy complete in $SECONDS seconds"
 echo "------------------------------------------"
