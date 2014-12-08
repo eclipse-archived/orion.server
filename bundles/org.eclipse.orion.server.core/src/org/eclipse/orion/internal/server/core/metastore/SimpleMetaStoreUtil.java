@@ -40,6 +40,7 @@ public class SimpleMetaStoreUtil {
 	 * The folder where files are invalid metadata is moved rather than deleting outright. 
 	 */
 	public static final String ARCHIVE = ".archive";
+	
 	/**
 	 * The file scheme name of a URI
 	 */
@@ -497,6 +498,9 @@ public class SimpleMetaStoreUtil {
 		for (File file : parent.listFiles()) {
 			if (file.getName().equals(".metadata")) {
 				// skip the eclipse workspace metadata folder
+				continue;
+			} else if (file.getName().equals("orion.conf")) {
+				// skip the orion.conf configuration file.
 				continue;
 			} else if (file.getName().equals(ARCHIVE)) {
 				// skip the archive folder
