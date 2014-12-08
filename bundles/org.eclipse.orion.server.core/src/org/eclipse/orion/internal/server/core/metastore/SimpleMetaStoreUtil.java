@@ -10,17 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core.metastore;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.resources.FileLocker;
 import org.json.JSONException;
@@ -399,20 +392,7 @@ public class SimpleMetaStoreUtil {
 	 * @return true if the name is a MetaFile.
 	 */
 	public static boolean isMetaFile(File parent, String name) {
-		if (!parent.exists()) {
-			return false;
-		}
-		if (!parent.isDirectory()) {
-			return false;
-		}
-		File savedFile = retrieveMetaFile(parent, name);
-		if (!savedFile.exists()) {
-			return false;
-		}
-		if (!savedFile.isFile()) {
-			return false;
-		}
-		return true;
+		return retrieveMetaFile(parent, name).isFile();
 	}
 
 	/**
@@ -422,20 +402,7 @@ public class SimpleMetaStoreUtil {
 	 * @return true if the parent is a folder with a MetaFile.
 	 */
 	public static boolean isMetaFolder(File parent, String name) {
-		if (!parent.exists()) {
-			return false;
-		}
-		if (!parent.isDirectory()) {
-			return false;
-		}
-		File savedFolder = retrieveMetaFolder(parent, name);
-		if (!savedFolder.exists()) {
-			return false;
-		}
-		if (!savedFolder.isDirectory()) {
-			return false;
-		}
-		return true;
+		return retrieveMetaFolder(parent, name).isDirectory();
 	}
 
 	/**
