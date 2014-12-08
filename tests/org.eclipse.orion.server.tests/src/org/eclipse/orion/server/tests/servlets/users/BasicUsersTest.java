@@ -57,10 +57,10 @@ public class BasicUsersTest extends UsersTest {
 		assertTrue(responseObject.has(UserHandlerV1.USERS_ROWS));
 		assertTrue(responseObject.has(UserHandlerV1.USERS_LENGTH));
 		assertEquals(0, responseObject.getInt(UserHandlerV1.USERS_START));
-		if (usersArray.length() <= 20) {
-			assertEquals(usersArray.length(), responseObject.getInt(UserHandlerV1.USERS_LENGTH));
+		if (responseObject.getInt(UserHandlerV1.USERS_LENGTH) >= 20) {
+			assertTrue(responseObject.getInt(UserHandlerV1.USERS_ROWS) == 20);
 		} else {
-			assertTrue(responseObject.getInt(UserHandlerV1.USERS_LENGTH) > 20);
+			assertTrue(responseObject.getInt(UserHandlerV1.USERS_LENGTH) < 20);
 		}
 	}
 
