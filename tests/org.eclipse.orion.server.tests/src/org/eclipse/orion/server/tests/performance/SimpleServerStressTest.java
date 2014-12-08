@@ -13,9 +13,9 @@ package org.eclipse.orion.server.tests.performance;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import com.meterware.httpunit.*;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
@@ -26,29 +26,23 @@ import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
-
 /**
  * A simple stress test of the Orion server.
  */
 public class SimpleServerStressTest extends FileSystemTest {
 
 	@Before
-	public void setUp() throws CoreException {
+	public void setUp() throws CoreException, IOException, SAXException {
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
+		createWorkspace();
 	}
 
 	@Test
 	public void testCreateProject() throws IOException, SAXException, JSONException {
 		Performance performance = Performance.getDefault();
 		PerformanceMeter meter = performance.createPerformanceMeter("SimpleServerStressTest#testCreateProject");
-		//create workspace
-		String workspaceName = SimpleServerStressTest.class.getName() + "#testCreateProject";
-		createWorkspace(workspaceName);
 		final int PROJECT_COUNT = 1000;//increase this value for a real stress test
 		meter.start();
 		long start = System.currentTimeMillis();
@@ -57,7 +51,7 @@ public class SimpleServerStressTest extends FileSystemTest {
 			String projectName = "Project" + i;
 			WebRequest request = getCreateProjectRequest(workspaceLocation, projectName, null);
 			WebResponse response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+			assertEquals(response.getResponseMessage(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 			String locationHeader = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 			assertNotNull(locationHeader);
 			if (i % 500 == 0) {

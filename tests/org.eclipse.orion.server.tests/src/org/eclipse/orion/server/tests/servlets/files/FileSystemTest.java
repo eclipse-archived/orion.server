@@ -16,49 +16,24 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URLDecoder;
+import com.meterware.httpunit.*;
+import java.io.*;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.commons.io.FileUtils;
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileInfo;
-import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.filesystem.*;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.Slug;
-import org.eclipse.orion.server.core.IOUtilities;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 import org.xml.sax.SAXException;
-
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.httpunit.WebResponse;
 
 /**
  * Common base class for file system tests.
@@ -505,11 +480,18 @@ public abstract class FileSystemTest extends AbstractServerTest {
 	}
 
 	/**
-	 * Creates a new workspace, and returns the URI of the resulting resource.
+	 * Creates a new workspace with the given name.
 	 */
 	protected void createWorkspace(String workspaceName) throws IOException, SAXException {
 		WebResponse response = basicCreateWorkspace(workspaceName);
 		workspaceLocation = SERVER_URI.resolve(response.getHeaderField(ProtocolConstants.HEADER_LOCATION));
+	}
+
+	/**
+	 * Creates a new workspace with default name.
+	 */
+	protected void createWorkspace() throws IOException, SAXException {
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 	}
 
 }
