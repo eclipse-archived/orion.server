@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.commands;
 
-import org.eclipse.orion.server.cf.live.cflauncher.commands.GetDebugAppCommand;
-
 import java.net.URI;
 import java.net.URLEncoder;
 import javax.servlet.http.HttpServletResponse;
@@ -82,14 +80,14 @@ public class GetAppCommand extends AbstractCFCommand {
 			this.app.setAppJSON(appJSON);
 			this.app.setSummaryJSON(summaryJSON);
 
-			GetDebugAppCommand getDebugAppCommand = new GetDebugAppCommand(target, app);
-			ServerStatus getDebugStatus = (ServerStatus) getDebugAppCommand.doIt();
+			// GetDebugAppCommand getDebugAppCommand = new GetDebugAppCommand(target, app);
+			// ServerStatus getDebugStatus = (ServerStatus) getDebugAppCommand.doIt();
+			//
+			// JSONObject totalAppJSON = this.app.toJSON();
+			// if (getDebugStatus.isOK())
+			//	totalAppJSON.put("debug", getDebugStatus.getJsonData());
 
-			JSONObject totalAppJSON = this.app.toJSON();
-			if (getDebugStatus.isOK())
-				totalAppJSON.put("debug", getDebugStatus.getJsonData());
-
-			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, totalAppJSON);
+			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, this.app.toJSON());
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
