@@ -15,6 +15,6 @@ Import-Package: org.slf4j;version="1.5.11",
  org.osgi.framework;version="1.6.0"
 Bundle-ClassPath: lib/mqtt-client-0.4.0.jar,
  .
-Service-Component: OSGI-INF/*.xml
+Service-Component: OSGI-INF/component.xml
 Bundle-ActivationPolicy: lazy
 Export-Package: org.eclipse.orion.internal.server.events

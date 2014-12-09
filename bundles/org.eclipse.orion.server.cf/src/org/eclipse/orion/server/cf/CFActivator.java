@@ -10,18 +10,18 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf;
 
-import org.eclipse.orion.server.cf.live.FileChangeListener;
-
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.params.HttpClientParams;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
+import org.eclipse.orion.internal.server.servlets.file.FilesystemModificationListenerManager;
 import org.eclipse.orion.server.cf.ds.*;
+import org.eclipse.orion.server.cf.live.FileChangeListener;
 import org.eclipse.orion.server.cf.utils.TargetRegistry;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.events.IFileChangeNotificationService;
-import org.osgi.framework.*;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,10 +43,6 @@ public class CFActivator implements BundleActivator {
 
 	private ServiceTracker<DeploymentService, IDeploymentService> serviceTracker;
 
-	private IFileChangeNotificationService fileChangeNotificationService;
-
-	private ServiceReference<IFileChangeNotificationService> fileChangeNotificationServiceRef;
-
 	private final Logger logger = LoggerFactory.getLogger(CFActivator.PI_CF); //$NON-NLS-1$
 
 	/*
@@ -67,42 +63,10 @@ public class CFActivator implements BundleActivator {
 
 		if (PreferenceHelper.getString(ServerConstants.CONFIG_CF_LIVEUPDATE_ENABLED, "false").equals("true")) {
 			logger.debug("Live Update enabled");
-			fileChangeNotificationServiceRef = context.getServiceReference(IFileChangeNotificationService.class);
-			if (fileChangeNotificationServiceRef == null) {
-				logger.debug("fileChangeNotificationServiceRef not found in bundle context");
-				this.bundleContext.addServiceListener(new ServiceListener() {
-					@SuppressWarnings("unchecked")
-					@Override
-					public void serviceChanged(ServiceEvent event) {
-						fileChangeNotificationServiceRef = (ServiceReference<IFileChangeNotificationService>) event.getServiceReference();
-						if (fileChangeNotificationServiceRef == null) {
-							logger.debug("fileChangeNotificationServiceRef still not found");
-							return;
-						}
-						logger.debug("fileChangeNotificationServiceRef found");
-						startFileChangeNotificationService();
-						bundleContext.removeServiceListener(this);
-					}
-				}, "(objectClass=" + IFileChangeNotificationService.class.getName() + ')');
-			} else {
-				startFileChangeNotificationService();
-			}
+			FilesystemModificationListenerManager.getInstance().addListener(new FileChangeListener());
 		} else {
 			logger.debug("Live Update disabled");
 		}
-	}
-
-	/**
-	 * Start the file change notification service that is used by the cf liveupdate feature.
-	 */
-	private void startFileChangeNotificationService() {
-		fileChangeNotificationService = bundleContext.getService(fileChangeNotificationServiceRef);
-		if (fileChangeNotificationService == null) {
-			logger.warn("No file change notification service available");
-			return;
-		}
-		fileChangeNotificationService.addListener(new FileChangeListener());
-		logger.debug("File change notification service started");
 	}
 
 	/*

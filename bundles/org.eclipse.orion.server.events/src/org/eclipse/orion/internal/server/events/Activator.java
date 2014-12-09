@@ -11,7 +11,6 @@
 package org.eclipse.orion.internal.server.events;
 
 import org.eclipse.orion.server.core.events.IEventService;
-import org.eclipse.orion.server.core.events.IFileChangeNotificationService;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -27,7 +26,6 @@ public class Activator implements BundleActivator {
 
 	static Activator singleton;
 	private EventService eventService;
-	private FileChangeNotificationService fileChangeNotificationService;
 
 	public static Activator getDefault() {
 		return singleton;
@@ -41,7 +39,6 @@ public class Activator implements BundleActivator {
 		singleton = this;
 		bundleContext = context;
 		registerEventService();
-		registerFileChangeNotificationService();
 	}
 
 	private void registerEventService() {
@@ -52,17 +49,9 @@ public class Activator implements BundleActivator {
 		}
 	}
 
-	private void registerFileChangeNotificationService() {
-		fileChangeNotificationService = new FileChangeNotificationService();
-		@SuppressWarnings("unused")
-		ServiceRegistration<IFileChangeNotificationService> eventServiceRegistration = bundleContext.registerService(IFileChangeNotificationService.class, fileChangeNotificationService, null);
-	}
-
 	public void stop(BundleContext context) throws Exception {
 		eventService.destroy();
 		eventService = null;
-		fileChangeNotificationService.shutdown();
-		fileChangeNotificationService = null;
 		bundleContext = null;
 	}
 }

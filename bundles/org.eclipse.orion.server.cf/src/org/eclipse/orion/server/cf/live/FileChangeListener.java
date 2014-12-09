@@ -13,22 +13,21 @@ package org.eclipse.orion.server.cf.live;
 import java.io.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.orion.internal.server.servlets.ChangeEvent;
+import org.eclipse.orion.internal.server.servlets.IFileStoreModificationListener;
 import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.live.cflauncher.commands.*;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.core.events.IFileChangeListener;
-import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class FileChangeListener implements IFileChangeListener {
+public class FileChangeListener implements IFileStoreModificationListener {
 
 	private final Logger logger = LoggerFactory.getLogger(CFActivator.PI_CF); //$NON-NLS-1$
 
-	@Override
-	public void directoryCreated(IFileStore directory, ProjectInfo projectInfo) {
-		logger.debug("Sync: creating " + directory.getName() + " in " + projectInfo.getFullName());
+	private void onDirectoryCreated(IFileStore directory) {
+		logger.debug("Sync: creating " + directory.toString());
 
 		try {
 			long time = System.currentTimeMillis();
@@ -55,24 +54,8 @@ public class FileChangeListener implements IFileChangeListener {
 		}
 	}
 
-	@Override
-	public void directoryUpdated(IFileStore directory, ProjectInfo projectInfo) {
-		logger.error("Sync: directory updated event for " + directory.getName() + " in " + projectInfo.getFullName() + " NOT supported");
-	}
-
-	@Override
-	public void directoryDeleted(IFileStore directory, ProjectInfo projectInfo) {
-		this.fileDeleted(directory, projectInfo);
-	}
-
-	@Override
-	public void fileCreated(IFileStore file, ProjectInfo projectInfo) {
-		this.fileUpdated(file, projectInfo);
-	}
-
-	@Override
-	public void fileDeleted(IFileStore file, ProjectInfo projectInfo) {
-		logger.debug("Sync: deleting " + file.getName() + " in " + projectInfo.getFullName());
+	private void onFileOrDirectoryDeleted(IFileStore file) {
+		logger.debug("Sync: deleting " + file.toString());
 
 		try {
 			long time = System.currentTimeMillis();
@@ -99,9 +82,8 @@ public class FileChangeListener implements IFileChangeListener {
 		}
 	}
 
-	@Override
-	public void fileUpdated(IFileStore file, ProjectInfo projectInfo) {
-		logger.debug("Sync: updating " + file.getName() + " in " + projectInfo.getFullName());
+	private void onFileCreatedOrUpdated(IFileStore file) {
+		logger.debug("Sync: updating " + file.toString());
 
 		try {
 			long time = System.currentTimeMillis();
@@ -211,5 +193,20 @@ public class FileChangeListener implements IFileChangeListener {
 		} finally {
 			responseStream.close();
 		}
+	}
+
+	@Override
+	public void changed(ChangeEvent event) {
+		if (IFileStoreModificationListener.ChangeType.WRITE.equals(event.getChangeType())) {
+			IFileStore modifiedItem = event.getModifiedItem();
+			if (modifiedItem.fetchInfo().isDirectory()) {
+				onDirectoryCreated(modifiedItem);
+			} else {
+				onFileCreatedOrUpdated(modifiedItem);
+			}
+		} else if (IFileStoreModificationListener.ChangeType.DELETE.equals(event.getChangeType())) {
+			onFileOrDirectoryDeleted(event.getModifiedItem());
+		}
+
 	}
 }
