@@ -10,12 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.live;
 
-import org.eclipse.orion.server.cf.live.cflauncher.commands.*;
-
 import java.io.*;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.orion.server.cf.CFActivator;
+import org.eclipse.orion.server.cf.live.cflauncher.commands.*;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.events.IFileChangeListener;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
@@ -182,9 +181,19 @@ public class FileChangeListener implements IFileChangeListener {
 		for (int i = 0; i < childNames.length; i++) {
 			if (childNames[i].endsWith(".launch")) {
 				byte[] content = getContent(launchConfStore.getChild(childNames[i]).openInputStream(EFS.NONE, null));
-				return new JSONObject(new String(content));
+				JSONObject launchConf = new JSONObject(new String(content));
+				JSONObject params = launchConf.optJSONObject("Params");
+				if (params != null) {
+					JSONObject devMode = params.optJSONObject("DevMode");
+					if (devMode != null) {
+						boolean on = devMode.optBoolean("On", false);
+						if (on)
+							return launchConf;
+					}
+				}
 			}
 		}
+
 		return new JSONObject();
 	}
 
