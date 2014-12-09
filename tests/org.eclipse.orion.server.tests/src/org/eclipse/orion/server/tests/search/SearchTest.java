@@ -13,20 +13,41 @@ package org.eclipse.orion.server.tests.search;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import com.meterware.httpunit.*;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.search.SearchActivator;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.xfer.TransferTest;
-import org.json.*;
-import org.junit.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.xml.sax.SAXException;
+
+import com.meterware.httpunit.GetMethodWebRequest;
+import com.meterware.httpunit.HttpUnitOptions;
+import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.PutMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
+import com.meterware.httpunit.WebRequest;
+import com.meterware.httpunit.WebResponse;
 
 /**
  * Tests for the search servlet.
@@ -345,6 +366,24 @@ public class SearchTest extends FileSystemTest {
 		searchResult = doSearch("oryx+Location:" + location + '*');
 		match = assertOneMatch(searchResult, "file with spaces.txt");
 
+	}
+
+	/**
+	 * Tests simply searching for file names.
+	 */
+	@Test
+	public void testFileNameSearch() throws Exception {
+		//search for file name starting with page
+		JSONObject searchResult = doSearch("NameLower:page*");
+		assertOneMatch(searchResult, "page.html");
+
+		//search for file name starting with page
+		searchResult = doSearch("NameLower:*.html");
+		assertOneMatch(searchResult, "page.html");
+
+		// search for dbcs filenames
+		searchResult = doSearch("NameLower:\u65e5\u672c*");
+		assertOneMatch(searchResult, "\u65e5\u672c\u8a9e.txt");
 	}
 
 }
