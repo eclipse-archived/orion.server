@@ -71,7 +71,9 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 			String defaultName = getApplicationName(contentLocation);
 
 			set(application, ManifestConstants.NAME, defaultName);
-			set(application, ManifestConstants.HOST, ManifestUtils.slugify(defaultName));
+
+			String appName = application.get(ManifestConstants.NAME).getValue();
+			set(application, ManifestConstants.HOST, ManifestUtils.slugify(appName));
 
 			set(application, ManifestConstants.MEMORY, ManifestUtils.DEFAULT_MEMORY);
 			set(application, ManifestConstants.INSTANCES, ManifestUtils.DEFAULT_INSTANCES);
