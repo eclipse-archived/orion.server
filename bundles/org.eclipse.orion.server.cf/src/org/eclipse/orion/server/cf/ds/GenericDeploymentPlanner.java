@@ -20,8 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class GenericDeploymentPlanner implements IDeploymentPlanner {
-	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
-	private static String TYPE = "generic"; //$NON-NLS-1$
+	protected final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
+	public static String TYPE = "generic"; //$NON-NLS-1$
 
 	@Override
 	public String getId() {

@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
 
 public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 	protected final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
-	protected static String TYPE = "node.js"; //$NON-NLS-1$
+	public static String TYPE = "node.js"; //$NON-NLS-1$
 
 	@Override
 	public String getId() {
