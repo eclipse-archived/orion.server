@@ -41,7 +41,6 @@ import org.eclipse.orion.server.core.users.UserConstants2;
  * @author Aidan Redpath
  */
 public class FileGrepper extends DirectoryWalker<GrepResult> {
-
 	private Pattern pattern;
 	private Matcher matcher;
 	private List<GrepResult> scopes;
@@ -57,7 +56,7 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 	public FileGrepper(HttpServletRequest req, HttpServletResponse resp, SearchOptions options) throws GrepException {
 		super();
 		this.options = options;
-		if (options.isFileSearch()) {
+		if (options.isFileContentsSearch()) {
 			pattern = buildSearchPattern();
 			matcher = pattern.matcher("");
 		}
@@ -80,7 +79,7 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 				project = scope.getProject();
 				File file = scope.getFile();
 				if (!file.isDirectory()) {
-					options.addFilenamePatterns(file.getAbsolutePath());
+					//options.addFilenamePatterns(file.getAbsolutePath());
 					file = file.getParentFile();
 				}
 
@@ -97,10 +96,10 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 	 */
 	protected void handleFile(File file, int depth, Collection<GrepResult> results) throws IOException {
 		// Check if the path is acceptable
-		if (!acceptFilePath(file.getPath()))
+		if (!acceptFilename(file.getName()))
 			return;
 		// Add if it is a filename search or search the file contents.
-		if (!options.isFileSearch() || searchFile(file)) {
+		if (!options.isFileContentsSearch() || searchFile(file)) {
 			IFileStore fileStore;
 			try {
 				fileStore = EFS.getStore(file.toURI());
@@ -113,7 +112,8 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 
 	@Override
 	protected boolean handleDirectory(File directory, int depth, Collection<GrepResult> results) throws IOException {
-		if (directory.getName().equals(".git")) {
+		if (directory.getName().startsWith(".")) {
+			// ignore directories starting with a dot like '.git'
 			return false;
 		} else {
 			return true;
@@ -145,18 +145,21 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 
 	/**
 	 * Check if the file path is acceptable.
-	 * @param path The file path string.
+	 * @param filename The file path string.
 	 * @return True is the file passes all the filename patterns (with wildcards)
 	 */
-	private boolean acceptFilePath(String path) {
-		if (options.getFilenamePatterns().size() <= 0)
+	private boolean acceptFilename(String filename) {
+		if (options.getFilenamePattern() == null) {
 			return true;
-		for (String filename : options.getFilenamePatterns()) {
-			if (!FilenameUtils.wildcardMatch(path, filename)) {
-				return false;
-			}
 		}
-		return true;
+		String filenamePattern = options.getFilenamePattern();
+		boolean match = false;
+		if (options.isCaseSensitive()) {
+			match = FilenameUtils.wildcardMatch(filename, filenamePattern);
+		} else {
+			match = FilenameUtils.wildcardMatch(filename.toLowerCase(), filenamePattern.toLowerCase());
+		}
+		return match;
 	}
 
 	/**
@@ -168,7 +171,22 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 		int flags = 0;
 		String searchTerm = options.getSearchTerm();
 		if (!options.isRegEx()) {
-			searchTerm = Pattern.quote(searchTerm);
+			if (searchTerm.startsWith("\"")) {
+				searchTerm = searchTerm.substring(1, searchTerm.length() - 1);
+			}
+			if (searchTerm.contains("?") || searchTerm.contains("*")) {
+				if (searchTerm.startsWith("*")) {
+					searchTerm = searchTerm.substring(1);
+				}
+				if (searchTerm.contains("?")) {
+					searchTerm = searchTerm.replace('?', '.');
+				}
+				if (searchTerm.contains("*")) {
+					searchTerm = searchTerm.replace("*", ".*");
+				}
+			} else {
+				searchTerm = Pattern.quote(searchTerm);
+			}
 		}
 		if (!options.isCaseSensitive()) {
 			flags |= Pattern.CASE_INSENSITIVE;
@@ -231,7 +249,7 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 			if (path.segmentCount() == 1) {
 				// Bug 415700: handle path format /workspaceId 
 				if (workspaceInfo != null && workspaceInfo.getUniqueId() != null) {
-					addProjectToScope(workspaceInfo);
+					addAllProjectsToScope(workspaceInfo);
 					return true;
 				}
 
@@ -274,14 +292,15 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 			List<String> workspaceIds = userInfo.getWorkspaceIds();
 			for (String workspaceId : workspaceIds) {
 				WorkspaceInfo workspaceInfo = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
-				addProjectToScope(workspaceInfo);
+				options.setDefaultScope("/file/" + workspaceId);
+				addAllProjectsToScope(workspaceInfo);
 			}
 		} catch (CoreException e) {
 			throw (new GrepException(e));
 		}
 	}
 
-	private void addProjectToScope(WorkspaceInfo workspaceInfo) throws CoreException {
+	private void addAllProjectsToScope(WorkspaceInfo workspaceInfo) throws CoreException {
 		List<String> projectnames = workspaceInfo.getProjectNames();
 		for (String projectName : projectnames) {
 			ProjectInfo projectInfo = OrionConfiguration.getMetaStore().readProject(workspaceInfo.getUniqueId(), projectName);

@@ -11,7 +11,6 @@
 package org.eclipse.orion.internal.server.search.grep;
 
 import java.io.File;
-import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.eclipse.core.filesystem.IFileInfo;
@@ -65,7 +64,6 @@ public class GrepResult {
 		doc.put(ProtocolConstants.KEY_DIRECTORY, fileInfo.isDirectory());
 		doc.put(ProtocolConstants.KEY_LAST_MODIFIED, fileInfo.getLastModified());
 		// Prepare project data
-		String encodedProjectName = new URI(null, null, project.getFullName(), null).toString();
 		IFileStore projectStore = project.getProjectStore();
 		int projectLocationLength = projectStore.toURI().toString().length();
 		IPath projectLocation = new Path(Activator.LOCATION_FILE_SERVLET).append(workspace.getUniqueId()).append(project.getFullName()).addTrailingSeparator();

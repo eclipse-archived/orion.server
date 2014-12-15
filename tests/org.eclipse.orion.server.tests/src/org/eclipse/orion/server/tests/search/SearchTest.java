@@ -272,6 +272,10 @@ public class SearchTest extends FileSystemTest {
 		searchResult = doSearch("mammoth");
 		assertOneMatch(searchResult, "a.txt");
 
+		//word in quotes with Name
+		searchResult = doSearch("mammoth+Name:*.txt");
+		assertOneMatch(searchResult, "a.txt");
+
 		//compound word
 		searchResult = doSearch("Will-o'-the-wisp");
 		assertOneMatch(searchResult, "a.txt");
@@ -372,18 +376,51 @@ public class SearchTest extends FileSystemTest {
 	 * Tests simply searching for file names.
 	 */
 	@Test
-	public void testFileNameSearch() throws Exception {
+	public void testFilenameSearch() throws Exception {
 		//search for file name starting with page
 		JSONObject searchResult = doSearch("NameLower:page*");
+		assertOneMatch(searchResult, "page.html");
+
+		//search for file name starting with page
+		searchResult = doSearch("Name:page*");
 		assertOneMatch(searchResult, "page.html");
 
 		//search for file name starting with page
 		searchResult = doSearch("NameLower:*.html");
 		assertOneMatch(searchResult, "page.html");
 
+		//search for file name starting with page
+		searchResult = doSearch("Name:*.html");
+		assertOneMatch(searchResult, "page.html");
+
+		//search for file name with *
+		searchResult = doSearch("NameLower:p*.html");
+		assertOneMatch(searchResult, "page.html");
+
+		//search for file name with *
+		searchResult = doSearch("Name:p*.html");
+		assertOneMatch(searchResult, "page.html");
+
+		//search for file name with ?
+		searchResult = doSearch("NameLower:pag?.html");
+		assertOneMatch(searchResult, "page.html");
+
+		//search for file name with ?
+		searchResult = doSearch("Name:pag?.html");
+		assertOneMatch(searchResult, "page.html");
+
 		// search for dbcs filenames
 		searchResult = doSearch("NameLower:\u65e5\u672c*");
 		assertOneMatch(searchResult, "\u65e5\u672c\u8a9e.txt");
+
+		// search for dbcs filenames
+		searchResult = doSearch("Name:\u65e5\u672c*");
+		assertOneMatch(searchResult, "\u65e5\u672c\u8a9e.txt");
+
+		// search upper case filename
+		searchResult = doSearch("NameLower:dbcs.txt");
+		assertOneMatch(searchResult, "DBCS.txt");
+
 	}
 
 }

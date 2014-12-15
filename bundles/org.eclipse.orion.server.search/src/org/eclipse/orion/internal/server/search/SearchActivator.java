@@ -219,11 +219,13 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 		SearchActivator.context = bundleContext;
 		createServer();
 		if (server != null) {
-			indexer = new Indexer(server, baseDir);
-			indexer.schedule();
+			if (PreferenceHelper.getString(ServerConstants.CONFIG_GREP_SEARCH_ENABLED, "false").equals("false")) {
+				indexer = new Indexer(server, baseDir);
+				indexer.schedule();
 
-			purgeJob = new IndexPurgeJob(server, baseDir);
-			purgeJob.schedule();
+				purgeJob = new IndexPurgeJob(server, baseDir);
+				purgeJob.schedule();
+			}
 		}
 		searchDecoratorRegistration = context.registerService(IWebResourceDecorator.class, this, null);
 	}
@@ -272,6 +274,9 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	 * Helper method for test suites. This method will block until the next indexer run completes.
 	 */
 	public void testWaitForIndex() {
+		if (indexer == null) {
+			return;
+		}
 		try {
 			if (indexer.getState() == Job.RUNNING) {
 				indexer.join();

@@ -11,7 +11,6 @@
 package org.eclipse.orion.internal.server.search.grep;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
@@ -45,7 +44,7 @@ public class GrepServlet extends OrionServlet {
 			SearchOptions options = buildSearchOptions(req, resp);
 			FileGrepper grepper = new FileGrepper(req, resp, options);
 			List<GrepResult> files = grepper.search();
-			writeResponse(req, resp, files);
+			writeResponse(req, resp, files, options);
 		} catch (GrepException e) {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
 		}
@@ -72,10 +71,16 @@ public class GrepServlet extends OrionServlet {
 						} catch (UnsupportedEncodingException e) {
 							//try with encoded term
 						}
-						options.setIsCaseSensitive(true);
+						options.setIsCaseSensitive(false);
+						options.setFilenamePattern(term.substring(10));
 					} else if (term.startsWith("Location:")) { //$NON-NLS-1${
-
-						options.setScope(term.substring(9 + req.getContextPath().length()));
+						String scope = term.substring(9 + req.getContextPath().length());
+						try {
+							scope = URLDecoder.decode(scope, "UTF-8"); //$NON-NLS-1$
+						} catch (UnsupportedEncodingException e) {
+							//try with encoded term
+						}
+						options.setScope(scope);
 						continue;
 					} else if (term.startsWith("Name:")) { //$NON-NLS-1$
 						try {
@@ -83,9 +88,8 @@ public class GrepServlet extends OrionServlet {
 						} catch (UnsupportedEncodingException e) {
 							//try with encoded term
 						}
-						//options.setFilenamePatterns(term.substring(5));
-					} else {
-
+						options.setIsCaseSensitive(true);
+						options.setFilenamePattern(term.substring(5));
 					}
 				} else {
 					//decode the term string now
@@ -95,9 +99,12 @@ public class GrepServlet extends OrionServlet {
 						//try with encoded term
 					}
 					options.setSearchTerm(term);
+					options.setFileSearch(true);
 				}
 			}
 		}
+		String login = req.getRemoteUser();
+		options.setUsername(login);
 		return options;
 	}
 
@@ -106,7 +113,6 @@ public class GrepServlet extends OrionServlet {
 	 * if no such parameter is defined or has an empty value.
 	 */
 	private String getEncodedParameter(HttpServletRequest req, String key) {
-		//TODO need to get query string unencoded - maybe use req.getQueryString() and parse manually
 		String query = req.getQueryString();
 		for (String param : query.split("&")) { //$NON-NLS-1$
 			String[] pair = param.split("=", 2); //$NON-NLS-1$
@@ -128,17 +134,12 @@ public class GrepServlet extends OrionServlet {
 		return false;
 	}
 
-	private void writeResponse(HttpServletRequest req, HttpServletResponse resp, List<GrepResult> files) {
-		try {
-			JSONObject json = convertListToJson(files);
-			PrintWriter writer = resp.getWriter();
-			writer.write(json.toString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	private void writeResponse(HttpServletRequest req, HttpServletResponse resp, List<GrepResult> files, SearchOptions options) throws IOException {
+		JSONObject json = convertListToJson(files, options);
+		writeJSONResponse(req, resp, json);
 	}
 
-	private JSONObject convertListToJson(List<GrepResult> files) {
+	private JSONObject convertListToJson(List<GrepResult> files, SearchOptions options) {
 		JSONObject resultsJSON = new JSONObject();
 		JSONObject responseJSON = new JSONObject();
 		try {
@@ -151,21 +152,30 @@ public class GrepServlet extends OrionServlet {
 			}
 			resultsJSON.put("docs", docs);
 			// Add to parent JSON
-			// TODO: add correct temporary responseHeader
 			JSONObject responseHeader = new JSONObject();
 			responseHeader.put("status", 0);
-			responseHeader.put("QTime", 77);
+			//responseHeader.put("QTime", 77);
 			JSONObject params = new JSONObject();
 			params.put("wt", "json");
 			params.put("fl", FIELD_NAMES);
 			JSONArray fq = new JSONArray();
-			fq.put("Location:/file/ahunterorion-OrionContent/org.eclipse.orion.client/*");
-			fq.put("UserName:ahunterorion");
+			if (options.getDefaultScope() != null) {
+				fq.put("Location:" + options.getDefaultScope());
+			} else if (options.getScope() != null) {
+				fq.put("Location:" + options.getScope());
+			} else {
+				throw new RuntimeException("Scope or DefaultScope is missing");
+			}
+			if (options.getUsername() != null) {
+				fq.put("UserName:" + options.getUsername());
+			} else {
+				throw new RuntimeException("UserName is missing");
+			}
 			params.put("fq", fq);
 			params.put("rows", "10000");
 			params.put("start", "0");
 			params.put("sort", "Path asc");
-			params.put("q", "docker Location:/file/ahunterorion-OrionContent/org.eclipse.orion.client/*");
+			//params.put("q", "docker Location:/file/ahunterorion-OrionContent/org.eclipse.orion.client/*");
 			responseHeader.put("params", params);
 			responseJSON.put("responseHeader", responseHeader);
 			responseJSON.put("response", resultsJSON);
