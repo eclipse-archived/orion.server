@@ -58,7 +58,7 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 		if (!packageStore.fetchInfo().exists())
 			return null;
 
-		/* do not support multi-aplication manifests */
+		/* do not support multi-application manifests */
 		if (manifest != null && ManifestUtils.hasMultipleApplications(manifest))
 			return null;
 
@@ -72,8 +72,8 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 
 			set(application, ManifestConstants.NAME, defaultName);
 
-			String appName = application.get(ManifestConstants.NAME).getValue();
-			set(application, ManifestConstants.HOST, ManifestUtils.slugify(appName));
+			//String appName = application.get(ManifestConstants.NAME).getValue();
+			//set(application, ManifestConstants.HOST, ManifestUtils.slugify(appName));
 
 			set(application, ManifestConstants.MEMORY, ManifestUtils.DEFAULT_MEMORY);
 			set(application, ManifestConstants.INSTANCES, ManifestUtils.DEFAULT_INSTANCES);

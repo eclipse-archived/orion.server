@@ -56,7 +56,7 @@ public final class GenericDeploymentPlanner implements IDeploymentPlanner {
 
 			/* set up generic defaults */
 			ManifestParseTree application = manifest.get(ManifestConstants.APPLICATIONS).get(0);
-			set(application, ManifestConstants.HOST, ManifestUtils.slugify(applicationName));
+			//set(application, ManifestConstants.HOST, ManifestUtils.slugify(applicationName));
 			set(application, ManifestConstants.MEMORY, ManifestUtils.DEFAULT_MEMORY);
 			set(application, ManifestConstants.INSTANCES, ManifestUtils.DEFAULT_INSTANCES);
 			set(application, ManifestConstants.PATH, ManifestUtils.DEFAULT_PATH);
