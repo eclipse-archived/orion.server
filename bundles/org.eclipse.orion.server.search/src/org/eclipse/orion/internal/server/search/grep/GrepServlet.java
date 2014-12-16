@@ -28,6 +28,8 @@ import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Aidan Redpath
@@ -38,6 +40,7 @@ public class GrepServlet extends OrionServlet {
 
 	private static final String FIELD_NAMES = "Name,NameLower,Length,Directory,LastModified,Location,Path"; //$NON-NLS-1$
 	private static final List<String> FIELD_LIST = Arrays.asList(FIELD_NAMES.split(",")); //$NON-NLS-1$
+	private Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 
 	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		try {
@@ -180,11 +183,11 @@ public class GrepServlet extends OrionServlet {
 			responseJSON.put("responseHeader", responseHeader);
 			responseJSON.put("response", resultsJSON);
 		} catch (JSONException e) {
-			e.printStackTrace();
+			logger.error("FileGrepper.convertListToJson: " + e.getLocalizedMessage(), e);
 		} catch (CoreException e) {
-
+			logger.error("FileGrepper.convertListToJson: " + e.getLocalizedMessage(), e);
 		} catch (URISyntaxException e) {
-			e.printStackTrace();
+			logger.error("FileGrepper.convertListToJson: " + e.getLocalizedMessage(), e);
 		}
 		return responseJSON;
 	}

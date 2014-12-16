@@ -36,6 +36,8 @@ import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.core.users.UserConstants2;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author Aidan Redpath
@@ -44,6 +46,7 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 	private Pattern pattern;
 	private Matcher matcher;
 	private List<GrepResult> scopes;
+	private Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 
 	private SearchOptions options;
 
@@ -94,7 +97,7 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 	/**
 	 * Handles each file in the file walk.
 	 */
-	protected void handleFile(File file, int depth, Collection<GrepResult> results) throws IOException {
+	protected void handleFile(File file, int depth, Collection<GrepResult> results) {
 		// Check if the path is acceptable
 		if (!acceptFilename(file.getName()))
 			return;
@@ -104,14 +107,15 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 			try {
 				fileStore = EFS.getStore(file.toURI());
 			} catch (CoreException e) {
-				throw new IOException(e);
+				logger.error("FileGrepper.handleFile: " + e.getLocalizedMessage(), e);
+				return;
 			}
 			results.add(new GrepResult(fileStore, workspace, project));
 		}
 	}
 
 	@Override
-	protected boolean handleDirectory(File directory, int depth, Collection<GrepResult> results) throws IOException {
+	protected boolean handleDirectory(File directory, int depth, Collection<GrepResult> results) {
 		if (directory.getName().startsWith(".")) {
 			// ignore directories starting with a dot like '.git'
 			return false;
@@ -126,8 +130,14 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 	 * @return returns whether the search was successful
 	 * @throws IOException thrown if there is an error reading the file
 	 */
-	private boolean searchFile(File file) throws IOException {
-		LineIterator lineIterator = FileUtils.lineIterator(file);
+	private boolean searchFile(File file) {
+		LineIterator lineIterator = null;
+		try {
+			lineIterator = FileUtils.lineIterator(file);
+		} catch (IOException e) {
+			logger.error("FileGrepper.searchFile: " + e.getLocalizedMessage());
+			return false;
+		}
 		try {
 			while (lineIterator.hasNext()) {
 				String line = lineIterator.nextLine();
@@ -172,8 +182,12 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 		String searchTerm = options.getSearchTerm();
 		if (!options.isRegEx()) {
 			if (searchTerm.startsWith("\"")) {
+				// remove the double quotes from the start and end of the search pattern
 				searchTerm = searchTerm.substring(1, searchTerm.length() - 1);
 			}
+			// remove the Lucene escaped characters
+			searchTerm = undoLuceneEscape(searchTerm);
+			// change ? and * to regular expression wildcards
 			if (searchTerm.contains("?") || searchTerm.contains("*")) {
 				if (searchTerm.startsWith("*")) {
 					searchTerm = searchTerm.substring(1);
@@ -205,6 +219,22 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 		} catch (PatternSyntaxException e) {
 			throw new GrepException(e);
 		}
+	}
+
+	/**
+	 * The Orion file client performs an operation that escapes all characters in the string that require escaping 
+	 * in a Lucene queries. We need to undo since we are not Lucene. 
+	 * @param searchTerm The search term with escaped characters
+	 * @return the correct search term.
+	 */
+	private String undoLuceneEscape(String searchTerm) {
+		String specialChars = "+-&|!(){}[]^\"~:\\";
+		for (int i = 0; i < specialChars.length(); i++) {
+			String character = specialChars.substring(i, i + 1);
+			String escaped = "\\" + character;
+			searchTerm = searchTerm.replaceAll(Pattern.quote(escaped), character);
+		}
+		return searchTerm;
 	}
 
 	/**
@@ -275,6 +305,7 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 
 			return false;
 		} catch (CoreException e) {
+			logger.error("FileGrepper.setScopeFromRequest: " + e.getLocalizedMessage(), e);
 			return false;
 		}
 	}
