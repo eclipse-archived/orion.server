@@ -10,44 +10,21 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-
+import java.io.*;
+import java.net.*;
 import javax.servlet.http.HttpServletRequest;
-
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
-import org.apache.solr.core.CoreContainer;
-import org.apache.solr.core.CoreDescriptor;
-import org.apache.solr.core.SolrCore;
+import org.apache.solr.core.*;
 import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.*;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.orion.server.core.IOUtilities;
-import org.eclipse.orion.server.core.IWebResourceDecorator;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ProtocolConstants;
-import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.*;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
+import org.osgi.framework.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	private static BundleContext context;
@@ -133,6 +110,8 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 			solrContainer.register(solrCore, false);
 			server = new EmbeddedSolrServer(solrContainer, "Eclipse Web Search"); //$NON-NLS-1$
 		} catch (Exception e) {
+			Logger logger = LoggerFactory.getLogger(Indexer.class);
+			logger.error("Failed to initialize search service", e); //$NON-NLS-1$
 			LogHelper.log(e);
 		}
 	}
@@ -224,6 +203,9 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 
 			purgeJob = new IndexPurgeJob(server, baseDir);
 			purgeJob.schedule();
+		} else {
+			Logger logger = LoggerFactory.getLogger(Indexer.class);
+			logger.info("Search indexer not started because the search server failed to initialize"); //$NON-NLS-1$
 		}
 		searchDecoratorRegistration = context.registerService(IWebResourceDecorator.class, this, null);
 	}
