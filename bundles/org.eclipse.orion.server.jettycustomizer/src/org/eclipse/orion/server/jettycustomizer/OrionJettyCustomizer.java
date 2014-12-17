@@ -13,9 +13,7 @@ package org.eclipse.orion.server.jettycustomizer;
 import java.io.File;
 import java.util.Dictionary;
 
-import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.equinox.http.jetty.JettyCustomizer;
 import org.eclipse.jetty.server.NCSARequestLog;
 import org.eclipse.jetty.server.handler.RequestLogHandler;
@@ -36,14 +34,8 @@ public final class OrionJettyCustomizer extends JettyCustomizer {
 		if (context instanceof ServletContextHandler) {
 			ServletContextHandler jettyContext = (ServletContextHandler) context;
 
-			IFileStore fileStore = OrionConfiguration.getRootLocation();
-			File rootLocation = null;
-			try {
-				rootLocation = fileStore.toLocalFile(EFS.NONE, null);
-			} catch (CoreException e) {
-				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-				logger.error("Could not initialize NCSA Request Log", e); //$NON-NLS-1$
-			}
+			IPath platformLocation = OrionConfiguration.getPlatformLocation();
+			File rootLocation = platformLocation.toFile();
 
 			File metadata = new File(rootLocation, ".metadata");
 			if (!metadata.exists() && !metadata.isDirectory()) {

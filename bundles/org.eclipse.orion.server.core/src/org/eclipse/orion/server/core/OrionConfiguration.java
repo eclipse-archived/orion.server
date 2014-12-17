@@ -33,7 +33,8 @@ public class OrionConfiguration {
 	}
 
 	/**
-	 * Returns the root location where data files are stored. This is the value of the serverworkspace.
+	 * Returns the root location where data files are stored. This is the value of the 
+	 * serverworkspace.  This is not necessarily the OSGi instance location.
 	 * 
 	 * @return the root location.
 	 */
