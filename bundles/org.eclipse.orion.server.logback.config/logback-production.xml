@@ -12,7 +12,7 @@
   <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
     
     <!-- by default, write to /var/logs/orion/orion.log -->
-    <file>${orion.log.directory:-/var/logs/orion/}${orion.log.file:-orion.log}</file>
+    <file>${orion.log.directory:-/var/logs/orion}/${orion.log.file:-orion.log}</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       
       <!-- daily rollover -->
