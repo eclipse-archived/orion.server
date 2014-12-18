@@ -82,4 +82,9 @@ public class ManifestConstants {
 	public static final String TIMEOUT = "timeout"; //$NON-NLS-1$
 
 	public static final String NOROUTE = "no-route"; //$NON-NLS-1$
+
+	/* other constants */
+	public static final String PROCFILE = "Procfile"; //$NON-NLS-1$
+
+	public static final String WEB = "web"; //$NON-NLS-1$
 }
