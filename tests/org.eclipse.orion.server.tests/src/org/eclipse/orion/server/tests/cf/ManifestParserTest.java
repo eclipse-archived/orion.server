@@ -155,7 +155,7 @@ public class ManifestParserTest {
 
 		ManifestParseTree applications = manifest.get("applications"); //$NON-NLS-1$
 		for (ManifestParseTree application : applications.getChildren())
-			assertTrue(application.get("propertyA").getValue().equals("valueA") && application.get("propertyB").getValue().equals("valueB")); //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$//$NON-NLS-4$
+			assertTrue(application.get("memory").getValue().equals("512M") && application.get("path").getValue().equals(".")); //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$//$NON-NLS-4$
 
 		manifestName = "02.yml"; //$NON-NLS-1$
 		manifestFile = new File(FileLocator.toFileURL(entry).getPath().concat(manifestName));
@@ -167,25 +167,21 @@ public class ManifestParserTest {
 		transformator.apply(manifest);
 
 		applications = manifest.get("applications"); //$NON-NLS-1$
-		assertEquals("nativeA", applications.get(0).get("A").getValue()); //$NON-NLS-1$//$NON-NLS-2$
-		assertEquals("nativeB", applications.get(0).get("B").getValue()); //$NON-NLS-1$//$NON-NLS-2$
-		assertEquals("overriddenC", applications.get(0).get("C").getValue()); //$NON-NLS-1$//$NON-NLS-2$
-		assertEquals("valueD", applications.get(0).get("D").get("overriddenD").getValue()); //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+		assertEquals("512M", applications.get(0).get("memory").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals(".", applications.get(0).get("path").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("1", applications.get(0).get("instances").getValue()); //$NON-NLS-1$//$NON-NLS-2$
 
-		assertEquals("overriddenA", applications.get(1).get("A").getValue()); //$NON-NLS-1$//$NON-NLS-2$
-		assertEquals("nativeB", applications.get(1).get("B").getValue()); //$NON-NLS-1$//$NON-NLS-2$
-		assertEquals("nativeC", applications.get(1).get("C").getValue()); //$NON-NLS-1$//$NON-NLS-2$
-		assertEquals("valueD", applications.get(1).get("D").get("overriddenD").getValue()); //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$
+		assertEquals("256M", applications.get(1).get("memory").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals(".", applications.get(1).get("path").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("2", applications.get(1).get("instances").getValue()); //$NON-NLS-1$//$NON-NLS-2$
 
-		assertEquals("nativeA", applications.get(2).get("A").getValue()); //$NON-NLS-1$//$NON-NLS-2$
-		assertEquals("overriddenB", applications.get(2).get("B").getValue()); //$NON-NLS-1$//$NON-NLS-2$
-		assertEquals("nativeC", applications.get(2).get("C").getValue()); //$NON-NLS-1$//$NON-NLS-2$
-		assertEquals("valueD", applications.get(2).get("D").get("overriddenD").getValue()); //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$
+		assertEquals("1024M", applications.get(2).get("memory").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("./app/", applications.get(2).get("path").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("2", applications.get(2).get("instances").getValue()); //$NON-NLS-1$//$NON-NLS-2$
 
-		assertEquals("overriddenA", applications.get(3).get("A").getValue()); //$NON-NLS-1$//$NON-NLS-2$
-		assertEquals("overriddenB", applications.get(3).get("B").getValue()); //$NON-NLS-1$//$NON-NLS-2$
-		assertEquals("overriddenC", applications.get(3).get("C").getValue()); //$NON-NLS-1$//$NON-NLS-2$
-		assertEquals("valueD", applications.get(3).get("D").get("nativeD").getValue()); //$NON-NLS-1$ //$NON-NLS-2$//$NON-NLS-3$
+		assertEquals("256M", applications.get(3).get("memory").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("./app/", applications.get(3).get("path").getValue()); //$NON-NLS-1$//$NON-NLS-2$
+		assertEquals("1", applications.get(3).get("instances").getValue()); //$NON-NLS-1$//$NON-NLS-2$
 	}
 
 	@Test

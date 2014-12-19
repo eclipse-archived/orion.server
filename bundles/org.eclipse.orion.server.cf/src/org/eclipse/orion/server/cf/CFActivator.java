@@ -16,6 +16,7 @@ import org.apache.commons.httpclient.params.HttpClientParams;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.eclipse.orion.internal.server.servlets.file.FilesystemModificationListenerManager;
 import org.eclipse.orion.server.cf.ds.*;
+import org.eclipse.orion.server.cf.ext.*;
 import org.eclipse.orion.server.cf.live.FileChangeListener;
 import org.eclipse.orion.server.cf.utils.TargetRegistry;
 import org.eclipse.orion.server.core.PreferenceHelper;
@@ -41,9 +42,10 @@ public class CFActivator implements BundleActivator {
 
 	private TargetRegistry targetRegistry = new TargetRegistry();
 
-	private ServiceTracker<DeploymentService, IDeploymentService> serviceTracker;
+	private ServiceTracker<DeploymentService, IDeploymentService> deploymentServiceTracker;
+	private ServiceTracker<CFDeploymentExtService, ICFDeploymentExtService> cfDeploymentExtServiceTracker;
 
-	private final Logger logger = LoggerFactory.getLogger(CFActivator.PI_CF); //$NON-NLS-1$
+	private final Logger logger = LoggerFactory.getLogger(CFActivator.PI_CF);
 
 	/*
 	 * (non-Javadoc)
@@ -58,8 +60,13 @@ public class CFActivator implements BundleActivator {
 
 		/* register the deployment service tracker */
 		DeploymentServiceTracker customer = new DeploymentServiceTracker(context);
-		serviceTracker = new ServiceTracker<DeploymentService, IDeploymentService>(context, DeploymentService.class.getName(), customer);
-		serviceTracker.open();
+		deploymentServiceTracker = new ServiceTracker<DeploymentService, IDeploymentService>(context, DeploymentService.class.getName(), customer);
+		deploymentServiceTracker.open();
+
+		/* register the deployment extension service tracker */
+		CFDeploymentExtServiceTracker extCustomer = new CFDeploymentExtServiceTracker(context);
+		cfDeploymentExtServiceTracker = new ServiceTracker<CFDeploymentExtService, ICFDeploymentExtService>(context, CFDeploymentExtService.class.getName(), extCustomer);
+		cfDeploymentExtServiceTracker.open();
 
 		if (PreferenceHelper.getString(ServerConstants.CONFIG_CF_LIVEUPDATE_ENABLED, "false").equals("true")) {
 			logger.debug("Live Update enabled");
@@ -80,7 +87,8 @@ public class CFActivator implements BundleActivator {
 		bundleContext = null;
 		instance = null;
 
-		serviceTracker.close();
+		deploymentServiceTracker.close();
+		cfDeploymentExtServiceTracker.close();
 	}
 
 	public static CFActivator getDefault() {
@@ -96,7 +104,11 @@ public class CFActivator implements BundleActivator {
 	}
 
 	public IDeploymentService getDeploymentService() {
-		return serviceTracker.getService();
+		return deploymentServiceTracker.getService();
+	}
+
+	public ICFDeploymentExtService getCFDeploymentExtDeploymentService() {
+		return cfDeploymentExtServiceTracker.getService();
 	}
 
 	/**

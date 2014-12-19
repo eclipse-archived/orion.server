@@ -1,7 +1,7 @@
 ---
 
-propertyA: valueA
-propertyB: valueB
+memory: 512M
+path: .
 
 applications:
 - name: A

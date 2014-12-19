@@ -15,7 +15,7 @@ import java.util.List;
 import org.eclipse.orion.server.cf.manifest.v2.*;
 
 /**
- * Inputs global settings to manifest applications
+ * Inputs global application properties to manifest applications.
  */
 public class ManifestTransformator implements Analyzer {
 
@@ -34,10 +34,10 @@ public class ManifestTransformator implements Analyzer {
 			/* nothing to do */
 			return;
 
-		/* find global properties */
+		/* find global application properties */
 		List<ManifestParseTree> globals = new LinkedList<ManifestParseTree>();
 		for (ManifestParseTree property : node.getChildren())
-			if (!ManifestUtils.isReserved(property))
+			if (ManifestUtils.isApplicationProperty(property))
 				globals.add(property);
 
 		if (globals.isEmpty())

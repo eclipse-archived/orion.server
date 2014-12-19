@@ -1,21 +1,17 @@
 ---
 
-A: overriddenA
-B: overriddenB
-C: overriddenC
-D:
-  overriddenD: valueD
+memory: 256M
+path: ./app/
+instances: 1
 
 applications:
 - name: A
-  A: nativeA
-  B: nativeB
+  memory: 512M
+  path: .
 - name: B
-  C: nativeC
-  B: nativeB
+  instances: 2
+  path: .
 - name: C
-  A: nativeA
-  C: nativeC
+  memory: 1024M
+  instances: 2
 - name: D
-  D:
-    nativeD: valueD

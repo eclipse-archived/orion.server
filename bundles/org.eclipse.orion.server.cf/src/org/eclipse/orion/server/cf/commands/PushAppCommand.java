@@ -14,8 +14,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.ds.IDeploymentPackager;
+import org.eclipse.orion.server.cf.ext.ICFDeploymentExtService;
+import org.eclipse.orion.server.cf.ext.ICFEnvironmentExtService;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.objects.App;
@@ -70,6 +73,19 @@ public class PushAppCommand extends AbstractCFCommand {
 				return status;
 
 			JSONObject respAppJSON = jobStatus.getJsonData();
+
+			/* look up available environment extension services */
+			ICFDeploymentExtService deploymentExtService = CFActivator.getDefault().getCFDeploymentExtDeploymentService();
+			if (deploymentExtService != null) {
+
+				ICFEnvironmentExtService environmentExtService = deploymentExtService.getDefaultEnvironmentExtService();
+				if (environmentExtService != null && environmentExtService.applies(app.getManifest())) {
+					ServerStatus envExtStatus = environmentExtService.apply(target, app);
+					status.add(envExtStatus);
+					if (!envExtStatus.isOK())
+						return status;
+				}
+			}
 
 			/* set up the application route */
 			BindRouteCommand bindRoute = new BindRouteCommand(target, app);

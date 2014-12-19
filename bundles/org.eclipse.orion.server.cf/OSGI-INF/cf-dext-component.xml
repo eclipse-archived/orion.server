@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="org.eclipse.orion.server.cf.ext.CFDeploymentExtService">
+   <implementation class="org.eclipse.orion.server.cf.ext.CFDeploymentExtService"/>
+   <service>
+      <provide interface="org.eclipse.orion.server.cf.ext.CFDeploymentExtService"/>
+   </service>
+   <reference bind="bindEnvironmentExtService" cardinality="1..n" interface="org.eclipse.orion.server.cf.ext.ICFEnvironmentExtService" name="ICFEnvironmentExtService" policy="dynamic" unbind="unbindEnvironmentExtService"/>
+</scr:component>

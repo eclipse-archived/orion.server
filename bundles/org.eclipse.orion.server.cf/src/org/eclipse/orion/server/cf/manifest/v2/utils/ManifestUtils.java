@@ -45,6 +45,20 @@ public class ManifestUtils {
 		return false;
 	}
 
+	public static final String[] APPLICATION_PROPERTIES = {//
+	"name", "memory", "host", "buildpack", "command", //   //$NON-NLS-1$//$NON-NLS-2$ //$NON-NLS-3$//$NON-NLS-4$ //$NON-NLS-5$
+			"domain", "instances", "path", "timeout", "no-route", "services"// //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+	};
+
+	public static boolean isApplicationProperty(ManifestParseTree node) {
+		String value = node.getLabel();
+		for (String property : APPLICATION_PROPERTIES)
+			if (property.equals(value))
+				return true;
+
+		return false;
+	}
+
 	/**
 	 * Inner helper method parsing single manifests with additional semantic analysis.
 	 */
