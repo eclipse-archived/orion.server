@@ -46,7 +46,7 @@ public class BindRouteCommand extends AbstractCFApplicationCommand {
 	}
 
 	public String getDomainName() {
-		return domain.getDomainName();
+		return (domain != null) ? domain.getDomainName() : null;
 	}
 
 	public BindRouteCommand(Target target, App app) {
