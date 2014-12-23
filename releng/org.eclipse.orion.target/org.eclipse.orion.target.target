@@ -1,8 +1,8 @@
-<?xml version="1.0" encoding="UTF-8"?><?pde version="3.8"?><target name="org.eclipse.orion" sequenceNumber="12">
+<?xml version="1.0" encoding="UTF-8"?><?pde version="3.8"?><target name="org.eclipse.orion" sequenceNumber="14">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.jgit" version="3.4.0.201406110918-r"/>
-<repository location="http://download.eclipse.org/egit/updates-3.4"/>
+<unit id="org.eclipse.jetty.bundles.f.feature.group" version="8.1.15.201404181548"/>
+<repository location="http://download.eclipse.org/jetty/updates/jetty-bundles-8.x"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="com.google.protobuf" version="2.4.0.v201105131100"/>
@@ -130,6 +130,18 @@
 <repository location="http://download.eclipse.org/tools/orbit/downloads/drops/R20140525021250/repository/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<unit id="org.eclipse.jgit.feature.group" version="3.4.2.201412180340-r"/>
+<repository location="http://download.eclipse.org/egit/updates-3.4.2"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<unit id="org.eclipse.emf.base.feature.group" version="2.10.0.v20140514-1158"/>
+<repository location="http://download.eclipse.org/modeling/emf/emf/updates/2.10/base"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<unit id="org.eclipse.license.feature.group" version="1.0.1.v20140414-1359"/>
+<repository location="http://download.eclipse.org/cbi/updates/license"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.compare.core" version="0.0.0"/>
 <unit id="org.eclipse.core.commands" version="0.0.0"/>
 <unit id="org.eclipse.core.contenttype" version="0.0.0"/>
@@ -191,18 +203,6 @@
 <unit id="org.eclipse.platform.feature.group" version="0.0.0"/>
 <unit id="org.eclipse.rcp.feature.group" version="0.0.0"/>
 <repository location="http://download.eclipse.org/eclipse/updates/4.4/R-4.4-201406061215"/>
-</location>
-<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.jetty.bundles.f.feature.group" version="8.1.15.201404181548"/>
-<repository location="http://download.eclipse.org/jetty/updates/jetty-bundles-8.x"/>
-</location>
-<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.emf.base.feature.group" version="2.10.0.v20140514-1158"/>
-<repository location="http://download.eclipse.org/modeling/emf/emf/updates/2.10/base"/>
-</location>
-<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.license.feature.group" version="1.0.1.v20140414-1359"/>
-<repository location="http://download.eclipse.org/cbi/updates/license"/>
 </location>
 </locations>
 <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
