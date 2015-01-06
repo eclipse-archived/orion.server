@@ -98,6 +98,10 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 	 * Handles each file in the file walk.
 	 */
 	protected void handleFile(File file, int depth, Collection<GrepResult> results) {
+		if (results.size() >= options.getRows()) {
+			// stop if we already have the max number of results to return
+			return;
+		}
 		// Check if the path is acceptable
 		if (!acceptFilename(file.getName()))
 			return;
@@ -116,7 +120,10 @@ public class FileGrepper extends DirectoryWalker<GrepResult> {
 
 	@Override
 	protected boolean handleDirectory(File directory, int depth, Collection<GrepResult> results) {
-		if (directory.getName().startsWith(".")) {
+		if (results.size() >= options.getRows()) {
+			// stop if we already have the max number of results to return
+			return false;
+		} else if (directory.getName().startsWith(".")) {
 			// ignore directories starting with a dot like '.git'
 			return false;
 		} else {

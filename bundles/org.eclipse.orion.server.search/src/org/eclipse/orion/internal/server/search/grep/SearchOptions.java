@@ -25,6 +25,7 @@ public class SearchOptions {
 	private String scope = null;
 	private String searchTerm = null;
 	private String username = null;
+	private int rows = 10000;
 
 	public String getDefaultScope() {
 		return defaultScope;
@@ -107,5 +108,13 @@ public class SearchOptions {
 
 	public void setUsername(String username) {
 		this.username = username;
+	}
+
+	public int getRows() {
+		return rows;
+	}
+
+	public void setRows(int rows) {
+		this.rows = rows;
 	}
 }
