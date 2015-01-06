@@ -208,6 +208,7 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 		diff.setIgnoreWhiteSpace(ignoreWS);
 		AbstractTreeIterator oldTree;
 		AbstractTreeIterator newTree = new FileTreeIterator(db);
+		response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$
 		if (scope.contains("..")) { //$NON-NLS-1$
 			String[] commits = scope.split("\\.\\."); //$NON-NLS-1$
 			if (commits.length != 2) {
