@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,12 +13,9 @@ package org.eclipse.orion.internal.server.core.tasks;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
-
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.server.core.IOUtilities;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.*;
 import org.eclipse.orion.server.core.resources.Base64;
 
 /**
@@ -146,7 +143,11 @@ public class TaskStore {
 	}
 
 	public synchronized void removeAllTempTasks() {
-		for (File userDirectory : root.listFiles()) {
+		File[] children = root.listFiles();
+		//listFiles returns null in case of IO exception
+		if (children == null)
+			return;
+		for (File userDirectory : children) {
 			if (userDirectory.isDirectory()) {
 				removeAllTempTasks(userDirectory);
 			}
