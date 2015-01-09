@@ -189,6 +189,13 @@
          </resource-mapping>
       </httpcontext>
       <httpcontext
+            id="org.eclipse.orion.server.httpcontext.examples">
+         <resource-mapping
+               bundle="org.eclipse.orion.client.editor"
+               path="/web/examples">
+         </resource-mapping>
+      </httpcontext>    
+      <httpcontext
             id="org.eclipse.orion.server.httpcontext.textview.components">
          <resource-mapping
                bundle="org.eclipse.orion.client.editor"
@@ -244,6 +251,10 @@
       <resource
             alias="/examples/editor"
             httpcontextId="org.eclipse.orion.server.httpcontext.editor.examples">
+      </resource>
+            <resource
+            alias="/examples"
+            httpcontextId="org.eclipse.orion.server.httpcontext.examples">
       </resource>
       <resource
             alias="/js-tests/editor"
