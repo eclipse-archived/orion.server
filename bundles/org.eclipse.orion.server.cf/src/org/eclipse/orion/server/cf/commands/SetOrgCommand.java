@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others 
+ * Copyright (c) 2013, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -27,7 +27,7 @@ public class SetOrgCommand extends AbstractCFCommand {
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
-	private boolean isGuid = false;
+	private boolean isGuid;
 	private String defaultOrg;
 	private String commandName;
 	private String org;
@@ -35,6 +35,7 @@ public class SetOrgCommand extends AbstractCFCommand {
 	public SetOrgCommand(Target target, String orgName) {
 		super(target);
 		this.org = orgName;
+		this.isGuid = false;
 		this.defaultOrg = null;
 		this.commandName = "Set Org"; //$NON-NLS-1$
 	}
