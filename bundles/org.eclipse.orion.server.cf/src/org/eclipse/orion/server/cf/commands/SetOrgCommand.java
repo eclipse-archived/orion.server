@@ -19,8 +19,7 @@ import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,28 +27,66 @@ public class SetOrgCommand extends AbstractCFCommand {
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
+	private boolean isGuid = false;
+	private String defaultOrg;
 	private String commandName;
 	private String org;
-	private boolean isGuid = false;
 
 	public SetOrgCommand(Target target, String orgName) {
 		super(target);
-		this.commandName = "Set Org"; //$NON-NLS-1$
 		this.org = orgName;
+		this.defaultOrg = null;
+		this.commandName = "Set Org"; //$NON-NLS-1$
 	}
 
 	public SetOrgCommand(Target target, String org, boolean isGuid) {
 		super(target);
-		this.commandName = "Set Org"; //$NON-NLS-1$
 		this.org = org;
 		this.isGuid = isGuid;
+		this.defaultOrg = null;
+		this.commandName = "Set Org"; //$NON-NLS-1$
+	}
+
+	/**
+	 * Defines the default organization to choose in case no specific organization
+	 *  is requested using the {@link SetOrgCommand} constructor.
+	 * @param defaultOrg
+	 */
+	public void setDefaultOrg(String defaultOrg) {
+		this.defaultOrg = defaultOrg;
+	}
+
+	/**
+	 * Attempts to find the given organization.
+	 * @param orgs The available non-empty organization array
+	 * @param organization The organization to find
+	 * @throws JSONException
+	 */
+	protected Org getOrganization(JSONArray orgs, String organization) throws JSONException {
+		for (int i = 0; i < orgs.length(); ++i) {
+			JSONObject orgJSON = orgs.getJSONObject(i);
+			if ((!isGuid && organization.equals(orgJSON.getJSONObject("entity").getString("name"))) || (isGuid && organization.equals(orgJSON.getJSONObject("metadata").getString("guid")))) //$NON-NLS-1$//$NON-NLS-2$//$NON-NLS-3$//$NON-NLS-4$
+				return new Org().setCFJSON(orgJSON);
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns an arbitrary organization.
+	 * @param orgs The available non-empty organization array
+	 * @throws JSONException
+	 */
+	protected Org getArbitraryOrganization(JSONArray orgs) throws JSONException {
+		JSONObject org = orgs.getJSONObject(0);
+		return new Org().setCFJSON(org);
 	}
 
 	public ServerStatus _doIt() {
 		try {
-			URI infoURI = URIUtil.toURI(target.getUrl());
 
-			infoURI = infoURI.resolve("/v2/organizations");
+			URI infoURI = URIUtil.toURI(target.getUrl());
+			infoURI = infoURI.resolve("/v2/organizations"); //$NON-NLS-1$
 
 			GetMethod getMethod = new GetMethod(infoURI.toString());
 			HttpUtil.configureHttpMethod(getMethod, target);
@@ -58,30 +95,33 @@ public class SetOrgCommand extends AbstractCFCommand {
 				return getStatus;
 
 			JSONObject result = getStatus.getJsonData();
-			JSONArray orgs = result.getJSONArray("resources");
+			JSONArray orgs = result.getJSONArray("resources"); //$NON-NLS-1$
 
-			if (orgs.length() == 0) {
+			if (orgs.length() == 0)
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Organization not found", null);
-			}
 
-			if (this.org == null || "".equals(this.org)) {
-				JSONObject org = orgs.getJSONObject(0);
-				target.setOrg(new Org().setCFJSON(org));
+			if (org == null || "".equals(org)) { //$NON-NLS-1$
+
+				Org organization = null;
+				if (defaultOrg != null) {
+					organization = getOrganization(orgs, defaultOrg);
+					if (organization == null)
+						organization = getArbitraryOrganization(orgs);
+				} else
+					organization = getArbitraryOrganization(orgs);
+
+				target.setOrg(organization);
+
 			} else {
-				for (int i = 0; i < orgs.length(); i++) {
-					JSONObject orgJSON = orgs.getJSONObject(i);
-					if ((!isGuid && org.equals(orgJSON.getJSONObject("entity").getString("name"))) || (isGuid && org.equals(orgJSON.getJSONObject("metadata").getString("guid")))) {
-						target.setOrg(new Org().setCFJSON(orgJSON));
-						break;
-					}
-				}
+				Org organization = getOrganization(orgs, org);
+				target.setOrg(organization);
 			}
 
-			if (target.getOrg() == null) {
+			if (target.getOrg() == null)
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Organization not found", null);
-			}
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, target.getOrg().toJSON());
+
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
