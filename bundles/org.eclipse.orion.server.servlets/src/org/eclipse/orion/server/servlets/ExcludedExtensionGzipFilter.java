@@ -132,6 +132,7 @@ public class ExcludedExtensionGzipFilter implements Filter {
 
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		if (isApplicable((HttpServletRequest) request)) {
+			((HttpServletResponse) response).setHeader("Content-Encoding", "gzip");
 			GZipServletResponse gzipResponse = new GZipServletResponse((HttpServletResponse) response);
 			chain.doFilter(request, gzipResponse);
 			gzipResponse.close();
