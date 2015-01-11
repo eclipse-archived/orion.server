@@ -141,7 +141,7 @@ public class ExcludedExtensionGzipFilter implements Filter {
 	}
 
 	private boolean isApplicable(HttpServletRequest req) {
-		if (req.getAttribute(INCLUDE_REQUEST_URI_ATTRIBUTE) == null) {
+		if (req.getAttribute(INCLUDE_REQUEST_URI_ATTRIBUTE) != null) {
 			return false;
 		}
 
