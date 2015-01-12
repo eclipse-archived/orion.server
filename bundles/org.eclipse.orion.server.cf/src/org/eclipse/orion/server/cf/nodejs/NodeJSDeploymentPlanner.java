@@ -160,14 +160,16 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 			/* look up Procfile */
 			String command = getProcfileCommand(contentLocation);
 			if (command != null) {
-				application.put(ManifestConstants.COMMAND, command);
+				/* Do not set the command, buildpack will handle it */
+				// application.put(ManifestConstants.COMMAND, command);
 				return new Plan(getId(), getWizardId(), TYPE, manifest);
 			}
 
 			/* look up package.json */
 			command = getPackageCommand(contentLocation);
 			if (command != null) {
-				application.put(ManifestConstants.COMMAND, command);
+				/* Do not set the command, buildpack will handle it */
+				// application.put(ManifestConstants.COMMAND, command);
 				return new Plan(getId(), getWizardId(), TYPE, manifest);
 			}
 
