@@ -12,8 +12,7 @@ package org.eclipse.orion.server.cf.manifest.v2;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.eclipse.core.filesystem.EFS;
@@ -101,11 +100,32 @@ public class ManifestParseTree {
 	}
 
 	/**
+	 * Inserts a (key, value) pair to the manifest node.
+	 * @param key
+	 * @param value
+	 * @throws JSONException 
+	 */
+	public void put(String key, JSONObject object) throws JSONException {
+		ManifestParseTree keyNode = new ManifestParseTree(getLevel());
+
+		Token keyToken = new Token(key, TokenType.LITERAL);
+		keyNode.getTokens().add(keyToken);
+
+		for (Iterator<String> it = object.keys(); it.hasNext();) {
+			String k = it.next();
+			String v = object.getString(k);
+			keyNode.put(k, (String) v);
+		}
+
+		getChildren().add(keyNode);
+		keyNode.setParent(this);
+	}
+
+	/**
 	 * Updates the manifest node with the given value.
 	 * @param key
 	 */
 	public void update(String value) {
-
 		if (getChildren().isEmpty())
 			return;
 

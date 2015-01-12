@@ -378,11 +378,22 @@ public class ManifestUtils {
 			return;
 
 		List<ManifestParseTree> applications = manifest.get(ManifestConstants.APPLICATIONS).getChildren();
+
+		if (instrumentation == null || instrumentation.length() == 0)
+			return;
+
 		for (String key : JSONObject.getNames(instrumentation)) {
-			String value = instrumentation.getString(key);
+			Object value = instrumentation.get(key);
 			for (ManifestParseTree application : applications) {
-				if (application.has(key))
-					application.get(key).update(value);
+				if (value instanceof String) {
+					if (application.has(key)) {
+						application.get(key).update((String) value);
+					} else {
+						application.put(key, (String) value);
+					}
+				} else if (value instanceof JSONObject) {
+					application.put(key, (JSONObject) value);
+				}
 			}
 		}
 	}
