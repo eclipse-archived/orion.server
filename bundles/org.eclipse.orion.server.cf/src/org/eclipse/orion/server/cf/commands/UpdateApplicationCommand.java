@@ -130,6 +130,14 @@ public class UpdateApplicationCommand extends AbstractCFCommand {
 					env.put(var.getLabel(), var.getValue());
 			}
 
+			/* look for environment variables in app */
+			ManifestParseTree appEnvNode = app.getOpt(CFProtocolConstants.V2_KEY_ENV);
+			if (appEnvNode != null) {
+				env = new JSONObject();
+				for (ManifestParseTree var : appEnvNode.getChildren())
+					env.put(var.getLabel(), var.getValue());
+			}
+
 			return Status.OK_STATUS;
 
 		} catch (InvalidAccessException e) {
