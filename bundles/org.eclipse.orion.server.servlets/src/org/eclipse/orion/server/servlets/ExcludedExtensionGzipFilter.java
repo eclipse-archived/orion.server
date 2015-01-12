@@ -76,6 +76,7 @@ public class ExcludedExtensionGzipFilter implements Filter {
 				throw new IllegalStateException();
 			}
 			if (_servletOutputStream == null) {
+				((HttpServletResponse) getResponse()).setHeader("Content-Encoding", "gzip");
 				_servletOutputStream = new ServletOutputStreamWrapper(new GZIPOutputStream(getResponse().getOutputStream()));
 			}
 			return _servletOutputStream;
@@ -87,6 +88,7 @@ public class ExcludedExtensionGzipFilter implements Filter {
 				if (_servletOutputStream != null) {
 					throw new IllegalStateException();
 				}
+				((HttpServletResponse) getResponse()).setHeader("Content-Encoding", "gzip");
 				_servletOutputStream = new ServletOutputStreamWrapper(new GZIPOutputStream(getResponse().getOutputStream()));
 				_printWriter = new PrintWriter(_servletOutputStream);
 			}
@@ -117,6 +119,7 @@ public class ExcludedExtensionGzipFilter implements Filter {
 	}
 
 	static final String INCLUDE_REQUEST_URI_ATTRIBUTE = "javax.servlet.include.request_uri"; //$NON-NLS-1$
+	static final String FORWARD_REQUEST_URI_ATTRIBUTE = "javax.servlet.forward.request_uri"; //$NON-NLS-1$
 
 	private HashSet<String> _excludedExtensions = new HashSet<String>();
 
@@ -132,7 +135,6 @@ public class ExcludedExtensionGzipFilter implements Filter {
 
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		if (isApplicable((HttpServletRequest) request)) {
-			((HttpServletResponse) response).setHeader("Content-Encoding", "gzip");
 			GZipServletResponse gzipResponse = new GZipServletResponse((HttpServletResponse) response);
 			chain.doFilter(request, gzipResponse);
 			gzipResponse.close();
@@ -142,7 +144,7 @@ public class ExcludedExtensionGzipFilter implements Filter {
 	}
 
 	private boolean isApplicable(HttpServletRequest req) {
-		if (req.getAttribute(INCLUDE_REQUEST_URI_ATTRIBUTE) != null) {
+		if (req.getAttribute(INCLUDE_REQUEST_URI_ATTRIBUTE) != null || req.getAttribute(FORWARD_REQUEST_URI_ATTRIBUTE) != null) {
 			return false;
 		}
 
