@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others.
+ * Copyright (c) 2014, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -23,7 +23,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.solr.common.params.CommonParams;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,28 +40,31 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Servlet for performing searches against files in the workspace.
+ * 
  * @author Aidan Redpath
+ * @author Anthony Hunter
  */
 public class GrepServlet extends OrionServlet {
 
+	private static final String FIELD_NAMES = "Name,NameLower,Length,Directory,LastModified,Location,Path"; //$NON-NLS-1$
+
+	private static final List<String> FIELD_LIST = Arrays.asList(FIELD_NAMES.split(",")); //$NON-NLS-1$
+
 	private static final long serialVersionUID = 1L;
 
-	private static final String FIELD_NAMES = "Name,NameLower,Length,Directory,LastModified,Location,Path"; //$NON-NLS-1$
-	private static final List<String> FIELD_LIST = Arrays.asList(FIELD_NAMES.split(",")); //$NON-NLS-1$
 	private Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 
-	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		try {
-			SearchOptions options = buildSearchOptions(req, resp);
-			FileGrepper grepper = new FileGrepper(req, resp, options);
-			List<GrepResult> files = grepper.search();
-			writeResponse(req, resp, files, options);
-		} catch (GrepException e) {
-			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+	private void addAllProjectsToScope(WorkspaceInfo workspaceInfo, SearchOptions options) throws CoreException {
+		List<String> projectnames = workspaceInfo.getProjectNames();
+		for (String projectName : projectnames) {
+			ProjectInfo projectInfo = OrionConfiguration.getMetaStore().readProject(workspaceInfo.getUniqueId(), projectName);
+			SearchScope scope = new SearchScope(projectInfo.getProjectStore(), workspaceInfo, projectInfo);
+			options.getScopes().add(scope);
 		}
 	}
 
-	private SearchOptions buildSearchOptions(HttpServletRequest req, HttpServletResponse resp) {
+	private SearchOptions buildSearchOptions(HttpServletRequest req, HttpServletResponse resp) throws GrepException {
 		SearchOptions options = new SearchOptions();
 
 		String queryString = getEncodedParameter(req, CommonParams.Q);
@@ -77,13 +88,13 @@ public class GrepServlet extends OrionServlet {
 						options.setIsCaseSensitive(false);
 						options.setFilenamePattern(term.substring(10));
 					} else if (term.startsWith("Location:")) { //$NON-NLS-1${
-						String scope = term.substring(9 + req.getContextPath().length());
+						String location = term.substring(9 + req.getContextPath().length());
 						try {
-							scope = URLDecoder.decode(scope, "UTF-8"); //$NON-NLS-1$
+							location = URLDecoder.decode(location, "UTF-8"); //$NON-NLS-1$
 						} catch (UnsupportedEncodingException e) {
 							//try with encoded term
 						}
-						options.setScope(scope);
+						options.setLocation(location);
 						continue;
 					} else if (term.startsWith("Name:")) { //$NON-NLS-1$
 						try {
@@ -106,9 +117,84 @@ public class GrepServlet extends OrionServlet {
 				}
 			}
 		}
+
 		String login = req.getRemoteUser();
 		options.setUsername(login);
+
+		setScopes(req, resp, options);
+
 		return options;
+	}
+
+	private JSONObject convertListToJson(List<SearchResult> files, SearchOptions options) {
+		JSONObject resultsJSON = new JSONObject();
+		JSONObject responseJSON = new JSONObject();
+		try {
+			resultsJSON.put("numFound", files.size());
+			resultsJSON.put("start", 0);
+
+			JSONArray docs = new JSONArray();
+			for (SearchResult file : files) {
+				docs.put(file.toJSON());
+			}
+			resultsJSON.put("docs", docs);
+			// Add to parent JSON
+			JSONObject responseHeader = new JSONObject();
+			responseHeader.put("status", 0);
+			//responseHeader.put("QTime", 77);
+			JSONObject params = new JSONObject();
+			params.put("wt", "json");
+			params.put("fl", FIELD_NAMES);
+			JSONArray fq = new JSONArray();
+			if (options.getDefaultLocation() != null) {
+				fq.put("Location:" + options.getDefaultLocation());
+			} else if (options.getLocation() != null) {
+				fq.put("Location:" + options.getLocation());
+			} else {
+				throw new RuntimeException("Scope or DefaultScope is missing");
+			}
+			if (options.getUsername() != null) {
+				fq.put("UserName:" + options.getUsername());
+			} else {
+				throw new RuntimeException("UserName is missing");
+			}
+			params.put("fq", fq);
+			params.put("rows", "10000");
+			params.put("start", "0");
+			params.put("sort", "Path asc");
+			responseHeader.put("params", params);
+			responseJSON.put("responseHeader", responseHeader);
+			responseJSON.put("response", resultsJSON);
+		} catch (JSONException e) {
+			logger.error("FileGrepper.convertListToJson: " + e.getLocalizedMessage(), e);
+		} catch (CoreException e) {
+			logger.error("FileGrepper.convertListToJson: " + e.getLocalizedMessage(), e);
+		} catch (URISyntaxException e) {
+			logger.error("FileGrepper.convertListToJson: " + e.getLocalizedMessage(), e);
+		}
+		return responseJSON;
+	}
+
+	public void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		try {
+			if (SearchJob.isSearchJobRunning(req.getRemoteUser())) {
+				resp.sendError(HttpServletResponse.SC_CONFLICT, "A search task is already running for " + req.getRemoteUser() + ", try again later.");
+				return;
+			}
+			SearchOptions options = buildSearchOptions(req, resp);
+			SearchJob searchJob = new SearchJob(options);
+			searchJob.schedule();
+			searchJob.join();
+			if (!searchJob.getResult().isOK()) {
+				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, searchJob.getResult().getMessage());
+			}
+			List<SearchResult> files = searchJob.getSearchResults();
+			writeResponse(req, resp, files, options);
+		} catch (GrepException e) {
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+		} catch (InterruptedException e) {
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+		}
 	}
 
 	/**
@@ -137,58 +223,104 @@ public class GrepServlet extends OrionServlet {
 		return false;
 	}
 
-	private void writeResponse(HttpServletRequest req, HttpServletResponse resp, List<GrepResult> files, SearchOptions options) throws IOException {
-		JSONObject json = convertListToJson(files, options);
-		writeJSONResponse(req, resp, json);
+	/**
+	 * Sets the default scopes to the location of each project.
+	 * @param req The request from the servlet.
+	 * @param res The response to the servlet.
+	 * @throws GrepException Thrown if there is an error reading a file.
+	 */
+	private void setDefaultScopes(HttpServletRequest req, HttpServletResponse resp, SearchOptions options) throws GrepException {
+		String login = req.getRemoteUser();
+		try {
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, login, false, false);
+			List<String> workspaceIds = userInfo.getWorkspaceIds();
+			for (String workspaceId : workspaceIds) {
+				WorkspaceInfo workspaceInfo = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
+				options.setDefaultLocation("/file/" + workspaceId);
+				addAllProjectsToScope(workspaceInfo, options);
+			}
+		} catch (CoreException e) {
+			throw (new GrepException(e));
+		}
 	}
 
-	private JSONObject convertListToJson(List<GrepResult> files, SearchOptions options) {
-		JSONObject resultsJSON = new JSONObject();
-		JSONObject responseJSON = new JSONObject();
+	private boolean setScopeFromRequest(HttpServletRequest req, HttpServletResponse resp, SearchOptions options) {
 		try {
-			resultsJSON.put("numFound", files.size());
-			resultsJSON.put("start", 0);
+			String pathInfo = options.getLocation();
+			// Remove the file servlet prefix
+			if (pathInfo != null) {
+				pathInfo = pathInfo.replaceFirst("/file", "");
+			}
+			IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
+			// prevent path canonicalization hacks
+			if (pathInfo != null && !pathInfo.equals(path.toString())) {
+				return false;
+			}
+			// don't allow anyone to mess with metadata
+			if (path.segmentCount() > 0 && ".metadata".equals(path.segment(0))) { //$NON-NLS-1$
+				return false;
+			}
+			// Must have a path
+			if (path.segmentCount() == 0) {
+				return false;
+			}
 
-			JSONArray docs = new JSONArray();
-			for (GrepResult file : files) {
-				docs.put(file.toJSON());
+			WorkspaceInfo workspaceInfo = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+			if (workspaceInfo == null || workspaceInfo.getUniqueId() == null) {
+				return false;
 			}
-			resultsJSON.put("docs", docs);
-			// Add to parent JSON
-			JSONObject responseHeader = new JSONObject();
-			responseHeader.put("status", 0);
-			//responseHeader.put("QTime", 77);
-			JSONObject params = new JSONObject();
-			params.put("wt", "json");
-			params.put("fl", FIELD_NAMES);
-			JSONArray fq = new JSONArray();
-			if (options.getDefaultScope() != null) {
-				fq.put("Location:" + options.getDefaultScope());
-			} else if (options.getScope() != null) {
-				fq.put("Location:" + options.getScope());
-			} else {
-				throw new RuntimeException("Scope or DefaultScope is missing");
+			if (path.segmentCount() == 1) {
+				// Bug 415700: handle path format /workspaceId 
+				if (workspaceInfo != null && workspaceInfo.getUniqueId() != null) {
+					addAllProjectsToScope(workspaceInfo, options);
+					return true;
+				}
+
+				return false;
 			}
-			if (options.getUsername() != null) {
-				fq.put("UserName:" + options.getUsername());
-			} else {
-				throw new RuntimeException("UserName is missing");
+			//path format is /workspaceId/projectName/[suffix]
+			ProjectInfo projectInfo = OrionConfiguration.getMetaStore().readProject(workspaceInfo.getUniqueId(), path.segment(1));
+			if (projectInfo != null) {
+				IFileStore projectStore = projectInfo.getProjectStore();
+				IFileStore scopeStore = projectStore.getFileStore(path.removeFirstSegments(2));
+				SearchScope scope = new SearchScope(scopeStore, workspaceInfo, projectInfo);
+				options.getScopes().add(scope);
+				return true;
 			}
-			params.put("fq", fq);
-			params.put("rows", "10000");
-			params.put("start", "0");
-			params.put("sort", "Path asc");
-			//params.put("q", "docker Location:/file/ahunterorion-OrionContent/org.eclipse.orion.client/*");
-			responseHeader.put("params", params);
-			responseJSON.put("responseHeader", responseHeader);
-			responseJSON.put("response", resultsJSON);
-		} catch (JSONException e) {
-			logger.error("FileGrepper.convertListToJson: " + e.getLocalizedMessage(), e);
+			// Bug 415700: handle path format /workspaceId/[file] 
+			if (path.segmentCount() == 2) {
+				IFileStore workspaceStore = OrionConfiguration.getMetaStore().getWorkspaceContentLocation(workspaceInfo.getUniqueId());
+				IFileStore scopeStore = workspaceStore.getChild(path.segment(1));
+				SearchScope scope = new SearchScope(scopeStore, workspaceInfo, null);
+				options.getScopes().add(scope);
+				return true;
+			}
+
+			return false;
 		} catch (CoreException e) {
-			logger.error("FileGrepper.convertListToJson: " + e.getLocalizedMessage(), e);
-		} catch (URISyntaxException e) {
-			logger.error("FileGrepper.convertListToJson: " + e.getLocalizedMessage(), e);
+			logger.error("FileGrepper.setScopeFromRequest: " + e.getLocalizedMessage(), e);
+			return false;
 		}
-		return responseJSON;
+	}
+
+	/**
+	 * Set the scope of the search to the user home if the scope was not given.
+	 * @param req The HTTP request to the servlet.
+	 * @param resp The HTTP response from the servlet.
+	 * @throws GrepException 
+	 */
+	private void setScopes(HttpServletRequest req, HttpServletResponse resp, SearchOptions options) throws GrepException {
+		if (!setScopeFromRequest(req, resp, options)) {
+			setDefaultScopes(req, resp, options);
+		}
+	}
+
+	private void writeResponse(HttpServletRequest req, HttpServletResponse resp, List<SearchResult> files, SearchOptions options) throws IOException {
+		try {
+			JSONObject json = convertListToJson(files, options);
+			writeJSONResponse(req, resp, json);
+		} catch (IllegalStateException e) {
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+		}
 	}
 }

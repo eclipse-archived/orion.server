@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others.
+ * Copyright (c) 2014, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,25 +10,69 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search.grep;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
+ * Represents the possible options provided to the search.
+ * 
  * @author Aidan Redpath
+ * @author Anthony Hunter
  */
 public class SearchOptions {
 
+	/**
+	 * The default search of the filename pattern is not case sensitive.
+	 */
 	private boolean caseSensitive = false;
-	private String defaultScope = null;
 
+	/** 
+	 * A default search location is used if the search location is not provided.
+	 */
+	private String defaultLocation = null;
+
+	/**
+	 * True is we have a search term that should be searched against file contents.
+	 */
 	private boolean fileContentsSearch = false;
+
+	/**
+	 * The filename pattern
+	 */
 	private String filenamePattern = null;
+
+	/**
+	 * The search location provided in the search request.
+	 */
+	private String location = null;
+
+	/**
+	 * True if the search term is a regular expression.
+	 */
 	private boolean regEx = false;
 
-	private String scope = null;
-	private String searchTerm = null;
-	private String username = null;
+	/**
+	 * The default is to limit the search to 10000 file matches.
+	 */
 	private int rows = 10000;
 
-	public String getDefaultScope() {
-		return defaultScope;
+	/**
+	 * The list of search scopes.
+	 */
+	private List<SearchScope> scopes = new ArrayList<SearchScope>();
+
+	/**
+	 * The search term used to match within file contents.
+	 */
+	private String searchTerm = null;
+
+	/**
+	 * The username of the user running the search.
+	 */
+	private String username = null;
+
+	public String getDefaultLocation() {
+		return defaultLocation;
 	}
 
 	/**
@@ -39,10 +83,18 @@ public class SearchOptions {
 	}
 
 	/**
-	 * Returns the scope.
+	 * Returns the location.
 	 */
-	public String getScope() {
-		return scope;
+	public String getLocation() {
+		return location;
+	}
+
+	public int getRows() {
+		return rows;
+	}
+
+	public List<SearchScope> getScopes() {
+		return scopes;
 	}
 
 	/**
@@ -77,8 +129,8 @@ public class SearchOptions {
 		return regEx;
 	}
 
-	public void setDefaultScope(String defaultScope) {
-		this.defaultScope = defaultScope;
+	public void setDefaultLocation(String defaultLocation) {
+		this.defaultLocation = defaultLocation;
 	}
 
 	public void setFilenamePattern(String pattern) {
@@ -93,12 +145,16 @@ public class SearchOptions {
 		this.caseSensitive = caseSensitive;
 	}
 
+	public void setLocation(String location) {
+		this.location = location;
+	}
+
 	public void setRegEx(boolean regEx) {
 		this.regEx = regEx;
 	}
 
-	public void setScope(String scope) {
-		this.scope = scope;
+	public void setRows(int rows) {
+		this.rows = rows;
 	}
 
 	public void setSearchTerm(String searchTerm) {
@@ -108,13 +164,5 @@ public class SearchOptions {
 
 	public void setUsername(String username) {
 		this.username = username;
-	}
-
-	public int getRows() {
-		return rows;
-	}
-
-	public void setRows(int rows) {
-		this.rows = rows;
 	}
 }

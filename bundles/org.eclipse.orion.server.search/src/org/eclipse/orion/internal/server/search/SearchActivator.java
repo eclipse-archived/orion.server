@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corporation and others 
+ * Copyright (c) 2010, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -36,6 +36,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.orion.internal.server.search.grep.SearchJob;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.IWebResourceDecorator;
 import org.eclipse.orion.server.core.LogHelper;
@@ -253,6 +254,9 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 		//wait for all indexing jobs to complete
 		Job.getJobManager().join(JOB_FAMILY, null);
 		SearchActivator.context = null;
+		//cancel all the running search jobs
+		Job.getJobManager().cancel(SearchJob.FAMILY);
+		Job.getJobManager().join(SearchJob.FAMILY, null);
 	}
 
 	private void writeIndexGeneration(File baseDir) {
