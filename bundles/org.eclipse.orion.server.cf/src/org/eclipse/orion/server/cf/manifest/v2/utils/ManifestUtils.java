@@ -302,22 +302,19 @@ public class ManifestUtils {
 
 			Object val = obj.get(prop);
 			if (val instanceof String) {
-
 				sb.append(" ").append((String) val); //$NON-NLS-1$
 				sb.append(System.getProperty("line.separator")); //$NON-NLS-1$
-
+			} else if (val instanceof Boolean) {
+				sb.append(" ").append(val.toString()); //$NON-NLS-1$
+				sb.append(System.getProperty("line.separator")); //$NON-NLS-1$
 			} else if (val instanceof JSONObject) {
-
 				JSONObject objVal = (JSONObject) val;
 				sb.append(System.getProperty("line.separator")); //$NON-NLS-1$
 				append(sb, objVal, indentation + 2, true);
-
 			} else if (val instanceof JSONArray) {
-
 				JSONArray arr = (JSONArray) val;
 				sb.append(System.getProperty("line.separator")); //$NON-NLS-1$
 				append(sb, arr, indentation);
-
 			} else
 				throw new IllegalArgumentException("Objects may contain only JSON objects, arrays or string literals.");
 		}
