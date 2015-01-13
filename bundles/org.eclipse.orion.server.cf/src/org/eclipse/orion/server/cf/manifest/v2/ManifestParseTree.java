@@ -12,7 +12,8 @@ package org.eclipse.orion.server.cf.manifest.v2;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.eclipse.core.filesystem.EFS;
@@ -111,10 +112,9 @@ public class ManifestParseTree {
 		Token keyToken = new Token(key, TokenType.LITERAL);
 		keyNode.getTokens().add(keyToken);
 
-		for (Iterator<String> it = object.keys(); it.hasNext();) {
-			String k = it.next();
+		for (String k : JSONObject.getNames(object)) {
 			String v = object.getString(k);
-			keyNode.put(k, (String) v);
+			keyNode.put(k, v);
 		}
 
 		getChildren().add(keyNode);
