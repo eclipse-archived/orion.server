@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others 
+ * Copyright (c) 2013, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -52,7 +52,7 @@ public class HttpUtil {
 			method.addRequestHeader(new Header("Authorization", "bearer " + cloud.getAccessToken().getString("access_token")));
 	}
 
-	public static ServerStatus executeMethod(HttpMethod method) throws HttpException, IOException, JSONException {
+	public static ServerStatus executeMethod(HttpMethodBase method) throws HttpException, IOException, JSONException {
 
 		try {
 			int code = CFActivator.getDefault().getHttpClient().executeMethod(method);
@@ -62,7 +62,7 @@ public class HttpUtil {
 				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 			}
 
-			String response = method.getResponseBodyAsString();
+			String response = method.getResponseBodyAsString(67108864);
 			JSONObject result;
 
 			try {

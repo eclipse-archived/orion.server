@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others 
+ * Copyright (c) 2013, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -56,7 +56,7 @@ public class LoginCommand implements ICFCommand {
 			String response;
 			try {
 				CFActivator.getDefault().getHttpClient().executeMethod(getMethod);
-				response = getMethod.getResponseBodyAsString();
+				response = getMethod.getResponseBodyAsString(67108864);
 			} finally {
 				getMethod.releaseConnection();
 			}
@@ -80,7 +80,7 @@ public class LoginCommand implements ICFCommand {
 
 			try {
 				int code = CFActivator.getDefault().getHttpClient().executeMethod(postMethod);
-				response = postMethod.getResponseBodyAsString();
+				response = postMethod.getResponseBodyAsString(67108864);
 				if (code != HttpServletResponse.SC_OK) {
 					try {
 						result = new JSONObject(response);
