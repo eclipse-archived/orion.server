@@ -11,7 +11,9 @@
 package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -50,14 +52,23 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 	 */
 	private int workspaceRootSuffixLength;
 
+	private String filter;
+
+	private IFileStore workspaceHome;
+
 	public FileListDirectoryWalker(WorkspaceInfo workspaceInfo) {
-		init(workspaceInfo);
+		this(workspaceInfo, null);
 	}
 
-	private void init(WorkspaceInfo workspaceInfo) {
+	public FileListDirectoryWalker(WorkspaceInfo workspaceInfo, String filterPath) {
+		init(workspaceInfo, filterPath);
+	}
+
+	private void init(WorkspaceInfo workspaceInfo, String filterPath) {
 		String workspaceId = workspaceInfo.getUniqueId();
+		filter = filterPath;
 		IFileStore userHome = OrionConfiguration.getMetaStore().getUserHome(workspaceInfo.getUserId());
-		IFileStore workspaceHome = userHome.getChild(workspaceId.substring(workspaceId.indexOf('-') + 1));
+		workspaceHome = userHome.getChild(workspaceId.substring(workspaceId.indexOf('-') + 1));
 		try {
 			workspaceRoot = workspaceHome.toLocalFile(EFS.NONE, null);
 		} catch (CoreException e) {
@@ -75,9 +86,19 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 
 	public JSONObject getFileList() {
 		List<File> files = new ArrayList<File>();
-
 		try {
-			walk(workspaceRoot, files);
+			if (filter != null) {
+				IFileStore projHome = workspaceHome.getChild(filter);
+				try {
+					File projRoot = projHome.toLocalFile(EFS.NONE, null);
+					walk(projRoot, files);
+				} catch (CoreException e) {
+					//should never happen
+					throw new RuntimeException(e);
+				}
+			} else {
+				walk(workspaceRoot, files);
+			}
 		} catch (IOException e) {
 			//should never happen
 			throw new RuntimeException(e);
@@ -90,6 +111,7 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 				jsonArray.put(toJSON(file, workspaceRootSuffixLength));
 			}
 			json.put("FileList", jsonArray);
+			json.put("Timestamp", System.currentTimeMillis());
 		} catch (JSONException e) {
 			//should never happen
 			throw new RuntimeException(e);
@@ -100,10 +122,45 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 	private JSONObject toJSON(File file, int workspaceRootSuffixLength) throws JSONException {
 		JSONObject json = new JSONObject();
 		String filePath = file.getAbsolutePath().substring(workspaceRootSuffixLength);
+		String sha = checkSum(file.getAbsolutePath());
 		json.put(ProtocolConstants.KEY_PATH, workspacePath + filePath);
+		json.put("FilePath", filePath);
 		json.put(ProtocolConstants.KEY_LENGTH, Long.toString(file.length()));
 		json.put(ProtocolConstants.KEY_LAST_MODIFIED, Long.toString(file.lastModified()));
+		json.put("SHA", sha);
 		return json;
+	}
+
+	String checkSum(String path) {
+		FileInputStream stream = null;
+		try {
+			stream = new FileInputStream(path);
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+			byte[] buffer = new byte[1024];
+			int bytesRead;
+			while ((bytesRead = stream.read(buffer)) > 0) {
+				digest.update(buffer, 0, bytesRead);
+			}
+			byte[] hashedBytes = digest.digest();
+			return convertByteArrayToHexString(hashedBytes);
+		} catch (Exception e) {
+		} finally {
+			if (stream != null)
+				try {
+					stream.close();
+				} catch (IOException e) {
+				}
+		}
+		return "";
+	}
+
+	private static String convertByteArrayToHexString(byte[] arrayBytes) {
+		StringBuffer stringBuffer = new StringBuffer();
+		for (int i = 0; i < arrayBytes.length; i++) {
+			stringBuffer.append(Integer.toString((arrayBytes[i] & 0xff) + 0x100, 16).substring(1));
+		}
+		return stringBuffer.toString();
 	}
 
 }
