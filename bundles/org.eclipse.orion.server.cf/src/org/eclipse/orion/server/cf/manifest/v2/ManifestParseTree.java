@@ -79,11 +79,22 @@ public class ManifestParseTree {
 	}
 
 	/**
-	 * Inserts a (key, value) pair to the manifest node.
+	 * Inserts or updates a (key, value) pair to the manifest node.
 	 * @param key
 	 * @param value
 	 */
 	public void put(String key, String value) {
+		if (has(key)) {
+			try {
+				ManifestParseTree keyNode = get(key);
+				keyNode.update(value);
+				return;
+			} catch (InvalidAccessException e) {
+				// it can't happen
+				// however if happens, try to to add the node instead of updating it
+			}
+		}
+
 		ManifestParseTree keyNode = new ManifestParseTree(getLevel());
 
 		Token keyToken = new Token(key, TokenType.LITERAL);
@@ -101,12 +112,26 @@ public class ManifestParseTree {
 	}
 
 	/**
-	 * Inserts a (key, value) pair to the manifest node.
+	 * Inserts or updates a (key, value) pair to the manifest node.
 	 * @param key
 	 * @param value
 	 * @throws JSONException 
 	 */
 	public void put(String key, JSONObject object) throws JSONException {
+		if (has(key)) {
+			try {
+				ManifestParseTree keyNode = get(key);
+				for (String k : JSONObject.getNames(object)) {
+					String v = object.getString(k);
+					keyNode.put(k, v);
+				}
+				return;
+			} catch (InvalidAccessException e) {
+				// it can't happen
+				// however if happens, try to to add the node instead of updating it
+			}
+		}
+
 		ManifestParseTree keyNode = new ManifestParseTree(getLevel());
 
 		Token keyToken = new Token(key, TokenType.LITERAL);

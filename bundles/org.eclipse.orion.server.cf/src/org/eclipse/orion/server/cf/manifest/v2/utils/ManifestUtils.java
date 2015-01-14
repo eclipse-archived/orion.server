@@ -383,11 +383,7 @@ public class ManifestUtils {
 			Object value = instrumentation.get(key);
 			for (ManifestParseTree application : applications) {
 				if (value instanceof String) {
-					if (application.has(key)) {
-						application.get(key).update((String) value);
-					} else {
-						application.put(key, (String) value);
-					}
+					application.put(key, (String) value);
 				} else if (value instanceof JSONObject) {
 					application.put(key, (JSONObject) value);
 				}
