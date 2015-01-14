@@ -415,7 +415,8 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 	}
 
 	private boolean handleGetWorkspaceFileList(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace) throws IOException {
-		FileListDirectoryWalker walker = new FileListDirectoryWalker(workspace);
+		String filter = request.getParameter("filter");
+		FileListDirectoryWalker walker = new FileListDirectoryWalker(workspace, filter);
 		JSONObject results = walker.getFileList();
 		OrionServlet.writeJSONResponse(request, response, results);
 		return true;
