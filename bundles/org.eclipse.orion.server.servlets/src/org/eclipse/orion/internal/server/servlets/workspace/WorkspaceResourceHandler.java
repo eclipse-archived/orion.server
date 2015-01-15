@@ -422,6 +422,18 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		return true;
 	}
 
+	private boolean handleGetWorkspaceSyncVersion(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace) throws IOException {
+		JSONObject results = new JSONObject();
+		try {
+			results.put("SyncVersion", FileListDirectoryWalker.SYNC_VERSION);
+			OrionServlet.writeJSONResponse(request, response, results);
+			return true;
+		} catch (JSONException e) {
+			//should never happen
+			throw new RuntimeException(e);
+		}
+	}
+
 	private boolean handleGetWorkspaceMetadata(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace) throws IOException {
 		//we need the base location for the workspace servlet. Since this is a GET 
 		//on workspace servlet we need to strip off all but the first segment of the request path
@@ -517,8 +529,11 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			switch (getMethod(request)) {
 				case GET :
 					String fileList = request.getParameter("fileList");
+					String syncVersion = request.getParameter("syncVersion");
 					if (fileList != null) {
 						return handleGetWorkspaceFileList(request, response, workspace);
+					} else if (syncVersion != null) {
+						return handleGetWorkspaceSyncVersion(request, response, workspace);
 					} else {
 						return handleGetWorkspaceMetadata(request, response, workspace);
 					}

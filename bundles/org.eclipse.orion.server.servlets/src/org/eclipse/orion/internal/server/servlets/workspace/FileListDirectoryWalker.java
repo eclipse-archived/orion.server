@@ -56,6 +56,8 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 
 	private IFileStore workspaceHome;
 
+	static final String SYNC_VERSION = "0.1";
+
 	public FileListDirectoryWalker(WorkspaceInfo workspaceInfo) {
 		this(workspaceInfo, null);
 	}
@@ -112,6 +114,7 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 			}
 			json.put("FileList", jsonArray);
 			json.put("Timestamp", System.currentTimeMillis());
+			json.put("SyncVersion", FileListDirectoryWalker.SYNC_VERSION);
 		} catch (JSONException e) {
 			//should never happen
 			throw new RuntimeException(e);
