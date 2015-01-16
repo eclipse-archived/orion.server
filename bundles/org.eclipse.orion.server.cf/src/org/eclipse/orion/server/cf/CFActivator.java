@@ -14,13 +14,9 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.params.HttpClientParams;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
-import org.eclipse.orion.internal.server.servlets.file.FilesystemModificationListenerManager;
 import org.eclipse.orion.server.cf.ds.*;
 import org.eclipse.orion.server.cf.ext.*;
-import org.eclipse.orion.server.cf.live.FileChangeListener;
 import org.eclipse.orion.server.cf.utils.TargetRegistry;
-import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ServerConstants;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
@@ -68,12 +64,12 @@ public class CFActivator implements BundleActivator {
 		cfDeploymentExtServiceTracker = new ServiceTracker<CFDeploymentExtService, ICFDeploymentExtService>(context, CFDeploymentExtService.class.getName(), extCustomer);
 		cfDeploymentExtServiceTracker.open();
 
-		if (PreferenceHelper.getString(ServerConstants.CONFIG_CF_LIVEUPDATE_ENABLED, "false").equals("true")) {
+		/* if (PreferenceHelper.getString(ServerConstants.CONFIG_CF_LIVEUPDATE_ENABLED, "false").equals("true")) {
 			logger.debug("Live Update enabled");
 			FilesystemModificationListenerManager.getInstance().addListener(new FileChangeListener());
 		} else {
 			logger.debug("Live Update disabled");
-		}
+		} */
 	}
 
 	/*
