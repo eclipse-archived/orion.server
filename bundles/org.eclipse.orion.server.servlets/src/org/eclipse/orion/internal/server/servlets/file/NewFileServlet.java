@@ -125,6 +125,14 @@ public class NewFileServlet extends OrionServlet {
 	 * @param path The path of the file resource to obtain the store for
 	 */
 	public static IFileStore getFileStore(HttpServletRequest request, IPath path) {
+		return getFileStore(request, path, false);
+	}
+
+	public static IFileStore getLocalFileStore(HttpServletRequest request, IPath path) {
+		return getFileStore(request, path, true);
+	}
+
+	private static IFileStore getFileStore(HttpServletRequest request, IPath path, boolean local) {
 		try {
 			if (path.segmentCount() == 0) {
 				return null;
@@ -132,20 +140,23 @@ public class NewFileServlet extends OrionServlet {
 				// Bug 415700: handle path format /workspaceId 
 				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
 				if (workspace != null) {
-					return getFileStore(request, workspace);
+					IFileStore store = getLocalFileStore(request, workspace);
+					return local ? store : wrap(workspace, store);
 				}
 				return null;
 			}
 			//path format is /workspaceId/projectName/[suffix]
 			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(0), path.segment(1));
 			if (project != null) {
-				return getFileStore(request, project).getFileStore(path.removeFirstSegments(2));
+				IFileStore store = getLocalFileStore(request, project).getFileStore(path.removeFirstSegments(2));
+				return local ? store : wrap(project, store);
 			}
 			// Bug 415700: handle path format /workspaceId/[file] 
 			if (path.segmentCount() == 2) {
 				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
 				if (workspace != null) {
-					return getFileStore(request, workspace).getChild(path.segment(1));
+					IFileStore store = getLocalFileStore(request, workspace).getChild(path.segment(1));
+					return local ? store : wrap(workspace, store);
 				}
 			}
 			return null;
@@ -163,12 +174,16 @@ public class NewFileServlet extends OrionServlet {
 	 * @param project The workspace to obtain the store for.
 	 */
 	public static IFileStore getFileStore(HttpServletRequest request, WorkspaceInfo workspace) {
+		return wrap(workspace, getLocalFileStore(request, workspace));
+	}
+
+	public static IFileStore getLocalFileStore(HttpServletRequest request, WorkspaceInfo workspace) {
 		try {
 			if (workspace.getUniqueId() == null) {
 				return null;
 			}
 			IFileStore fileStore = OrionConfiguration.getMetaStore().getWorkspaceContentLocation(workspace.getUniqueId());
-			return wrap(workspace, fileStore);
+			return fileStore;
 		} catch (CoreException e) {
 			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, 1, "An error occurred when getting workspace store for path", e));
 			// fallback and return null
@@ -183,6 +198,10 @@ public class NewFileServlet extends OrionServlet {
 	 * @param project The project to obtain the store for.
 	 */
 	public static IFileStore getFileStore(HttpServletRequest request, ProjectInfo project) throws CoreException {
+		return wrap(project, getLocalFileStore(request, project));
+	}
+
+	public static IFileStore getLocalFileStore(HttpServletRequest request, ProjectInfo project) throws CoreException {
 		URI location = project.getContentLocation();
 		if (location.isAbsolute()) {
 			//insert authentication details from request if available
@@ -200,23 +219,22 @@ public class NewFileServlet extends OrionServlet {
 					}
 				}
 			}
-			return wrap(project, EFS.getStore(location));
+			return EFS.getStore(location);
 		}
 		//there is no scheme but it could still be an absolute path
 		IPath localPath = new Path(location.getPath());
 		if (localPath.isAbsolute()) {
-			return wrap(project, EFS.getLocalFileSystem().getStore(localPath));
+			return EFS.getLocalFileSystem().getStore(localPath);
 		}
 		//treat relative location as relative to the file system root
 		IFileStore root = OrionConfiguration.getMetaStore().getUserHome(request.getRemoteUser());
-		return wrap(project, root.getChild(location.toString()));
+		return root.getChild(location.toString());
 	}
 
 	private static IFileStore wrap(MetadataInfo info, IFileStore store) {
-		if (FilesystemModificationListenerManager.getInstance().hasListeners()) {
+		if (store != null && FilesystemModificationListenerManager.getInstance().hasListeners()) {
 			return FileStoreNotificationWrapper.wrap(info, store);
 		}
-
 		return store;
 	}
 }
