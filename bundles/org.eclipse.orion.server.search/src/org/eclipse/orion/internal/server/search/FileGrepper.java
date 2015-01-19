@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.internal.server.search.grep;
+package org.eclipse.orion.internal.server.search;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,9 +58,9 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 	/**
 	 * The constructor for FileGrepper
 	 * @param options the search options
-	 * @throws GrepException If there was a syntax error with the search term.
+	 * @throws SearchException If there was a syntax error with the search term.
 	 */
-	public FileGrepper(SearchOptions options) throws GrepException {
+	public FileGrepper(SearchOptions options) throws SearchException {
 		super();
 		this.options = options;
 		if (options.isFileContentsSearch()) {
@@ -91,9 +91,9 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 	/**
 	 * Build a search pattern based on the search options.
 	 * @return A new pattern of the search term.
-	 * @throws GrepException If there was a syntax error with the search term.
+	 * @throws SearchException If there was a syntax error with the search term.
 	 */
-	private Pattern buildSearchPattern() throws GrepException {
+	private Pattern buildSearchPattern() throws SearchException {
 		int flags = 0;
 		String searchTerm = options.getSearchTerm();
 		if (!options.isRegEx()) {
@@ -133,7 +133,7 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 		try {
 			return Pattern.compile(searchTerm, flags);
 		} catch (PatternSyntaxException e) {
-			throw new GrepException(e);
+			throw new SearchException(e);
 		}
 	}
 
@@ -175,9 +175,9 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 	/**
 	 * Performs the search from the HTTP request
 	 * @return A list of files which contain the search term, and pass the filename patterns.
-	 * @throws GrepException If there is a problem accessing any of the files.
+	 * @throws SearchException If there is a problem accessing any of the files.
 	 */
-	public List<SearchResult> search(SearchOptions options) throws GrepException {
+	public List<SearchResult> search(SearchOptions options) throws SearchException {
 		List<SearchResult> files = new LinkedList<SearchResult>();
 		try {
 			for (SearchScope scope : options.getScopes()) {
@@ -191,7 +191,7 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 				super.walk(file, files);
 			}
 		} catch (IOException e) {
-			throw (new GrepException(e));
+			throw (new SearchException(e));
 		}
 		return files;
 	}

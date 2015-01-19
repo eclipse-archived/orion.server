@@ -226,11 +226,6 @@ public class ServerConstants {
 	public static final String CONFIG_XSRF_PROTECTION_ENABLED = "orion.XSRFPreventionFilterEnabled"; //$NON-NLS-1$
 	
  	/**
- 	 * The name of a configuration property to enable grep search instead of index search
- 	 */
- 	public static final String CONFIG_GREP_SEARCH_ENABLED = "orion.search.grep.enabled"; //$NON-NLS-1$
-	
- 	/**
  	 * The name of a configuration property to enable the cf liveupdate feature.
  	 */
  	public static final String CONFIG_CF_LIVEUPDATE_ENABLED = "orion.cf.liveupdate.enabled"; //$NON-NLS-1$

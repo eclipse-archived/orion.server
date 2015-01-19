@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others.
+ * Copyright (c) 2014, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,20 +8,20 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.internal.server.search.grep;
+package org.eclipse.orion.internal.server.search;
 
 /**
  * @author Aidan Redpath
  */
-public class GrepException extends Exception {
+public class SearchException extends Exception {
 
 	private static final long serialVersionUID = 4387363119495722008L;
 
-	public GrepException(String message) {
+	public SearchException(String message) {
 		super(message);
 	}
 
-	public GrepException(Throwable cause) {
+	public SearchException(Throwable cause) {
 		super(cause.getMessage(), cause);
 	}
 }

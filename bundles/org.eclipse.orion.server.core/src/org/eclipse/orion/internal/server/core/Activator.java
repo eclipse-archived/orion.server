@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corporation and others 
+ * Copyright (c) 2009, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -169,6 +169,8 @@ public class Activator implements BundleActivator {
 			List<String> keys = new ArrayList<String>();
 			keys.add(UserConstants2.USER_NAME);
 			metastore.registerUserProperties(keys);
+			// reading all users will automatically add all user names to the username cache
+			metastore.readAllUsers();
 		} catch (CoreException e) {
 			throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
 		}

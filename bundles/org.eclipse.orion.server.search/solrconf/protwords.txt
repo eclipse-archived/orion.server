@@ -1,3 +1,0 @@
-# This is used to prevent the stemmer from reduced unrelated words into a base word
-# list words to protect, one on each line
-

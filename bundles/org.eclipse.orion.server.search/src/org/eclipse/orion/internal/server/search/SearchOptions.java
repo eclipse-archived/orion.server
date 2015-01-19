@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.internal.server.search.grep;
+package org.eclipse.orion.internal.server.search;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -29,7 +29,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
-import org.eclipse.orion.internal.server.search.SearchActivator;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.xfer.TransferTest;
@@ -153,8 +152,6 @@ public class SearchTest extends FileSystemTest {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		createTestProject(testName.getMethodName());
 		createTestData();
-		//wait for indexer to finish
-		SearchActivator.getInstance().testWaitForIndex();
 	}
 
 	/**
@@ -241,7 +238,6 @@ public class SearchTest extends FileSystemTest {
 		final String projectName = "[breakme]";
 		createTestProject(projectName);
 		createFile("smaug.txt", "Chiefest and Greatest of Calamities");
-		SearchActivator.getInstance().testWaitForIndex();
 
 		JSONObject searchResult = doSearch("Calamities");
 		assertOneMatch(searchResult, "smaug.txt");

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.internal.server.search.grep;
+package org.eclipse.orion.internal.server.search;
 
 import java.util.List;
 
@@ -57,7 +57,7 @@ public class SearchJob extends Job {
 			FileGrepper grepper = new FileGrepper(options);
 			files = grepper.search(options);
 			result = Status.OK_STATUS;
-		} catch (GrepException exception) {
+		} catch (SearchException exception) {
 			result = new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, exception.getLocalizedMessage(), exception);
 		}
 		return result;
