@@ -213,6 +213,10 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 		try {
 			while (lineIterator.hasNext()) {
 				String line = lineIterator.nextLine();
+				if (line.contains("\0")) {
+					// file contains binary content
+					return false;
+				}
 				matcher.reset(line);
 				if (matcher.find()) {
 					return true;
