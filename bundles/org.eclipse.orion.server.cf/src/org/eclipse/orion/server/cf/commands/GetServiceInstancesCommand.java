@@ -82,20 +82,24 @@ public class GetServiceInstancesCommand extends AbstractCFCommand {
 					JSONObject serviceObj = resources.getJSONObject(i);
 
 					JSONObject serviceInstanceEntity = serviceObj.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY);
-					JSONObject serviceEntity = serviceInstanceEntity.getJSONObject(CFProtocolConstants.V2_KEY_SERVICE_PLAN)//
-							.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY);
 
-					String serviceGuid = serviceEntity.getString(CFProtocolConstants.V2_KEY_SERVICE_GUID);
-					GetServiceCommand getServiceCommand = new GetServiceCommand(target, serviceGuid);
+					boolean isBindable = true;
+					if (serviceInstanceEntity.has(CFProtocolConstants.V2_KEY_SERVICE_PLAN)) {
+						JSONObject serviceEntity = serviceInstanceEntity.getJSONObject(CFProtocolConstants.V2_KEY_SERVICE_PLAN)//
+								.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY);
+						String serviceGuid = serviceEntity.getString(CFProtocolConstants.V2_KEY_SERVICE_GUID);
 
-					/* get detailed info about the service */
-					jobStatus = (ServerStatus) getServiceCommand.doIt(); /* FIXME: unsafe type cast */
-					status.add(jobStatus);
-					if (!jobStatus.isOK())
-						return status;
+						GetServiceCommand getServiceCommand = new GetServiceCommand(target, serviceGuid);
 
-					JSONObject serviceResp = jobStatus.getJsonData();
-					boolean isBindable = serviceResp.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getBoolean(CFProtocolConstants.V2_KEY_BINDABLE);
+						/* get detailed info about the service */
+						jobStatus = (ServerStatus) getServiceCommand.doIt(); /* FIXME: unsafe type cast */
+						status.add(jobStatus);
+						if (!jobStatus.isOK())
+							return status;
+
+						JSONObject serviceResp = jobStatus.getJsonData();
+						isBindable = serviceResp.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getBoolean(CFProtocolConstants.V2_KEY_BINDABLE);
+					}
 
 					if (isBindable) {
 						Service s = new Service(serviceInstanceEntity.getString(CFProtocolConstants.V2_KEY_NAME));
