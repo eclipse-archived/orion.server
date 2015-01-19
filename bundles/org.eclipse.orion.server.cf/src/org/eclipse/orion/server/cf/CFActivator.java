@@ -63,13 +63,6 @@ public class CFActivator implements BundleActivator {
 		CFDeploymentExtServiceTracker extCustomer = new CFDeploymentExtServiceTracker(context);
 		cfDeploymentExtServiceTracker = new ServiceTracker<CFDeploymentExtService, ICFDeploymentExtService>(context, CFDeploymentExtService.class.getName(), extCustomer);
 		cfDeploymentExtServiceTracker.open();
-
-		/* if (PreferenceHelper.getString(ServerConstants.CONFIG_CF_LIVEUPDATE_ENABLED, "false").equals("true")) {
-			logger.debug("Live Update enabled");
-			FilesystemModificationListenerManager.getInstance().addListener(new FileChangeListener());
-		} else {
-			logger.debug("Live Update disabled");
-		} */
 	}
 
 	/*
