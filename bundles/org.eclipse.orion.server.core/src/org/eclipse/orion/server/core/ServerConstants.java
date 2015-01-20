@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2014 IBM Corporation and others.
+ * Copyright (c) 2011, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -170,11 +170,6 @@ public class ServerConstants {
 	 * name of configuration property for the disk usage calculation support. When this property is set to true, the disk usage calculation support is enabled.
 	 */
 	public static final String CONFIG_DISK_USAGE_ENABLED = "orion.file.diskUsageEnabled"; //$NON-NLS-1$
-
-	/**
-	 * The name of the configuration property specifying the root location to use for Orion search indices. Must be an absolute path on the server file system.
-	 */
-	public static final String CONFIG_SEARCH_INDEX_LOCATION = "orion.search.index.location"; //$NON-NLS-1$
 
 	/**
 	 * The name of a configuration property specifying the virtual hosts to use for test sites launched by this server. The property value is a comma-separated
