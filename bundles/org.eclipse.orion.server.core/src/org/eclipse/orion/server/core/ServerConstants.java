@@ -131,21 +131,6 @@ public class ServerConstants {
 	public static final String CONFIG_FILE_DEFAULT_SCM = "orion.file.defaultSCM"; //$NON-NLS-1$
 
 	/**
-	 * The name of a configuration property specifying the layout format for user data files.
-	 */
-	public static final String CONFIG_FILE_LAYOUT = "orion.file.layout"; //$NON-NLS-1$
-
-	/**
-	 * The name of a configuration property specifying a flat layout format for user data files.
-	 */
-	public static final String CONFIG_FILE_LAYOUT_FLAT = "flat"; //$NON-NLS-1$
-
-	/**
-	 * The name of a configuration property specifying that user data files are organized in a hierarchy by the user who created it.
-	 */
-	public static final String CONFIG_FILE_LAYOUT_USERTREE = "usertree"; //$NON-NLS-1$
-
-	/**
 	 * The name of the configuration property specifying the root location to use for all Orion content. Must be an absolute path on the server file system.
 	 */
 	public static final String CONFIG_FILE_USER_CONTENT = "orion.file.content.location"; //$NON-NLS-1$
