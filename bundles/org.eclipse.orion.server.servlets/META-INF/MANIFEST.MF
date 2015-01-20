@@ -27,7 +27,6 @@ Export-Package: org.eclipse.orion.internal.server.servlets;
    org.eclipse.orion.server.hosting,
    org.eclipse.orion.server.authentication,
    org.eclipse.orion.server.tests,
-   org.eclipse.orion.server.docker,
    org.eclipse.orion.server.cf",
  org.eclipse.orion.internal.server.servlets.about;x-internal:=true,
  org.eclipse.orion.internal.server.servlets.metrics;x-internal:=true,

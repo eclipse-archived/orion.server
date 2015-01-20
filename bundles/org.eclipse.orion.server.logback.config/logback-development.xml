@@ -35,9 +35,6 @@
   <!-- Prints information on starting up the orion application -->
   <!--  <logger name="org.eclipse.orion.app" level="INFO"/> -->
 
-  <!-- Prints docker / terminal connections -->
-  <!--  <logger name="org.eclipse.orion.server.docker" level="INFO"/>  -->
-
   <root level="WARN">
     <appender-ref ref="STDOUT" />
   </root>

@@ -63,36 +63,6 @@ public class ServerConstants {
 	public static final String CONFIG_AUTH_USER_CREATION_FORCE_EMAIL = "orion.auth.user.creation.force.email"; //$NON-NLS-1$
 
 	/**
-	 * The name of configuration property specifying the uri for the reverse proxy for the docker websocket.
-	 */
-	public static final String CONFIG_DOCKER_PROXY_URI = "orion.core.docker.proxy.uri"; //$NON-NLS-1$
-
-	/**
-	 * The name of configuration property specifying the uri for the docker server for the docker remote API.
-	 */
-	public static final String CONFIG_DOCKER_URI = "orion.core.docker.uri"; //$NON-NLS-1$
-
-	/**
-	 * The name of configuration property specifying the start of the port range for the docker server to use for port mapping the docker remote API.
-	 */
-	public static final String CONFIG_DOCKER_PORT_START = "orion.core.docker.port.start"; //$NON-NLS-1$
-
-	/**
-	 * The name of configuration property specifying the end of the port range for the docker server to use for port mapping the docker remote API.
-	 */
-	public static final String CONFIG_DOCKER_PORT_END = "orion.core.docker.port.end"; //$NON-NLS-1$
-
-	/**
-	 * The name of configuration property specifying the UID of the process running the orion server, default is 1000
-	 */
-	public static final String CONFIG_DOCKER_UID = "orion.core.docker.uid"; //$NON-NLS-1$
-
-	/**
-	 * The name of configuration property specifying the GID of the process running the orion server, default is 100
-	 */
-	public static final String CONFIG_DOCKER_GID = "orion.core.docker.gid"; //$NON-NLS-1$
-
-	/**
 	 * The name of configuration property specifying the username for the MQTT message broker
 	 */
 	public static final String CONFIG_EVENT_USERNAME = "orion.events.username"; //$NON-NLS-1$
