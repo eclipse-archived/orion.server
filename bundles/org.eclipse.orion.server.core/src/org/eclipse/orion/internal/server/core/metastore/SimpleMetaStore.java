@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 IBM Corporation and others.
+ * Copyright (c) 2013, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -578,6 +578,9 @@ public class SimpleMetaStore implements IMetaStore {
 	}
 
 	public UserInfo readUser(String userId) throws CoreException {
+		if (userId == null) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.readUser: user is null", null));
+		}
 		ReadWriteLock lock = getLockForUser(userId);
 		lock.readLock().lock();
 		try {

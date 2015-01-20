@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,19 +10,29 @@
  *******************************************************************************/
 package org.eclipse.orion.server.hosting;
 
-import org.eclipse.orion.server.core.ProtocolConstants;
-
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.servlets.*;
-import org.eclipse.orion.internal.server.hosting.*;
 import java.io.IOException;
 import java.net.URI;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
-import org.eclipse.orion.server.core.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.orion.internal.server.hosting.SiteConfigurationConstants;
+import org.eclipse.orion.internal.server.hosting.SiteConfigurationResourceHandler;
+import org.eclipse.orion.internal.server.hosting.SiteInfo;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -41,12 +51,17 @@ public class SiteConfigurationServlet extends OrionServlet {
 	@Override
 	protected synchronized void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
+		String userName = req.getRemoteUser();
+		if (userName == null) {
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad request: authenticated user is null", null));
+			return;
+		}
 		IPath pathInfo = getPathInfo(req);
 		if (pathInfo.segmentCount() == 0) {
-			doGetAllSiteConfigurations(req, resp);
+			doGetAllSiteConfigurations(req, resp, userName);
 			return;
 		} else if (pathInfo.segmentCount() == 1) {
-			SiteInfo site = getExistingSiteConfig(req, resp);
+			SiteInfo site = getExistingSiteConfig(req, resp, userName);
 			if (siteConfigurationResourceHandler.handleRequest(req, resp, site)) {
 				return;
 			}
@@ -75,9 +90,14 @@ public class SiteConfigurationServlet extends OrionServlet {
 	@Override
 	protected synchronized void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
+		String userName = req.getRemoteUser();
+		if (userName == null) {
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad request: authenticated user is null", null));
+			return;
+		}
 		IPath pathInfo = getPathInfo(req);
 		if (pathInfo.segmentCount() == 1) {
-			SiteInfo site = getExistingSiteConfig(req, resp);
+			SiteInfo site = getExistingSiteConfig(req, resp, userName);
 			if (siteConfigurationResourceHandler.handleRequest(req, resp, site)) {
 				return;
 			}
@@ -91,8 +111,13 @@ public class SiteConfigurationServlet extends OrionServlet {
 	@Override
 	protected synchronized void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
+		String userName = req.getRemoteUser();
+		if (userName == null) {
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad request: authenticated user is null", null));
+			return;
+		}
 		if (getPathInfo(req).segmentCount() == 1) {
-			SiteInfo site = getExistingSiteConfig(req, resp);
+			SiteInfo site = getExistingSiteConfig(req, resp, userName);
 			if (siteConfigurationResourceHandler.handleRequest(req, resp, site)) {
 				return;
 			}
@@ -105,8 +130,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 	/**
 	 * @return The SiteConfiguration whose id matches the 0th segment of the request pathInfo, or null.
 	 */
-	private SiteInfo getExistingSiteConfig(HttpServletRequest req, HttpServletResponse resp) {
-		String userName = getUserName(req);
+	private SiteInfo getExistingSiteConfig(HttpServletRequest req, HttpServletResponse resp, String userName) {
 		IPath pathInfo = getPathInfo(req);
 		try {
 			//bad request
@@ -122,8 +146,7 @@ public class SiteConfigurationServlet extends OrionServlet {
 	}
 
 	// TODO: allow filtering by hosting state via query parameter?
-	private boolean doGetAllSiteConfigurations(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
-		String userName = getUserName(req);
+	private boolean doGetAllSiteConfigurations(HttpServletRequest req, HttpServletResponse resp, String userName) throws ServletException {
 		try {
 			UserInfo user = OrionConfiguration.getMetaStore().readUser(userName);
 			//user info stores an object where key is site id, value is site info, but we just want the values
@@ -163,12 +186,4 @@ public class SiteConfigurationServlet extends OrionServlet {
 		}
 		return path;
 	}
-
-	/**
-	 * Obtain and return the user name from the request headers.
-	 */
-	private static String getUserName(HttpServletRequest req) {
-		return req.getRemoteUser();
-	}
-
 }
