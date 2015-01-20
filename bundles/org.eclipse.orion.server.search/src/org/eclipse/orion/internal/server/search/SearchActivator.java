@@ -30,10 +30,6 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 
 	private static SearchActivator instance;
 	public static final String PI_SEARCH = "org.eclipse.orion.server.core.search"; //$NON-NLS-1$
-	/**
-	 * A family for all jobs related to indexing. Used to join jobs on shutdown.
-	 */
-	public static final Object JOB_FAMILY = new Object();
 	private ServiceRegistration<IWebResourceDecorator> searchDecoratorRegistration;
 
 	static BundleContext getContext() {
