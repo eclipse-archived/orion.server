@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others.
+ * Copyright (c) 2014, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -32,7 +32,7 @@ import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreMigration
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -309,7 +309,7 @@ public class SimpleMetaStoreLiveMigrationTests extends AbstractSimpleMetaStoreMi
 		// create metadata on disk
 		JSONObject newUserJSON = createUserJson(SimpleMetaStoreMigration.VERSION4, testUserId, workspaceIds);
 		// tweak the default to match the internal server's metadata.
-		newUserJSON.put(UserConstants2.FULL_NAME, "Unnamed User");
+		newUserJSON.put(UserConstants.FULL_NAME, "Unnamed User");
 		createUserMetaData(newUserJSON, testUserId);
 		JSONObject newWorkspaceJSON = createWorkspaceJson(SimpleMetaStoreMigration.VERSION4, testUserId, workspaceName, projectNames);
 		createWorkspaceMetaData(SimpleMetaStoreMigration.VERSION4, newWorkspaceJSON, testUserId, workspaceName);
@@ -452,7 +452,7 @@ public class SimpleMetaStoreLiveMigrationTests extends AbstractSimpleMetaStoreMi
 		assertTrue(SimpleMetaStoreUtil.isMetaFile(userMetaFolder, SimpleMetaStore.USER));
 		JSONObject userJSON = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
 		assertFalse(userJSON.has("passwordResetId"));
-		assertFalse(userJSON.has(UserConstants2.EMAIL_CONFIRMATION_ID));
+		assertFalse(userJSON.has(UserConstants.EMAIL_CONFIRMATION_ID));
 	}
 
 	/**

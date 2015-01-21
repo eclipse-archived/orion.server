@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -31,7 +31,7 @@ import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -149,7 +149,7 @@ public class OAuthHelper {
 
 		try {
 			// try to store the login timestamp in the user profile
-			userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
+			userInfo.setProperty(UserConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
 			OrionConfiguration.getMetaStore().updateUser(userInfo);
 		} catch (CoreException e) {
 			// just log that the login timestamp was not stored
@@ -169,7 +169,7 @@ public class OAuthHelper {
 	private static UserInfo getUser(OAuthConsumer oauthConsumer) {
 		try {
 			// Get user by oauth property
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.OAUTH, ".*\\Q" + oauthConsumer.getIdentifier() + "\\E.*", true, false);
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.OAUTH, ".*\\Q" + oauthConsumer.getIdentifier() + "\\E.*", true, false);
 			if (userInfo != null) {
 				return userInfo;
 			}
@@ -177,13 +177,13 @@ public class OAuthHelper {
 			String openidIdentifier = oauthConsumer.getOpenidIdentifier();
 			if (openidIdentifier == null)
 				return null;
-			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.OPENID, ".*\\Q" + openidIdentifier + "\\E.*", true, false);
+			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.OPENID, ".*\\Q" + openidIdentifier + "\\E.*", true, false);
 			if (userInfo != null) {
 				// Remove old property
-				String openidsString = (String) userInfo.getProperty(UserConstants2.OPENID);
+				String openidsString = (String) userInfo.getProperty(UserConstants.OPENID);
 				String[] openIds = openidsString.split("\n");
 				if (openIds.length == 1) {
-					userInfo.setProperty(UserConstants2.OPENID, null);
+					userInfo.setProperty(UserConstants.OPENID, null);
 				} else {
 					// Multiple open id's
 					// Remove the current one
@@ -194,17 +194,17 @@ public class OAuthHelper {
 						}
 					}
 					newOpenIds = newOpenIds.substring(0, newOpenIds.length() - 1);
-					userInfo.setProperty(UserConstants2.OPENID, newOpenIds);
+					userInfo.setProperty(UserConstants.OPENID, newOpenIds);
 				}
 				// Add new property
-				String oauths = userInfo.getProperty(UserConstants2.OAUTH);
+				String oauths = userInfo.getProperty(UserConstants.OAUTH);
 				if (oauths != null && !oauths.equals("")) {
 					oauths += '\n';
 				} else {
 					oauths = "";
 				}
 				oauths += oauthConsumer.getIdentifier();
-				userInfo.setProperty(UserConstants2.OAUTH, oauths);
+				userInfo.setProperty(UserConstants.OAUTH, oauths);
 				OrionConfiguration.getMetaStore().updateUser(userInfo);
 				return userInfo;
 			}

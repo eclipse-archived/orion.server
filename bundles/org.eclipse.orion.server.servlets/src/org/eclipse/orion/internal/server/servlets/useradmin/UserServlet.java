@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corporation and others 
+ * Copyright (c) 2010, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -31,7 +31,7 @@ import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
@@ -91,7 +91,7 @@ public class UserServlet extends OrionServlet {
 			// just fall through
 		}
 		if ("POST".equals(req.getMethod())) { //$NON-NLS-1$
-			if (json != null && !json.has(UserConstants2.RESET)) {
+			if (json != null && !json.has(UserConstants.RESET)) {
 				// either everyone can create users, or only the specific list
 				if (authorizedAccountCreators != null && !authorizedAccountCreators.contains(login)) {
 					handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Forbidden access"), HttpServletResponse.SC_FORBIDDEN);
@@ -123,7 +123,7 @@ public class UserServlet extends OrionServlet {
 			String userId = pathInfo.split("\\/")[1];
 			UserInfo userInfo = null;
 			try {
-				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, userId, false, false);
+				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.USER_NAME, userId, false, false);
 			} catch (CoreException e) {
 				LogHelper.log(e);
 				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());

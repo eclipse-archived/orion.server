@@ -29,7 +29,7 @@ import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,7 +48,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 
 		UserInfo userInfo = null;
 		try {
-			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, userId, false, false);
+			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.USER_NAME, userId, false, false);
 		} catch (CoreException e) {
 			LogHelper.log(e);
 			resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userId + " not found.");
@@ -60,7 +60,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			return;
 		}
 
-		if (req.getParameter(UserConstants2.PASSWORD_RESET_ID) != null) {
+		if (req.getParameter(UserConstants.PASSWORD_RESET_ID) != null) {
 			resetPassword(userInfo, req, resp);
 		} else {
 			confirmEmail(userInfo, req, resp);
@@ -69,21 +69,21 @@ public class EmailConfirmationServlet extends OrionServlet {
 	}
 
 	private void resetPassword(UserInfo userInfo, HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		if (userInfo.getProperty(UserConstants2.PASSWORD_RESET_ID) == null || "".equals(userInfo.getProperty(UserConstants2.PASSWORD_RESET_ID))) {
+		if (userInfo.getProperty(UserConstants.PASSWORD_RESET_ID) == null || "".equals(userInfo.getProperty(UserConstants.PASSWORD_RESET_ID))) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
 					"You have not requested to reset your password or this password reset request was already completed");
 			return;
 		}
 
-		if (!userInfo.getProperty(UserConstants2.PASSWORD_RESET_ID).equals(req.getParameter(UserConstants2.PASSWORD_RESET_ID))) {
+		if (!userInfo.getProperty(UserConstants.PASSWORD_RESET_ID).equals(req.getParameter(UserConstants.PASSWORD_RESET_ID))) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "This password reset request is out of date");
 			return;
 		}
 
 		String newPass = getRandomPassword();
 
-		userInfo.setProperty(UserConstants2.PASSWORD, newPass);
-		userInfo.setProperty(UserConstants2.PASSWORD_RESET_ID, null);
+		userInfo.setProperty(UserConstants.PASSWORD, newPass);
+		userInfo.setProperty(UserConstants.PASSWORD_RESET_ID, null);
 
 		try {
 			UserEmailUtil.getUtil().setPasswordResetEmail(userInfo);
@@ -111,21 +111,21 @@ public class EmailConfirmationServlet extends OrionServlet {
 	}
 
 	private void confirmEmail(UserInfo userInfo, HttpServletRequest req, HttpServletResponse resp) throws IOException {
-		if (userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID) == null) {
+		if (userInfo.getProperty(UserConstants.EMAIL_CONFIRMATION_ID) == null) {
 			resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
 			resp.getWriter().write("<html><body><p>Your email address has already been confirmed. Thank you!</p></body></html>");
 			return;
 		}
 
-		if (req.getParameter(UserConstants2.EMAIL_CONFIRMATION_ID) == null
-				|| !req.getParameter(UserConstants2.EMAIL_CONFIRMATION_ID).equals(userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID))) {
+		if (req.getParameter(UserConstants.EMAIL_CONFIRMATION_ID) == null
+				|| !req.getParameter(UserConstants.EMAIL_CONFIRMATION_ID).equals(userInfo.getProperty(UserConstants.EMAIL_CONFIRMATION_ID))) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Email could not be confirmed.");
 			return;
 		}
 
 		try {
-			userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION_ID, null);
-			userInfo.setProperty(UserConstants2.BLOCKED, null);
+			userInfo.setProperty(UserConstants.EMAIL_CONFIRMATION_ID, null);
+			userInfo.setProperty(UserConstants.BLOCKED, null);
 			OrionConfiguration.getMetaStore().updateUser(userInfo);
 		} catch (CoreException e) {
 			LogHelper.log(e);
@@ -169,11 +169,11 @@ public class EmailConfirmationServlet extends OrionServlet {
 		String userName = null;
 		try {
 			JSONObject json = OrionServlet.readJSONRequest(req);
-			if (json.has(UserConstants2.EMAIL)) {
-				userEmail = json.getString(UserConstants2.EMAIL);
+			if (json.has(UserConstants.EMAIL)) {
+				userEmail = json.getString(UserConstants.EMAIL);
 			}
-			if (json.has(UserConstants2.USER_NAME)) {
-				userName = json.getString(UserConstants2.USER_NAME);
+			if (json.has(UserConstants.USER_NAME)) {
+				userName = json.getString(UserConstants.USER_NAME);
 			}
 		} catch (JSONException e) {
 			getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not parse json request", e));
@@ -186,7 +186,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			// reset using login
 			UserInfo userInfo = null;
 			try {
-				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, userName.trim(), false, false);
+				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.USER_NAME, userName.trim(), false, false);
 			} catch (CoreException e) {
 				LogHelper.log(e);
 				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
@@ -203,7 +203,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 							+ " Please follow the instructions from the confirmation email in your inbox and then request a password reset again.");
 					return;
 				}
-				if (!userEmail.equals(userInfo.getProperty(UserConstants2.EMAIL))) {
+				if (!userEmail.equals(userInfo.getProperty(UserConstants.EMAIL))) {
 					resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User " + userName + " with email " + userEmail + " does not exist.");
 					return;
 				}
@@ -213,7 +213,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			// reset using email address
 			UserInfo userInfo = null;
 			try {
-				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.EMAIL, userEmail.trim().toLowerCase(), false, false);
+				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.EMAIL, userEmail.trim().toLowerCase(), false, false);
 			} catch (CoreException e) {
 				LogHelper.log(e);
 				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
@@ -258,7 +258,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 	}
 
 	private IStatus sendPasswordResetConfirmation(UserInfo userInfo, URI baseUri) {
-		if (userInfo.getProperty(UserConstants2.EMAIL) == null || userInfo.getProperty(UserConstants2.EMAIL).length() == 0) {
+		if (userInfo.getProperty(UserConstants.EMAIL) == null || userInfo.getProperty(UserConstants.EMAIL).length() == 0) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userInfo.getUniqueId()
 					+ " doesn't have its email set. Contact administrator to reset your password.", null);
 		}
@@ -269,7 +269,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 		}
 
 		try {
-			userInfo.setProperty(UserConstants2.PASSWORD_RESET_ID, getUniqueEmailConfirmationId());
+			userInfo.setProperty(UserConstants.PASSWORD_RESET_ID, getUniqueEmailConfirmationId());
 			OrionConfiguration.getMetaStore().updateUser(userInfo);
 		} catch (CoreException e) {
 			LogHelper.log(e);
@@ -312,8 +312,8 @@ public class EmailConfirmationServlet extends OrionServlet {
 	}
 
 	private boolean isEmailConfirmed(UserInfo userInfo) {
-		String email = userInfo.getProperty(UserConstants2.EMAIL);
-		return (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID) == null : false;
+		String email = userInfo.getProperty(UserConstants.EMAIL);
+		return (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants.EMAIL_CONFIRMATION_ID) == null : false;
 	}
 
 	private static String getUniqueEmailConfirmationId() {

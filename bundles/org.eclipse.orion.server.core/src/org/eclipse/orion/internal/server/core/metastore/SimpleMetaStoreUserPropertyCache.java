@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others.
+ * Copyright (c) 2014, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,7 +20,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.ServerConstants;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,12 +107,12 @@ public class SimpleMetaStoreUserPropertyCache {
 	}
 
 	public void addUsers(List<String> userIds) {
-		if (cacheMap.containsKey(UserConstants2.USER_NAME)) {
-			Map<String, String> cache = cacheMap.get(UserConstants2.USER_NAME);
+		if (cacheMap.containsKey(UserConstants.USER_NAME)) {
+			Map<String, String> cache = cacheMap.get(UserConstants.USER_NAME);
 			for (String userId : userIds) {
 				cache.put(userId, userId);
 				if (logger.isDebugEnabled()) {
-					logger.debug("Added " + userId + " to the user cache for the " + UserConstants2.USER_NAME + " property"); //$NON-NLS-1$
+					logger.debug("Added " + userId + " to the user cache for the " + UserConstants.USER_NAME + " property"); //$NON-NLS-1$
 				}
 			}
 		}

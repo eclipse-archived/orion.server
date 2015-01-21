@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2014 IBM Corporation and others.
+ * Copyright (c) 2011, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,7 +20,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -41,7 +41,7 @@ public class GenericUserHandler extends ServletResourceHandler<String> {
 
 		String userId = userPathInfo.split("\\/")[1]; //$NON-NLS-1$
 		try {
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, userId, false, false);
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.USER_NAME, userId, false, false);
 			if (userInfo == null) {
 				return false;
 			}
@@ -55,17 +55,17 @@ public class GenericUserHandler extends ServletResourceHandler<String> {
 			writer.println("<body>"); //$NON-NLS-1$
 			writer.println("<h1>Details of " + userId + "</h1>"); //$NON-NLS-1$ //$NON-NLS-2$
 
-			if (userInfo.getProperties().containsKey(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
-				String lastLoginTimestamp = userInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP);
-				writer.println(UserConstants2.LAST_LOGIN_TIMESTAMP + " : " + lastLoginTimestamp + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+			if (userInfo.getProperties().containsKey(UserConstants.LAST_LOGIN_TIMESTAMP)) {
+				String lastLoginTimestamp = userInfo.getProperty(UserConstants.LAST_LOGIN_TIMESTAMP);
+				writer.println(UserConstants.LAST_LOGIN_TIMESTAMP + " : " + lastLoginTimestamp + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
-			if (userInfo.getProperties().containsKey(UserConstants2.DISK_USAGE)) {
-				String diskUsage = userInfo.getProperty(UserConstants2.DISK_USAGE);
-				writer.println(UserConstants2.DISK_USAGE + " : " + diskUsage + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+			if (userInfo.getProperties().containsKey(UserConstants.DISK_USAGE)) {
+				String diskUsage = userInfo.getProperty(UserConstants.DISK_USAGE);
+				writer.println(UserConstants.DISK_USAGE + " : " + diskUsage + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
-			if (userInfo.getProperties().containsKey(UserConstants2.DISK_USAGE_TIMESTAMP)) {
-				String diskUsageTimestamp = userInfo.getProperty(UserConstants2.DISK_USAGE_TIMESTAMP);
-				writer.println(UserConstants2.DISK_USAGE_TIMESTAMP + " : " + diskUsageTimestamp + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+			if (userInfo.getProperties().containsKey(UserConstants.DISK_USAGE_TIMESTAMP)) {
+				String diskUsageTimestamp = userInfo.getProperty(UserConstants.DISK_USAGE_TIMESTAMP);
+				writer.println(UserConstants.DISK_USAGE_TIMESTAMP + " : " + diskUsageTimestamp + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 
 			writer.println("<hr>"); //$NON-NLS-1$

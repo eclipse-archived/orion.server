@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 IBM Corporation and others.
+ * Copyright (c) 2013, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -35,7 +35,7 @@ import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.eclipse.orion.server.tests.AbstractServerTest;
 import org.junit.Test;
 
@@ -1030,7 +1030,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		metaStore.createUser(userInfo);
 
 		// read the user
-		UserInfo readUserInfo = metaStore.readUserByProperty(UserConstants2.USER_NAME, testUserLogin, false, false);
+		UserInfo readUserInfo = metaStore.readUserByProperty(UserConstants.USER_NAME, testUserLogin, false, false);
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
 
@@ -1038,7 +1038,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		metaStore.deleteUser(testUserLogin);
 
 		// read the user again
-		UserInfo readUserInfo2 = metaStore.readUserByProperty(UserConstants2.USER_NAME, testUserLogin, false, false);
+		UserInfo readUserInfo2 = metaStore.readUserByProperty(UserConstants.USER_NAME, testUserLogin, false, false);
 		assertNull(readUserInfo2);
 	}
 
@@ -1385,7 +1385,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		metaStore.createUser(userInfo);
 
 		// read the user using the cache
-		UserInfo readUserInfo = metaStore.readUserByProperty(UserConstants2.USER_NAME, testUserLogin, false, false);
+		UserInfo readUserInfo = metaStore.readUserByProperty(UserConstants.USER_NAME, testUserLogin, false, false);
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
 
@@ -1426,11 +1426,11 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		assertTrue(readUserInfo2.getUserName().equals(newUserName));
 
 		// read the user using the cache
-		UserInfo readUserInfo3 = metaStore.readUserByProperty(UserConstants2.USER_NAME, testUserLogin, false, false);
+		UserInfo readUserInfo3 = metaStore.readUserByProperty(UserConstants.USER_NAME, testUserLogin, false, false);
 		assertNull(readUserInfo3);
 
 		// read the user using the cache
-		UserInfo readUserInfo4 = metaStore.readUserByProperty(UserConstants2.USER_NAME, newUserName, false, false);
+		UserInfo readUserInfo4 = metaStore.readUserByProperty(UserConstants.USER_NAME, newUserName, false, false);
 		assertNotNull(readUserInfo4);
 		assertEquals(readUserInfo4.getUniqueId(), userInfo.getUniqueId());
 
@@ -1724,18 +1724,18 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		userInfo.setUserName(testUserLogin);
 		userInfo.setFullName(testUserLogin);
 		String emailConfirmationId = "1413302977602-0.2258318922458089";
-		userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION_ID, emailConfirmationId);
+		userInfo.setProperty(UserConstants.EMAIL_CONFIRMATION_ID, emailConfirmationId);
 		metaStore.createUser(userInfo);
 
 		// read the user back again
 		UserInfo readUserInfo = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo);
 		assertEquals(testUserLogin, readUserInfo.getUserName());
-		assertEquals(emailConfirmationId, readUserInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID));
+		assertEquals(emailConfirmationId, readUserInfo.getProperty(UserConstants.EMAIL_CONFIRMATION_ID));
 
 		// update the UserInfo
 		emailConfirmationId = "1381865755658-0.34789953865892875";
-		userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION_ID, emailConfirmationId);
+		userInfo.setProperty(UserConstants.EMAIL_CONFIRMATION_ID, emailConfirmationId);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -1744,22 +1744,22 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo2 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo2);
 		assertEquals(testUserLogin, readUserInfo2.getUserName());
-		String readEmail_confirmation = readUserInfo2.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID);
+		String readEmail_confirmation = readUserInfo2.getProperty(UserConstants.EMAIL_CONFIRMATION_ID);
 		assertEquals(emailConfirmationId, readEmail_confirmation);
 
 		// delete the email_confirmation property and update the user
-		userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION_ID, null);
+		userInfo.setProperty(UserConstants.EMAIL_CONFIRMATION_ID, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo3 = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo3);
 		assertEquals(readUserInfo3.getUniqueId(), userInfo.getUniqueId());
-		assertNull(readUserInfo3.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID));
+		assertNull(readUserInfo3.getProperty(UserConstants.EMAIL_CONFIRMATION_ID));
 
 		// update the UserInfo again
 		emailConfirmationId = "1381865755658-0.34789953865892875";
-		userInfo.setProperty(UserConstants2.EMAIL_CONFIRMATION_ID, emailConfirmationId);
+		userInfo.setProperty(UserConstants.EMAIL_CONFIRMATION_ID, emailConfirmationId);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -1768,7 +1768,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo4 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo4);
 		assertEquals(testUserLogin, readUserInfo4.getUserName());
-		assertEquals(emailConfirmationId, readUserInfo4.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID));
+		assertEquals(emailConfirmationId, readUserInfo4.getProperty(UserConstants.EMAIL_CONFIRMATION_ID));
 	}
 
 	@Test
@@ -1781,18 +1781,18 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		userInfo.setUserName(testUserLogin);
 		userInfo.setFullName(testUserLogin);
 		String passwordResetId = "1413302977602-0.2258318922458089";
-		userInfo.setProperty(UserConstants2.PASSWORD_RESET_ID, passwordResetId);
+		userInfo.setProperty(UserConstants.PASSWORD_RESET_ID, passwordResetId);
 		metaStore.createUser(userInfo);
 
 		// read the user back again
 		UserInfo readUserInfo = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo);
 		assertEquals(testUserLogin, readUserInfo.getUserName());
-		assertEquals(passwordResetId, readUserInfo.getProperty(UserConstants2.PASSWORD_RESET_ID));
+		assertEquals(passwordResetId, readUserInfo.getProperty(UserConstants.PASSWORD_RESET_ID));
 
 		// update the UserInfo
 		passwordResetId = "1381865755658-0.34789953865892875";
-		userInfo.setProperty(UserConstants2.PASSWORD_RESET_ID, passwordResetId);
+		userInfo.setProperty(UserConstants.PASSWORD_RESET_ID, passwordResetId);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -1801,21 +1801,21 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo2 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo2);
 		assertEquals(testUserLogin, readUserInfo2.getUserName());
-		assertEquals(passwordResetId, readUserInfo2.getProperty(UserConstants2.PASSWORD_RESET_ID));
+		assertEquals(passwordResetId, readUserInfo2.getProperty(UserConstants.PASSWORD_RESET_ID));
 
 		// delete the passwordResetId property and update the user
-		userInfo.setProperty(UserConstants2.PASSWORD_RESET_ID, null);
+		userInfo.setProperty(UserConstants.PASSWORD_RESET_ID, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo3 = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo3);
 		assertEquals(readUserInfo3.getUniqueId(), userInfo.getUniqueId());
-		assertNull(readUserInfo3.getProperty(UserConstants2.PASSWORD_RESET_ID));
+		assertNull(readUserInfo3.getProperty(UserConstants.PASSWORD_RESET_ID));
 
 		// update the UserInfo again
 		passwordResetId = "1381865755658-0.34789953865892875";
-		userInfo.setProperty(UserConstants2.PASSWORD_RESET_ID, passwordResetId);
+		userInfo.setProperty(UserConstants.PASSWORD_RESET_ID, passwordResetId);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -1824,7 +1824,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo4 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo4);
 		assertEquals(testUserLogin, readUserInfo4.getUserName());
-		assertEquals(passwordResetId, readUserInfo4.getProperty(UserConstants2.PASSWORD_RESET_ID));
+		assertEquals(passwordResetId, readUserInfo4.getProperty(UserConstants.PASSWORD_RESET_ID));
 	}
 
 	@Test
@@ -1839,26 +1839,26 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		String diskusage = "16M";
 		String diskusagetimestamp = "1413360653603";
 		String lastlogintimestamp = "1413360653600";
-		userInfo.setProperty(UserConstants2.DISK_USAGE, diskusage);
-		userInfo.setProperty(UserConstants2.DISK_USAGE_TIMESTAMP, diskusagetimestamp);
-		userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, lastlogintimestamp);
+		userInfo.setProperty(UserConstants.DISK_USAGE, diskusage);
+		userInfo.setProperty(UserConstants.DISK_USAGE_TIMESTAMP, diskusagetimestamp);
+		userInfo.setProperty(UserConstants.LAST_LOGIN_TIMESTAMP, lastlogintimestamp);
 		metaStore.createUser(userInfo);
 
 		// read the user back again
 		UserInfo readUserInfo = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo);
 		assertEquals(testUserLogin, readUserInfo.getUserName());
-		assertEquals(diskusage, readUserInfo.getProperty(UserConstants2.DISK_USAGE));
-		assertEquals(diskusagetimestamp, readUserInfo.getProperty(UserConstants2.DISK_USAGE_TIMESTAMP));
-		assertEquals(lastlogintimestamp, readUserInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
+		assertEquals(diskusage, readUserInfo.getProperty(UserConstants.DISK_USAGE));
+		assertEquals(diskusagetimestamp, readUserInfo.getProperty(UserConstants.DISK_USAGE_TIMESTAMP));
+		assertEquals(lastlogintimestamp, readUserInfo.getProperty(UserConstants.LAST_LOGIN_TIMESTAMP));
 
 		// update the UserInfo
 		diskusage = "10M";
 		diskusagetimestamp = "1413360652087";
 		diskusagetimestamp = "1413360652080";
-		userInfo.setProperty(UserConstants2.DISK_USAGE, diskusage);
-		userInfo.setProperty(UserConstants2.DISK_USAGE_TIMESTAMP, diskusagetimestamp);
-		userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, lastlogintimestamp);
+		userInfo.setProperty(UserConstants.DISK_USAGE, diskusage);
+		userInfo.setProperty(UserConstants.DISK_USAGE_TIMESTAMP, diskusagetimestamp);
+		userInfo.setProperty(UserConstants.LAST_LOGIN_TIMESTAMP, lastlogintimestamp);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -1867,31 +1867,31 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo2 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo2);
 		assertEquals(testUserLogin, readUserInfo2.getUserName());
-		assertEquals(diskusage, readUserInfo2.getProperty(UserConstants2.DISK_USAGE));
-		assertEquals(diskusagetimestamp, readUserInfo2.getProperty(UserConstants2.DISK_USAGE_TIMESTAMP));
-		assertEquals(lastlogintimestamp, readUserInfo2.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
+		assertEquals(diskusage, readUserInfo2.getProperty(UserConstants.DISK_USAGE));
+		assertEquals(diskusagetimestamp, readUserInfo2.getProperty(UserConstants.DISK_USAGE_TIMESTAMP));
+		assertEquals(lastlogintimestamp, readUserInfo2.getProperty(UserConstants.LAST_LOGIN_TIMESTAMP));
 
 		// delete the diskusage property and update the user
-		userInfo.setProperty(UserConstants2.DISK_USAGE, null);
-		userInfo.setProperty(UserConstants2.DISK_USAGE_TIMESTAMP, null);
-		userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, null);
+		userInfo.setProperty(UserConstants.DISK_USAGE, null);
+		userInfo.setProperty(UserConstants.DISK_USAGE_TIMESTAMP, null);
+		userInfo.setProperty(UserConstants.LAST_LOGIN_TIMESTAMP, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo3 = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo3);
 		assertEquals(readUserInfo3.getUniqueId(), userInfo.getUniqueId());
-		assertNull(readUserInfo3.getProperty(UserConstants2.DISK_USAGE));
-		assertNull(readUserInfo3.getProperty(UserConstants2.DISK_USAGE_TIMESTAMP));
-		assertNull(readUserInfo3.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
+		assertNull(readUserInfo3.getProperty(UserConstants.DISK_USAGE));
+		assertNull(readUserInfo3.getProperty(UserConstants.DISK_USAGE_TIMESTAMP));
+		assertNull(readUserInfo3.getProperty(UserConstants.LAST_LOGIN_TIMESTAMP));
 
 		// update the UserInfo again
 		diskusage = "16M";
 		diskusagetimestamp = "1413360653603";
 		lastlogintimestamp = "1413360653600";
-		userInfo.setProperty(UserConstants2.DISK_USAGE, diskusage);
-		userInfo.setProperty(UserConstants2.DISK_USAGE_TIMESTAMP, diskusagetimestamp);
-		userInfo.setProperty(UserConstants2.LAST_LOGIN_TIMESTAMP, lastlogintimestamp);
+		userInfo.setProperty(UserConstants.DISK_USAGE, diskusage);
+		userInfo.setProperty(UserConstants.DISK_USAGE_TIMESTAMP, diskusagetimestamp);
+		userInfo.setProperty(UserConstants.LAST_LOGIN_TIMESTAMP, lastlogintimestamp);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -1900,9 +1900,9 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo4 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo4);
 		assertEquals(testUserLogin, readUserInfo4.getUserName());
-		assertEquals(diskusage, readUserInfo4.getProperty(UserConstants2.DISK_USAGE));
-		assertEquals(diskusagetimestamp, readUserInfo4.getProperty(UserConstants2.DISK_USAGE_TIMESTAMP));
-		assertEquals(lastlogintimestamp, readUserInfo4.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
+		assertEquals(diskusage, readUserInfo4.getProperty(UserConstants.DISK_USAGE));
+		assertEquals(diskusagetimestamp, readUserInfo4.getProperty(UserConstants.DISK_USAGE_TIMESTAMP));
+		assertEquals(lastlogintimestamp, readUserInfo4.getProperty(UserConstants.LAST_LOGIN_TIMESTAMP));
 	}
 
 	@Test
@@ -1915,28 +1915,28 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		userInfo.setUserName(testUserLogin);
 		userInfo.setFullName(testUserLogin);
 		String blocked = "true";
-		userInfo.setProperty(UserConstants2.BLOCKED, blocked);
+		userInfo.setProperty(UserConstants.BLOCKED, blocked);
 		metaStore.createUser(userInfo);
 
 		// read the user back again
 		UserInfo readUserInfo = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo);
 		assertEquals(testUserLogin, readUserInfo.getUserName());
-		assertEquals(blocked, readUserInfo.getProperty(UserConstants2.BLOCKED));
+		assertEquals(blocked, readUserInfo.getProperty(UserConstants.BLOCKED));
 
 		// delete the blocked property and update the user
-		userInfo.setProperty(UserConstants2.BLOCKED, null);
+		userInfo.setProperty(UserConstants.BLOCKED, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo3 = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo3);
 		assertEquals(readUserInfo3.getUniqueId(), userInfo.getUniqueId());
-		assertNull(readUserInfo3.getProperty(UserConstants2.BLOCKED));
+		assertNull(readUserInfo3.getProperty(UserConstants.BLOCKED));
 
 		// update the UserInfo again
 		blocked = "true";
-		userInfo.setProperty(UserConstants2.BLOCKED, blocked);
+		userInfo.setProperty(UserConstants.BLOCKED, blocked);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -1945,7 +1945,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo4 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo4);
 		assertEquals(testUserLogin, readUserInfo4.getUserName());
-		assertEquals(blocked, readUserInfo4.getProperty(UserConstants2.BLOCKED));
+		assertEquals(blocked, readUserInfo4.getProperty(UserConstants.BLOCKED));
 	}
 
 	@Test
@@ -1958,51 +1958,51 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		String emailAddress = "test@example.com";
 		userInfo.setUserName(testUserLogin);
 		userInfo.setFullName(testUserLogin);
-		userInfo.setProperty(UserConstants2.EMAIL, emailAddress);
+		userInfo.setProperty(UserConstants.EMAIL, emailAddress);
 		metaStore.createUser(userInfo);
 
 		// read the user using the cache
-		UserInfo readUserInfo = metaStore.readUserByProperty(UserConstants2.EMAIL, emailAddress, false, false);
+		UserInfo readUserInfo = metaStore.readUserByProperty(UserConstants.EMAIL, emailAddress, false, false);
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(readUserInfo.getProperty(UserConstants2.EMAIL), emailAddress);
+		assertEquals(readUserInfo.getProperty(UserConstants.EMAIL), emailAddress);
 
 		// update the UserInfo
 		String newEmailAddress = "new@sample.ca";
-		userInfo.setProperty(UserConstants2.EMAIL, newEmailAddress);
+		userInfo.setProperty(UserConstants.EMAIL, newEmailAddress);
 
 		// update the user
 		metaStore.updateUser(userInfo);
 
 		// read the user using the cache
-		UserInfo readUserInfo2 = metaStore.readUserByProperty(UserConstants2.EMAIL, newEmailAddress, false, false);
+		UserInfo readUserInfo2 = metaStore.readUserByProperty(UserConstants.EMAIL, newEmailAddress, false, false);
 		assertNotNull(readUserInfo2);
 		assertEquals(readUserInfo2.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(readUserInfo2.getProperty(UserConstants2.EMAIL), newEmailAddress);
+		assertEquals(readUserInfo2.getProperty(UserConstants.EMAIL), newEmailAddress);
 
 		// read the user using the cache
-		UserInfo readUserInfo3 = metaStore.readUserByProperty(UserConstants2.EMAIL, emailAddress, false, false);
+		UserInfo readUserInfo3 = metaStore.readUserByProperty(UserConstants.EMAIL, emailAddress, false, false);
 		assertNull(readUserInfo3);
 
 		// delete the email property and update the user
-		userInfo.setProperty(UserConstants2.EMAIL, null);
+		userInfo.setProperty(UserConstants.EMAIL, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo6 = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo6);
 		assertEquals(readUserInfo6.getUniqueId(), userInfo.getUniqueId());
-		assertNull(readUserInfo6.getProperty(UserConstants2.EMAIL));
+		assertNull(readUserInfo6.getProperty(UserConstants.EMAIL));
 
 		// read the user using the cache
-		UserInfo readUserInfo7 = metaStore.readUserByProperty(UserConstants2.EMAIL, newEmailAddress, false, false);
+		UserInfo readUserInfo7 = metaStore.readUserByProperty(UserConstants.EMAIL, newEmailAddress, false, false);
 		assertNull(readUserInfo7);
 
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());
 
 		// read the user using the cache
-		UserInfo readUserInfo4 = metaStore.readUserByProperty(UserConstants2.EMAIL, newEmailAddress, false, false);
+		UserInfo readUserInfo4 = metaStore.readUserByProperty(UserConstants.EMAIL, newEmailAddress, false, false);
 		assertNull(readUserInfo4);
 	}
 
@@ -2016,57 +2016,57 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		String oauth = "https://www.google.com/accounts/o8/id?id=AItOawnmfbTrOADLMe3BteRFouYMK99xMTiqACw";
 		userInfo.setUserName(testUserLogin);
 		userInfo.setFullName(testUserLogin);
-		userInfo.setProperty(UserConstants2.OAUTH, oauth);
+		userInfo.setProperty(UserConstants.OAUTH, oauth);
 		metaStore.createUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(readUserInfo.getProperty(UserConstants2.OAUTH), oauth);
+		assertEquals(readUserInfo.getProperty(UserConstants.OAUTH), oauth);
 
 		// read the user using the cache
-		UserInfo readUserInfo5 = metaStore.readUserByProperty(UserConstants2.OAUTH, oauth, false, false);
+		UserInfo readUserInfo5 = metaStore.readUserByProperty(UserConstants.OAUTH, oauth, false, false);
 		assertNotNull(readUserInfo5);
 		assertEquals(readUserInfo5.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(readUserInfo5.getProperty(UserConstants2.OAUTH), oauth);
+		assertEquals(readUserInfo5.getProperty(UserConstants.OAUTH), oauth);
 
 		// update the UserInfo
 		String newoauth = "https://www.google.com/accounts/o8/id?id=AItOawmBI-L96jdXg8wdb08OzgWvXveS1_95zKI";
-		userInfo.setProperty(UserConstants2.OAUTH, newoauth);
+		userInfo.setProperty(UserConstants.OAUTH, newoauth);
 
 		// update the user
 		metaStore.updateUser(userInfo);
 
 		// read the user using the cache
-		UserInfo readUserInfo2 = metaStore.readUserByProperty(UserConstants2.OAUTH, newoauth, false, false);
+		UserInfo readUserInfo2 = metaStore.readUserByProperty(UserConstants.OAUTH, newoauth, false, false);
 		assertNotNull(readUserInfo2);
 		assertEquals(readUserInfo2.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(readUserInfo2.getProperty(UserConstants2.OAUTH), newoauth);
+		assertEquals(readUserInfo2.getProperty(UserConstants.OAUTH), newoauth);
 
 		// read the user using the cache
-		UserInfo readUserInfo3 = metaStore.readUserByProperty(UserConstants2.OAUTH, oauth, false, false);
+		UserInfo readUserInfo3 = metaStore.readUserByProperty(UserConstants.OAUTH, oauth, false, false);
 		assertNull(readUserInfo3);
 
 		// delete the oauth property and update the user
-		userInfo.setProperty(UserConstants2.OAUTH, null);
+		userInfo.setProperty(UserConstants.OAUTH, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo6 = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo6);
 		assertEquals(readUserInfo6.getUniqueId(), userInfo.getUniqueId());
-		assertNull(readUserInfo6.getProperty(UserConstants2.OAUTH));
+		assertNull(readUserInfo6.getProperty(UserConstants.OAUTH));
 
 		// read the user using the cache
-		UserInfo readUserInfo7 = metaStore.readUserByProperty(UserConstants2.OAUTH, newoauth, false, false);
+		UserInfo readUserInfo7 = metaStore.readUserByProperty(UserConstants.OAUTH, newoauth, false, false);
 		assertNull(readUserInfo7);
 
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());
 
 		// read the user using the cache
-		UserInfo readUserInfo4 = metaStore.readUserByProperty(UserConstants2.OAUTH, newoauth, false, false);
+		UserInfo readUserInfo4 = metaStore.readUserByProperty(UserConstants.OAUTH, newoauth, false, false);
 		assertNull(readUserInfo4);
 	}
 
@@ -2080,57 +2080,57 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		String openid = "https://www.google.com/accounts/o8/id?id=AItOawnmfbTrOADLMe3BteRFouYMK99xMTiqACw";
 		userInfo.setUserName(testUserLogin);
 		userInfo.setFullName(testUserLogin);
-		userInfo.setProperty(UserConstants2.OPENID, openid);
+		userInfo.setProperty(UserConstants.OPENID, openid);
 		metaStore.createUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(openid, readUserInfo.getProperty(UserConstants2.OPENID));
+		assertEquals(openid, readUserInfo.getProperty(UserConstants.OPENID));
 
 		// read the user using the cache
-		UserInfo readUserInfo5 = metaStore.readUserByProperty(UserConstants2.OPENID, openid, false, false);
+		UserInfo readUserInfo5 = metaStore.readUserByProperty(UserConstants.OPENID, openid, false, false);
 		assertNotNull(readUserInfo5);
 		assertEquals(readUserInfo5.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(readUserInfo5.getProperty(UserConstants2.OPENID), openid);
+		assertEquals(readUserInfo5.getProperty(UserConstants.OPENID), openid);
 
 		// update the UserInfo
 		String newOpenid = "https://www.google.com/accounts/o8/id?id=AItOawmBI-L96jdXg8wdb08OzgWvXveS1_95zKI";
-		userInfo.setProperty(UserConstants2.OPENID, newOpenid);
+		userInfo.setProperty(UserConstants.OPENID, newOpenid);
 
 		// update the user
 		metaStore.updateUser(userInfo);
 
 		// read the user using the cache
-		UserInfo readUserInfo2 = metaStore.readUserByProperty(UserConstants2.OPENID, newOpenid, false, false);
+		UserInfo readUserInfo2 = metaStore.readUserByProperty(UserConstants.OPENID, newOpenid, false, false);
 		assertNotNull(readUserInfo2);
 		assertEquals(readUserInfo2.getUniqueId(), userInfo.getUniqueId());
-		assertEquals(readUserInfo2.getProperty(UserConstants2.OPENID), newOpenid);
+		assertEquals(readUserInfo2.getProperty(UserConstants.OPENID), newOpenid);
 
 		// read the user using the cache
-		UserInfo readUserInfo3 = metaStore.readUserByProperty(UserConstants2.OPENID, openid, false, false);
+		UserInfo readUserInfo3 = metaStore.readUserByProperty(UserConstants.OPENID, openid, false, false);
 		assertNull(readUserInfo3);
 
 		// delete the openid property and update the user
-		userInfo.setProperty(UserConstants2.OPENID, null);
+		userInfo.setProperty(UserConstants.OPENID, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo6 = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo6);
 		assertEquals(readUserInfo6.getUniqueId(), userInfo.getUniqueId());
-		assertNull(readUserInfo6.getProperty(UserConstants2.OPENID));
+		assertNull(readUserInfo6.getProperty(UserConstants.OPENID));
 
 		// read the user using the cache
-		UserInfo readUserInfo7 = metaStore.readUserByProperty(UserConstants2.OPENID, newOpenid, false, false);
+		UserInfo readUserInfo7 = metaStore.readUserByProperty(UserConstants.OPENID, newOpenid, false, false);
 		assertNull(readUserInfo7);
 
 		// delete the user
 		metaStore.deleteUser(userInfo.getUniqueId());
 
 		// read the user using the cache
-		UserInfo readUserInfo4 = metaStore.readUserByProperty(UserConstants2.OPENID, newOpenid, false, false);
+		UserInfo readUserInfo4 = metaStore.readUserByProperty(UserConstants.OPENID, newOpenid, false, false);
 		assertNull(readUserInfo4);
 	}
 
@@ -2144,18 +2144,18 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		userInfo.setUserName(testUserLogin);
 		userInfo.setFullName(testUserLogin);
 		String password = "sekret-Passw0rd";
-		userInfo.setProperty(UserConstants2.PASSWORD, password);
+		userInfo.setProperty(UserConstants.PASSWORD, password);
 		metaStore.createUser(userInfo);
 
 		// read the user back again
 		UserInfo readUserInfo = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo);
 		assertEquals(testUserLogin, readUserInfo.getUserName());
-		assertEquals(password, readUserInfo.getProperty(UserConstants2.PASSWORD));
+		assertEquals(password, readUserInfo.getProperty(UserConstants.PASSWORD));
 
 		// update the UserInfo
 		String newPassword = "new-sekret-Passw0rd";
-		userInfo.setProperty(UserConstants2.PASSWORD, newPassword);
+		userInfo.setProperty(UserConstants.PASSWORD, newPassword);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -2164,21 +2164,21 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo2 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo2);
 		assertEquals(testUserLogin, readUserInfo2.getUserName());
-		assertEquals(newPassword, readUserInfo2.getProperty(UserConstants2.PASSWORD));
+		assertEquals(newPassword, readUserInfo2.getProperty(UserConstants.PASSWORD));
 
 		// delete the password property and update the user
-		userInfo.setProperty(UserConstants2.PASSWORD, null);
+		userInfo.setProperty(UserConstants.PASSWORD, null);
 		metaStore.updateUser(userInfo);
 
 		// read the user
 		UserInfo readUserInfo3 = metaStore.readUser(userInfo.getUniqueId());
 		assertNotNull(readUserInfo3);
 		assertEquals(readUserInfo3.getUniqueId(), userInfo.getUniqueId());
-		assertNull(readUserInfo3.getProperty(UserConstants2.PASSWORD));
+		assertNull(readUserInfo3.getProperty(UserConstants.PASSWORD));
 
 		// update the UserInfo again
 		String finalPassword = "final-sekret-Passw0rd";
-		userInfo.setProperty(UserConstants2.PASSWORD, finalPassword);
+		userInfo.setProperty(UserConstants.PASSWORD, finalPassword);
 
 		// update the user
 		metaStore.updateUser(userInfo);
@@ -2187,7 +2187,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		UserInfo readUserInfo4 = metaStore.readUser(testUserLogin);
 		assertNotNull(readUserInfo4);
 		assertEquals(testUserLogin, readUserInfo4.getUserName());
-		assertEquals(finalPassword, readUserInfo4.getProperty(UserConstants2.PASSWORD));
+		assertEquals(finalPassword, readUserInfo4.getProperty(UserConstants.PASSWORD));
 	}
 
 	@Test
@@ -2202,7 +2202,7 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		metaStore.createUser(userInfo);
 
 		// read the user using the cache
-		UserInfo readUserInfo = metaStore.readUserByProperty(UserConstants2.USER_NAME, testUserLogin, false, false);
+		UserInfo readUserInfo = metaStore.readUserByProperty(UserConstants.USER_NAME, testUserLogin, false, false);
 		assertNotNull(readUserInfo);
 		assertEquals(readUserInfo.getUniqueId(), userInfo.getUniqueId());
 	}

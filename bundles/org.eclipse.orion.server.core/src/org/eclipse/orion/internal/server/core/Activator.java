@@ -34,7 +34,7 @@ import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.tasks.ITaskService;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.eclipse.osgi.framework.log.FrameworkLog;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.Bundle;
@@ -172,7 +172,7 @@ public class Activator implements BundleActivator {
 		try {
 			metastore = new SimpleMetaStore(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null));
 			List<String> keys = new ArrayList<String>();
-			keys.add(UserConstants2.USER_NAME);
+			keys.add(UserConstants.USER_NAME);
 			metastore.registerUserProperties(keys);
 			// reading all users will automatically add all user names to the username cache
 			metastore.readAllUsers();

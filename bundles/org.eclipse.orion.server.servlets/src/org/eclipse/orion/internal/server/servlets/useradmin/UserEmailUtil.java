@@ -34,7 +34,7 @@ import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 
 /**
  * Handles sending emails to users
@@ -159,11 +159,11 @@ public class UserEmailUtil {
 		}
 		String confirmURL = confirmLocation.toString();
 		confirmURL += "/" + userInfo.getUniqueId();
-		confirmURL += "?" + UserConstants2.EMAIL_CONFIRMATION_ID + "=" + userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID);
+		confirmURL += "?" + UserConstants.EMAIL_CONFIRMATION_ID + "=" + userInfo.getProperty(UserConstants.EMAIL_CONFIRMATION_ID);
 		sendEmail(
 				confirmationEmail.getTitle(),
 				confirmationEmail.getContent().replaceAll(EMAIL_USER_LINK, userInfo.getUniqueId()).replaceAll(EMAIL_URL_LINK, confirmURL)
-						.replaceAll(EMAIL_ADDRESS_LINK, userInfo.getProperty(UserConstants2.EMAIL)), userInfo.getProperty(UserConstants2.EMAIL));
+						.replaceAll(EMAIL_ADDRESS_LINK, userInfo.getProperty(UserConstants.EMAIL)), userInfo.getProperty(UserConstants.EMAIL));
 	}
 
 	public void sendResetPasswordConfirmation(URI baseURI, UserInfo userInfo) throws URISyntaxException, IOException, CoreException {
@@ -172,10 +172,10 @@ public class UserEmailUtil {
 		}
 		String confirmURL = baseURI.toURL().toString();
 		confirmURL += "/" + userInfo.getUniqueId();
-		confirmURL += "?" + UserConstants2.PASSWORD_RESET_ID + "=" + userInfo.getProperty(UserConstants2.PASSWORD_RESET_ID);
+		confirmURL += "?" + UserConstants.PASSWORD_RESET_ID + "=" + userInfo.getProperty(UserConstants.PASSWORD_RESET_ID);
 		sendEmail(confirmationResetPassEmail.getTitle(),
 				confirmationResetPassEmail.getContent().replaceAll(EMAIL_URL_LINK, confirmURL).replaceAll(EMAIL_USER_LINK, userInfo.getUniqueId()),
-				userInfo.getProperty(UserConstants2.EMAIL));
+				userInfo.getProperty(UserConstants.EMAIL));
 	}
 
 	public void setPasswordResetEmail(UserInfo userInfo) throws URISyntaxException, IOException, CoreException {
@@ -185,6 +185,6 @@ public class UserEmailUtil {
 		sendEmail(
 				passwordResetEmail.getTitle(),
 				passwordResetEmail.getContent().replaceAll(EMAIL_USER_LINK, userInfo.getUniqueId())
-						.replaceAll(EMAIL_PASSWORD_LINK, userInfo.getProperty(UserConstants2.PASSWORD)), userInfo.getProperty(UserConstants2.EMAIL));
+						.replaceAll(EMAIL_PASSWORD_LINK, userInfo.getProperty(UserConstants.PASSWORD)), userInfo.getProperty(UserConstants.EMAIL));
 	}
 }

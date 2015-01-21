@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corporation and others.
+ * Copyright (c) 2010, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -23,7 +23,7 @@ import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.resources.Base64;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
@@ -87,7 +87,7 @@ public class AbstractServerTest {
 		try {
 			// see if the user exists already
 			IMetaStore metaStore = OrionConfiguration.getMetaStore();
-			userInfo = metaStore.readUserByProperty(UserConstants2.USER_NAME, login, false, false);
+			userInfo = metaStore.readUserByProperty(UserConstants.USER_NAME, login, false, false);
 			if (userInfo != null) {
 				return userInfo;
 			}
@@ -96,7 +96,7 @@ public class AbstractServerTest {
 			userInfo = new UserInfo();
 			userInfo.setUserName(login);
 			userInfo.setFullName(login);
-			userInfo.setProperty(UserConstants2.PASSWORD, password);
+			userInfo.setProperty(UserConstants.PASSWORD, password);
 
 			OrionConfiguration.getMetaStore().createUser(userInfo);
 		} catch (CoreException e) {

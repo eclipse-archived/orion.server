@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others.
+ * Copyright (c) 2014, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -32,7 +32,7 @@ import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.core.metastore.SimpleUserPasswordUtil;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.metastore.MetadataInfo;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -72,7 +72,7 @@ public class AbstractSimpleMetaStoreMigrationTests extends FileSystemTest {
 		jsonObject.put("WorkspaceId", workspaceId);
 		String projectId = SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectName);
 		jsonObject.put(MetadataInfo.UNIQUE_ID, projectId);
-		jsonObject.put(UserConstants2.FULL_NAME, projectName);
+		jsonObject.put(UserConstants.FULL_NAME, projectName);
 		String encodedContentLocation = SimpleMetaStoreUtil.encodeProjectContentLocation(contentLocation.toURI().toString());
 		jsonObject.put("ContentLocation", encodedContentLocation);
 		JSONObject properties = new JSONObject();
@@ -153,14 +153,14 @@ public class AbstractSimpleMetaStoreMigrationTests extends FileSystemTest {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put(SimpleMetaStore.ORION_VERSION, version);
 		jsonObject.put(MetadataInfo.UNIQUE_ID, userId);
-		jsonObject.put(UserConstants2.USER_NAME, userId);
-		jsonObject.put(UserConstants2.FULL_NAME, userId);
+		jsonObject.put(UserConstants.USER_NAME, userId);
+		jsonObject.put(UserConstants.FULL_NAME, userId);
 		String password = SimpleUserPasswordUtil.encryptPassword(userId);
 		JSONObject properties = new JSONObject();
 		if (version == SimpleMetaStoreMigration.VERSION4 || version == SimpleMetaStoreMigration.VERSION6 || version == SimpleMetaStoreMigration.VERSION7) {
 			jsonObject.put("password", password);
 		} else {
-			properties.put(UserConstants2.PASSWORD, password);
+			properties.put(UserConstants.PASSWORD, password);
 		}
 		properties.put("UserRightsVersion", "3");
 		JSONArray userRights = new JSONArray();
@@ -213,15 +213,15 @@ public class AbstractSimpleMetaStoreMigrationTests extends FileSystemTest {
 			jsonObject.put("GitName", userId);
 			jsonObject.put("GitMail", email);
 		} else {
-			properties.put(UserConstants2.BLOCKED, "true");
-			properties.put(UserConstants2.DISK_USAGE, "74M");
-			properties.put(UserConstants2.DISK_USAGE_TIMESTAMP, TIMESTAMP);
-			properties.put(UserConstants2.EMAIL, email);
-			properties.put(UserConstants2.EMAIL_CONFIRMATION_ID, CONFIRMATION_ID);
-			properties.put(UserConstants2.LAST_LOGIN_TIMESTAMP, TIMESTAMP);
-			properties.put(UserConstants2.OAUTH, "https://api.github.com/users/ahunter-orion/4500523");
-			properties.put(UserConstants2.OPENID, "https://www.google.com/accounts/o8/id?id=AItOawkTs8dYMgHG0tlvW8PE7RmNZwDlOWlWIU8");
-			properties.put(UserConstants2.PASSWORD_RESET_ID, CONFIRMATION_ID);
+			properties.put(UserConstants.BLOCKED, "true");
+			properties.put(UserConstants.DISK_USAGE, "74M");
+			properties.put(UserConstants.DISK_USAGE_TIMESTAMP, TIMESTAMP);
+			properties.put(UserConstants.EMAIL, email);
+			properties.put(UserConstants.EMAIL_CONFIRMATION_ID, CONFIRMATION_ID);
+			properties.put(UserConstants.LAST_LOGIN_TIMESTAMP, TIMESTAMP);
+			properties.put(UserConstants.OAUTH, "https://api.github.com/users/ahunter-orion/4500523");
+			properties.put(UserConstants.OPENID, "https://www.google.com/accounts/o8/id?id=AItOawkTs8dYMgHG0tlvW8PE7RmNZwDlOWlWIU8");
+			properties.put(UserConstants.PASSWORD_RESET_ID, CONFIRMATION_ID);
 			properties.put("git/config/userInfo", "{\"GitName\":\"" + userId + "\",\"GitMail\":\"" + email + "\"}");
 		}
 		jsonObject.put("Properties", properties);
@@ -254,7 +254,7 @@ public class AbstractSimpleMetaStoreMigrationTests extends FileSystemTest {
 		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(userId, workspaceName);
 		jsonObject.put(MetadataInfo.UNIQUE_ID, workspaceId);
 		jsonObject.put("UserId", userId);
-		jsonObject.put(UserConstants2.FULL_NAME, workspaceName);
+		jsonObject.put(UserConstants.FULL_NAME, workspaceName);
 		JSONArray projectNamesJson = new JSONArray();
 		for (String projectName : projectNames) {
 			projectNamesJson.put(projectName);
@@ -314,8 +314,8 @@ public class AbstractSimpleMetaStoreMigrationTests extends FileSystemTest {
 		assertEquals(projectName, jsonObject.getString(MetadataInfo.UNIQUE_ID));
 		assertTrue(jsonObject.has("WorkspaceId"));
 		assertEquals(workspaceId, jsonObject.getString("WorkspaceId"));
-		assertTrue(jsonObject.has(UserConstants2.FULL_NAME));
-		assertEquals(projectName, jsonObject.getString(UserConstants2.FULL_NAME));
+		assertTrue(jsonObject.has(UserConstants.FULL_NAME));
+		assertEquals(projectName, jsonObject.getString(UserConstants.FULL_NAME));
 		assertTrue(jsonObject.has("Properties"));
 		assertTrue(jsonObject.has("ContentLocation"));
 		String contentLocationFromJson = jsonObject.getString("ContentLocation");
@@ -392,9 +392,9 @@ public class AbstractSimpleMetaStoreMigrationTests extends FileSystemTest {
 		assertEquals("OrionVersion is incorrect", SimpleMetaStore.VERSION, jsonObject.getInt(SimpleMetaStore.ORION_VERSION));
 		assertTrue(jsonObject.has(MetadataInfo.UNIQUE_ID));
 		assertEquals(userId, jsonObject.getString(MetadataInfo.UNIQUE_ID));
-		assertTrue(jsonObject.has(UserConstants2.USER_NAME));
-		assertEquals(userId, jsonObject.getString(UserConstants2.USER_NAME));
-		assertTrue(jsonObject.has(UserConstants2.FULL_NAME));
+		assertTrue(jsonObject.has(UserConstants.USER_NAME));
+		assertEquals(userId, jsonObject.getString(UserConstants.USER_NAME));
+		assertTrue(jsonObject.has(UserConstants.FULL_NAME));
 		assertTrue(jsonObject.has("WorkspaceIds"));
 		JSONArray workspaceIdsFromJson = jsonObject.getJSONArray("WorkspaceIds");
 		assertNotNull(workspaceIdsFromJson);
@@ -405,36 +405,36 @@ public class AbstractSimpleMetaStoreMigrationTests extends FileSystemTest {
 		JSONObject properties = jsonObject.getJSONObject("Properties");
 		assertTrue(properties.has("UserRightsVersion"));
 		assertTrue(properties.has("UserRights"));
-		assertTrue(properties.has(UserConstants2.PASSWORD));
+		assertTrue(properties.has(UserConstants.PASSWORD));
 
 		String email = userId + "@example.com";
 
-		if (properties.has(UserConstants2.BLOCKED)) {
-			assertEquals(properties.getString(UserConstants2.BLOCKED), "true");
+		if (properties.has(UserConstants.BLOCKED)) {
+			assertEquals(properties.getString(UserConstants.BLOCKED), "true");
 		}
-		if (properties.has(UserConstants2.DISK_USAGE)) {
-			assertEquals(properties.getString(UserConstants2.DISK_USAGE), "74M");
+		if (properties.has(UserConstants.DISK_USAGE)) {
+			assertEquals(properties.getString(UserConstants.DISK_USAGE), "74M");
 		}
-		if (properties.has(UserConstants2.DISK_USAGE_TIMESTAMP)) {
-			assertEquals(properties.getString(UserConstants2.DISK_USAGE_TIMESTAMP), TIMESTAMP);
+		if (properties.has(UserConstants.DISK_USAGE_TIMESTAMP)) {
+			assertEquals(properties.getString(UserConstants.DISK_USAGE_TIMESTAMP), TIMESTAMP);
 		}
-		if (properties.has(UserConstants2.EMAIL)) {
-			assertEquals(properties.getString(UserConstants2.EMAIL), email);
+		if (properties.has(UserConstants.EMAIL)) {
+			assertEquals(properties.getString(UserConstants.EMAIL), email);
 		}
-		if (properties.has(UserConstants2.EMAIL_CONFIRMATION_ID)) {
-			assertEquals(properties.getString(UserConstants2.EMAIL_CONFIRMATION_ID), CONFIRMATION_ID);
+		if (properties.has(UserConstants.EMAIL_CONFIRMATION_ID)) {
+			assertEquals(properties.getString(UserConstants.EMAIL_CONFIRMATION_ID), CONFIRMATION_ID);
 		}
-		if (properties.has(UserConstants2.LAST_LOGIN_TIMESTAMP)) {
-			assertEquals(properties.getString(UserConstants2.LAST_LOGIN_TIMESTAMP), TIMESTAMP);
+		if (properties.has(UserConstants.LAST_LOGIN_TIMESTAMP)) {
+			assertEquals(properties.getString(UserConstants.LAST_LOGIN_TIMESTAMP), TIMESTAMP);
 		}
-		if (properties.has(UserConstants2.OAUTH)) {
-			assertEquals(properties.getString(UserConstants2.OAUTH), "https://api.github.com/users/ahunter-orion/4500523");
+		if (properties.has(UserConstants.OAUTH)) {
+			assertEquals(properties.getString(UserConstants.OAUTH), "https://api.github.com/users/ahunter-orion/4500523");
 		}
-		if (properties.has(UserConstants2.OPENID)) {
-			assertEquals(properties.getString(UserConstants2.OPENID), "https://www.google.com/accounts/o8/id?id=AItOawkTs8dYMgHG0tlvW8PE7RmNZwDlOWlWIU8");
+		if (properties.has(UserConstants.OPENID)) {
+			assertEquals(properties.getString(UserConstants.OPENID), "https://www.google.com/accounts/o8/id?id=AItOawkTs8dYMgHG0tlvW8PE7RmNZwDlOWlWIU8");
 		}
-		if (properties.has(UserConstants2.PASSWORD_RESET_ID)) {
-			assertEquals(properties.getString(UserConstants2.PASSWORD_RESET_ID), CONFIRMATION_ID);
+		if (properties.has(UserConstants.PASSWORD_RESET_ID)) {
+			assertEquals(properties.getString(UserConstants.PASSWORD_RESET_ID), CONFIRMATION_ID);
 		}
 		if (properties.has("git/config/userInfo")) {
 			assertEquals(properties.getString("git/config/userInfo"), "{\"GitName\":\"" + userId + "\",\"GitMail\":\"" + email + "\"}");
@@ -469,8 +469,8 @@ public class AbstractSimpleMetaStoreMigrationTests extends FileSystemTest {
 		assertEquals(workspaceId, jsonObject.getString(MetadataInfo.UNIQUE_ID));
 		assertTrue(jsonObject.has("UserId"));
 		assertEquals(userId, jsonObject.getString("UserId"));
-		assertTrue(jsonObject.has(UserConstants2.FULL_NAME));
-		assertEquals(workspaceName, jsonObject.getString(UserConstants2.FULL_NAME));
+		assertTrue(jsonObject.has(UserConstants.FULL_NAME));
+		assertEquals(workspaceName, jsonObject.getString(UserConstants.FULL_NAME));
 		assertTrue(jsonObject.has("ProjectNames"));
 		JSONArray projectNamesJson = jsonObject.getJSONArray("ProjectNames");
 		for (String projectName : projectNames) {
@@ -508,7 +508,7 @@ public class AbstractSimpleMetaStoreMigrationTests extends FileSystemTest {
 		assertNotNull("No workspace information in response", responseObject);
 		String userId = responseObject.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(userId);
-		assertEquals(testUserId, responseObject.optString(UserConstants2.USER_NAME));
+		assertEquals(testUserId, responseObject.optString(UserConstants.USER_NAME));
 		JSONArray workspaces = responseObject.optJSONArray("Workspaces");
 		assertNotNull(workspaces);
 		assertEquals(workspaceIds.size(), workspaces.length());

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others.
+ * Copyright (c) 2014, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,9 +19,8 @@ import java.util.Random;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.eclipse.orion.server.tests.servlets.users.UsersTest;
-import org.eclipse.orion.server.useradmin.UserConstants;
 import org.eclipse.test.performance.Performance;
 import org.eclipse.test.performance.PerformanceMeter;
 import org.json.JSONException;
@@ -87,14 +86,14 @@ public class SimpleServerUserStressTest extends UsersTest {
 			// create a user
 			JSONObject json = new JSONObject();
 			String login = getRandomName();
-			json.put(UserConstants.KEY_LOGIN, login);
-			json.put(UserConstants2.FULL_NAME, getRandomName() + " " + getRandomName());
-			json.put(UserConstants2.EMAIL, login + "@example.com");
-			json.put(UserConstants2.PASSWORD, getRandomName() + System.currentTimeMillis());
+			json.put(UserConstants.USER_NAME, login);
+			json.put(UserConstants.FULL_NAME, getRandomName() + " " + getRandomName());
+			json.put(UserConstants.EMAIL, login + "@example.com");
+			json.put(UserConstants.PASSWORD, getRandomName() + System.currentTimeMillis());
 
 			WebRequest request = getPostUsersRequest("", json, true);
 			WebResponse response = webConversation.getResponse(request);
-			assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
+			assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 			if (i % 1000 == 0) {
 				long end = System.currentTimeMillis();

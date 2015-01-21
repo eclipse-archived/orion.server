@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corporation and others
+ * Copyright (c) 2010, 2015 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,7 +15,7 @@ import java.util.List;
 
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
@@ -44,9 +44,9 @@ public class Activator implements BundleActivator {
 		bundleContext = context;
 		IMetaStore metastore =  OrionConfiguration.getMetaStore();
 		List<String> keys = new ArrayList<String>();
-		keys.add(UserConstants2.EMAIL);
-		keys.add(UserConstants2.OAUTH);
-		keys.add(UserConstants2.OPENID);
+		keys.add(UserConstants.EMAIL);
+		keys.add(UserConstants.OAUTH);
+		keys.add(UserConstants.OPENID);
 		metastore.registerUserProperties(keys);
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 		if (logger.isDebugEnabled()) {

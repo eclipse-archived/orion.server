@@ -30,7 +30,7 @@ import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -231,7 +231,7 @@ public class SearchServlet extends OrionServlet {
 	private void setDefaultScopes(HttpServletRequest req, HttpServletResponse resp, SearchOptions options) throws SearchException {
 		String login = req.getRemoteUser();
 		try {
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, login, false, false);
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.USER_NAME, login, false, false);
 			List<String> workspaceIds = userInfo.getWorkspaceIds();
 			for (String workspaceId : workspaceIds) {
 				WorkspaceInfo workspaceInfo = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);

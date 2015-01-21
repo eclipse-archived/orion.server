@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others.
+ * Copyright (c) 2014, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,7 +19,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.MetadataInfo;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -252,13 +252,13 @@ public class SimpleMetaStoreMigration {
 				String openid = profileProperties.getString("openid");
 				// if openid is empty then remove
 				if (!openid.replaceAll("\n", "").equals("")) {
-					properties.put(UserConstants2.OPENID, openid);
+					properties.put(UserConstants.OPENID, openid);
 				}
 				profileProperties.remove("openid");
 			}
 			if (profileProperties.has("oauth")) {
 				String oauth = profileProperties.getString("oauth");
-				properties.put(UserConstants2.OAUTH, oauth);
+				properties.put(UserConstants.OAUTH, oauth);
 				profileProperties.remove("oauth");
 			}
 			if (profileProperties.has("passwordResetId")) {
@@ -269,7 +269,7 @@ public class SimpleMetaStoreMigration {
 					boolean isRecent = (System.currentTimeMillis() - lastLogin < OLD_PASSWORD_RESET_ID_THRESHOLD);
 					if (isRecent) {
 						// only add recently created password reset requests
-						properties.put(UserConstants2.PASSWORD_RESET_ID, passwordResetId);
+						properties.put(UserConstants.PASSWORD_RESET_ID, passwordResetId);
 					}
 				} catch (Exception e) {
 					// just ignore the password reset id then
@@ -282,37 +282,37 @@ public class SimpleMetaStoreMigration {
 		}
 		if (jsonObject.has("email")) {
 			String email = jsonObject.getString("email");
-			properties.put(UserConstants2.EMAIL, email);
+			properties.put(UserConstants.EMAIL, email);
 			jsonObject.remove("email");
 		}
 		if (jsonObject.has("blocked")) {
 			String blocked = jsonObject.getString("blocked");
-			properties.put(UserConstants2.BLOCKED, blocked);
+			properties.put(UserConstants.BLOCKED, blocked);
 			jsonObject.remove("blocked");
 		}
 		if (jsonObject.has("email_confirmation")) {
 			String email_confirmation = jsonObject.getString("email_confirmation");
-			properties.put(UserConstants2.EMAIL_CONFIRMATION_ID, email_confirmation);
+			properties.put(UserConstants.EMAIL_CONFIRMATION_ID, email_confirmation);
 			jsonObject.remove("email_confirmation");
 		}
 		if (jsonObject.has("diskusage")) {
 			String diskusage = jsonObject.getString("diskusage");
-			properties.put(UserConstants2.DISK_USAGE, diskusage);
+			properties.put(UserConstants.DISK_USAGE, diskusage);
 			jsonObject.remove("diskusage");
 		}
 		if (jsonObject.has("diskusagetimestamp")) {
 			String diskusagetimestamp = jsonObject.getString("diskusagetimestamp");
-			properties.put(UserConstants2.DISK_USAGE_TIMESTAMP, diskusagetimestamp);
+			properties.put(UserConstants.DISK_USAGE_TIMESTAMP, diskusagetimestamp);
 			jsonObject.remove("diskusagetimestamp");
 		}
 		if (jsonObject.has("lastlogintimestamp")) {
 			String lastlogintimestamp = jsonObject.getString("lastlogintimestamp");
-			properties.put(UserConstants2.LAST_LOGIN_TIMESTAMP, lastlogintimestamp);
+			properties.put(UserConstants.LAST_LOGIN_TIMESTAMP, lastlogintimestamp);
 			jsonObject.remove("lastlogintimestamp");
 		}
 		if (jsonObject.has("password")) {
 			String password = jsonObject.getString("password");
-			properties.put(UserConstants2.PASSWORD, password);
+			properties.put(UserConstants.PASSWORD, password);
 			jsonObject.remove("password");
 		}
 		if (jsonObject.has("GitName") && jsonObject.has("GitMail") && !properties.has("git/config/userInfo")) {

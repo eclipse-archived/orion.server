@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corporation and others.
+ * Copyright (c) 2010, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -37,7 +37,7 @@ import org.eclipse.orion.internal.server.servlets.workspace.WorkspaceServlet;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ProtocolConstants;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
@@ -712,7 +712,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertNotNull("No workspace information in response", responseObject);
 		String userId = responseObject.optString(ProtocolConstants.KEY_ID, null);
 		assertNotNull(userId);
-		assertEquals(testUserId, responseObject.optString(UserConstants2.USER_NAME));
+		assertEquals(testUserId, responseObject.optString(UserConstants.USER_NAME));
 		JSONArray workspaces = responseObject.optJSONArray("Workspaces");
 		assertNotNull(workspaces);
 		assertEquals(0, workspaces.length());
@@ -735,7 +735,7 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		responseObject = new JSONObject(response.getText());
 		assertNotNull("No workspace information in response", responseObject);
 		assertEquals(userId, responseObject.optString(ProtocolConstants.KEY_ID));
-		assertEquals(testUserId, responseObject.optString(UserConstants2.USER_NAME));
+		assertEquals(testUserId, responseObject.optString(UserConstants.USER_NAME));
 		workspaces = responseObject.optJSONArray("Workspaces");
 		assertNotNull(workspaces);
 		assertEquals(1, workspaces.length());

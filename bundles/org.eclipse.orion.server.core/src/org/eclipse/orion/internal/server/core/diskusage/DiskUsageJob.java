@@ -24,7 +24,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,8 +69,8 @@ public class DiskUsageJob extends Job {
 				String diskUsage = getFolderSize(userRoot);
 				UserInfo userInfo = metaStore.readUser(userId);
 				// try to store the disk usage timestamp and value in the user profile
-				userInfo.setProperty(UserConstants2.DISK_USAGE, diskUsage);
-				userInfo.setProperty(UserConstants2.DISK_USAGE_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
+				userInfo.setProperty(UserConstants.DISK_USAGE, diskUsage);
+				userInfo.setProperty(UserConstants.DISK_USAGE_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
 				metaStore.updateUser(userInfo);
 			}
 			if (logger.isInfoEnabled()) {

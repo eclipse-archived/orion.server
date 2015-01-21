@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2014 IBM Corporation and others 
+ * Copyright (c) 2009, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -29,7 +29,7 @@ import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Filter;
@@ -207,7 +207,7 @@ public class Activator implements BundleActivator {
 				UserInfo userInfo = new UserInfo();
 				userInfo.setUserName(ADMIN_LOGIN_VALUE);
 				userInfo.setFullName(ADMIN_NAME_VALUE);
-				userInfo.setProperty(UserConstants2.PASSWORD, adminDefaultPassword);
+				userInfo.setProperty(UserConstants.PASSWORD, adminDefaultPassword);
 				OrionConfiguration.getMetaStore().createUser(userInfo);
 
 				try {

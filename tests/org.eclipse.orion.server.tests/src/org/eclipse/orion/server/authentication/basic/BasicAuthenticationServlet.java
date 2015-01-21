@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2014 IBM Corporation and others 
+ * Copyright (c) 2011, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,7 +20,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.eclipse.orion.server.core.users.UserConstants2;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,22 +39,22 @@ public class BasicAuthenticationServlet extends OrionServlet {
 	private JSONObject getUserJson(String username) throws JSONException {
 		JSONObject json = new JSONObject();
 		try {
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, username, false, false);
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.USER_NAME, username, false, false);
 			if (userInfo == null) {
 				return null;
 			}
-			json.put(UserConstants2.USER_NAME, userInfo.getUserName());
-			json.put(UserConstants2.FULL_NAME, userInfo.getFullName());
-			json.put(UserConstants2.LOCATION, UserConstants2.LOCATION_USERS_SERVLET + '/' + username);
-			String email = userInfo.getProperty(UserConstants2.EMAIL);
-			json.put(UserConstants2.EMAIL, email);
-			boolean emailConfirmed = (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID) == null : false;
-			json.put(UserConstants2.EMAIL_CONFIRMED, emailConfirmed);
-			json.put(UserConstants2.HAS_PASSWORD, userInfo.getProperty(UserConstants2.PASSWORD) == null ? false : true);
+			json.put(UserConstants.USER_NAME, userInfo.getUserName());
+			json.put(UserConstants.FULL_NAME, userInfo.getFullName());
+			json.put(UserConstants.LOCATION, UserConstants.LOCATION_USERS_SERVLET + '/' + username);
+			String email = userInfo.getProperty(UserConstants.EMAIL);
+			json.put(UserConstants.EMAIL, email);
+			boolean emailConfirmed = (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants.EMAIL_CONFIRMATION_ID) == null : false;
+			json.put(UserConstants.EMAIL_CONFIRMED, emailConfirmed);
+			json.put(UserConstants.HAS_PASSWORD, userInfo.getProperty(UserConstants.PASSWORD) == null ? false : true);
 
-			json.put(UserConstants2.LAST_LOGIN_TIMESTAMP, userInfo.getProperty(UserConstants2.LAST_LOGIN_TIMESTAMP));
-			json.put(UserConstants2.DISK_USAGE_TIMESTAMP, userInfo.getProperty(UserConstants2.DISK_USAGE_TIMESTAMP));
-			json.put(UserConstants2.DISK_USAGE, userInfo.getProperty(UserConstants2.DISK_USAGE));
+			json.put(UserConstants.LAST_LOGIN_TIMESTAMP, userInfo.getProperty(UserConstants.LAST_LOGIN_TIMESTAMP));
+			json.put(UserConstants.DISK_USAGE_TIMESTAMP, userInfo.getProperty(UserConstants.DISK_USAGE_TIMESTAMP));
+			json.put(UserConstants.DISK_USAGE, userInfo.getProperty(UserConstants.DISK_USAGE));
 		} catch (IllegalArgumentException e) {
 			LogHelper.log(e);
 		} catch (CoreException e) {

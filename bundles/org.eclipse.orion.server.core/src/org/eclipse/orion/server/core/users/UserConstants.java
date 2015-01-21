@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 IBM Corporation and others.
+ * Copyright (c) 2012, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,10 +14,8 @@ package org.eclipse.orion.server.core.users;
  * Orion server core user constants.
  * 
  * @author Anthony Hunter
- * 
- * TODO: This class needs to be renamed to UserConstants once we cleanup the other UserConstants
  */
-public class UserConstants2 {
+public class UserConstants {
 
 	/**
 	 * JSON representation key for a blocked property that blocks user login. The value's data type is a boolean String.
@@ -48,7 +46,7 @@ public class UserConstants2 {
 	 * JSON representation key for whether a user has a confirmed email address. The value's data type is a Boolean.
 	 */
 	public static final String EMAIL_CONFIRMED = "EmailConfirmed"; //$NON-NLS-1$
-	
+
 	/**
 	 * JSON representation key for a user's full name. The value's data type is a String.
 	 */
