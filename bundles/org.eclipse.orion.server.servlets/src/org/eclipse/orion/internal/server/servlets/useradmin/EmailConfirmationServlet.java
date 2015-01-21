@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -30,7 +31,6 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.user.profile.RandomPasswordGenerator;
 import org.eclipse.orion.server.useradmin.UserEmailUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -81,7 +81,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			return;
 		}
 
-		String newPass = RandomPasswordGenerator.getRandomPassword();
+		String newPass = getRandomPassword();
 
 		userInfo.setProperty(UserConstants2.PASSWORD, newPass);
 		userInfo.setProperty(UserConstants2.PASSWORD_RESET_ID, null);
@@ -284,6 +284,32 @@ public class EmailConfirmationServlet extends OrionServlet {
 			LogHelper.log(e);
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Could not send confirmation email.", null);
 		}
+	}
+
+	/**
+	 * Generates random string that may be used as auto-generated password after user reset.
+	 * 
+	 * @return a random string.
+	 */
+	private String getRandomPassword() {
+		return getRandomString(5, 25);
+	}
+
+	private String getRandomString(int lo, int hi) {
+		int n = getRandomNumber(lo, hi);
+		byte b[] = new byte[n];
+		for (int i = 0; i < n; i++)
+			b[i] = (byte) getRandomNumber('1', 'Z');
+		return new String(b);
+	}
+
+	private int getRandomNumber(int lo, int hi) {
+		Random rn = new Random();
+		int n = hi - lo + 1;
+		int i = rn.nextInt(n);
+		if (i < 0)
+			i = -i;
+		return lo + i;
 	}
 
 	private boolean isEmailConfirmed(UserInfo userInfo) {
