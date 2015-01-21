@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2014 IBM Corporation and others.
+ * Copyright (c) 2012, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -71,7 +71,8 @@ public class EmailConfirmationServlet extends OrionServlet {
 
 	private void resetPassword(UserInfo userInfo, HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (userInfo.getProperty(UserConstants2.PASSWORD_RESET_ID) == null || "".equals(userInfo.getProperty(UserConstants2.PASSWORD_RESET_ID))) {
-			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "You have not requested to reset your password or this password reset request was already completed");
+			resp.sendError(HttpServletResponse.SC_BAD_REQUEST,
+					"You have not requested to reset your password or this password reset request was already completed");
 			return;
 		}
 
@@ -89,7 +90,8 @@ public class EmailConfirmationServlet extends OrionServlet {
 			UserEmailUtil.getUtil().setPasswordResetEmail(userInfo);
 		} catch (Exception e) {
 			LogHelper.log(e);
-			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Your password could not be changed, because confirmation email could not be sent. To reset your password contact your administrator.");
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"Your password could not be changed, because confirmation email could not be sent. To reset your password contact your administrator.");
 			return;
 		}
 
@@ -97,12 +99,14 @@ public class EmailConfirmationServlet extends OrionServlet {
 			OrionConfiguration.getMetaStore().updateUser(userInfo);
 		} catch (Exception e) {
 			LogHelper.log(e);
-			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Your password could not be changed. To reset your password contact your administrator.");
+			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"Your password could not be changed. To reset your password contact your administrator.");
 			return;
 		}
 
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
-		resp.getWriter().write("<html><body><p>Your password has been successfully reset. Your new password has been sent to the email address associated with your account.</p></body></html>");
+		resp.getWriter()
+				.write("<html><body><p>Your password has been successfully reset. Your new password has been sent to the email address associated with your account.</p></body></html>");
 		return;
 
 	}
@@ -114,7 +118,8 @@ public class EmailConfirmationServlet extends OrionServlet {
 			return;
 		}
 
-		if (req.getParameter(UserConstants2.EMAIL_CONFIRMATION_ID) == null || !req.getParameter(UserConstants2.EMAIL_CONFIRMATION_ID).equals(userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID))) {
+		if (req.getParameter(UserConstants2.EMAIL_CONFIRMATION_ID) == null
+				|| !req.getParameter(UserConstants2.EMAIL_CONFIRMATION_ID).equals(userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID))) {
 			resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Email could not be confirmed.");
 			return;
 		}
@@ -139,7 +144,9 @@ public class EmailConfirmationServlet extends OrionServlet {
 		host.append(":");
 		int port = req.getServerPort();
 		host.append(port);
-		resp.getWriter().write("<html><body><p>Your email address has been confirmed. Thank you! <a href=\"" + host + "\">Click here</a> to continue and login to your Orion account.</p></body></html>");
+		resp.getWriter().write(
+				"<html><body><p>Your email address has been confirmed. Thank you! <a href=\"" + host
+						+ "\">Click here</a> to continue and login to your Orion account.</p></body></html>");
 		return;
 	}
 
@@ -153,7 +160,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 				jsonResp.put("EmailConfigured", UserEmailUtil.getUtil().isEmailConfigured());
 				writeJSONResponse(req, resp, jsonResp);
 			} catch (JSONException e) {
-				//this should never happen
+				// this should never happen
 				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
 			}
 			return;
@@ -177,7 +184,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 		List<UserInfo> users = new ArrayList<UserInfo>();
 
 		if (userName != null && userName.trim().length() > 0) {
-			//reset using login
+			// reset using login
 			UserInfo userInfo = null;
 			try {
 				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.USER_NAME, userName.trim(), false, false);
@@ -193,7 +200,8 @@ public class EmailConfirmationServlet extends OrionServlet {
 			}
 			if (userEmail != null && userEmail.trim().length() > 0) {
 				if (!isEmailConfirmed(userInfo)) {
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User " + userName + " email has not been yet confirmed." + " Please follow the instructions from the confirmation email in your inbox and then request a password reset again.");
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "User " + userName + " email has not been yet confirmed."
+							+ " Please follow the instructions from the confirmation email in your inbox and then request a password reset again.");
 					return;
 				}
 				if (!userEmail.equals(userInfo.getProperty(UserConstants2.EMAIL))) {
@@ -203,7 +211,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			}
 			users.add(userInfo);
 		} else if (userEmail != null && userEmail.trim().length() > 0) {
-			//reset using email address
+			// reset using email address
 			UserInfo userInfo = null;
 			try {
 				userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants2.EMAIL, userEmail.trim().toLowerCase(), false, false);
@@ -220,7 +228,8 @@ public class EmailConfirmationServlet extends OrionServlet {
 				if (userInfo == null) {
 					resp.sendError(HttpServletResponse.SC_NOT_FOUND, "User with email " + userEmail + " not found.");
 				} else {
-					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Email " + userName + " has not been yet confirmed." + " Please follow the instructions from the confirmation email in your inbox and then request a password reset again.");
+					resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Email " + userName + " has not been yet confirmed."
+							+ " Please follow the instructions from the confirmation email in your inbox and then request a password reset again.");
 				}
 				return;
 			}
@@ -244,17 +253,20 @@ public class EmailConfirmationServlet extends OrionServlet {
 				return;
 			}
 		}
-		getStatusHandler().handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been sent to " + userEmail, null));
+		getStatusHandler().handleRequest(req, resp,
+				new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been sent to " + userEmail, null));
 
 	}
 
 	private IStatus sendPasswordResetConfirmation(UserInfo userInfo, URI baseUri) {
 		if (userInfo.getProperty(UserConstants2.EMAIL) == null || userInfo.getProperty(UserConstants2.EMAIL).length() == 0) {
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userInfo.getUniqueId() + " doesn't have its email set. Contact administrator to reset your password.", null);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userInfo.getUniqueId()
+					+ " doesn't have its email set. Contact administrator to reset your password.", null);
 		}
 
 		if (!isEmailConfirmed(userInfo)) {
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Your email has not been yet confirmed." + " Please follow the instructions from the confirmation email in your inbox and then request a password reset again.", null);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Your email has not been yet confirmed."
+					+ " Please follow the instructions from the confirmation email in your inbox and then request a password reset again.", null);
 		}
 
 		try {
