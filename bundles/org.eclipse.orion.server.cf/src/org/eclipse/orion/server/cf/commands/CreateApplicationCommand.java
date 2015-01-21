@@ -68,8 +68,7 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 			createAppRequst.put(CFProtocolConstants.V2_KEY_COMMAND, appCommand);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_MEMORY, appMemory);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_STACK_GUID, JSONObject.NULL);
-			if (env != null)
-				createAppRequst.put(CFProtocolConstants.V2_KEY_ENVIRONMENT_JSON, env);
+			createAppRequst.put(CFProtocolConstants.V2_KEY_ENVIRONMENT_JSON, env != null ? env : new JSONObject());
 
 			createAppMethod.setRequestEntity(new StringRequestEntity(createAppRequst.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
 

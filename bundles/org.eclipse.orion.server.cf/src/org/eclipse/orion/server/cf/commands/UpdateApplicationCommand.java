@@ -65,10 +65,7 @@ public class UpdateApplicationCommand extends AbstractCFCommand {
 			updateAppRequest.put(CFProtocolConstants.V2_KEY_INSTANCES, appInstances);
 			updateAppRequest.put(CFProtocolConstants.V2_KEY_COMMAND, appCommand);
 			updateAppRequest.put(CFProtocolConstants.V2_KEY_MEMORY, appMemory);
-
-			if (env != null)
-				updateAppRequest.put(CFProtocolConstants.V2_KEY_ENVIRONMENT_JSON, env);
-
+			updateAppRequest.put(CFProtocolConstants.V2_KEY_ENVIRONMENT_JSON, env != null ? env : new JSONObject());
 			updateAppRequest.put(CFProtocolConstants.V2_KEY_BUILDPACK, buildPack != null ? buildPack : JSONObject.NULL);
 
 			updateApplicationMethod.setRequestEntity(new StringRequestEntity(updateAppRequest.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
