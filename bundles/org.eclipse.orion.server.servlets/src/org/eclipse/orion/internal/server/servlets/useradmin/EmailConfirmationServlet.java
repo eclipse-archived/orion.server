@@ -31,7 +31,6 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.useradmin.UserEmailUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 

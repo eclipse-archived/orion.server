@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corporation and others.
+ * Copyright (c) 2010, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -44,7 +44,6 @@ import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.core.users.UserConstants2;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.orion.server.useradmin.UserConstants;
-import org.eclipse.orion.server.useradmin.UserEmailUtil;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 import org.json.JSONObject;

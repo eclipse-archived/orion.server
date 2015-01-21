@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2014 IBM Corporation and others.
+ * Copyright (c) 2011, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -61,6 +61,7 @@ import org.eclipse.jgit.treewalk.filter.PathFilterGroup;
 import org.eclipse.jgit.treewalk.filter.TreeFilter;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
+import org.eclipse.orion.internal.server.servlets.useradmin.UserEmailUtil;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -75,7 +76,6 @@ import org.eclipse.orion.server.git.jobs.LogJob;
 import org.eclipse.orion.server.git.objects.Commit;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.server.useradmin.UserEmailUtil;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 import org.json.JSONObject;
