@@ -311,7 +311,9 @@ public class AbstractSimpleMetaStoreMigrationTests extends FileSystemTest {
 		assertTrue(jsonObject.has(SimpleMetaStore.ORION_VERSION));
 		assertEquals("OrionVersion is incorrect", SimpleMetaStore.VERSION, jsonObject.getInt(SimpleMetaStore.ORION_VERSION));
 		assertTrue(jsonObject.has(MetadataInfo.UNIQUE_ID));
-		assertEquals(projectName, jsonObject.getString(MetadataInfo.UNIQUE_ID));
+		String projectId = jsonObject.getString(MetadataInfo.UNIQUE_ID);
+		String decodedProjectName = SimpleMetaStoreUtil.decodeProjectNameFromProjectId(projectId);
+		assertEquals(projectName, decodedProjectName);
 		assertTrue(jsonObject.has("WorkspaceId"));
 		assertEquals(workspaceId, jsonObject.getString("WorkspaceId"));
 		assertTrue(jsonObject.has(UserConstants.FULL_NAME));
@@ -353,9 +355,8 @@ public class AbstractSimpleMetaStoreMigrationTests extends FileSystemTest {
 	protected void verifyProjectRequest(String userId, String workspaceName, String projectName) throws Exception {
 		//now get the project metadata
 		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(userId, workspaceName);
-		String projectId = SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectName);
-		String encodedProjectId = URLEncoder.encode(projectId, "UTF-8").replace("+", "%20");
-		String projectLocation = "workspace/" + workspaceId + "/project/" + encodedProjectId;
+		String encodedProjectName = URLEncoder.encode(projectName, "UTF-8").replace("+", "%20");
+		String projectLocation = "workspace/" + workspaceId + "/project/" + encodedProjectName;
 		WebRequest request = new GetMethodWebRequest(SERVER_LOCATION + projectLocation);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
@@ -413,7 +414,9 @@ public class AbstractSimpleMetaStoreMigrationTests extends FileSystemTest {
 			assertEquals(properties.getString(UserConstants.BLOCKED), "true");
 		}
 		if (properties.has(UserConstants.DISK_USAGE)) {
-			assertEquals(properties.getString(UserConstants.DISK_USAGE), "74M");
+			String diskUsage = properties.getString(UserConstants.DISK_USAGE);
+			assertTrue(Character.isDigit(diskUsage.charAt(0)));
+			assertTrue(diskUsage.charAt(2) == 'M' || diskUsage.charAt(2) == 'K');
 		}
 		if (properties.has(UserConstants.DISK_USAGE_TIMESTAMP)) {
 			assertEquals(properties.getString(UserConstants.DISK_USAGE_TIMESTAMP), TIMESTAMP);

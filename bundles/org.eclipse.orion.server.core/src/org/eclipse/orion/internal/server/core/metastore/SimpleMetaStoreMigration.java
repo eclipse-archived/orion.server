@@ -27,8 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Migrate the MetaStore from the version one of the simple metadata store (SimpleMetaStoreV1) to 
- * version two of the simple metadata store (SimpleMetaStoreV2).
+ * Migrate the MetaStore from the version one of the simple metadata store (SimpleMetaStoreV1) to version two of the simple metadata store (SimpleMetaStoreV2).
  * 
  * @author Anthony Hunter
  */
@@ -37,7 +36,7 @@ public class SimpleMetaStoreMigration {
 	/**
 	 * Remove old password reset ids that are more than a week old
 	 */
-	private static final long OLD_PASSWORD_RESET_ID_THRESHOLD = 1000L * 60L * 60L * 24L * 7L;//seven days
+	private static final long OLD_PASSWORD_RESET_ID_THRESHOLD = 1000L * 60L * 60L * 24L * 7L;// seven days
 
 	/**
 	 * The first version of the Simple Meta Store was version 4 introduced for Orion 4.0.
@@ -58,8 +57,11 @@ public class SimpleMetaStoreMigration {
 
 	/**
 	 * Perform the migration for the provided user folder.
-	 * @param rootLocation The root location of the metadata store.
-	 * @param userMetaFolder The users metadata folder.
+	 * 
+	 * @param rootLocation
+	 *            The root location of the metadata store.
+	 * @param userMetaFolder
+	 *            The users metadata folder.
 	 * @throws JSONException
 	 */
 	public void doMigration(File rootLocation, File userMetaFolder) throws JSONException {
@@ -108,7 +110,9 @@ public class SimpleMetaStoreMigration {
 
 	/**
 	 * Determine if migration for the provided metadata is required.
-	 * @param jsonObject the Orion metadata in JSON format.
+	 * 
+	 * @param jsonObject
+	 *            the Orion metadata in JSON format.
 	 * @return true if migration is required.
 	 * @throws JSONException
 	 * @throws CoreException
@@ -122,16 +126,20 @@ public class SimpleMetaStoreMigration {
 			return true;
 		} else if (version > SimpleMetaStore.VERSION) {
 			// we are running an old server on metadata that is at a newer version
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStoreMigration.isMigrationRequired: cannot run an old server (version " + SimpleMetaStore.VERSION + ") on metadata that is at a newer version (version " + version + ")", null));
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+					"SimpleMetaStoreMigration.isMigrationRequired: cannot run an old server (version " + SimpleMetaStore.VERSION
+							+ ") on metadata that is at a newer version (version " + version + ")", null));
 		}
 		return false;
 	}
 
 	/**
-	 * In version 4 and version 6 it as possible to have multiple workspaces, merge them in the default workspace
-	 * and delete the extra workspaces.
-	 * @param count The number of folders under the user, should be one for the workspace folder.
-	 * @param userMetaFolder The user metadata folder.
+	 * In version 4 and version 6 it as possible to have multiple workspaces, merge them in the default workspace and delete the extra workspaces.
+	 * 
+	 * @param count
+	 *            The number of folders under the user, should be one for the workspace folder.
+	 * @param userMetaFolder
+	 *            The user metadata folder.
 	 * @throws JSONException
 	 */
 	private void mergeMultipleWorkspaces(int count, File userMetaFolder) throws JSONException {
@@ -168,7 +176,7 @@ public class SimpleMetaStoreMigration {
 								logger.info("Migration: Moved project folder: " + originalProjectFolder.toString() + " to " + newProjectFolder.toString());
 								JSONObject projectJSON = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, projectName);
 								String contentLocation = newProjectFolder.toURI().toString();
-								// remove trailing slash from the contentLocation 
+								// remove trailing slash from the contentLocation
 								contentLocation = contentLocation.substring(0, contentLocation.length() - 1);
 								String encodedContentLocation = SimpleMetaStoreUtil.encodeProjectContentLocation(contentLocation);
 								projectJSON.put("ContentLocation", encodedContentLocation);
@@ -240,8 +248,10 @@ public class SimpleMetaStoreMigration {
 
 	/**
 	 * Update the Orion properties in user.json file in the provided folder.
-	 * @param parent The parent folder containing the metadata (user.json) file.
-	 * @throws JSONException 
+	 * 
+	 * @param parent
+	 *            The parent folder containing the metadata (user.json) file.
+	 * @throws JSONException
 	 */
 	private void updateOrionProperties(File parent) throws JSONException {
 		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(parent, SimpleMetaStore.USER);
@@ -333,9 +343,12 @@ public class SimpleMetaStoreMigration {
 
 	/**
 	 * Update the Orion version in the provided file and folder.
-	 * @param parent The parent folder containing the metadata (JSON) file.
-	 * @param name The name of the file without the ".json" extension.
-	 * @throws JSONException 
+	 * 
+	 * @param parent
+	 *            The parent folder containing the metadata (JSON) file.
+	 * @param name
+	 *            The name of the file without the ".json" extension.
+	 * @throws JSONException
 	 */
 	private void updateOrionVersion(File parent, String name) throws JSONException {
 		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(parent, name);
@@ -347,15 +360,19 @@ public class SimpleMetaStoreMigration {
 		SimpleMetaStoreUtil.updateMetaFile(parent, name, jsonObject);
 		File metaFile = SimpleMetaStoreUtil.retrieveMetaFile(parent, name);
 		String oldVersionStr = (oldVersion == -1) ? "UNKNOWN" : Integer.toString(oldVersion);
-		logger.info("Migration: Updated Orion version from version " + oldVersionStr + " to version " + SimpleMetaStore.VERSION + " in metadata file: " + metaFile.toString());
+		logger.info("Migration: Updated Orion version from version " + oldVersionStr + " to version " + SimpleMetaStore.VERSION + " in metadata file: "
+				+ metaFile.toString());
 	}
 
 	/**
 	 * Update the Orion version in the provided file and folder.
-	 * @param parent The parent folder containing the metadata (JSON) file.
-	 * @param name The name of the file without the ".json" extension.
+	 * 
+	 * @param parent
+	 *            The parent folder containing the metadata (JSON) file.
+	 * @param name
+	 *            The name of the file without the ".json" extension.
 	 * @return The previous version that was in the metadata file.
-	 * @throws JSONException 
+	 * @throws JSONException
 	 */
 	private int readOrionVersion(File parent, String name) throws JSONException {
 		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(parent, name);
@@ -370,9 +387,13 @@ public class SimpleMetaStoreMigration {
 
 	/**
 	 * Update the user metadata file with the new single workspace and user rights.
-	 * @param userMetaFolder The user metadata folder.
-	 * @param userJSON The current user metadata.
-	 * @param workspaceId the single workspace. 
+	 * 
+	 * @param userMetaFolder
+	 *            The user metadata folder.
+	 * @param userJSON
+	 *            The current user metadata.
+	 * @param workspaceId
+	 *            the single workspace.
 	 */
 	private void updateUserJson(File userMetaFolder, JSONObject userJSON, String workspaceId) throws JSONException {
 		JSONArray workspaceIds = new JSONArray();
@@ -416,9 +437,12 @@ public class SimpleMetaStoreMigration {
 	}
 
 	/**
-	 * Update a Simple Meta Store version 4 workspace folder to the latest version. 
-	 * @param rootLocation The root location of the metadata store.
-	 * @param workspaceMetaFolder A workspace folder.
+	 * Update a Simple Meta Store version 4 workspace folder to the latest version.
+	 * 
+	 * @param rootLocation
+	 *            The root location of the metadata store.
+	 * @param workspaceMetaFolder
+	 *            A workspace folder.
 	 * @throws JSONException
 	 */
 	private void updateWorkspaceFolder(File rootLocation, File workspaceMetaFolder) throws JSONException {
@@ -446,7 +470,8 @@ public class SimpleMetaStoreMigration {
 				continue;
 			} else if (next.isDirectory()) {
 				// process project folder in /serverworkspace/an/anthony/workspace
-				if (!projectNameList.contains(next.getName())) {
+				String decodedProjectName = SimpleMetaStoreUtil.decodeProjectNameFromProjectId(next.getName());
+				if (!projectNameList.contains(decodedProjectName)) {
 					// Workspace folder contains invalid metadata: archive orphan project folder
 					SimpleMetaStoreUtil.archive(rootLocation, next);
 				}
@@ -454,7 +479,8 @@ public class SimpleMetaStoreMigration {
 				// process project folder in /serverworkspace/an/anthony/workspace
 				if (next.getName().endsWith(SimpleMetaStoreUtil.METAFILE_EXTENSION)) {
 					String name = next.getName().substring(0, next.getName().length() - SimpleMetaStoreUtil.METAFILE_EXTENSION.length());
-					if (projectNameList.contains(name)) {
+					String decodedProjectName = SimpleMetaStoreUtil.decodeProjectNameFromProjectId(name);
+					if (projectNameList.contains(decodedProjectName)) {
 						// Update the project metadata
 						if (readOrionVersion(workspaceMetaFolder, name) == -1) {
 							return;
@@ -472,9 +498,12 @@ public class SimpleMetaStoreMigration {
 
 	/**
 	 * Update the ContentLocation in the provided project metadata file and folder.
-	 * @param parent The parent folder containing the metadata (JSON) file.
-	 * @param name The name of the file without the ".json" extension.
-	 * @throws JSONException 
+	 * 
+	 * @param parent
+	 *            The parent folder containing the metadata (JSON) file.
+	 * @param name
+	 *            The name of the file without the ".json" extension.
+	 * @throws JSONException
 	 */
 	private void updateProjectContentLocation(File parent, String name) throws JSONException {
 		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(parent, name);
