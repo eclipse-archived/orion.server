@@ -66,6 +66,9 @@ public class NewFileServlet extends OrionServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		String pathInfo = req.getPathInfo();
+		if (pathInfo != null && pathInfo.indexOf("%3A") >= 0) {
+			pathInfo = pathInfo.replace("%3A", ":");
+		}
 		IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
 
 		// prevent path canonicalization hacks
