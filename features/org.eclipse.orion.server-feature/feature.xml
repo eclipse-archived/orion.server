@@ -46,13 +46,6 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.orion.server.useradmin"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="ch.qos.logback.classic"
          download-size="0"
          install-size="0"
