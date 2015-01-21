@@ -1,6 +1,6 @@
 #!/bin/bash
 #*******************************************************************************
-# Copyright (c) 2010, 2014 IBM Corporation and others.
+# Copyright (c) 2010, 2015 IBM Corporation and others.
 # All rights reserved. This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License v1.0
 # which accompanies this distribution, and is available at
@@ -61,9 +61,6 @@ then
         sleep 5
 fi
 
-#delete old search index to save space
-echo Deleting old search index
-rm -fr ${WORKSPACEHOME}/.metadata/.plugins/org.eclipse.orion.server.core.search/
 echo Deleting old tasks
 rm -fr ${WORKSPACEHOME}/.metadata/.plugins/org.eclipse.orion.server.core/tasks/
 
@@ -114,7 +111,8 @@ popd
 echo Starting server
 pushd ${SERVERHOME}/eclipse
 ulimit -n 2000
-ulimit -v 10000000
+ulimit -v 20000000
+ulimit -c unlimited
 ./orion >> log.txt 2>&1 &
 
 pid_eclipse="$!"
