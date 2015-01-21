@@ -132,6 +132,9 @@ public class Status extends GitObject {
 	private JSONArray toJSONArray(Set<String> set, IPath basePath, URI baseLocation, String diffType) throws JSONException, URISyntaxException {
 		JSONArray result = new JSONArray();
 		for (String s : set) {
+			if (s.indexOf(':') >= 0) {
+				s = s.replace(":", "%3A");
+			}
 			JSONObject object = new JSONObject();
 
 			object.put(ProtocolConstants.KEY_NAME, s);

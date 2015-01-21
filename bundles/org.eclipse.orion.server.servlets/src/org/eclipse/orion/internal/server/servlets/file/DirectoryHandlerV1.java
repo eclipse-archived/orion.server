@@ -80,6 +80,9 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			String name = childInfo.getName();
 			if (childInfo.isDirectory())
 				name += "/"; //$NON-NLS-1$
+			if (name.indexOf(':') >= 0) {
+				name = name.replaceAll(":", "%3A");
+			}
 			URI childLocation = URIUtil.append(location, name);
 			JSONObject childResult = ServletFileStoreHandler.toJSON(childStore, childInfo, childLocation);
 			if (childInfo.isDirectory())
