@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.IPreferencesService;
+import org.eclipse.orion.internal.server.core.diskusage.DiskUsageJob;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.core.tasks.TaskService;
 import org.eclipse.orion.server.core.LogHelper;
@@ -62,6 +63,7 @@ public class Activator implements BundleActivator {
 	private ITaskService taskService;
 	private IMetaStore metastore;
 	private URI rootStoreURI;
+	private DiskUsageJob diskUsageJob;
 
 	private ServiceTracker<Location, Location> instanceLocationTracker;
 
@@ -73,7 +75,7 @@ public class Activator implements BundleActivator {
 	 * Returns the framework log, or null if not available
 	 */
 	public static FrameworkLog getFrameworkLog() {
-		//protect against concurrent shutdown
+		// protect against concurrent shutdown
 		Activator a = singleton;
 		if (a == null)
 			return null;
@@ -85,7 +87,9 @@ public class Activator implements BundleActivator {
 
 	/**
 	 * Returns the currently configured metadata store for this server. This method never returns <code>null</code>.
-	 * @throws IllegalStateException if the server is not properly configured to have an @link {@link IMetaStore}. 
+	 * 
+	 * @throws IllegalStateException
+	 *             if the server is not properly configured to have an @link {@link IMetaStore}.
 	 */
 	public synchronized IMetaStore getMetastore() {
 		return metastore;
@@ -95,7 +99,7 @@ public class Activator implements BundleActivator {
 	 * Returns the preference service, or <code>null</code> if not available.
 	 */
 	public static IPreferencesService getPreferenceService() {
-		//protect against concurrent shutdown
+		// protect against concurrent shutdown
 		Activator a = singleton;
 		if (a == null)
 			return null;
@@ -116,7 +120,7 @@ public class Activator implements BundleActivator {
 	private ServiceTracker<FrameworkLog, FrameworkLog> getLogTracker() {
 		if (logTracker != null)
 			return logTracker;
-		//lazy init if the bundle has been started
+		// lazy init if the bundle has been started
 		if (bundleContext == null)
 			return null;
 		logTracker = new ServiceTracker<FrameworkLog, FrameworkLog>(bundleContext, FrameworkLog.class, null);
@@ -127,7 +131,7 @@ public class Activator implements BundleActivator {
 	private ServiceTracker<IPreferencesService, IPreferencesService> getPrefTracker() {
 		if (prefTracker != null)
 			return prefTracker;
-		//lazy init if the bundle has been started
+		// lazy init if the bundle has been started
 		if (bundleContext == null)
 			return null;
 		prefTracker = new ServiceTracker<IPreferencesService, IPreferencesService>(bundleContext, IPreferencesService.class, null);
@@ -137,7 +141,8 @@ public class Activator implements BundleActivator {
 
 	/**
 	 * Returns the root file system location for storing task data. Never returns null.
-	 * @throws IOException 
+	 * 
+	 * @throws IOException
 	 */
 	private IPath getTaskLocation() throws IOException {
 		BundleContext context = Activator.getDefault().getContext();
@@ -177,15 +182,23 @@ public class Activator implements BundleActivator {
 		bundleContext.registerService(IMetaStore.class, metastore, null);
 	}
 
-	/*(non-Javadoc)
-	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
-	 */
+	@Override
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
 		bundleContext = context;
 		registerServices();
 		initializeFileSystem();
 		initializeMetaStore();
+		startDiskUsageJob();
+	}
+
+	private void startDiskUsageJob() {
+		String diskUsageEnabled = PreferenceHelper.getString(ServerConstants.CONFIG_DISK_USAGE_ENABLED, "false").toLowerCase(); //$NON-NLS-1$
+		if ("true".equals(diskUsageEnabled)) {
+			diskUsageJob = new DiskUsageJob();
+			// Collect the disk usage data in ten seconds.
+			diskUsageJob.schedule(10000);
+		}
 	}
 
 	private void registerServices() {
@@ -198,9 +211,7 @@ public class Activator implements BundleActivator {
 		}
 	}
 
-	/*(non-Javadoc)
-	 * @see org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
-	 */
+	@Override
 	public void stop(BundleContext context) throws Exception {
 		metastore = null;
 		stopTaskService();
