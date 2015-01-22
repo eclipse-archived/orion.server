@@ -86,6 +86,12 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 		results.add(file);
 	}
 
+	@Override
+	protected boolean handleDirectory(File directory, int depth, Collection<File> results) throws IOException {
+		results.add(directory);
+		return true;
+	}
+
 	public JSONObject getFileList() {
 		List<File> files = new ArrayList<File>();
 		try {
@@ -125,10 +131,14 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 	private JSONObject toJSON(File file, int workspaceRootSuffixLength) throws JSONException {
 		JSONObject json = new JSONObject();
 		String filePath = file.getAbsolutePath().substring(workspaceRootSuffixLength);
-		String sha = checkSum(file.getAbsolutePath());
+		String type = file.isFile() ? "file" : "dir";
+		String sha = "";
+		if (type.equals("file"))
+			sha = checkSum(file.getAbsolutePath());
+		json.put("Type", type);
+		json.put(ProtocolConstants.KEY_LENGTH, type.equals("dir") ? file.list().length : Long.toString(file.length()));
 		json.put(ProtocolConstants.KEY_PATH, workspacePath + filePath);
 		json.put("FilePath", filePath);
-		json.put(ProtocolConstants.KEY_LENGTH, Long.toString(file.length()));
 		json.put(ProtocolConstants.KEY_LAST_MODIFIED, Long.toString(file.lastModified()));
 		json.put("SHA", sha);
 		return json;
