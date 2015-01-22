@@ -58,6 +58,10 @@ public class SearchServlet extends OrionServlet {
 		List<String> projectnames = workspaceInfo.getProjectNames();
 		for (String projectName : projectnames) {
 			ProjectInfo projectInfo = OrionConfiguration.getMetaStore().readProject(workspaceInfo.getUniqueId(), projectName);
+			if (projectInfo == null) {
+				logger.error("Unexpected missing project with name " + projectName + " in workspace " + workspaceInfo.getUniqueId());
+				continue;
+			}
 			SearchScope scope = new SearchScope(projectInfo.getProjectStore(), workspaceInfo, projectInfo);
 			options.getScopes().add(scope);
 		}
