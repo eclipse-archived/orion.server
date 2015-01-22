@@ -22,6 +22,7 @@ import org.apache.commons.io.DirectoryWalker;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
@@ -42,13 +43,13 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 	 */
 	private File workspaceRoot;
 
-	/** 
+	/**
 	 * The path of the workspace root used to create the path for the file.
 	 */
 	private String workspacePath;
 
-	/** 
-	 * The length of the absolute path of the workspace file. 
+	/**
+	 * The length of the absolute path of the workspace file.
 	 */
 	private int workspaceRootSuffixLength;
 
@@ -74,7 +75,7 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 		try {
 			workspaceRoot = workspaceHome.toLocalFile(EFS.NONE, null);
 		} catch (CoreException e) {
-			//should never happen
+			// should never happen
 			throw new RuntimeException(e);
 		}
 		workspacePath = "/file/" + workspaceId + "/";
@@ -101,14 +102,14 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 					File projRoot = projHome.toLocalFile(EFS.NONE, null);
 					walk(projRoot, files);
 				} catch (CoreException e) {
-					//should never happen
+					// should never happen
 					throw new RuntimeException(e);
 				}
 			} else {
 				walk(workspaceRoot, files);
 			}
 		} catch (IOException e) {
-			//should never happen
+			// should never happen
 			throw new RuntimeException(e);
 		}
 
@@ -122,7 +123,7 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 			json.put("Timestamp", System.currentTimeMillis());
 			json.put("SyncVersion", FileListDirectoryWalker.SYNC_VERSION);
 		} catch (JSONException e) {
-			//should never happen
+			// should never happen
 			throw new RuntimeException(e);
 		}
 		return json;
@@ -131,6 +132,7 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 	private JSONObject toJSON(File file, int workspaceRootSuffixLength) throws JSONException {
 		JSONObject json = new JSONObject();
 		String filePath = file.getAbsolutePath().substring(workspaceRootSuffixLength);
+		filePath = new Path(filePath).toPortableString();
 		String type = file.isFile() ? "file" : "dir";
 		String sha = "";
 		if (type.equals("file"))
