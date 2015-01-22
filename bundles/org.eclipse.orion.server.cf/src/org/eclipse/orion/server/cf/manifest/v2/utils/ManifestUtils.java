@@ -382,12 +382,34 @@ public class ManifestUtils {
 		for (String key : JSONObject.getNames(instrumentation)) {
 			Object value = instrumentation.get(key);
 			for (ManifestParseTree application : applications) {
+
+				if (ManifestConstants.MEMORY.equals(key) && !updateMemory(application, (String) value))
+					continue;
+
 				if (value instanceof String) {
 					application.put(key, (String) value);
 				} else if (value instanceof JSONObject) {
 					application.put(key, (JSONObject) value);
 				}
 			}
+		}
+	}
+
+	private static boolean updateMemory(ManifestParseTree application, String value) {
+		if (!application.has(ManifestConstants.MEMORY))
+			return true;
+
+		try {
+			String appMemoryString = application.get(ManifestConstants.MEMORY).getValue();
+			appMemoryString = appMemoryString.replaceAll("[^\\d.]", "");
+			int appMemory = Integer.valueOf(appMemoryString).intValue();
+
+			value = value.replaceAll("[^\\d.]", "");
+			int instrumentationMemory = Integer.valueOf(value).intValue();
+
+			return instrumentationMemory > appMemory;
+		} catch (InvalidAccessException e) {
+			return true;
 		}
 	}
 }
