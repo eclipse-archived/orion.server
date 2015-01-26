@@ -66,6 +66,9 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 		if (options.isFileContentsSearch()) {
 			pattern = buildSearchPattern();
 			matcher = pattern.matcher("");
+		} else {
+			// remove the Lucene escaped characters, see bugzilla 458450
+			options.setFilenamePattern(undoLuceneEscape(options.getFilenamePattern()));
 		}
 	}
 
