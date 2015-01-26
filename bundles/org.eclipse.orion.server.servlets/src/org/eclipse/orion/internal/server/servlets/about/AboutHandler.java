@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others.
+ * Copyright (c) 2014, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -22,6 +22,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.core.runtime.IBundleGroup;
+import org.eclipse.core.runtime.IBundleGroupProvider;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.orion.internal.server.servlets.Activator;
@@ -30,8 +32,8 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 
 /**
- * Handler for requests for information about the orion server. 
- * Some implementation details of this class were extracted from {@link org.eclipse.help.internal.webapp.servlet.AboutServlet}  
+ * Handler for requests for information about the orion server. Some implementation details of this class were extracted from
+ * {@link org.eclipse.help.internal.webapp.servlet.AboutServlet}
  * 
  * @author Anthony Hunter
  */
@@ -64,6 +66,7 @@ public class AboutHandler extends ServletResourceHandler<String> {
 
 		private int column;
 
+		@Override
 		public int compare(PluginDetails pd1, PluginDetails pd2) {
 			return Collator.getInstance().compare(pd1.columns[column], pd2.columns[column]);
 		}
@@ -91,15 +94,15 @@ public class AboutHandler extends ServletResourceHandler<String> {
 
 		buf.append("About");
 		buf.append(XHTML_2);
-		String app = System.getProperty("eclipse.application", "org.eclipse.orion"); //$NON-NLS-1$
-		String build = System.getProperty("eclipse.buildId", "@qualifier@"); //$NON-NLS-1$
+		String app = System.getProperty("eclipse.application", "org.eclipse.orion.application"); //$NON-NLS-1$
+		String build = getBuildId();
 		if (app != null || build != null) {
 			buf.append("<table><tr><td><img src=\"../webapp/orion-96.png\"/></td><td>"); //$NON-NLS-1$
 			buf.append("<p>"); //$NON-NLS-1$
 			if (app != null)
 				buf.append("Application: " + app + "<br/>");//$NON-NLS-1$ //$NON-NLS-2$
 			if (build != null)
-				buf.append("BuildId: " + build + "<br/>");//$NON-NLS-1$ //$NON-NLS-2$
+				buf.append("Build Id: " + build + "<br/>");//$NON-NLS-1$ //$NON-NLS-2$
 			buf.append("</p></td></tr></table>"); //$NON-NLS-1$
 		}
 
@@ -113,7 +116,7 @@ public class AboutHandler extends ServletResourceHandler<String> {
 
 		Comparator<PluginDetails> pluginComparator = new PluginComparator(sortColumn);
 		Collections.sort(plugins, pluginComparator);
-		String[] headerColumns = new String[] {"Provider", //$NON-NLS-1$
+		String[] headerColumns = new String[] { "Provider", //$NON-NLS-1$
 				"PluginName", //$NON-NLS-1$
 				"Version", //$NON-NLS-1$
 				"Identifier" //$NON-NLS-1$
@@ -121,7 +124,7 @@ public class AboutHandler extends ServletResourceHandler<String> {
 		PluginDetails header = new PluginDetails(headerColumns);
 		buf.append(headerRowFor(header));
 		for (Iterator<PluginDetails> iter = plugins.iterator(); iter.hasNext();) {
-			PluginDetails details = (PluginDetails) iter.next();
+			PluginDetails details = iter.next();
 			buf.append(tableRowFor(details));
 		}
 		buf.append("</table>"); //$NON-NLS-1$
@@ -161,24 +164,48 @@ public class AboutHandler extends ServletResourceHandler<String> {
 	}
 
 	protected PluginDetails pluginDetails(Bundle bundle) {
-		String[] values = new String[] {getResourceString(bundle, Constants.BUNDLE_VENDOR), getResourceString(bundle, Constants.BUNDLE_NAME), getResourceString(bundle, Constants.BUNDLE_VERSION), bundle.getSymbolicName()};
+		String[] values = new String[] { getResourceString(bundle, Constants.BUNDLE_VENDOR), getResourceString(bundle, Constants.BUNDLE_NAME),
+				getResourceString(bundle, Constants.BUNDLE_VERSION), bundle.getSymbolicName() };
 		PluginDetails details = new PluginDetails(values);
 
 		return details;
 	}
 
 	private static String getResourceString(Bundle bundle, String headerName) {
-		String value = (String) bundle.getHeaders().get(headerName);
+		String value = bundle.getHeaders().get(headerName);
 		return value == null ? null : Platform.getResourceString(bundle, value);
 	}
 
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
 		switch (getMethod(request)) {
-			case GET :
-				return handleGetRequest(request, response, path);
-			default :
-				return false;
+		case GET:
+			return handleGetRequest(request, response, path);
+		default:
+			return false;
 		}
+	}
+
+	/**
+	 * Get the build id for the orion application by using the bundle group version from the org.eclipse.orion feature. The maven build assigns this feature the
+	 * same timestamp as the build timestamp.
+	 * 
+	 * @return the build id.
+	 */
+	private String getBuildId() {
+		String version = System.getProperty("eclipse.buildId", "unknown"); //$NON-NLS-1$
+		String featureId = "org.eclipse.orion";
+		IBundleGroupProvider[] providers = Platform.getBundleGroupProviders();
+		if (providers != null) {
+			for (IBundleGroupProvider provider : providers) {
+				IBundleGroup[] bundleGroups = provider.getBundleGroups();
+				for (IBundleGroup group : bundleGroups) {
+					if (group.getIdentifier().equals(featureId)) {
+						version = group.getVersion();
+					}
+				}
+			}
+		}
+		return version;
 	}
 }
