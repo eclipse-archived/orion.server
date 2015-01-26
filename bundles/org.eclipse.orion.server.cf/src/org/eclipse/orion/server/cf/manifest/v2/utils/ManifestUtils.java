@@ -401,11 +401,8 @@ public class ManifestUtils {
 
 		try {
 			String appMemoryString = application.get(ManifestConstants.MEMORY).getValue();
-			appMemoryString = appMemoryString.replaceAll("[^\\d.]", "");
-			int appMemory = Integer.valueOf(appMemoryString).intValue();
-
-			value = value.replaceAll("[^\\d.]", "");
-			int instrumentationMemory = Integer.valueOf(value).intValue();
+			int appMemory = normalizeMemoryMeasure(appMemoryString);
+			int instrumentationMemory = normalizeMemoryMeasure(value);
 
 			return instrumentationMemory > appMemory;
 		} catch (InvalidAccessException e) {
