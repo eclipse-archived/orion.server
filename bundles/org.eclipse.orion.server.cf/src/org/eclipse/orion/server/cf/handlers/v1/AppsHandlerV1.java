@@ -309,10 +309,15 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					app = getAppCommand.getApp();
 					app.setManifest(manifest);
 
+					ServerStatus startStatus = null;
 					if (restart)
-						new RestartAppCommand(target, app).doIt();
+						startStatus = (ServerStatus) new RestartAppCommand(target, app).doIt();
 					else
-						new StartAppCommand(target, app).doIt();
+						startStatus = (ServerStatus) new StartAppCommand(target, app).doIt();
+
+					if (startStatus.getSeverity() == IStatus.ERROR) {
+						return startStatus;
+					}
 
 					return status;
 				} catch (Exception e) {
