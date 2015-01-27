@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corporation and others.
+ * Copyright (c) 2010, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -32,6 +32,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
+import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.AnyObjectId;
 import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.FileMode;
@@ -245,6 +246,17 @@ public class GerritListFile extends HttpServlet {
 					treeWalk.release();
 				}
 			}
+		} catch (RepositoryNotFoundException e) {
+			handleException(resp, e, 400);
+		} catch (MissingObjectException e) {
+			// example "Missing unknown 7035305927ca125757ecd8407e608f6dcf0bd8a5"
+			// usually indicative of being unable to locate a commit from a submodule
+			log.error(e.getMessage(), e);
+			String msg = e.getMessage() + ".  This exception could have been caused by the use of a git submodule, " +
+					"which is currently not supported by the repository browser";
+			handleException(resp, new Exception(msg), 501);
+		} catch (IOException e) {
+			handleException(resp, e, 500);
 		} finally {
 			out.close();
 		}
@@ -341,6 +353,19 @@ public class GerritListFile extends HttpServlet {
 		    	log.debug("Anonymous user");
 		    }
 		}
+	}
+	
+	private void handleException(HttpServletResponse resp, Exception e, int status) throws IOException {
+		log.error(e.getMessage());
+		PrintWriter out = resp.getWriter();
+		HashMap<String, Object> jsonObject = new HashMap<String, Object>();
+		jsonObject.put("Severity", "Error");
+		jsonObject.put("Message", e.getMessage());
+		String response = JSONUtil.write(jsonObject);
+		resp.setStatus(status);
+		resp.setContentType("application/json");
+		out.write(response);
+		out.flush();
 	}
 	
 	public static String getImageLink(String emailAddress) {
