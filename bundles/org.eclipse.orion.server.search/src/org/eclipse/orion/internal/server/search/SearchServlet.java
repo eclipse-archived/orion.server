@@ -129,7 +129,14 @@ public class SearchServlet extends OrionServlet {
 		return options;
 	}
 
-	private JSONObject convertListToJson(List<SearchResult> files, SearchOptions options) {
+	/**
+	 * Convert the list of file results to JSON format for return to the client.
+	 * @param contextPath the context path of the server that is added to the location for each result.
+	 * @param files The list of files matching the search query.
+	 * @param options The search options.
+	 * @return the file results in JSON format.
+	 */
+	private JSONObject convertListToJson(String contextPath, List<SearchResult> files, SearchOptions options) {
 		JSONObject resultsJSON = new JSONObject();
 		JSONObject responseJSON = new JSONObject();
 		try {
@@ -138,7 +145,7 @@ public class SearchServlet extends OrionServlet {
 
 			JSONArray docs = new JSONArray();
 			for (SearchResult file : files) {
-				docs.put(file.toJSON());
+				docs.put(file.toJSON(contextPath));
 			}
 			resultsJSON.put("docs", docs);
 			// Add to parent JSON
@@ -320,7 +327,7 @@ public class SearchServlet extends OrionServlet {
 
 	private void writeResponse(HttpServletRequest req, HttpServletResponse resp, List<SearchResult> files, SearchOptions options) throws IOException {
 		try {
-			JSONObject json = convertListToJson(files, options);
+			JSONObject json = convertListToJson(req.getContextPath(), files, options);
 			writeJSONResponse(req, resp, json);
 		} catch (IllegalStateException e) {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
