@@ -37,13 +37,13 @@ public class SearchResult extends SearchScope {
 
 	/**
 	 * Provides a JSON representation of the search result.
-	 * 
+	 * @param contextPath the context path of the server that is added to the location for the result.
 	 * @return a JSON representation of the search result.
 	 * @throws URISyntaxException
 	 * @throws JSONException
 	 * @throws CoreException
 	 */
-	public JSONObject toJSON() throws URISyntaxException, JSONException, CoreException {
+	public JSONObject toJSON(String contextPath) throws URISyntaxException, JSONException, CoreException {
 		JSONObject doc = new JSONObject();
 
 		IFileInfo fileInfo = getFileStore().fetchInfo();
@@ -55,7 +55,7 @@ public class SearchResult extends SearchScope {
 		// Prepare project data
 		IFileStore projectStore = getProject().getProjectStore();
 		int projectLocationLength = projectStore.toURI().toString().length();
-		IPath projectLocation = new Path(Activator.LOCATION_FILE_SERVLET).append(getWorkspace().getUniqueId()).append(getProject().getFullName()).addTrailingSeparator();
+		IPath projectLocation = new Path(contextPath).append(Activator.LOCATION_FILE_SERVLET).append(getWorkspace().getUniqueId()).append(getProject().getFullName()).addTrailingSeparator();
 		String projectRelativePath = getFileStore().toURI().toString().substring(projectLocationLength);
 		// Add location to json
 		IPath fileLocation = projectLocation.append(projectRelativePath);
