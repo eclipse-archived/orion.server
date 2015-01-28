@@ -55,7 +55,12 @@ public class SearchResult extends SearchScope {
 		// Prepare project data
 		IFileStore projectStore = getProject().getProjectStore();
 		int projectLocationLength = projectStore.toURI().toString().length();
-		IPath projectLocation = new Path(contextPath).append(Activator.LOCATION_FILE_SERVLET).append(getWorkspace().getUniqueId()).append(getProject().getFullName()).addTrailingSeparator();
+		IPath projectLocation;
+		if (contextPath.length() != 0) {
+			projectLocation = new Path(contextPath).append(Activator.LOCATION_FILE_SERVLET).append(getWorkspace().getUniqueId()).append(getProject().getFullName()).addTrailingSeparator();
+		} else {
+			projectLocation = new Path(Activator.LOCATION_FILE_SERVLET).append(getWorkspace().getUniqueId()).append(getProject().getFullName()).addTrailingSeparator();
+		}
 		String projectRelativePath = getFileStore().toURI().toString().substring(projectLocationLength);
 		// Add location to json
 		IPath fileLocation = projectLocation.append(projectRelativePath);
