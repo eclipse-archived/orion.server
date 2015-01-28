@@ -422,4 +422,41 @@ public class SearchTest extends FileSystemTest {
 		assertOneMatch(searchResult, "dbcs-folder.txt");
 	}
 
+	/**
+	 * Tests searching with regular expression search option.
+	 */
+	@Test
+	public void testRegExSearch() throws Exception {
+
+		// search with regex
+		JSONObject searchResult = doSearch("(error|warn)+RegEx:true");
+		assertOneMatch(searchResult, "script.js");
+
+		// search with regex
+		searchResult = doSearch("[Ee]rr+RegEx:true");
+		assertOneMatch(searchResult, "script.js");
+	}
+
+	/**
+	 * Tests searching with case sensitivity search option.
+	 */
+	@Test
+	public void testCaseSensitive() throws Exception {
+
+		// search with not case sensitive, the default
+		JSONObject searchResult = doSearch("error");
+		assertOneMatch(searchResult, "script.js");
+
+		// search with not case sensitive, the default
+		searchResult = doSearch("ERROR");
+		assertOneMatch(searchResult, "script.js");
+
+		// search with case sensitive
+		searchResult = doSearch("error+CaseSensitive:true");
+		assertOneMatch(searchResult, "script.js");
+
+		// search with case sensitive
+		searchResult = doSearch("ERROR+CaseSensitive:true");
+		assertNoMatch(searchResult);
+	}
 }
