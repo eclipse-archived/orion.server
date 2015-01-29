@@ -88,7 +88,7 @@ public class SearchServlet extends OrionServlet {
 						} catch (UnsupportedEncodingException e) {
 							//try with encoded term
 						}
-						options.setIsCaseSensitive(false);
+						options.setIsFilenamePatternCaseSensitive(false);
 						options.setFilenamePattern(term.substring(10));
 					} else if (term.startsWith("Location:")) { //$NON-NLS-1${
 						String location = term.substring(9 + req.getContextPath().length());
@@ -105,12 +105,12 @@ public class SearchServlet extends OrionServlet {
 						} catch (UnsupportedEncodingException e) {
 							//try with encoded term
 						}
-						options.setIsCaseSensitive(true);
+						options.setIsFilenamePatternCaseSensitive(true);
 						options.setFilenamePattern(term.substring(5));
 					} else if (term.startsWith("RegEx:")) {
 						options.setRegEx(true);
 					} else if (term.startsWith("CaseSensitive:")) {
-						options.setIsCaseSensitive(true);
+						options.setIsSearchTermCaseSensitive(true);
 					}
 				} else {
 					//decode the term string now

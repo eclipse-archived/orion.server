@@ -21,11 +21,6 @@ import java.util.List;
  */
 public class SearchOptions {
 
-	/**
-	 * The default search of the filename pattern is not case sensitive.
-	 */
-	private boolean caseSensitive = false;
-
 	/** 
 	 * A default search location is used if the search location is not provided.
 	 */
@@ -40,6 +35,11 @@ public class SearchOptions {
 	 * The filename pattern
 	 */
 	private String filenamePattern = null;
+
+	/**
+	 * The default search of the filename pattern is not case sensitive.
+	 */
+	private boolean filenamePatternCaseSensitive = false;
 
 	/**
 	 * The search location provided in the search request.
@@ -65,6 +65,11 @@ public class SearchOptions {
 	 * The search term used to match within file contents.
 	 */
 	private String searchTerm = null;
+
+	/**
+	 * The default search term is not case sensitive.
+	 */
+	private boolean searchTermCaseSensitive = false;
 
 	/**
 	 * The username of the user running the search.
@@ -109,13 +114,6 @@ public class SearchOptions {
 	}
 
 	/**
-	 * Returns if the search should be case sensitive.
-	 */
-	public boolean isCaseSensitive() {
-		return caseSensitive;
-	}
-
-	/**
 	 * Returns if the search needs to search the file contents
 	 */
 	public boolean isFileContentsSearch() {
@@ -123,10 +121,24 @@ public class SearchOptions {
 	}
 
 	/**
+	 * Returns if the search should be case sensitive.
+	 */
+	public boolean isFilenamePatternCaseSensitive() {
+		return filenamePatternCaseSensitive;
+	}
+
+	/**
 	 * Returns if the search is regex.
 	 */
 	public boolean isRegEx() {
 		return regEx;
+	}
+
+	/**
+	 * Returns if the search should be case sensitive.
+	 */
+	public boolean isSearchTermCaseSensitive() {
+		return searchTermCaseSensitive;
 	}
 
 	public void setDefaultLocation(String defaultLocation) {
@@ -141,8 +153,12 @@ public class SearchOptions {
 		this.fileContentsSearch = fileSearch;
 	}
 
-	public void setIsCaseSensitive(boolean caseSensitive) {
-		this.caseSensitive = caseSensitive;
+	public void setIsFilenamePatternCaseSensitive(boolean filenamePatternCaseSensitive) {
+		this.filenamePatternCaseSensitive = filenamePatternCaseSensitive;
+	}
+
+	public void setIsSearchTermCaseSensitive(boolean searchTermCaseSensitive) {
+		this.searchTermCaseSensitive = searchTermCaseSensitive;
 	}
 
 	public void setLocation(String location) {

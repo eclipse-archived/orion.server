@@ -83,7 +83,7 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 		}
 		String filenamePattern = options.getFilenamePattern();
 		boolean match = false;
-		if (options.isCaseSensitive()) {
+		if (options.isFilenamePatternCaseSensitive()) {
 			match = FilenameUtils.wildcardMatch(filename, filenamePattern);
 		} else {
 			match = FilenameUtils.wildcardMatch(filename.toLowerCase(), filenamePattern.toLowerCase());
@@ -121,7 +121,7 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 				searchTerm = Pattern.quote(searchTerm);
 			}
 		}
-		if (!options.isCaseSensitive()) {
+		if (!options.isSearchTermCaseSensitive()) {
 			flags |= Pattern.CASE_INSENSITIVE;
 		}
 		/* Possible flags

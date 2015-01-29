@@ -458,5 +458,18 @@ public class SearchTest extends FileSystemTest {
 		// search with case sensitive
 		searchResult = doSearch("ERROR+CaseSensitive:true");
 		assertNoMatch(searchResult);
+
+		// search with case sensitive
+		searchResult = doSearch("error+CaseSensitive:true+NameLower:Script.js");
+		assertOneMatch(searchResult, "script.js");
+
+		// search with case sensitive
+		searchResult = doSearch("error+CaseSensitive:true+Name:*.js");
+		assertOneMatch(searchResult, "script.js");
+
+		// search with case sensitive
+		searchResult = doSearch("error+CaseSensitive:true+Name:script.js");
+		assertOneMatch(searchResult, "script.js");
+
 	}
 }
