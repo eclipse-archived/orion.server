@@ -154,7 +154,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			return true;
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when identifying a new Commit resource.", e));
+					"An error occurred when identifying a new Commit resource.", e));
 		}
 	}
 
@@ -183,7 +183,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			return false;
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when requesting a commit info.", e));
+					"An error occurred while requesting commit information.", e));
 		}
 	}
 
@@ -380,14 +380,14 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				return true;
 			} catch (GitAPIException e) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
-						"An error occured when commiting.", e));
+						"An error occurred when committing.", e));
 			} catch (UnmergedPathException e) {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-						"An internal error occured when commiting.", e));
+						"An internal error occurred when committing.", e));
 			}
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when requesting a commit info.", e));
+					"An error occurred when requesting commit information.", e));
 		}
 	}
 
@@ -407,10 +407,10 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			return workaroundBug356918(request, response, e);
 		} catch (IOException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when merging.", e));
+					"An error occurred when merging.", e));
 		} catch (GitAPIException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when merging.", e));
+					"An error occurred when merging.", e));
 		}
 	}
 
@@ -434,7 +434,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			}
 		}
 		return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-				"An error occured when merging.", e.getCause()));
+				"An error occurred when merging.", e.getCause()));
 	}
 
 	private boolean rebase(HttpServletRequest request, HttpServletResponse response, Repository db, String commitToRebase, String rebaseOperation)
@@ -476,7 +476,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				result.put(GitConstants.KEY_RESULT, AdditionalRebaseStatus.FAILED_PENDING_CHANGES.name());
 			} else {
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-						"An error occured when rebasing.", e));
+						"An error occurred when rebasing.", e));
 			}
 		}
 		OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
@@ -491,7 +491,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			Ref headRef = db.getRef(Constants.HEAD);
 			if (headRef == null)
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-						"An error occured when cherry-picking.", null));
+						"An error occurred when cherry-picking.", null));
 			RevCommit head = revWalk.parseCommit(headRef.getObjectId());
 
 			ObjectId objectId = db.resolve(commitToCherryPick);
@@ -506,10 +506,10 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			return true;
 		} catch (IOException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when cherry-picking.", e));
+					"An error occurred when cherry-picking.", e));
 		} catch (GitAPIException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when cherry-picking.", e));
+					"An error occurred when cherry-picking.", e));
 		} finally {
 			revWalk.release();
 		}
@@ -523,7 +523,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			Ref headRef = db.getRef(Constants.HEAD);
 			if (headRef == null)
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-						"An error occured when reverting.", null));
+						"An error occurred when reverting.", null));
 
 			ObjectId objectId = db.resolve(commitToRevert);
 			Git git = new Git(db);
@@ -544,10 +544,10 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			return true;
 		} catch (IOException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when reverting.", e));
+					"An error occurred when reverting.", e));
 		} catch (GitAPIException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when reverting.", e));
+					"An error occurred when reverting.", e));
 		} finally {
 			revWalk.release();
 		}
@@ -607,7 +607,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			return false;
 		} catch (Exception e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when tagging.", e));
+					"An error occurred when tagging.", e));
 		}
 	}
 
@@ -629,13 +629,13 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			return true;
 		} catch (IOException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when tagging.", e));
+					"An error occurred when tagging.", e));
 		} catch (GitAPIException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when tagging.", e));
+					"An error occurred when tagging.", e));
 		} catch (CoreException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-					"An error occured when tagging.", e));
+					"An error occurred when tagging.", e));
 		} finally {
 			walk.dispose();
 		}
