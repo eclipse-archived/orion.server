@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import org.eclipse.orion.server.core.PreferenceHelper;
@@ -44,13 +45,27 @@ public class EventService implements IEventService {
 	private MqttConnectOptions mqttConnectOptions;
 	private Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 	
+	private static AtomicBoolean reconnectionLock = new AtomicBoolean(false);
+	
+	private static final int SECS_BETWEEN_RECONNECTION_ATTEMPTS = 30;
+	private static final int MILLISECS_IN_A_SEC = 1000;
+	private static long lastReconnectionTimestamp;
+	
+	private static final int RECONNECTION_TIMEOUT_IN_SECS = 60;
+	
 	private volatile Map<String, Set<IMessageListener>>  messageListeners = new HashMap<String, Set<IMessageListener>>();
 	private Callback callback;
 	
 	private class Callback implements MqttCallback{
 		
 		public void connectionLost(Throwable e) {
-			//Do nothing
+			boolean attemptToReconnect = System.currentTimeMillis() > SECS_BETWEEN_RECONNECTION_ATTEMPTS * 
+						MILLISECS_IN_A_SEC + lastReconnectionTimestamp;
+				logger.warn("The activityClient was disconnected "
+						+ "Will we attempt to reconnect? " + attemptToReconnect + " reconnectionLock value: " + reconnectionLock.toString());
+				if (attemptToReconnect) {
+					reconnectMQTTClient();
+				}
 		}
 
 		public void deliveryComplete(IMqttDeliveryToken token) {
@@ -73,11 +88,17 @@ public class EventService implements IEventService {
 			Set<String> topics = messageListeners.keySet(); 
 			for( String registeredTopic : topics ){
 				if(Pattern.matches(registeredTopic.replaceAll("/#", ".*").replaceAll("#", ".*").replaceAll("\\\\+", ".+"), topic)){
+					if (logger.isDebugEnabled()) {
+						logger.debug("Pattern matched. Topic: " + topic + " . Registered topic: " + registeredTopic);
+					}
 					Set<IMessageListener> topicListners = messageListeners.get(registeredTopic);
 					if(topicListners!=null && !topicListners.isEmpty()){
 						for(IMessageListener listner : topicListners){
 							listner.receiveMessage(message);
 						}
+					}
+					else {
+						logger.warn("Topic listener could not be found to topic we were subscribed to. Topic: " + registeredTopic);
 					}
 					
 				}
@@ -141,18 +162,61 @@ public class EventService implements IEventService {
 		if(trustStore!=null){
 			sslProperties.put("com.ibm.ssl.trustStore", trustStore);
 		}
-		mqttConnectOptions.setSSLProperties(sslProperties);
+		//mqttConnectOptions.setSSLProperties(sslProperties);
 
 		try {
 			mqttClient = new MqttClient(serverURI, clientId, new MemoryPersistence());
-			mqttClient.connect(mqttConnectOptions);
-			logger.info("MQTT client connected");
+			this.connectMQTTClient();
 		} catch (MqttException e) {
 			logger.warn("Failed to initialize MQTT event client", e); //$NON-NLS-1$
 		}
 
 		this.callback = new Callback();
 		this.mqttClient.setCallback(callback);
+	}
+	
+	private void connectMQTTClient() throws MqttException {
+		lastReconnectionTimestamp = System.currentTimeMillis(); // in case there is an exception below (possible if broker is down)
+		mqttClient.connect(mqttConnectOptions);
+		lastReconnectionTimestamp = System.currentTimeMillis(); // to ensure the full time elapses before the next attempt.
+		logger.info("MQTT client connected");
+	}
+	
+	private void reconnectMQTTClient() {
+		if (!mqttClient.isConnected() && reconnectionLock.compareAndSet(false, true)) {
+			this.logger.warn("MQTT client was disconnected. Attempting to reconnect. Instance: " + this.toString() + " Client: " + mqttClient.toString());
+			try {
+				new Thread(new Runnable() {
+					public void run() {
+	
+						try {
+							connectMQTTClient();
+							
+							if(mqttClient.isConnected()) {
+								logger.info("Activity messaging client connection reestablished!");
+							}
+							else {
+								logger.error("Unable to reconnect activity client.");
+							}
+						} catch (MqttException e) {
+							if (e.getCause() instanceof InterruptedException) {
+								logger.error("We hit the timeout while waiting for the activity client to reconnect (its hanging). " + e.getLocalizedMessage());
+							}
+							else {
+								logger.error("Could not re-connect the activity messaging client. Reason: " + e.getLocalizedMessage());
+							}
+						}
+						finally {
+							reconnectionLock.set(false);
+						}
+					}
+				}).start();
+			}
+			catch (Exception e) {
+				this.logger.error("Unexpected exception occurred: " + e.getLocalizedMessage());
+				reconnectionLock.set(false);	
+			}
+		}
 	}
 
 	public void publish(String topic, JSONObject message) {
@@ -188,6 +252,9 @@ public class EventService implements IEventService {
 			try {
 				if(mqttClient!=null && mqttClient.isConnected()){
 					mqttClient.subscribe(topic);
+				}
+				else {
+					logger.warn("Mqtt client is in an invalid state. Value: " + mqttClient);
 				}
 			} catch (MqttException e) {
 				logger.warn("Failure subscribing on topic: " + topic, e); //$NON-NLS-1$ //$NON-NLS-2$
