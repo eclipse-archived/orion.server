@@ -13,6 +13,8 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,6 +44,8 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 	 * The root of a users workspace
 	 */
 	private File workspaceRoot;
+
+	private boolean isRoot = true;
 
 	/**
 	 * The path of the workspace root used to create the path for the file.
@@ -78,8 +82,8 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 			// should never happen
 			throw new RuntimeException(e);
 		}
-		workspacePath = "/file/" + workspaceId + "/";
-		workspaceRootSuffixLength = workspaceRoot.getAbsolutePath().length() + 1;
+		workspacePath = "/file/" + workspaceId;
+		workspaceRootSuffixLength = workspaceRoot.getAbsolutePath().length();
 	}
 
 	@Override
@@ -89,7 +93,11 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 
 	@Override
 	protected boolean handleDirectory(File directory, int depth, Collection<File> results) throws IOException {
-		results.add(directory);
+		if (!isRoot) {
+			results.add(directory);
+		} else {
+			isRoot = false;
+		}
 		return true;
 	}
 
@@ -133,16 +141,22 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 		JSONObject json = new JSONObject();
 		String filePath = file.getAbsolutePath().substring(workspaceRootSuffixLength);
 		filePath = new Path(filePath).toPortableString();
-		String type = file.isFile() ? "file" : "dir";
-		String sha = "";
-		if (type.equals("file"))
-			sha = checkSum(file.getAbsolutePath());
-		json.put("Type", type);
-		json.put(ProtocolConstants.KEY_LENGTH, type.equals("dir") ? file.list().length : Long.toString(file.length()));
-		json.put(ProtocolConstants.KEY_PATH, workspacePath + filePath);
-		json.put("FilePath", filePath);
-		json.put(ProtocolConstants.KEY_LAST_MODIFIED, Long.toString(file.lastModified()));
-		json.put("SHA", sha);
+		if (file.isFile()) {
+			String sha = checkSum(file.getAbsolutePath());
+			json.put("SHA", sha);
+		} else {
+			if (!filePath.endsWith("/")) {
+				filePath += "/";
+			}
+		}
+		json.put(ProtocolConstants.KEY_LENGTH, file.isFile() ? Long.toString(file.length()) : file.list().length);
+		try {
+			json.put(ProtocolConstants.KEY_LOCATION, new URI("orion", null, workspacePath + filePath, null, null));
+			json.put(ProtocolConstants.KEY_LAST_MODIFIED, Long.toString(file.lastModified()));
+		} catch (URISyntaxException e) {
+			// should never happen
+			throw new RuntimeException(e);
+		}
 		return json;
 	}
 
