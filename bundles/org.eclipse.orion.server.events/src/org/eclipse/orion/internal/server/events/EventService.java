@@ -47,25 +47,14 @@ public class EventService implements IEventService {
 	
 	private static AtomicBoolean reconnectionLock = new AtomicBoolean(false);
 	
-	private static final int SECS_BETWEEN_RECONNECTION_ATTEMPTS = 30;
-	private static final int MILLISECS_IN_A_SEC = 1000;
-	private static long lastReconnectionTimestamp;
-	
-	private static final int RECONNECTION_TIMEOUT_IN_SECS = 60;
-	
 	private volatile Map<String, Set<IMessageListener>>  messageListeners = new HashMap<String, Set<IMessageListener>>();
 	private Callback callback;
 	
 	private class Callback implements MqttCallback{
 		
 		public void connectionLost(Throwable e) {
-			boolean attemptToReconnect = System.currentTimeMillis() > SECS_BETWEEN_RECONNECTION_ATTEMPTS * 
-						MILLISECS_IN_A_SEC + lastReconnectionTimestamp;
-				logger.warn("The activityClient was disconnected "
-						+ "Will we attempt to reconnect? " + attemptToReconnect + " reconnectionLock value: " + reconnectionLock.toString());
-				if (attemptToReconnect) {
-					reconnectMQTTClient();
-				}
+			logger.warn("Connection to Rabbit MQ broker was lost. Scheduling job to reconnect.");
+			new ReconnectMQTTClientJob(EventService.this).schedule();
 		}
 
 		public void deliveryComplete(IMqttDeliveryToken token) {
@@ -168,7 +157,8 @@ public class EventService implements IEventService {
 			mqttClient = new MqttClient(serverURI, clientId, new MemoryPersistence());
 			this.connectMQTTClient();
 		} catch (MqttException e) {
-			logger.warn("Failed to initialize MQTT event client", e); //$NON-NLS-1$
+			logger.warn("Connection to Rabbit MQ broker could not be established. Scheduling job to reconnect.");
+			new ReconnectMQTTClientJob(this).schedule();
 		}
 
 		this.callback = new Callback();
@@ -176,15 +166,13 @@ public class EventService implements IEventService {
 	}
 	
 	private void connectMQTTClient() throws MqttException {
-		lastReconnectionTimestamp = System.currentTimeMillis(); // in case there is an exception below (possible if broker is down)
 		mqttClient.connect(mqttConnectOptions);
-		lastReconnectionTimestamp = System.currentTimeMillis(); // to ensure the full time elapses before the next attempt.
 		logger.info("MQTT client connected");
 	}
 	
-	private void reconnectMQTTClient() {
+	public void reconnectMQTTClient() {
 		if (!mqttClient.isConnected() && reconnectionLock.compareAndSet(false, true)) {
-			this.logger.warn("MQTT client was disconnected. Attempting to reconnect. Instance: " + this.toString() + " Client: " + mqttClient.toString());
+			this.logger.warn("MQTT client was disconnected. Attempting to reconnect.");
 			try {
 				new Thread(new Runnable() {
 					public void run() {
@@ -196,15 +184,10 @@ public class EventService implements IEventService {
 								logger.info("Activity messaging client connection reestablished!");
 							}
 							else {
-								logger.error("Unable to reconnect activity client.");
+								logger.warn("Unable to reconnect activity client.");
 							}
 						} catch (MqttException e) {
-							if (e.getCause() instanceof InterruptedException) {
-								logger.error("We hit the timeout while waiting for the activity client to reconnect (its hanging). " + e.getLocalizedMessage());
-							}
-							else {
-								logger.error("Could not re-connect the activity messaging client. Reason: " + e.getLocalizedMessage());
-							}
+							logger.error("Could not re-connect the activity messaging client: " + e.getMessage());
 						}
 						finally {
 							reconnectionLock.set(false);
@@ -217,6 +200,10 @@ public class EventService implements IEventService {
 				reconnectionLock.set(false);	
 			}
 		}
+	}
+
+	public boolean clientConnected() {
+		return mqttClient.isConnected();
 	}
 
 	public void publish(String topic, JSONObject message) {
@@ -250,11 +237,14 @@ public class EventService implements IEventService {
 		}
 		if(topicListeners.isEmpty()){
 			try {
-				if(mqttClient!=null && mqttClient.isConnected()){
-					mqttClient.subscribe(topic);
+				if (mqttClient==null) {
+					logger.warn("MqttClient was unexpectedly null.");
+				}
+				else if (!mqttClient.isConnected()) {
+					logger.warn("Could not subscribe to topic " + topic + " since MqttClient is disconnected");
 				}
 				else {
-					logger.warn("Mqtt client is in an invalid state. Value: " + mqttClient);
+					mqttClient.subscribe(topic);
 				}
 			} catch (MqttException e) {
 				logger.warn("Failure subscribing on topic: " + topic, e); //$NON-NLS-1$ //$NON-NLS-2$
