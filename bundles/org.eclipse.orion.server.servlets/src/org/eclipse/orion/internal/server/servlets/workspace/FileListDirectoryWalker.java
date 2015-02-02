@@ -164,7 +164,7 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 		FileInputStream stream = null;
 		try {
 			stream = new FileInputStream(path);
-			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			MessageDigest digest = MessageDigest.getInstance("SHA-1");
 
 			byte[] buffer = new byte[1024];
 			int bytesRead;
