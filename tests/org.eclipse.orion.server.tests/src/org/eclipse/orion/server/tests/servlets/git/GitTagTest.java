@@ -189,7 +189,7 @@ public class GitTagTest extends GitTest {
 			JSONObject result = new JSONObject(response.getText());
 			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
 			assertEquals("Error", result.getString("Severity"));
-			assertEquals("An error occured when tagging.", result.getString("Message"));
+			assertEquals("An error occurerd when tagging.", result.getString("Message"));
 			assertTrue(result.toString(), result.getString("DetailedMessage").endsWith("already exists"));
 
 			// tag HEAD with 'tag' again (CommitHandler) - should fail
