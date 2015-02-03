@@ -15,6 +15,7 @@ import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Dictionary;
 import java.util.Iterator;
 import java.util.List;
 
@@ -22,8 +23,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.core.runtime.IBundleGroup;
-import org.eclipse.core.runtime.IBundleGroupProvider;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.orion.internal.server.servlets.Activator;
@@ -187,22 +186,21 @@ public class AboutHandler extends ServletResourceHandler<String> {
 	}
 
 	/**
-	 * Get the build id for the orion application by using the bundle group version from the org.eclipse.orion feature. The maven build assigns this feature the
-	 * same timestamp as the build timestamp.
+	 * Get the build id for the orion application by using the bundle version from the org.eclipse.orion.server.core plugin. The maven build assigns this
+	 * feature the same timestamp as the build timestamp.
 	 * 
 	 * @return the build id.
 	 */
 	private String getBuildId() {
 		String version = System.getProperty("eclipse.buildId", "unknown"); //$NON-NLS-1$
-		String featureId = "org.eclipse.orion";
-		IBundleGroupProvider[] providers = Platform.getBundleGroupProviders();
-		if (providers != null) {
-			for (IBundleGroupProvider provider : providers) {
-				IBundleGroup[] bundleGroups = provider.getBundleGroups();
-				for (IBundleGroup group : bundleGroups) {
-					if (group.getIdentifier().equals(featureId)) {
-						version = group.getVersion();
-					}
+		String featureId = "org.eclipse.orion.server.core";
+		Bundle bundle = Platform.getBundle(featureId);
+		if (bundle != null) {
+			Dictionary<String, String> directory = bundle.getHeaders();
+			if (directory != null) {
+				String coreVersion = directory.get("Bundle-Version");
+				if (coreVersion != null) {
+					version = coreVersion;
 				}
 			}
 		}
