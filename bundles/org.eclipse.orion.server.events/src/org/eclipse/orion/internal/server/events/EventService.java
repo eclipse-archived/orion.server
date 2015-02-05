@@ -187,7 +187,7 @@ public class EventService implements IEventService {
 								logger.warn("Unable to reconnect activity client.");
 							}
 						} catch (MqttException e) {
-							logger.error("Could not re-connect the activity messaging client: " + e.getMessage());
+							logger.error("Could not re-connect the activity messaging client. Reason code: ", e.getReasonCode());
 						}
 						finally {
 							reconnectionLock.set(false);
@@ -241,7 +241,7 @@ public class EventService implements IEventService {
 					logger.warn("MqttClient was unexpectedly null.");
 				}
 				else if (!mqttClient.isConnected()) {
-					logger.warn("Could not subscribe to topic " + topic + " since MqttClient is disconnected");
+					logger.debug("Could not subscribe to topic " + topic + " since MqttClient is disconnected");
 				}
 				else {
 					mqttClient.subscribe(topic);
