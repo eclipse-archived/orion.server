@@ -181,13 +181,13 @@ public class EventService implements IEventService {
 							connectMQTTClient();
 							
 							if(mqttClient.isConnected()) {
-								logger.info("Activity messaging client connection reestablished!");
+								logger.info("MQTT client connection reestablished!");
 							}
 							else {
-								logger.warn("Unable to reconnect activity client.");
+								logger.warn("Unable to reconnect MQTT client.");
 							}
 						} catch (MqttException e) {
-							logger.error("Could not re-connect the activity messaging client. Reason code: ", e.getReasonCode());
+							logger.error("Could not re-connect the MQTT client. Message: " + e.getMessage() + " Reason code: ", e.getReasonCode());
 						}
 						finally {
 							reconnectionLock.set(false);
