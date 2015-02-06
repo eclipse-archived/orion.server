@@ -151,7 +151,7 @@ public class EventService implements IEventService {
 		if(trustStore!=null){
 			sslProperties.put("com.ibm.ssl.trustStore", trustStore);
 		}
-		//mqttConnectOptions.setSSLProperties(sslProperties);
+		mqttConnectOptions.setSSLProperties(sslProperties);
 
 		try {
 			mqttClient = new MqttClient(serverURI, clientId, new MemoryPersistence());
