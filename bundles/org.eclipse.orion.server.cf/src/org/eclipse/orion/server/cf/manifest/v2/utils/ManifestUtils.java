@@ -230,7 +230,7 @@ public class ManifestUtils {
 	 * @return Slugified input
 	 */
 	public static String slugify(String input) {
-		input = WHITESPACE_PATTERN.matcher(input).replaceAll("-"); //$NON-NLS-1$
+		input = WHITESPACE_PATTERN.matcher(input).replaceAll(""); //$NON-NLS-1$
 		return NON_SLUG_PATTERN.matcher(input).replaceAll(""); //$NON-NLS-1$
 	}
 

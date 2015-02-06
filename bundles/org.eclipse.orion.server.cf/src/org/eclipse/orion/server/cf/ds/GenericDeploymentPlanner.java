@@ -37,8 +37,17 @@ public final class GenericDeploymentPlanner implements IDeploymentPlanner {
 		return "org.eclipse.orion.client.cf.wizard.generic"; //$NON-NLS-1$
 	}
 
-	private String getApplicationName(IFileStore contentLocation) {
-		return contentLocation.fetchInfo().getName();
+	protected String getApplicationName(IFileStore contentLocation) {
+		String folderName = contentLocation.fetchInfo().getName();
+		String[] folderNameParts = folderName.split(" --- ", 2);
+		if (folderNameParts.length > 1)
+			return folderNameParts[1];
+		return folderNameParts[0];
+	}
+
+	protected String getApplicationHost(IFileStore contentLocation) {
+		String folderName = contentLocation.fetchInfo().getName();
+		return ManifestUtils.slugify(folderName);
 	}
 
 	private void set(ManifestParseTree application, String property, String defaultValue) {
@@ -85,7 +94,7 @@ public final class GenericDeploymentPlanner implements IDeploymentPlanner {
 
 			/* set up generic defaults */
 			ManifestParseTree application = manifest.get(ManifestConstants.APPLICATIONS).get(0);
-			/* set(application, ManifestConstants.HOST, ManifestUtils.slugify(applicationName)); */
+			set(application, ManifestConstants.HOST, getApplicationHost(contentLocation));
 			set(application, ManifestConstants.MEMORY, ManifestUtils.DEFAULT_MEMORY);
 			set(application, ManifestConstants.INSTANCES, ManifestUtils.DEFAULT_INSTANCES);
 			set(application, ManifestConstants.PATH, ManifestUtils.DEFAULT_PATH);

@@ -42,7 +42,16 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 	}
 
 	protected String getApplicationName(IFileStore contentLocation) {
-		return contentLocation.fetchInfo().getName();
+		String folderName = contentLocation.fetchInfo().getName();
+		String[] folderNameParts = folderName.split(" --- ", 2);
+		if (folderNameParts.length > 1)
+			return folderNameParts[1];
+		return folderNameParts[0];
+	}
+
+	protected String getApplicationHost(IFileStore contentLocation) {
+		String folderName = contentLocation.fetchInfo().getName();
+		return ManifestUtils.slugify(folderName);
 	}
 
 	protected void set(ManifestParseTree application, String property, String defaultValue) {
@@ -145,10 +154,7 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 			String defaultName = getApplicationName(contentLocation);
 
 			set(application, ManifestConstants.NAME, defaultName);
-
-			/*String appName = application.get(ManifestConstants.NAME).getValue();
-			set(application, ManifestConstants.HOST, ManifestUtils.slugify(appName));*/
-
+			set(application, ManifestConstants.HOST, getApplicationHost(contentLocation));
 			set(application, ManifestConstants.MEMORY, ManifestUtils.DEFAULT_MEMORY);
 			set(application, ManifestConstants.INSTANCES, ManifestUtils.DEFAULT_INSTANCES);
 			set(application, ManifestConstants.PATH, ManifestUtils.DEFAULT_PATH);
