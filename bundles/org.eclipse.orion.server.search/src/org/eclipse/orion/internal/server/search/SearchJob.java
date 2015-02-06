@@ -19,7 +19,8 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.servlets.Activator;
 
 /**
- * A job that wraps and runs a search task. We currently limit one running search job per user.
+ * A job that wraps and runs a search task. We currently limit one running
+ * search job per user.
  * 
  * @author Anthony Hunter
  */
@@ -65,11 +66,16 @@ public class SearchJob extends Job {
 
 	public static boolean isSearchJobRunning(String remoteUser) {
 		Job[] jobs = Job.getJobManager().find(FAMILY);
+		int count = 0;
 		for (int i = 0; i < jobs.length; i++) {
 			SearchJob searchJob = (SearchJob) jobs[i];
 			if (searchJob.getUsername().equals(remoteUser)) {
-				return true;
+				count++;
 			}
+		}
+		if (count > 5) {
+			// TODO: allow five search jobs per user, see Bug 459325
+			return true;
 		}
 		return false;
 	}
