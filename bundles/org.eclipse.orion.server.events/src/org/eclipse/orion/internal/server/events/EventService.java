@@ -53,7 +53,7 @@ public class EventService implements IEventService {
 	private class Callback implements MqttCallback{
 		
 		public void connectionLost(Throwable e) {
-			logger.warn("Connection to Rabbit MQ broker was lost. Scheduling job to reconnect.");
+			logger.warn("Connection to MQTT broker was lost. Scheduling job to reconnect.");
 			new ReconnectMQTTClientJob(EventService.this).schedule();
 		}
 
@@ -157,7 +157,7 @@ public class EventService implements IEventService {
 			mqttClient = new MqttClient(serverURI, clientId, new MemoryPersistence());
 			this.connectMQTTClient();
 		} catch (MqttException e) {
-			logger.warn("Connection to Rabbit MQ broker could not be established. Scheduling job to reconnect.");
+			logger.warn("Connection to MQTT broker could not be established. Scheduling job to reconnect.", e);
 			new ReconnectMQTTClientJob(this).schedule();
 		}
 
