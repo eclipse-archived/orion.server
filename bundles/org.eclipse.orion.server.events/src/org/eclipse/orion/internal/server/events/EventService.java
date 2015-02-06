@@ -187,7 +187,7 @@ public class EventService implements IEventService {
 								logger.warn("Unable to reconnect MQTT client.");
 							}
 						} catch (MqttException e) {
-							logger.error("Could not re-connect the MQTT client. Message: " + e.getMessage() + " Reason code: ", e.getReasonCode());
+							logger.error("Could not re-connect the MQTT client. Message: " + e.getMessage() + " Reason code: " + e.getReasonCode());
 						}
 						finally {
 							reconnectionLock.set(false);
