@@ -23,8 +23,11 @@ public class HashUtilities {
 
 	/**
 	 * Returns the hash of data read from the given input stream.
-	 * @param inputStream input stream
-	 * @param hashFunction desired hash function (i.e. SHA-1)
+	 * 
+	 * @param inputStream
+	 *            input stream
+	 * @param hashFunction
+	 *            desired hash function (i.e. SHA-1)
 	 * @return text representation of the hash
 	 * @throws IOException
 	 * @throws NoSuchAlgorithmException
@@ -35,9 +38,13 @@ public class HashUtilities {
 
 	/**
 	 * Returns the hash of data read from the given input stream.
-	 * @param inputStream input stream
-	 * @param hashFunction desired hash function (i.e. SHA-1)
-	 * @param closeIn determines if input stream should be closed after reading
+	 * 
+	 * @param inputStream
+	 *            input stream
+	 * @param hashFunction
+	 *            desired hash function (i.e. SHA-1)
+	 * @param closeIn
+	 *            determines if input stream should be closed after reading
 	 * @return text representation of the hash
 	 * @throws IOException
 	 * @throws NoSuchAlgorithmException
@@ -62,10 +69,13 @@ public class HashUtilities {
 
 	/**
 	 * Returns the hash of the given input String.
-	 * @param data string to compute hash for
-	 * @param hashFunction desired hash function (i.e. SHA-1)
+	 * 
+	 * @param data
+	 *            string to compute hash for
+	 * @param hashFunction
+	 *            desired hash function (i.e. SHA-1)
 	 * @return text representation of the hash
-	 * @throws NoSuchAlgorithmException 
+	 * @throws NoSuchAlgorithmException
 	 */
 	public static String getHash(String data, String hashFunction) throws NoSuchAlgorithmException {
 		MessageDigest md = MessageDigest.getInstance(hashFunction);
@@ -76,11 +86,15 @@ public class HashUtilities {
 		return bytesToHex(mdbytes);
 	}
 
-	//convert the byte to hex format
+	// convert the byte to hex format
 	private static String bytesToHex(byte[] bytes) {
 		StringBuffer sb = new StringBuffer();
 		for (int i = 0; i < bytes.length; i++) {
-			sb.append(Integer.toHexString(0xFF & bytes[i]));
+			String hexString = Integer.toHexString(0xFF & bytes[i]);
+			while (hexString.length() < 2) {
+				hexString = "0" + hexString;
+			}
+			sb.append(hexString);
 		}
 
 		return sb.toString();
