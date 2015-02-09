@@ -43,6 +43,12 @@ public class Target extends CFObject {
 		this.cloud = cloud;
 	}
 
+	public Target(Cloud cloud, Org org, Space space) {
+		this.cloud = cloud;
+		this.org = org;
+		this.space = space;
+	}
+
 	@Override
 	protected URI getLocation() throws URISyntaxException {
 		return null;

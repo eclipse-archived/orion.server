@@ -84,7 +84,6 @@ public class Cloud extends CFObject {
 
 	@Override
 	public int hashCode() {
-		System.out.println("h");
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((url == null) ? 0 : url.hashCode());
@@ -95,7 +94,6 @@ public class Cloud extends CFObject {
 
 	@Override
 	public boolean equals(Object obj) {
-		System.out.println("e");
 		if (this == obj)
 			return true;
 		if (obj == null)

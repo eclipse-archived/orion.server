@@ -47,7 +47,7 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 			@Override
 			protected IStatus performJob() {
 				try {
-					Target target = CFActivator.getDefault().getTargetRegistry().getTarget(this.userId);
+					Target target = CFActivator.getDefault().getTargetRegistry().getDefaultTarget(this.userId);
 					if (target == null) {
 						String msg = "Target not set"; //$NON-NLS-1$
 						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
@@ -82,7 +82,7 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 							return result;
 					}
 
-					CFActivator.getDefault().getTargetRegistry().markDefault(this.userId, target);
+					CFActivator.getDefault().getTargetRegistry().setDefaultTarget(this.userId, target);
 
 					return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, target.toJSON());
 				} catch (Exception e) {
@@ -103,7 +103,7 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 			@Override
 			protected IStatus performJob() {
 				try {
-					Target target = CFActivator.getDefault().getTargetRegistry().getTarget(this.userId);
+					Target target = CFActivator.getDefault().getTargetRegistry().getDefaultTarget(this.userId);
 					if (target == null) {
 						String msg = "Target not set"; //$NON-NLS-1$
 						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);

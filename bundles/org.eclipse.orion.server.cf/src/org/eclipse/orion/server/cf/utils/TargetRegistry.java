@@ -12,7 +12,10 @@ package org.eclipse.orion.server.cf.utils;
 
 import java.net.URL;
 import java.util.*;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.server.cf.CFExtServiceHelper;
+import org.eclipse.orion.server.cf.commands.SetOrgCommand;
+import org.eclipse.orion.server.cf.commands.SetSpaceCommand;
 import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -26,13 +29,18 @@ public class TargetRegistry {
 		this.cloudMap = Collections.synchronizedMap(new HashMap<String, UserClouds>());
 	}
 
-	public Target getTarget(String userId) {
+	public Target getDefaultTarget(String userId) {
 		return this.getTarget(userId, null);
 	}
 
 	public Target getTarget(String userId, URL url) {
 		UserClouds userClouds = getUserClouds(userId);
 		return userClouds.getTarget(url);
+	}
+
+	public Target getTarget(String userId, URL url, String org, String space) {
+		UserClouds userClouds = getUserClouds(userId);
+		return userClouds.getTarget(url, org, space);
 	}
 
 	public Cloud getCloud(String userId, URL url) {
@@ -47,11 +55,10 @@ public class TargetRegistry {
 			if (someCloud != null)
 				return new DarkCloud(someCloud, null);
 		}
-
 		return new DarkCloud(url, null, null);
 	}
 
-	public void markDefault(String userId, Target target) {
+	public void setDefaultTarget(String userId, Target target) {
 		UserClouds userClouds = getUserClouds(userId);
 		userClouds.setDefaulTarget(target);
 	}
@@ -70,12 +77,14 @@ public class TargetRegistry {
 		private String userId;
 
 		private Map<URL, Cloud> userCloudMap;
+		private Set<Target> targets;
 
 		private Target defaultTarget;
 
 		private UserClouds(String userId) {
 			this.userId = userId;
 			this.userCloudMap = Collections.synchronizedMap(new HashMap<URL, Cloud>());
+			this.targets = new HashSet<Target>();
 		}
 
 		private Cloud getCloud(URL url) {
@@ -127,6 +136,37 @@ public class TargetRegistry {
 			}
 			Cloud cloud = getCloud(url);
 			return new Target(cloud);
+		}
+
+		private Target getTarget(URL url, String org, String space) {
+			if (url == null || org == null || space == null) {
+				return null;
+			}
+			url = URLUtil.normalizeURL(url);
+
+			synchronized (targets) {
+				for (Target t : targets) {
+					if (org.equals(t.getOrg().getName()) && space.equals(t.getSpace().getName()) && url.equals(t.getUrl())) {
+						return new Target(t.getCloud(), t.getOrg(), t.getSpace());
+					}
+				}
+			}
+
+			Cloud cloud = getCloud(url);
+			Target target = new Target(cloud);
+			IStatus result = new SetOrgCommand(target, org).doIt();
+			if (!result.isOK())
+				return null;
+
+			result = new SetSpaceCommand(target, space).doIt();
+			if (!result.isOK())
+				return null;
+
+			synchronized (targets) {
+				targets.add(target);
+			}
+
+			return target;
 		}
 
 		private void setDefaulTarget(Target target) {

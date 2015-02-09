@@ -34,29 +34,23 @@ public class ComputeTargetCommand implements ICFCommand {
 
 	public IStatus doIt() {
 		URL targetUrl = null;
+		String org = null;
+		String space = null;
 
 		if (targetJSON != null) {
 			try {
 				targetUrl = new URL(targetJSON.getString(CFProtocolConstants.KEY_URL));
+				org = targetJSON.optString(CFProtocolConstants.KEY_ORG);
+				space = targetJSON.optString(CFProtocolConstants.KEY_SPACE);
 			} catch (Exception e) {
 				// do nothing
 			}
 		}
 
-		this.target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
-
+		this.target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl, org, space);
 		if (target == null) {
 			return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
 		}
-
-		IStatus result = new SetOrgCommand(this.target, targetJSON != null ? targetJSON.optString("Org") : null).doIt();
-		if (!result.isOK())
-			return result;
-
-		result = new SetSpaceCommand(this.target, targetJSON != null ? targetJSON.optString("Space") : null).doIt();
-		if (!result.isOK())
-			return result;
-
 		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 	}
 
