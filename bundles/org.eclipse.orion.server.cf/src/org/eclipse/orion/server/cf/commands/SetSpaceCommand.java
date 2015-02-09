@@ -91,7 +91,7 @@ public class SetSpaceCommand extends AbstractCFCommand {
 			URI spaceURI = targetURI.resolve(spaceUrl);
 
 			GetMethod getMethod = new GetMethod(spaceURI.toString());
-			HttpUtil.configureHttpMethod(getMethod, target);
+			HttpUtil.configureHttpMethod(getMethod, target.getCloud());
 			ServerStatus getStatus = HttpUtil.executeMethod(getMethod);
 			if (!getStatus.isOK())
 				return getStatus;

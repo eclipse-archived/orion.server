@@ -90,7 +90,7 @@ public class SetOrgCommand extends AbstractCFCommand {
 			infoURI = infoURI.resolve("/v2/organizations"); //$NON-NLS-1$
 
 			GetMethod getMethod = new GetMethod(infoURI.toString());
-			HttpUtil.configureHttpMethod(getMethod, target);
+			HttpUtil.configureHttpMethod(getMethod, target.getCloud());
 			ServerStatus getStatus = HttpUtil.executeMethod(getMethod);
 			if (!getStatus.isOK())
 				return getStatus;

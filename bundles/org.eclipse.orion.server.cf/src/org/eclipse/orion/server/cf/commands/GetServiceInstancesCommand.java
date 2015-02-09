@@ -63,7 +63,7 @@ public class GetServiceInstancesCommand extends AbstractCFCommand {
 
 				GetMethod getServiceInstancesMethod = new GetMethod(serviceInstancesURI.toString());
 				getServiceInstancesMethod.setQueryString(pa);
-				HttpUtil.configureHttpMethod(getServiceInstancesMethod, target);
+				HttpUtil.configureHttpMethod(getServiceInstancesMethod, target.getCloud());
 
 				/* send request */
 				ServerStatus jobStatus = HttpUtil.executeMethod(getServiceInstancesMethod);

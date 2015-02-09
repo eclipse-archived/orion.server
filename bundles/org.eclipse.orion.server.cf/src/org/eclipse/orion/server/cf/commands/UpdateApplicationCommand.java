@@ -56,7 +56,7 @@ public class UpdateApplicationCommand extends AbstractCFCommand {
 			URI appURI = targetURI.resolve(application.getAppJSON().getString(CFProtocolConstants.V2_KEY_URL));
 
 			PutMethod updateApplicationMethod = new PutMethod(appURI.toString());
-			HttpUtil.configureHttpMethod(updateApplicationMethod, target);
+			HttpUtil.configureHttpMethod(updateApplicationMethod, target.getCloud());
 			updateApplicationMethod.setQueryString("async=true&inline-relations-depth=1"); //$NON-NLS-1$
 
 			/* set request body */

@@ -49,7 +49,7 @@ public class GetAppCommand extends AbstractCFCommand {
 			String appsUrl = target.getSpace().getCFJSON().getJSONObject("entity").getString("apps_url");
 			URI appsURI = targetURI.resolve(appsUrl);
 			GetMethod getAppsMethod = new GetMethod(appsURI.toString());
-			HttpUtil.configureHttpMethod(getAppsMethod, target);
+			HttpUtil.configureHttpMethod(getAppsMethod, target.getCloud());
 			getAppsMethod.setQueryString("q=name:" + URLEncoder.encode(name, "UTF8") + "&inline-relations-depth=1");
 
 			ServerStatus getStatus = HttpUtil.executeMethod(getAppsMethod);
@@ -68,7 +68,7 @@ public class GetAppCommand extends AbstractCFCommand {
 			URI summaryAppURI = targetURI.resolve(summaryAppUrl);
 
 			GetMethod getSummaryMethod = new GetMethod(summaryAppURI.toString());
-			HttpUtil.configureHttpMethod(getSummaryMethod, target);
+			HttpUtil.configureHttpMethod(getSummaryMethod, target.getCloud());
 
 			getStatus = HttpUtil.executeMethod(getSummaryMethod);
 			if (!getStatus.isOK())

@@ -60,7 +60,7 @@ public class GetDomainsCommand extends AbstractCFCommand {
 			URI domainsURI = targetURI.resolve(domainsURL);
 
 			GetMethod getDomainsMethod = new GetMethod(domainsURI.toString());
-			HttpUtil.configureHttpMethod(getDomainsMethod, target);
+			HttpUtil.configureHttpMethod(getDomainsMethod, target.getCloud());
 			getDomainsMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 			ServerStatus getDomainStatus = HttpUtil.executeMethod(getDomainsMethod);
 

@@ -43,7 +43,7 @@ public class DeleteRouteCommand extends AbstractCFCommand {
 			URI routeURI = targetURI.resolve("/v2/routes/" + route.getGuid()); //$NON-NLS-1$
 
 			DeleteMethod deleteRouteMethod = new DeleteMethod(routeURI.toString());
-			HttpUtil.configureHttpMethod(deleteRouteMethod, target);
+			HttpUtil.configureHttpMethod(deleteRouteMethod, target.getCloud());
 			deleteRouteMethod.setQueryString("recursive=true"); //$NON-NLS-1$
 
 			ServerStatus status = HttpUtil.executeMethod(deleteRouteMethod);

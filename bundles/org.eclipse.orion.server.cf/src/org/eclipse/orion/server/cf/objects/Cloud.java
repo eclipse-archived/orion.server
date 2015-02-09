@@ -84,15 +84,18 @@ public class Cloud extends CFObject {
 
 	@Override
 	public int hashCode() {
+		System.out.println("h");
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((url == null) ? 0 : url.hashCode());
 		result = prime * result + ((manageUrl == null) ? 0 : manageUrl.hashCode());
+		result = prime * result + ((userId == null) ? 0 : userId.hashCode());
 		return result;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
+		System.out.println("e");
 		if (this == obj)
 			return true;
 		if (obj == null)
@@ -109,6 +112,11 @@ public class Cloud extends CFObject {
 			if (other.manageUrl != null)
 				return false;
 		} else if (!manageUrl.equals(other.manageUrl))
+			return false;
+		if (userId == null) {
+			if (other.userId != null)
+				return false;
+		} else if (!userId.equals(other.userId))
 			return false;
 		return true;
 	}

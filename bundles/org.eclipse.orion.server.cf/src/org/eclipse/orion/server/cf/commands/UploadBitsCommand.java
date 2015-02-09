@@ -108,7 +108,7 @@ public class UploadBitsCommand extends AbstractCFApplicationCommand {
 				/* check whether job has finished */
 				URI jobLocation = targetURI.resolve(resp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_URL));
 				GetMethod jobRequest = new GetMethod(jobLocation.toString());
-				HttpUtil.configureHttpMethod(jobRequest, target);
+				HttpUtil.configureHttpMethod(jobRequest, target.getCloud());
 
 				/* send request */
 				jobStatus = HttpUtil.executeMethod(jobRequest);

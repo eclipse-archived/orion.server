@@ -66,7 +66,7 @@ public class CreateRouteCommand extends AbstractCFCommand {
 			URI routesURI = targetURI.resolve("/v2/routes"); //$NON-NLS-1$
 
 			PostMethod createRouteMethod = new PostMethod(routesURI.toString());
-			HttpUtil.configureHttpMethod(createRouteMethod, target);
+			HttpUtil.configureHttpMethod(createRouteMethod, target.getCloud());
 
 			/* set request body */
 			JSONObject routeRequest = new JSONObject();

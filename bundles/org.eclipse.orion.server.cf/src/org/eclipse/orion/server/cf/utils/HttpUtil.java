@@ -19,7 +19,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.objects.Cloud;
-import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -29,17 +28,6 @@ public class HttpUtil {
 	 * Default socket connection timeout.
 	 */
 	private static final int DEFAULT_SOCKET_TIMEOUT = 300000;//five minutes
-
-	public static void configureHttpMethod(HttpMethod method, Target target) throws JSONException {
-		method.addRequestHeader(new Header("Accept", "application/json"));
-		method.addRequestHeader(new Header("Content-Type", "application/json"));
-		//set default socket timeout for connection
-		HttpMethodParams params = method.getParams();
-		params.setSoTimeout(DEFAULT_SOCKET_TIMEOUT);
-		method.setParams(params);
-		if (target.getCloud().getAccessToken() != null)
-			method.addRequestHeader(new Header("Authorization", "bearer " + target.getCloud().getAccessToken().getString("access_token")));
-	}
 
 	public static void configureHttpMethod(HttpMethod method, Cloud cloud) throws JSONException {
 		method.addRequestHeader(new Header("Accept", "application/json"));
@@ -53,7 +41,6 @@ public class HttpUtil {
 	}
 
 	public static ServerStatus executeMethod(HttpMethodBase method) throws HttpException, IOException, JSONException {
-
 		try {
 			int code = CFActivator.getDefault().getHttpClient().executeMethod(method);
 

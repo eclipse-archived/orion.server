@@ -59,7 +59,7 @@ public class StartAppCommand extends AbstractCFCommand {
 			URI appURI = targetURI.resolve(appUrl);
 
 			PutMethod startMethod = new PutMethod(appURI.toString());
-			HttpUtil.configureHttpMethod(startMethod, target);
+			HttpUtil.configureHttpMethod(startMethod, target.getCloud());
 			startMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 
 			JSONObject startCommand = new JSONObject();
@@ -96,7 +96,7 @@ public class StartAppCommand extends AbstractCFCommand {
 				URI appInstancesURI = targetURI.resolve(appInstancesUrl);
 
 				GetMethod getInstancesMethod = new GetMethod(appInstancesURI.toString());
-				HttpUtil.configureHttpMethod(getInstancesMethod, target);
+				HttpUtil.configureHttpMethod(getInstancesMethod, target.getCloud());
 
 				checkAppStatus = HttpUtil.executeMethod(getInstancesMethod);
 				if (!checkAppStatus.isOK()) {

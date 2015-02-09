@@ -378,7 +378,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 		URI appsURI = URIUtil.toURI(target.getUrl()).resolve(appsUrl);
 
 		GetMethod getAppsMethod = new GetMethod(appsURI.toString());
-		HttpUtil.configureHttpMethod(getAppsMethod, target);
+		HttpUtil.configureHttpMethod(getAppsMethod, target.getCloud());
 		getAppsMethod.setQueryString("inline-relations-depth=2"); //$NON-NLS-1$
 
 		ServerStatus getAppsStatus = HttpUtil.executeMethod(getAppsMethod);

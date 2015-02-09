@@ -10,14 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-
 import java.net.URI;
 import java.net.URL;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.jobs.CFJob;
@@ -75,7 +74,7 @@ public class SpacesHandlerV1 extends AbstractRESTHandler<Space> {
 					URI orgsURI = targetURI.resolve("/v2/spaces/" + spaceId);
 
 					GetMethod getDomainsMethod = new GetMethod(orgsURI.toString());
-					HttpUtil.configureHttpMethod(getDomainsMethod, target);
+					HttpUtil.configureHttpMethod(getDomainsMethod, target.getCloud());
 					getDomainsMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 
 					ServerStatus status = HttpUtil.executeMethod(getDomainsMethod);

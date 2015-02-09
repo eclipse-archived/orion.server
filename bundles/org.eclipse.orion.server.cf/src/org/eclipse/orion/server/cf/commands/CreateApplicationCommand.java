@@ -57,7 +57,7 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 			URI appsURI = targetURI.resolve("/v2/apps"); //$NON-NLS-1$
 
 			PostMethod createAppMethod = new PostMethod(appsURI.toString());
-			HttpUtil.configureHttpMethod(createAppMethod, target);
+			HttpUtil.configureHttpMethod(createAppMethod, target.getCloud());
 
 			/* set request body */
 			JSONObject createAppRequst = new JSONObject();

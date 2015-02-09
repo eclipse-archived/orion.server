@@ -46,7 +46,7 @@ public class UnmapRouteCommand extends AbstractCFCommand {
 			/* unmap route from application */
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			DeleteMethod unmapRouteMethod = new DeleteMethod(targetURI.resolve("/v2/apps/" + app.getGuid() + "/routes/" + route.getGuid()).toString()); //$NON-NLS-1$//$NON-NLS-2$
-			HttpUtil.configureHttpMethod(unmapRouteMethod, target);
+			HttpUtil.configureHttpMethod(unmapRouteMethod, target.getCloud());
 			return HttpUtil.executeMethod(unmapRouteMethod);
 
 		} catch (Exception e) {

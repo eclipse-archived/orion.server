@@ -64,7 +64,7 @@ public class GetRoutesCommand extends AbstractCFCommand {
 			URI routesURI = targetURI.resolve(routesURL);
 
 			GetMethod getRoutesMethod = new GetMethod(routesURI.toString());
-			HttpUtil.configureHttpMethod(getRoutesMethod, target);
+			HttpUtil.configureHttpMethod(getRoutesMethod, target.getCloud());
 			getRoutesMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 
 			ServerStatus getRouteStatus = HttpUtil.executeMethod(getRoutesMethod);

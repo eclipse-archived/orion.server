@@ -42,7 +42,7 @@ public class GetServiceCommand extends AbstractCFCommand {
 			URI serviceInstanceURI = targetURI.resolve("/v2/services/" + serviceGuid); //$NON-NLS-1$//$NON-NLS-2$
 
 			GetMethod getServiceMethod = new GetMethod(serviceInstanceURI.toString());
-			HttpUtil.configureHttpMethod(getServiceMethod, target);
+			HttpUtil.configureHttpMethod(getServiceMethod, target.getCloud());
 
 			ServerStatus getStatus = HttpUtil.executeMethod(getServiceMethod);
 			if (!getStatus.isOK())

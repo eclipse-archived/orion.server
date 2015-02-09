@@ -57,7 +57,7 @@ public class DeleteApplicationCommand extends AbstractCFCommand {
 			String appsUrl = target.getSpace().getCFJSON().getJSONObject("entity").getString("apps_url"); //$NON-NLS-1$//$NON-NLS-2$
 			URI appsURI = targetURI.resolve(appsUrl);
 			GetMethod getAppsMethod = new GetMethod(appsURI.toString());
-			HttpUtil.configureHttpMethod(getAppsMethod, target);
+			HttpUtil.configureHttpMethod(getAppsMethod, target.getCloud());
 			getAppsMethod.setQueryString("q=name:" + appName + "&inline-relations-depth=1"); //$NON-NLS-1$ //$NON-NLS-2$
 
 			ServerStatus appsStatus = HttpUtil.executeMethod(getAppsMethod);
@@ -77,7 +77,7 @@ public class DeleteApplicationCommand extends AbstractCFCommand {
 				URI summaryAppURI = targetURI.resolve(summaryAppUrl);
 
 				GetMethod getSummaryMethod = new GetMethod(summaryAppURI.toString());
-				HttpUtil.configureHttpMethod(getSummaryMethod, target);
+				HttpUtil.configureHttpMethod(getSummaryMethod, target.getCloud());
 
 				ServerStatus getStatus = HttpUtil.executeMethod(getSummaryMethod);
 				if (!getStatus.isOK())
@@ -101,7 +101,7 @@ public class DeleteApplicationCommand extends AbstractCFCommand {
 			URI appURI = targetURI.resolve("/v2/apps/" + application.getGuid()); //$NON-NLS-1$
 
 			DeleteMethod deleteAppMethod = new DeleteMethod(appURI.toString());
-			HttpUtil.configureHttpMethod(deleteAppMethod, target);
+			HttpUtil.configureHttpMethod(deleteAppMethod, target.getCloud());
 			deleteAppMethod.setQueryString("recursive=true"); //$NON-NLS-1$
 
 			ServerStatus status = HttpUtil.executeMethod(deleteAppMethod);

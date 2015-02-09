@@ -47,7 +47,7 @@ public class StopAppCommand extends AbstractCFCommand {
 			URI appURI = targetURI.resolve(appUrl);
 
 			PutMethod stopMethod = new PutMethod(appURI.toString());
-			HttpUtil.configureHttpMethod(stopMethod, target);
+			HttpUtil.configureHttpMethod(stopMethod, target.getCloud());
 			stopMethod.setQueryString("inline-relations-depth=1");
 
 			JSONObject stopComand = new JSONObject();

@@ -59,7 +59,7 @@ public class FindRouteCommand extends AbstractCFCommand {
 			URI routesURI = targetURI.resolve("/v2/routes"); //$NON-NLS-1$
 
 			GetMethod findRouteMethod = new GetMethod(routesURI.toString());
-			HttpUtil.configureHttpMethod(findRouteMethod, target);
+			HttpUtil.configureHttpMethod(findRouteMethod, target.getCloud());
 			findRouteMethod.setQueryString("inline-relations-depth=1&q=host:" + appHost + ";domain_guid:" + domainGUID); //$NON-NLS-1$ //$NON-NLS-2$
 
 			ServerStatus status = HttpUtil.executeMethod(findRouteMethod);
