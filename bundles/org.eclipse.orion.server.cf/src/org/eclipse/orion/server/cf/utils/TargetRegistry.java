@@ -12,10 +12,7 @@ package org.eclipse.orion.server.cf.utils;
 
 import java.net.URL;
 import java.util.*;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.server.cf.CFExtServiceHelper;
-import org.eclipse.orion.server.cf.commands.SetOrgCommand;
-import org.eclipse.orion.server.cf.commands.SetSpaceCommand;
 import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -41,6 +38,11 @@ public class TargetRegistry {
 	public Target getTarget(String userId, URL url, String org, String space) {
 		UserClouds userClouds = getUserClouds(userId);
 		return userClouds.getTarget(url, org, space);
+	}
+
+	public void addTarget(Target target) {
+		UserClouds userClouds = getUserClouds(target.getCloud().getUserId());
+		userClouds.addTarget(target);
 	}
 
 	public Cloud getCloud(String userId, URL url) {
@@ -151,22 +153,13 @@ public class TargetRegistry {
 					}
 				}
 			}
+			return null;
+		}
 
-			Cloud cloud = getCloud(url);
-			Target target = new Target(cloud);
-			IStatus result = new SetOrgCommand(target, org).doIt();
-			if (!result.isOK())
-				return null;
-
-			result = new SetSpaceCommand(target, space).doIt();
-			if (!result.isOK())
-				return null;
-
+		private void addTarget(Target target) {
 			synchronized (targets) {
 				targets.add(target);
 			}
-
-			return target;
 		}
 
 		private void setDefaulTarget(Target target) {

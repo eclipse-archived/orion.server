@@ -46,10 +46,22 @@ public class ComputeTargetCommand implements ICFCommand {
 				// do nothing
 			}
 		}
-
-		this.target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl, org, space);
-		if (target == null) {
+		if (targetUrl == null || org == null || space == null) {
 			return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
+		}
+
+		target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl, org, space);
+		if (target == null) {
+			target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
+			IStatus result = new SetOrgCommand(target, org).doIt();
+			if (!result.isOK())
+				return result;
+
+			result = new SetSpaceCommand(target, space).doIt();
+			if (!result.isOK())
+				return result;
+
+			CFActivator.getDefault().getTargetRegistry().addTarget(target);
 		}
 		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 	}
