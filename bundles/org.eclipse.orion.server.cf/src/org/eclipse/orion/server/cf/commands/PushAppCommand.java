@@ -53,7 +53,7 @@ public class PushAppCommand extends AbstractCFCommand {
 
 		/* multi server status */
 		MultiServerStatus status = new MultiServerStatus();
-
+		GetAppCommand.expire(target, app.getName());
 		try {
 
 			/* set up the application */

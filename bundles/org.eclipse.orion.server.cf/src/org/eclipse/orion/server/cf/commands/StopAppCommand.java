@@ -56,6 +56,7 @@ public class StopAppCommand extends AbstractCFCommand {
 			StringRequestEntity requestEntity = new StringRequestEntity(stopComand.toString(), CFProtocolConstants.JSON_CONTENT_TYPE, "UTF-8");
 			stopMethod.setRequestEntity(requestEntity);
 
+			GetAppCommand.expire(target, app.getName());
 			return HttpUtil.executeMethod(stopMethod);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$

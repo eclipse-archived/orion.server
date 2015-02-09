@@ -50,7 +50,6 @@ public class UpdateApplicationCommand extends AbstractCFCommand {
 	@Override
 	protected ServerStatus _doIt() {
 		try {
-
 			/* get application URL */
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			URI appURI = targetURI.resolve(application.getAppJSON().getString(CFProtocolConstants.V2_KEY_URL));
@@ -73,7 +72,7 @@ public class UpdateApplicationCommand extends AbstractCFCommand {
 			ServerStatus status = HttpUtil.executeMethod(updateApplicationMethod);
 			if (!status.isOK())
 				return status;
-
+			GetAppCommand.expire(target, application.getName());
 			return status;
 
 		} catch (Exception e) {

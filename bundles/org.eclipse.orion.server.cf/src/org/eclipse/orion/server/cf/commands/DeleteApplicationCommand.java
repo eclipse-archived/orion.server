@@ -105,6 +105,7 @@ public class DeleteApplicationCommand extends AbstractCFCommand {
 			deleteAppMethod.setQueryString("recursive=true"); //$NON-NLS-1$
 
 			ServerStatus status = HttpUtil.executeMethod(deleteAppMethod);
+			GetAppCommand.expire(target, application.getName());
 			return status;
 
 		} catch (Exception e) {

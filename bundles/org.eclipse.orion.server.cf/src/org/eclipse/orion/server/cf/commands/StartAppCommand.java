@@ -51,7 +51,7 @@ public class StartAppCommand extends AbstractCFCommand {
 
 	public ServerStatus _doIt() {
 		/* multi server status */
-
+		GetAppCommand.expire(target, app.getName());
 		try {
 			URI targetURI = URIUtil.toURI(target.getUrl());
 
@@ -71,6 +71,8 @@ public class StartAppCommand extends AbstractCFCommand {
 			ServerStatus startStatus = HttpUtil.executeMethod(startMethod);
 			if (!startStatus.isOK())
 				return startStatus;
+
+			GetAppCommand.expire(target, app.getName());
 
 			if (timeout < 0) {
 				/* extract user defined timeout if present */

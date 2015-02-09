@@ -12,6 +12,7 @@ package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
 import java.net.URLEncoder;
+import java.util.*;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
@@ -26,11 +27,30 @@ import org.slf4j.LoggerFactory;
 
 public class GetAppCommand extends AbstractCFCommand {
 
+	private static final int CACHE_EXPIRES_MS = 30000;
+	private static final int MAX_CACHE_SIZE = 50;
+
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private String commandName;
 	private String name;
 	private App app;
+
+	static Map<List<Object>, Expirable<App>> appCache = Collections.synchronizedMap(new HashMap<List<Object>, Expirable<App>>());
+
+	class Expirable<T> {
+		T value;
+		long expires;
+
+		public Expirable(T value, long expires) {
+			this.value = value;
+			this.expires = expires;
+		}
+
+		public boolean valid() {
+			return System.currentTimeMillis() < expires;
+		}
+	}
 
 	public GetAppCommand(Target target, String name) {
 		super(target);
@@ -41,8 +61,39 @@ public class GetAppCommand extends AbstractCFCommand {
 		this.name = name;
 	}
 
+	public static void expire(Target target, String name) {
+		appCache.remove(Arrays.asList(target, name));
+	}
+
 	public ServerStatus _doIt() {
 		try {
+			if (appCache.size() > MAX_CACHE_SIZE) {
+				synchronized (appCache) {
+					for (Iterator<Expirable<App>> it = appCache.values().iterator(); it.hasNext();) {
+						Expirable<App> value = it.next();
+						if (!value.valid()) {
+							it.remove();
+						}
+					}
+					if (appCache.size() > MAX_CACHE_SIZE) {
+						appCache.clear();
+					}
+				}
+			}
+
+			List<Object> key = Arrays.asList(target, name);
+			Expirable<App> expirable = appCache.get(key);
+			if (expirable != null) {
+				if (expirable.valid()) {
+					app = expirable.value;
+				} else {
+					appCache.remove(key);
+				}
+			}
+
+			if (app != null) {
+				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, this.app.toJSON());
+			}
 			URI targetURI = URIUtil.toURI(target.getUrl());
 
 			// Find the app
@@ -79,6 +130,7 @@ public class GetAppCommand extends AbstractCFCommand {
 			this.app = new App();
 			this.app.setAppJSON(appJSON);
 			this.app.setSummaryJSON(summaryJSON);
+			appCache.put(key, new Expirable<App>(app, System.currentTimeMillis() + CACHE_EXPIRES_MS));
 
 			// GetDebugAppCommand getDebugAppCommand = new GetDebugAppCommand(target, app);
 			// ServerStatus getDebugStatus = (ServerStatus) getDebugAppCommand.doIt();
