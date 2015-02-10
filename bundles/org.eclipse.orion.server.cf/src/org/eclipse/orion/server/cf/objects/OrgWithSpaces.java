@@ -14,12 +14,19 @@ import java.util.Iterator;
 import java.util.List;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
+import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.json.*;
 
 @ResourceDescription(type = Org.TYPE)
 public class OrgWithSpaces extends Org {
+
+	protected static final ResourceShape ORGWITHSPACES_RESOURCE_SHAPE = new ResourceShape();
+	{
+		ORGWITHSPACES_RESOURCE_SHAPE.setProperties(DEFAULT_RESOURCE_SHAPE.getProperties());
+		ORGWITHSPACES_RESOURCE_SHAPE.addProperty(new Property(CFProtocolConstants.KEY_SPACES));
+	}
 
 	private List<Space> spaces;
 
@@ -50,8 +57,7 @@ public class OrgWithSpaces extends Org {
 
 	@Override
 	public JSONObject toJSON() throws JSONException {
-		DEFAULT_RESOURCE_SHAPE.addProperty(new Property(CFProtocolConstants.KEY_SPACES));
-		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
+		return jsonSerializer.serialize(this, ORGWITHSPACES_RESOURCE_SHAPE);
 	}
 
 }
