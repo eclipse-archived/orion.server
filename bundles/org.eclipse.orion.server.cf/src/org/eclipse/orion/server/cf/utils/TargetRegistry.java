@@ -35,16 +35,6 @@ public class TargetRegistry {
 		return userClouds.getTarget(url);
 	}
 
-	public Target getTarget(String userId, URL url, String org, String space) {
-		UserClouds userClouds = getUserClouds(userId);
-		return userClouds.getTarget(url, org, space);
-	}
-
-	public void addTarget(Target target) {
-		UserClouds userClouds = getUserClouds(target.getCloud().getUserId());
-		userClouds.addTarget(target);
-	}
-
 	public Cloud getCloud(String userId, URL url) {
 		UserClouds userClouds = getUserClouds(userId);
 		return userClouds.getCloud(url);
@@ -79,14 +69,11 @@ public class TargetRegistry {
 		private String userId;
 
 		private Map<URL, Cloud> userCloudMap;
-		private Set<Target> targets;
-
 		private Target defaultTarget;
 
 		private UserClouds(String userId) {
 			this.userId = userId;
 			this.userCloudMap = Collections.synchronizedMap(new HashMap<URL, Cloud>());
-			this.targets = new HashSet<Target>();
 		}
 
 		private Cloud getCloud(URL url) {
@@ -138,28 +125,6 @@ public class TargetRegistry {
 			}
 			Cloud cloud = getCloud(url);
 			return new Target(cloud);
-		}
-
-		private Target getTarget(URL url, String org, String space) {
-			if (url == null || org == null || space == null) {
-				return null;
-			}
-			url = URLUtil.normalizeURL(url);
-
-			synchronized (targets) {
-				for (Target t : targets) {
-					if (org.equals(t.getOrg().getName()) && space.equals(t.getSpace().getName()) && url.equals(t.getUrl())) {
-						return new Target(t.getCloud(), t.getOrg(), t.getSpace());
-					}
-				}
-			}
-			return null;
-		}
-
-		private void addTarget(Target target) {
-			synchronized (targets) {
-				targets.add(target);
-			}
 		}
 
 		private void setDefaulTarget(Target target) {

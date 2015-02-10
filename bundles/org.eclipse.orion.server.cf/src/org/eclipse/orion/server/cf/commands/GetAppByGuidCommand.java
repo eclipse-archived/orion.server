@@ -74,6 +74,7 @@ public class GetAppByGuidCommand extends AbstractCFCommand {
 			this.app.setAppJSON(appJSON);
 			this.app.setSummaryJSON(summaryJSON);
 			this.app.setGuid(appJSON.getString("guid"));
+			this.app.setName(summaryJSON.getString("name"));
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, this.app.toJSON());
 		} catch (Exception e) {

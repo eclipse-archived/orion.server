@@ -12,10 +12,12 @@ package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.server.cf.ExpiryCache;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -28,7 +30,7 @@ import org.slf4j.LoggerFactory;
 public class GetAppCommand extends AbstractCFCommand {
 
 	private static final int CACHE_EXPIRES_MS = 30000;
-	private static final int MAX_CACHE_SIZE = 50;
+	private static final int MAX_CACHE_SIZE = 100;
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
@@ -36,28 +38,13 @@ public class GetAppCommand extends AbstractCFCommand {
 	private String name;
 	private App app;
 
-	static Map<List<Object>, Expirable<App>> appCache = Collections.synchronizedMap(new HashMap<List<Object>, Expirable<App>>());
-
-	class Expirable<T> {
-		T value;
-		long expires;
-
-		public Expirable(T value, long expires) {
-			this.value = value;
-			this.expires = expires;
-		}
-
-		public boolean valid() {
-			return System.currentTimeMillis() < expires;
-		}
-	}
+	static ExpiryCache<App> appCache = new ExpiryCache<App>(MAX_CACHE_SIZE, CACHE_EXPIRES_MS);
 
 	public GetAppCommand(Target target, String name) {
 		super(target);
 
 		String[] bindings = {name};
 		this.commandName = NLS.bind("Get application {0}", bindings);
-
 		this.name = name;
 	}
 
@@ -67,30 +54,8 @@ public class GetAppCommand extends AbstractCFCommand {
 
 	public ServerStatus _doIt() {
 		try {
-			if (appCache.size() > MAX_CACHE_SIZE) {
-				synchronized (appCache) {
-					for (Iterator<Expirable<App>> it = appCache.values().iterator(); it.hasNext();) {
-						Expirable<App> value = it.next();
-						if (!value.valid()) {
-							it.remove();
-						}
-					}
-					if (appCache.size() > MAX_CACHE_SIZE) {
-						appCache.clear();
-					}
-				}
-			}
-
 			List<Object> key = Arrays.asList(target, name);
-			Expirable<App> expirable = appCache.get(key);
-			if (expirable != null) {
-				if (expirable.valid()) {
-					app = expirable.value;
-				} else {
-					appCache.remove(key);
-				}
-			}
-
+			app = appCache.get(key);
 			if (app != null) {
 				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, this.app.toJSON());
 			}
@@ -130,14 +95,9 @@ public class GetAppCommand extends AbstractCFCommand {
 			this.app = new App();
 			this.app.setAppJSON(appJSON);
 			this.app.setSummaryJSON(summaryJSON);
-			appCache.put(key, new Expirable<App>(app, System.currentTimeMillis() + CACHE_EXPIRES_MS));
-
-			// GetDebugAppCommand getDebugAppCommand = new GetDebugAppCommand(target, app);
-			// ServerStatus getDebugStatus = (ServerStatus) getDebugAppCommand.doIt();
-			//
-			// JSONObject totalAppJSON = this.app.toJSON();
-			// if (getDebugStatus.isOK())
-			//	totalAppJSON.put("debug", getDebugStatus.getJsonData());
+			this.app.setName(summaryJSON.getString("name"));
+			this.app.setGuid(summaryJSON.getString("guid"));
+			appCache.put(key, app);
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, this.app.toJSON());
 		} catch (Exception e) {

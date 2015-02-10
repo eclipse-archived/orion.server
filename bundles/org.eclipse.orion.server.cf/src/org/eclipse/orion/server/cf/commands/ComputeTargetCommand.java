@@ -11,11 +11,12 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.server.cf.CFActivator;
-import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.*;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -26,6 +27,9 @@ public class ComputeTargetCommand implements ICFCommand {
 	private String userId;
 	private JSONObject targetJSON;
 	private Target target;
+	private static final int CACHE_EXPIRES_MS = 60000 * 30;
+	private static final int MAX_CACHE_SIZE = 100;
+	static ExpiryCache<Target> targetCache = new ExpiryCache<Target>(MAX_CACHE_SIZE, CACHE_EXPIRES_MS);
 
 	public ComputeTargetCommand(String userId, JSONObject targetJSON) {
 		this.userId = userId;
@@ -50,7 +54,8 @@ public class ComputeTargetCommand implements ICFCommand {
 			return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
 		}
 
-		target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl, org, space);
+		List<Object> key = Arrays.asList(new Object[] {targetUrl, org, space});
+		target = targetCache.get(key);
 		if (target == null) {
 			target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
 			IStatus result = new SetOrgCommand(target, org).doIt();
@@ -61,7 +66,7 @@ public class ComputeTargetCommand implements ICFCommand {
 			if (!result.isOK())
 				return result;
 
-			CFActivator.getDefault().getTargetRegistry().addTarget(target);
+			targetCache.put(key, target);
 		}
 		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 	}
