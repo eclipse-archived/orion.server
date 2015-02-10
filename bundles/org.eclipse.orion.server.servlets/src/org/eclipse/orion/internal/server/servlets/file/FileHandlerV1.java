@@ -120,7 +120,10 @@ class FileHandlerV1 extends GenericFileHandler {
 	private void handlePutContents(HttpServletRequest request, ServletInputStream requestStream, HttpServletResponse response, IFileStore file)
 			throws IOException, CoreException, NoSuchAlgorithmException, JSONException {
 		String source = request.getParameter(ProtocolConstants.PARM_SOURCE);
-		file.getParent().mkdir(EFS.NONE, null);
+		if (!file.getParent().fetchInfo().exists()) {
+			// make sure the parent folder exists
+			file.getParent().mkdir(EFS.NONE, null);
+		}
 		if (source != null) {
 			// if source is specified, read contents from different URL rather than from this request stream
 			IOUtilities.pipe(new URL(source).openStream(), file.openOutputStream(EFS.NONE, null), true, true);
