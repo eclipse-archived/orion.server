@@ -38,16 +38,18 @@ public class UploadBitsCommand extends AbstractCFApplicationCommand {
 	private String commandName;
 	private IFileStore appStore;
 	private String deployedAppPackageName;
+	private String command;
 
 	private IDeploymentPackager packager;
 
-	public UploadBitsCommand(Target target, App app, IFileStore appStore, IDeploymentPackager packager) {
+	public UploadBitsCommand(Target target, App app, IFileStore appStore, IDeploymentPackager packager, String command) {
 		super(target, app);
 
 		String[] bindings = {app.getName(), app.getGuid()};
 		this.commandName = NLS.bind("Upload application {0} bits (guid: {1})", bindings);
 		this.appStore = appStore;
 		this.packager = packager;
+		this.command = command;
 	}
 
 	public String getDeployedAppPackageName() {
@@ -62,7 +64,7 @@ public class UploadBitsCommand extends AbstractCFApplicationCommand {
 		try {
 
 			/* upload project contents */
-			File appPackage = packager.getDeploymentPackage(appStore);
+			File appPackage = packager.getDeploymentPackage(super.getApplication(), appStore, command);
 			deployedAppPackageName = PackageUtils.getApplicationPackageType(appStore);
 
 			if (appPackage == null) {

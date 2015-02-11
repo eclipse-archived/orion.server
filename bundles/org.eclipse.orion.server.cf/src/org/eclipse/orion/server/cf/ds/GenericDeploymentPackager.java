@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.utils.PackageUtils;
 
 public class GenericDeploymentPackager implements IDeploymentPackager {
@@ -24,7 +25,7 @@ public class GenericDeploymentPackager implements IDeploymentPackager {
 	}
 
 	@Override
-	public File getDeploymentPackage(IFileStore contentLocation) throws IOException, CoreException {
+	public File getDeploymentPackage(App application, IFileStore contentLocation, String command) throws IOException, CoreException {
 		return PackageUtils.getApplicationPackage(contentLocation);
 	}
 }

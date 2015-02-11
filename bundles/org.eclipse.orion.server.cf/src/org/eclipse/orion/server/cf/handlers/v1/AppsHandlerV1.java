@@ -25,6 +25,7 @@ import org.eclipse.orion.server.cf.commands.*;
 import org.eclipse.orion.server.cf.ds.IDeploymentPackager;
 import org.eclipse.orion.server.cf.ds.IDeploymentService;
 import org.eclipse.orion.server.cf.jobs.CFJob;
+import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
@@ -33,8 +34,7 @@ import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.*;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -287,6 +287,8 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					}
 
 					/* instrument the manifest if required */
+
+					String command = findCommand(manifest);
 					ManifestUtils.instrumentManifest(manifest, instrumentationJSON);
 
 					app.setName(appName != null ? appName : manifestAppName);
@@ -298,7 +300,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 					if (packager == null)
 						packager = deploymentService.getDefaultDeplomentPackager();
 
-					status = new PushAppCommand(target, app, appStore, packager).doIt();
+					status = new PushAppCommand(target, app, appStore, packager, command).doIt();
 
 					if (!status.isOK())
 						return status;
@@ -328,6 +330,19 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 				}
 			}
 		};
+	}
+
+	protected String findCommand(ManifestParseTree manifestTree) throws JSONException {
+		String command = null;
+		try {
+			ManifestParseTree applications = manifestTree.get(ManifestConstants.APPLICATIONS);
+			ManifestParseTree application = applications.get(0);
+			command = application.get(ManifestConstants.COMMAND).getValue();
+		} catch (InvalidAccessException e) {
+			return null;
+		}
+
+		return command;
 	}
 
 	@Override

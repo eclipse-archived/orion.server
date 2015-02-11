@@ -17,6 +17,7 @@ import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.cf.ds.IDeploymentPackager;
+import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.json.*;
 
@@ -69,7 +70,7 @@ public class CFLauncherDeploymentPackager implements IDeploymentPackager {
 	}
 
 	@Override
-	public File getDeploymentPackage(IFileStore contentLocation) throws IOException, CoreException {
+	public File getDeploymentPackage(App application, IFileStore contentLocation, String command) throws IOException, CoreException {
 
 		/* require a package.json file present */
 		IFileStore packageStore = contentLocation.getChild(NodeJSConstants.PACKAGE_JSON);

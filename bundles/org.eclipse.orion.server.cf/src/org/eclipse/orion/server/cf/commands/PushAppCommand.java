@@ -38,6 +38,7 @@ public class PushAppCommand extends AbstractCFCommand {
 	private IFileStore appStore;
 	private String commandName;
 	private IDeploymentPackager packager;
+	private String command;
 
 	public PushAppCommand(Target target, App app, IFileStore appStore, IDeploymentPackager packager) {
 		super(target);
@@ -46,6 +47,16 @@ public class PushAppCommand extends AbstractCFCommand {
 		this.app = app;
 		this.appStore = appStore;
 		this.packager = packager;
+	}
+
+	public PushAppCommand(Target target, App app, IFileStore appStore, IDeploymentPackager packager, String command) {
+		super(target);
+		this.commandName = "Push application"; //$NON-NLS-1$
+
+		this.app = app;
+		this.appStore = appStore;
+		this.packager = packager;
+		this.command = command;
 	}
 
 	@Override
@@ -95,7 +106,7 @@ public class PushAppCommand extends AbstractCFCommand {
 				return status;
 
 			/* upload application contents */
-			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, appStore, packager);
+			UploadBitsCommand uploadBits = new UploadBitsCommand(target, app, appStore, packager, command);
 			multijobStatus = (ServerStatus) uploadBits.doIt(); /* FIXME: unsafe type cast */
 			status.add(multijobStatus);
 			if (!multijobStatus.isOK())

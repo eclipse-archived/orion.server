@@ -15,7 +15,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.utils.Packager;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.json.JSONObject;
@@ -27,7 +26,6 @@ import org.json.JSONObject;
 public class CFLauncherPackager extends Packager {
 
 	protected JSONObject packageJSON;
-	protected ManifestParseTree manifest;
 
 	public CFLauncherPackager(IFileStore base, JSONObject packageJSON) {
 		super(base);

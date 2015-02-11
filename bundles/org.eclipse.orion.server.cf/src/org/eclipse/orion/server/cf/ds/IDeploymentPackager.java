@@ -14,11 +14,12 @@ import java.io.File;
 import java.io.IOException;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.server.cf.objects.App;
 
 public interface IDeploymentPackager {
 
 	public String getId();
 
-	public File getDeploymentPackage(IFileStore contentLocation) throws IOException, CoreException;
+	public File getDeploymentPackage(App application, IFileStore contentLocation, String command) throws IOException, CoreException;
 
 }
