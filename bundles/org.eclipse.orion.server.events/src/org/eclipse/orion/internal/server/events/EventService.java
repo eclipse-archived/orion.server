@@ -50,10 +50,14 @@ public class EventService implements IEventService {
 	private volatile Map<String, Set<IMessageListener>>  messageListeners = new HashMap<String, Set<IMessageListener>>();
 	private Callback callback;
 	
+
+	/** Quality of Service level of 1 should be the default but just to make it explicit. **/
+	private static final int QOS = 1;
+	
 	private class Callback implements MqttCallback{
 		
 		public void connectionLost(Throwable e) {
-			logger.warn("Connection to MQTT broker was lost. Scheduling job to reconnect.");
+			logger.warn("Connection to MQTT broker was lost. Scheduling job to reconnect.", e);
 			new ReconnectMQTTClientJob(EventService.this).schedule();
 		}
 
@@ -132,6 +136,17 @@ public class EventService implements IEventService {
 			mqttConnectOptions.setPassword(password.toCharArray());
 		}
 		
+		/**
+         * If set to false both the client and server will maintain state across restarts of the client, the server and the connection. As state is maintained:
+    			Message delivery will be reliable meeting the specified QOS even if the client, server or connection are restarted.
+    			The server will treat a subscription as durable. 
+    			
+    			From Rabbit MQ documentation for the MQTT adapter:
+    			Durable (QoS1) subscriptions use durable queues. Whether the queues are auto-deleted is controlled 
+    			by the client's clean session flag. Clients with clean sessions use auto-deleted queues, others use non-auto-deleted ones.
+         */
+		mqttConnectOptions.setCleanSession(false);
+		
 		Properties sslProperties = new Properties();
 		String keyType = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_KEY_TYPE, null);
 		if(keyType!=null){
@@ -167,7 +182,7 @@ public class EventService implements IEventService {
 	
 	private void connectMQTTClient() throws MqttException {
 		mqttClient.connect(mqttConnectOptions);
-		logger.info("MQTT client connected");
+		logger.info("MQTT client connected.");
 	}
 	
 	public void reconnectMQTTClient() {
@@ -244,7 +259,9 @@ public class EventService implements IEventService {
 					logger.debug("Could not subscribe to topic " + topic + " since MqttClient is disconnected");
 				}
 				else {
-					mqttClient.subscribe(topic);
+					/** Quality of Service level of 1 should be the default but just to make it explicit.  Why QoS 1? 
+					 So the queue is not auto-deleted on disconnection. **/
+					mqttClient.subscribe(topic, QOS);
 				}
 			} catch (MqttException e) {
 				logger.warn("Failure subscribing on topic: " + topic, e); //$NON-NLS-1$ //$NON-NLS-2$
