@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 IBM Corporation and others 
+ * Copyright (c) 2013, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,8 +20,6 @@ import org.eclipse.orion.server.cf.utils.TargetRegistry;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The activator class controls the plug-in life cycle
@@ -40,8 +38,6 @@ public class CFActivator implements BundleActivator {
 
 	private ServiceTracker<DeploymentService, IDeploymentService> deploymentServiceTracker;
 	private ServiceTracker<CFDeploymentExtService, ICFDeploymentExtService> cfDeploymentExtServiceTracker;
-
-	private final Logger logger = LoggerFactory.getLogger(CFActivator.PI_CF);
 
 	/*
 	 * (non-Javadoc)
