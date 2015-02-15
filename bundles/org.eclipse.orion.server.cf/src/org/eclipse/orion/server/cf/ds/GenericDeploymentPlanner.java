@@ -83,14 +83,19 @@ public final class GenericDeploymentPlanner implements IDeploymentPlanner {
 	}
 
 	@Override
-	public Plan getDeploymentPlan(IFileStore contentLocation, ManifestParseTree manifest) {
+	public Plan getDeploymentPlan(IFileStore contentLocation, ManifestParseTree manifest, IFileStore manifestStore) {
 
 		try {
 
 			String applicationName = getApplicationName(contentLocation);
+			String manifestPath;
 
-			if (manifest == null)
+			if (manifest == null) {
 				manifest = ManifestUtils.createBoilerplate(applicationName);
+				manifestPath = null;
+			} else {
+				manifestPath = contentLocation.toURI().relativize(manifestStore.toURI()).toString();
+			}
 
 			/* set up generic defaults */
 			ManifestParseTree application = manifest.get(ManifestConstants.APPLICATIONS).get(0);
@@ -103,7 +108,7 @@ public final class GenericDeploymentPlanner implements IDeploymentPlanner {
 			if (procfileCommand != null)
 				set(application, ManifestConstants.COMMAND, procfileCommand);
 
-			return new Plan(getId(), getWizardId(), TYPE, manifest);
+			return new Plan(getId(), getWizardId(), TYPE, manifest, manifestPath);
 
 		} catch (Exception ex) {
 			/* Nobody expected the Spanish inquisition */

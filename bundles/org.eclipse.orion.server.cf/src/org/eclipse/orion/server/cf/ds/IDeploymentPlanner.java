@@ -20,6 +20,6 @@ public interface IDeploymentPlanner {
 
 	public String getWizardId();
 
-	public Plan getDeploymentPlan(IFileStore contentLocation, ManifestParseTree manifest);
+	public Plan getDeploymentPlan(IFileStore contentLocation, ManifestParseTree manifest, IFileStore manifestStore);
 
 }

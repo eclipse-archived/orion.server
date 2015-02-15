@@ -38,6 +38,7 @@ public class ParseManifestCommand extends AbstractCFCommand {
 
 	private ManifestParseTree manifest;
 	private IFileStore appStore;
+	private IFileStore manifestStore;
 
 	private Analyzer applicationAnalyzer;
 	private boolean strict;
@@ -65,6 +66,10 @@ public class ParseManifestCommand extends AbstractCFCommand {
 
 	public IFileStore getAppStore() {
 		return appStore;
+	}
+
+	public IFileStore getManifestStore() {
+		return manifestStore;
 	}
 
 	/* checks whether the given path may be access by the user */
@@ -106,7 +111,7 @@ public class ParseManifestCommand extends AbstractCFCommand {
 				return cannotFindManifest(contentPath);
 
 			/* lookup the manifest description */
-			IFileStore manifestStore = strict ? fileStore : fileStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
+			manifestStore = strict ? fileStore : fileStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
 			if (!manifestStore.fetchInfo().exists())
 				return cannotFindManifest(contentPath);
 

@@ -66,15 +66,17 @@ public class PlansHandlerV1 extends AbstractRESTHandler<Plan> {
 
 					/* check if the application has a manifest */
 					ManifestParseTree manifest = null;
+					IFileStore manifestStore;
 					ParseManifestCommand parseManifestCommand = new ParseManifestCommand(null, userId, contentPath.toString()); /* TODO: set target */
 					parseManifestCommand.setApplicationAnalyzer(new ApplicationReconstructor());
 
 					IStatus status = parseManifestCommand.doIt();
+					manifestStore = parseManifestCommand.getManifestStore();
 					if (status.isOK())
 						manifest = parseManifestCommand.getManifest();
 
 					IDeploymentService deploymentService = CFActivator.getDefault().getDeploymentService();
-					List<Plan> plans = deploymentService.getDeploymentPlans(contentLocation, manifest);
+					List<Plan> plans = deploymentService.getDeploymentPlans(contentLocation, manifest, manifestStore);
 
 					JSONArray children = new JSONArray();
 					for (Plan plan : plans)

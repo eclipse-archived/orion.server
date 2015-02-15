@@ -186,4 +186,6 @@ public class CFProtocolConstants {
 	public static final String KEY_REQUIRED = "Required"; //$NON-NLS-1$
 
 	public static final String KEY_APPLICATION_TYPE = "ApplicationType"; //$NON-NLS-1$
+
+	public static final String KEY_MANIFEST_PATH = "ManifestPath"; //$NON-NLS-1$
 }

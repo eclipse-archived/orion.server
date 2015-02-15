@@ -39,7 +39,8 @@ public class Plan extends CFObject {
 				new Property(CFProtocolConstants.KEY_APPLICATION_TYPE), //
 				new Property(CFProtocolConstants.KEY_DEPLOYMENT_WIZARD), //
 				new Property(CFProtocolConstants.KEY_REQUIRED), //
-				new Property(Manifest.TYPE)};
+				new Property(Manifest.TYPE), //
+				new Property(CFProtocolConstants.KEY_MANIFEST_PATH)};
 
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
@@ -48,14 +49,16 @@ public class Plan extends CFObject {
 	protected String wizard;
 	protected String applicationType;
 	protected ManifestParseTree manifest;
+	protected String manifestPath;
 	protected List<String> required;
 
-	public Plan(String planner, String wizard, String applicationType, ManifestParseTree manifest) {
+	public Plan(String planner, String wizard, String applicationType, ManifestParseTree manifest, String manifestPath) {
 		this.required = new ArrayList<String>();
 		this.applicationType = applicationType;
 		this.planner = planner;
 		this.wizard = wizard;
 		this.manifest = manifest;
+		this.manifestPath = manifestPath;
 	}
 
 	@PropertyDescription(name = CFProtocolConstants.KEY_APPLICATION_TYPE)
@@ -71,6 +74,11 @@ public class Plan extends CFObject {
 	@PropertyDescription(name = CFProtocolConstants.KEY_DEPLOYMENT_WIZARD)
 	public String getWidget() {
 		return wizard;
+	}
+
+	@PropertyDescription(name = CFProtocolConstants.KEY_MANIFEST_PATH)
+	public String getManifestPath() {
+		return manifestPath;
 	}
 
 	public ManifestParseTree getManifest() {

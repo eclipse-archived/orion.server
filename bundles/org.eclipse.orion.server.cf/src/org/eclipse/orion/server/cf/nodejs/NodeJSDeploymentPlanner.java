@@ -134,7 +134,7 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 	}
 
 	@Override
-	public Plan getDeploymentPlan(IFileStore contentLocation, ManifestParseTree manifest) {
+	public Plan getDeploymentPlan(IFileStore contentLocation, ManifestParseTree manifest, IFileStore manifestStore) {
 
 		/* a present package.json file determines a node.js application */
 		IFileStore packageStore = contentLocation.getChild(NodeJSConstants.PACKAGE_JSON);
@@ -146,9 +146,13 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 			return null;
 
 		try {
-
-			if (manifest == null)
+			String manifestPath;
+			if (manifest == null) {
 				manifest = ManifestUtils.createBoilerplate(getApplicationName(contentLocation));
+				manifestPath = null;
+			} else {
+				manifestPath = contentLocation.toURI().relativize(manifestStore.toURI()).toString();
+			}
 
 			ManifestParseTree application = manifest.get(ManifestConstants.APPLICATIONS).get(0);
 			String defaultName = getApplicationName(contentLocation);
@@ -161,14 +165,14 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 
 			/* node.js application require a start command */
 			if (application.has(ManifestConstants.COMMAND))
-				return new Plan(getId(), getWizardId(), TYPE, manifest);
+				return new Plan(getId(), getWizardId(), TYPE, manifest, manifestPath);
 
 			/* look up Procfile */
 			String command = getProcfileCommand(contentLocation);
 			if (command != null) {
 				/* Do not set the command, buildpack will handle it */
 				// application.put(ManifestConstants.COMMAND, command);
-				return new Plan(getId(), getWizardId(), TYPE, manifest);
+				return new Plan(getId(), getWizardId(), TYPE, manifest, manifestPath);
 			}
 
 			/* look up package.json */
@@ -176,17 +180,17 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 			if (command != null) {
 				/* Do not set the command, buildpack will handle it */
 				// application.put(ManifestConstants.COMMAND, command);
-				return new Plan(getId(), getWizardId(), TYPE, manifest);
+				return new Plan(getId(), getWizardId(), TYPE, manifest, manifestPath);
 			}
 
 			command = getConventionCommand(contentLocation);
 			if (command != null) {
 				application.put(ManifestConstants.COMMAND, command);
-				return new Plan(getId(), getWizardId(), TYPE, manifest);
+				return new Plan(getId(), getWizardId(), TYPE, manifest, manifestPath);
 			}
 
 			/* could not deduce command, mark as required */
-			Plan plan = new Plan(getId(), getWizardId(), TYPE, manifest);
+			Plan plan = new Plan(getId(), getWizardId(), TYPE, manifest, manifestPath);
 			plan.addRequired(ManifestConstants.COMMAND);
 			return plan;
 

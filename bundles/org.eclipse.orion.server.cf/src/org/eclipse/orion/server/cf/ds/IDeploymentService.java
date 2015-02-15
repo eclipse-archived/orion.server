@@ -23,7 +23,7 @@ public interface IDeploymentService {
 
 	public IDeploymentPlanner getDeploymentPlanner(String id);
 
-	public List<Plan> getDeploymentPlans(IFileStore contentLocation, ManifestParseTree manifest);
+	public List<Plan> getDeploymentPlans(IFileStore contentLocation, ManifestParseTree manifest, IFileStore manifestStore);
 
 	public String getDefaultDeplomentPackagerId();
 

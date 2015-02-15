@@ -65,10 +65,10 @@ public final class DeploymentService implements IDeploymentService {
 	}
 
 	@Override
-	public List<Plan> getDeploymentPlans(IFileStore contentLocation, ManifestParseTree manifest) {
+	public List<Plan> getDeploymentPlans(IFileStore contentLocation, ManifestParseTree manifest, IFileStore manifestStore) {
 		List<Plan> plans = new ArrayList<Plan>();
 		for (IDeploymentPlanner planner : planners) {
-			Plan plan = planner.getDeploymentPlan(contentLocation, manifest != null ? new ManifestParseTree(manifest) : null);
+			Plan plan = planner.getDeploymentPlan(contentLocation, manifest != null ? new ManifestParseTree(manifest) : null, manifestStore);
 			if (plan != null)
 				plans.add(plan);
 		}
