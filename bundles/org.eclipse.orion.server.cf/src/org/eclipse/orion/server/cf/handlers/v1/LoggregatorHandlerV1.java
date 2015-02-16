@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 public class LoggregatorHandlerV1 extends AbstractRESTHandler<Log> {
 
-	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
+	final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	public LoggregatorHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		super(statusHandler);
@@ -87,18 +87,18 @@ public class LoggregatorHandlerV1 extends AbstractRESTHandler<Log> {
 
 					return new ServerStatus(IStatus.OK, HttpServletResponse.SC_OK, null, messages, null);
 				} catch (Exception e) {
-					String msg = NLS.bind("Failed to handle request for {0}", pathString); //$NON-NLS-1$
+					String msg = "Unable to retrieve the application logs from the Cloud Foundry runtime.  Please try again later."; //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 					logger.error(msg, e);
 					return status;
 				} catch (NoClassDefFoundError e) {
-					String msg = NLS.bind("Failed to handle request for {0}", pathString); //$NON-NLS-1$
+					String msg = "Unable to retrieve the application logs from the Cloud Foundry runtime.  Please try again later."; //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 
-					if (e.getMessage().equals("org/eclipse/jetty/websocket/client/WebSocketClient")) {
-						status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Not supported", null);
+					if (e.getMessage().equals("org/eclipse/jetty/websocket/client/WebSocketClient")) { //$NON-NLS-1$
+						msg = "The application logs cannot be retrieved for this version of Cloud Foundry"; //$NON-NLS-1$
+						status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, null);
 					}
-
 					logger.error(msg, e);
 					return status;
 				}
