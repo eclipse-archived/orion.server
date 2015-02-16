@@ -39,7 +39,7 @@ public final class GenericDeploymentPlanner implements IDeploymentPlanner {
 
 	protected String getApplicationName(IFileStore contentLocation) {
 		String folderName = contentLocation.fetchInfo().getName();
-		folderName = folderName.replaceAll(" | ", "---");
+		folderName = folderName.replaceFirst(" \\| ", " --- ");
 		String[] folderNameParts = folderName.split(" --- ", 2);
 		if (folderNameParts.length > 1)
 			return folderNameParts[1];
@@ -48,7 +48,7 @@ public final class GenericDeploymentPlanner implements IDeploymentPlanner {
 
 	protected String getApplicationHost(IFileStore contentLocation) {
 		String folderName = contentLocation.fetchInfo().getName();
-		folderName = folderName.replaceAll(" | ", "---");
+		folderName = folderName.replaceFirst(" \\| ", " --- ");
 		return ManifestUtils.slugify(folderName);
 	}
 
