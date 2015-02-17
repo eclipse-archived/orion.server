@@ -61,7 +61,7 @@ public class FileListDirectoryWalker extends DirectoryWalker<File> {
 
 	private IFileStore workspaceHome;
 
-	static final String SYNC_VERSION = "0.1";
+	static final String SYNC_VERSION = "1.0";
 
 	public FileListDirectoryWalker(WorkspaceInfo workspaceInfo) {
 		this(workspaceInfo, null);
