@@ -28,7 +28,7 @@ public class ComputeTargetCommand implements ICFCommand {
 	private JSONObject targetJSON;
 	private Target target;
 	private static final int CACHE_EXPIRES_MS = 60000 * 30;
-	private static final int MAX_CACHE_SIZE = 100;
+	private static final int MAX_CACHE_SIZE = 10000;
 	static ExpiryCache<Target> targetCache = new ExpiryCache<Target>(MAX_CACHE_SIZE, CACHE_EXPIRES_MS);
 
 	public ComputeTargetCommand(String userId, JSONObject targetJSON) {

@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 public class GetAppCommand extends AbstractCFCommand {
 
 	private static final int CACHE_EXPIRES_MS = 30000;
-	private static final int MAX_CACHE_SIZE = 100;
+	private static final int MAX_CACHE_SIZE = 1000;
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
