@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2012, 2014 IBM Corporation and others.
+# Copyright (c) 2012, 2015 IBM Corporation and others.
 # All rights reserved.   This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License v1.0
 # which accompanies this distribution, and is available at
@@ -177,9 +177,15 @@ if [ -e ${WORKSPACE}/tests/org.eclipse.orion.server.tests/target/surefire-report
 	ServerTestResults=`egrep "Tests run" ${WORKSPACE}/tests/org.eclipse.orion.server.tests/target/surefire-reports/org.eclipse.orion.server.tests.AllServerTests.txt`
 	cp ${WORKSPACE}/tests/org.eclipse.orion.server.tests/target/surefire-reports/org.eclipse.orion.server.tests.AllServerTests.txt ${localDropDir}
 	cp ${WORKSPACE}/tests/org.eclipse.orion.server.tests/target/surefire-reports/TEST-org.eclipse.orion.server.tests.AllServerTests.xml ${localDropDir}
+	ServerTestFailure=`egrep 'Tests run: ' ${WORKSPACE}/tests/org.eclipse.orion.server.tests/target/surefire-reports/org.eclipse.orion.server.tests.AllServerTests.txt | egrep 'FAILURE' | wc -l`
+	if [ "${ServerTestFailure}" -ne 0 ]; then
+		echo "Tests failure, so do not deploy build."
+	fi
 else
 	#tests did not run
 	ServerTestResults="Tests run: 0 <<< FAILURE!" 
+	ServerTestFailure="1"
+	echo "Tests did not run, so do not deploy build."
 fi
 	
 #generate the index.html for the build
@@ -244,6 +250,20 @@ EOF
 
 echo "Update the composite update site"
 ./eclipse/eclipse -nosplash --launcher.suppressErrors -clean -debug -application org.eclipse.ant.core.antRunner -buildfile p2.composite.repository.xml default
+
+# deploy the successful build
+if [ "${ServerTestFailure}" -eq 0 ]; then
+	if [[ "${JOB_NAME}" == *-dev ]]; then
+		echo "Deploying successful build to orion.eclipse.org."
+		echo "ssh ahunter@build.eclipse.org ./deploy.sh -archive ${remoteDropDir}/org.eclipse.orion-${version}-linux.gtk.x86_64.zip"
+		ssh ahunter@build.eclipse.org ./deploy.sh
+		ssh ahunter@build.eclipse.org ./deploy.sh -archive ${remoteDropDir}/org.eclipse.orion-${version}-linux.gtk.x86_64.zip
+	else
+		echo "Not deploying this successful build."
+	fi
+else
+	echo "Not deploying this build, tests failed."
+fi
 
 # Clean up
 echo "Cleaning up"
