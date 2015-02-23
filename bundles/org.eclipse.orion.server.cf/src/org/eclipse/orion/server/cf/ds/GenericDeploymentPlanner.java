@@ -13,8 +13,10 @@ package org.eclipse.orion.server.cf.ds;
 import java.io.InputStream;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.server.cf.ds.objects.Plan;
 import org.eclipse.orion.server.cf.ds.objects.Procfile;
+import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
@@ -87,8 +89,19 @@ public final class GenericDeploymentPlanner implements IDeploymentPlanner {
 	@Override
 	public Plan getDeploymentPlan(IFileStore contentLocation, ManifestParseTree manifest, IFileStore manifestStore) {
 
+		IFileStore appStore = contentLocation;
 		try {
+			if (manifest != null) {
+				ManifestParseTree application = manifest.get(ManifestConstants.APPLICATIONS).get(0);
+				if (application.has(ManifestConstants.PATH)) {
+					appStore = contentLocation.getFileStore(new Path(application.get(ManifestConstants.PATH).getValue()));
+				}
+			}
+		} catch (InvalidAccessException e) {
+			logger.error("Problem while reading manifest", e);
+		}
 
+		try {
 			String applicationName = getApplicationName(contentLocation);
 			String manifestPath;
 
@@ -106,7 +119,7 @@ public final class GenericDeploymentPlanner implements IDeploymentPlanner {
 			set(application, ManifestConstants.INSTANCES, ManifestUtils.DEFAULT_INSTANCES);
 			set(application, ManifestConstants.PATH, ManifestUtils.DEFAULT_PATH);
 
-			String procfileCommand = getProcfileCommand(contentLocation);
+			String procfileCommand = getProcfileCommand(appStore);
 			if (procfileCommand != null)
 				set(application, ManifestConstants.COMMAND, procfileCommand);
 
