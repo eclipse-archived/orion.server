@@ -54,41 +54,4 @@ public class ChangeEvent extends EventObject {
 	public IFileStore getInitialLocation() {
 		return start;
 	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((modified == null) ? 0 : modified.hashCode());
-		result = prime * result + ((start == null) ? 0 : start.hashCode());
-		result = prime * result + ((type == null) ? 0 : type.hashCode());
-		result = prime * result + getSource().hashCode();
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		ChangeEvent other = (ChangeEvent) obj;
-		if (type != other.type)
-			return false;
-		if (!getSource().equals(other.getSource()))
-			return false;
-		if (modified == null) {
-			if (other.modified != null)
-				return false;
-		} else if (!modified.equals(other.modified))
-			return false;
-		if (start == null) {
-			if (other.start != null)
-				return false;
-		} else if (!start.equals(other.start))
-			return false;
-		return true;
-	}
 }
