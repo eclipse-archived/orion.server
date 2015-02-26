@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -62,6 +62,7 @@ public class ChangeEvent extends EventObject {
 		result = prime * result + ((modified == null) ? 0 : modified.hashCode());
 		result = prime * result + ((start == null) ? 0 : start.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		result = prime * result + getSource().hashCode();
 		return result;
 	}
 
@@ -74,6 +75,10 @@ public class ChangeEvent extends EventObject {
 		if (getClass() != obj.getClass())
 			return false;
 		ChangeEvent other = (ChangeEvent) obj;
+		if (type != other.type)
+			return false;
+		if (!getSource().equals(other.getSource()))
+			return false;
 		if (modified == null) {
 			if (other.modified != null)
 				return false;
@@ -83,8 +88,6 @@ public class ChangeEvent extends EventObject {
 			if (other.start != null)
 				return false;
 		} else if (!start.equals(other.start))
-			return false;
-		if (type != other.type)
 			return false;
 		return true;
 	}
