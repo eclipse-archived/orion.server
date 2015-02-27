@@ -10,12 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.about;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Dictionary;
 import java.util.Iterator;
 import java.util.List;
 
@@ -186,23 +189,31 @@ public class AboutHandler extends ServletResourceHandler<String> {
 	}
 
 	/**
-	 * Get the build id for the orion application by using the bundle version from the org.eclipse.orion.server.core plugin. The maven build assigns this
-	 * feature the same timestamp as the build timestamp.
+	 * Get the build id for the orion application by using the about.properties from the org.eclipse.orion.server.core plugin. The maven build assigns a
+	 * property with the build timestamp when the build runs.
 	 * 
 	 * @return the build id.
 	 */
 	private String getBuildId() {
 		String version = System.getProperty("eclipse.buildId", "unknown"); //$NON-NLS-1$
-		String featureId = "org.eclipse.orion.server.core";
-		Bundle bundle = Platform.getBundle(featureId);
-		if (bundle != null) {
-			Dictionary<String, String> directory = bundle.getHeaders();
-			if (directory != null) {
-				String coreVersion = directory.get("Bundle-Version");
-				if (coreVersion != null) {
-					version = coreVersion;
+		try {
+			URL url = new URL("platform:/plugin/org.eclipse.orion.server.core/about.properties");
+			InputStream inputStream = url.openConnection().getInputStream();
+			BufferedReader in = new BufferedReader(new InputStreamReader(inputStream));
+			String inputLine;
+
+			while ((inputLine = in.readLine()) != null) {
+				if (inputLine.startsWith("Build id:")) {
+					break;
 				}
 			}
+			in.close();
+			// The Build Id line is in the format: "Build id: 8.0.0-v20150223-1056\n\"
+			if (inputLine.length() > 30) {
+				version = inputLine.substring(inputLine.indexOf(':') + 1, inputLine.length() - 3);
+			}
+		} catch (IOException e) {
+			// just ignore and use the calculated version from the property
 		}
 		return version;
 	}

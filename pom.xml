@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-   Copyright (C) 2013, 2014 SAP AG and others.
+   Copyright (C) 2013, 2015 SAP AG and others.
 
    All rights reserved. This program and the accompanying materials
    are made available under the terms of the Eclipse Public License v1.0
@@ -64,6 +64,8 @@
 		<java-version>1.6</java-version>
 		<orion-repository>https://repo.eclipse.org/content/repositories/orion/</orion-repository>
 		<antrun-version>1.7</antrun-version>
+		<build-timestamp>${maven.build.timestamp}</build-timestamp>
+		<maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
 	</properties>
 
 	<distributionManagement>
@@ -407,10 +409,10 @@
 									<available file="orion.product" />
 									<then>
 										<echo
-											message="Replacing @qualifier@ token within orion.product with build id ${unqualifiedVersion}.${buildQualifier}" />
+											message="Replacing @qualifier@ token within about.properties with build id 8.0.0-v${build-timestamp}" />
 										<replace file="orion.product">
 											<replacefilter token="@qualifier@"
-												value="${unqualifiedVersion}.${buildQualifier}" />
+												value="8.0.0-v${build-timestamp}" />
 										</replace>
 									</then>
 								</if>
@@ -418,10 +420,10 @@
 									<available file="about.properties" />
 									<then>
 										<echo
-											message="Replacing @qualifier@ token within about.properties with build id ${unqualifiedVersion}.${buildQualifier}" />
+											message="Replacing @qualifier@ token within about.properties with build id 8.0.0-v${build-timestamp}" />
 										<replace file="about.properties">
 											<replacefilter token="@qualifier@"
-												value="${unqualifiedVersion}.${buildQualifier}" />
+												value="8.0.0-v${build-timestamp}" />
 										</replace>
 									</then>
 								</if>
