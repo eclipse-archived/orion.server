@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?pde version="3.5"?>
 
-<product name="Eclipse Orion" uid="org.eclipse.orion" id="org.eclipse.orion.product" application="org.eclipse.orion.application" version="8.0.0.qualifier" useFeatures="true" includeLaunchers="true">
+<product name="Eclipse Orion" uid="org.eclipse.orion" id="org.eclipse.orion.product" application="org.eclipse.orion.application" version="9.0.0.qualifier" useFeatures="true" includeLaunchers="true">
 
    <configIni use="default">
    </configIni>
