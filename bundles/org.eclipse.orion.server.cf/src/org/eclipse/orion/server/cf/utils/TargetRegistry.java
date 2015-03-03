@@ -120,9 +120,14 @@ public class TargetRegistry {
 
 		private Target getTarget(URL url) {
 			url = URLUtil.normalizeURL(url);
-			if (url == null || (defaultTarget != null && url.equals(defaultTarget.getCloud().getUrl()))) {
+			if (url == null) {
 				return defaultTarget;
 			}
+
+			if (defaultTarget != null && url.equals(defaultTarget.getCloud().getUrl())) {
+				return new Target(defaultTarget.getCloud());
+			}
+
 			Cloud cloud = getCloud(url);
 			return new Target(cloud);
 		}
