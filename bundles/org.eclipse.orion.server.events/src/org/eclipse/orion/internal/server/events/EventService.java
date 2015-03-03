@@ -10,24 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.events;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
-
+import java.util.regex.PatternSyntaxException;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.events.IEventService;
 import org.eclipse.orion.server.core.events.IMessageListener;
-import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
-import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
+import org.eclipse.paho.client.mqttv3.*;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -43,19 +34,18 @@ public class EventService implements IEventService {
 
 	private MqttClient mqttClient;
 	private MqttConnectOptions mqttConnectOptions;
-	private Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-	
+	Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+
 	private static AtomicBoolean reconnectionLock = new AtomicBoolean(false);
-	
-	private volatile Map<String, Set<IMessageListener>>  messageListeners = new HashMap<String, Set<IMessageListener>>();
+
+	private volatile Map<String, Set<IMessageListener>> messageListeners = new HashMap<String, Set<IMessageListener>>();
 	private Callback callback;
-	
 
 	/** Quality of Service level of 1 should be the default but just to make it explicit. **/
 	private static final int QOS = 1;
-	
-	private class Callback implements MqttCallback{
-		
+
+	private class Callback implements MqttCallback {
+
 		public void connectionLost(Throwable e) {
 			logger.warn("Connection to MQTT broker was lost. Scheduling job to reconnect.", e);
 			new ReconnectMQTTClientJob(EventService.this).schedule();
@@ -72,40 +62,45 @@ public class EventService implements IEventService {
 			JSONObject message = new JSONObject();
 			message.put("Topic", topic);
 			String messageText = new String(msg.getPayload());
-			try{
+			try {
 				message.put("Message", new JSONObject(messageText));
-			} catch(JSONException e){
+			} catch (JSONException e) {
 				message.put("Message", messageText);
 			}
 			message.put("QoS", msg.getQos());
-			Set<String> topics = messageListeners.keySet(); 
-			for( String registeredTopic : topics ){
-				if(Pattern.matches(registeredTopic.replaceAll("/#", ".*").replaceAll("#", ".*").replaceAll("\\\\+", ".+"), topic)){
+			Set<String> topics = messageListeners.keySet();
+			for (String registeredTopic : topics) {
+				String scrubbedTopic = registeredTopic.replaceAll("/#", ".*").replaceAll("#", ".*").replaceAll("\\\\+", ".+");
+				boolean matches = false;
+				try {
+					matches = Pattern.matches(scrubbedTopic, topic);
+				} catch (PatternSyntaxException e) {
+					logger.debug("Ignoring malformed topic:" + registeredTopic);
+				}
+				if (matches) {
 					if (logger.isDebugEnabled()) {
 						logger.debug("Pattern matched. Topic: " + topic + " . Registered topic: " + registeredTopic);
 					}
 					Set<IMessageListener> topicListners = messageListeners.get(registeredTopic);
-					if(topicListners!=null && !topicListners.isEmpty()){
-						for(IMessageListener listner : topicListners){
+					if (topicListners != null && !topicListners.isEmpty()) {
+						for (IMessageListener listner : topicListners) {
 							listner.receiveMessage(message);
 						}
-					}
-					else {
+					} else {
 						logger.warn("Topic listener could not be found to topic we were subscribed to. Topic: " + registeredTopic);
 					}
-					
+
 				}
 			}
-			
+
 		}
-		
 	}
 
 	public EventService() {
 		initClient();
 	}
-	
-	public void destroy(){
+
+	public void destroy() {
 		try {
 			mqttClient.disconnect();
 		} catch (MqttException e) {
@@ -135,35 +130,35 @@ public class EventService implements IEventService {
 		if (password != null) {
 			mqttConnectOptions.setPassword(password.toCharArray());
 		}
-		
+
 		/**
-         * If set to false both the client and server will maintain state across restarts of the client, the server and the connection. As state is maintained:
-    			Message delivery will be reliable meeting the specified QOS even if the client, server or connection are restarted.
-    			The server will treat a subscription as durable. 
-    			
-    			From Rabbit MQ documentation for the MQTT adapter:
-    			Durable (QoS1) subscriptions use durable queues. Whether the queues are auto-deleted is controlled 
-    			by the client's clean session flag. Clients with clean sessions use auto-deleted queues, others use non-auto-deleted ones.
-         */
+		 * If set to false both the client and server will maintain state across restarts of the client, the server and the connection. As state is maintained:
+				Message delivery will be reliable meeting the specified QOS even if the client, server or connection are restarted.
+				The server will treat a subscription as durable. 
+				
+				From Rabbit MQ documentation for the MQTT adapter:
+				Durable (QoS1) subscriptions use durable queues. Whether the queues are auto-deleted is controlled 
+				by the client's clean session flag. Clients with clean sessions use auto-deleted queues, others use non-auto-deleted ones.
+		 */
 		mqttConnectOptions.setCleanSession(false);
-		
+
 		Properties sslProperties = new Properties();
 		String keyType = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_KEY_TYPE, null);
-		if(keyType!=null){
+		if (keyType != null) {
 			sslProperties.put("com.ibm.ssl.keyStoreType", keyType);
 			sslProperties.put("com.ibm.ssl.trustStoreType", keyType);
 		}
 		String keyPassword = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_KEY_PASSWORD, null);
-		if(keyPassword!=null){
+		if (keyPassword != null) {
 			sslProperties.put("com.ibm.ssl.keyStorePassword", keyPassword);
 			sslProperties.put("com.ibm.ssl.trustStorePassword", keyPassword);
 		}
 		String keyStore = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_KEY_STORE, null);
-		if(keyStore!=null){
+		if (keyStore != null) {
 			sslProperties.put("com.ibm.ssl.keyStore", keyStore);
 		}
 		String trustStore = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_TRUST_STORE, null);
-		if(trustStore!=null){
+		if (trustStore != null) {
 			sslProperties.put("com.ibm.ssl.trustStore", trustStore);
 		}
 		mqttConnectOptions.setSSLProperties(sslProperties);
@@ -179,40 +174,37 @@ public class EventService implements IEventService {
 		this.callback = new Callback();
 		this.mqttClient.setCallback(callback);
 	}
-	
+
 	private void connectMQTTClient() throws MqttException {
 		mqttClient.connect(mqttConnectOptions);
 		logger.info("MQTT client connected.");
 	}
-	
+
 	public void reconnectMQTTClient() {
 		if (!mqttClient.isConnected() && reconnectionLock.compareAndSet(false, true)) {
 			this.logger.warn("MQTT client was disconnected. Attempting to reconnect.");
 			try {
 				new Thread(new Runnable() {
 					public void run() {
-	
+
 						try {
 							connectMQTTClient();
-							
-							if(mqttClient.isConnected()) {
+
+							if (mqttClient.isConnected()) {
 								logger.info("MQTT client connection reestablished!");
-							}
-							else {
+							} else {
 								logger.warn("Unable to reconnect MQTT client.");
 							}
 						} catch (MqttException e) {
 							logger.error("Could not re-connect the MQTT client. Message: " + e.getMessage() + " Reason code: " + e.getReasonCode());
-						}
-						finally {
+						} finally {
 							reconnectionLock.set(false);
 						}
 					}
 				}).start();
-			}
-			catch (Exception e) {
+			} catch (Exception e) {
 				this.logger.error("Unexpected exception occurred: " + e.getLocalizedMessage());
-				reconnectionLock.set(false);	
+				reconnectionLock.set(false);
 			}
 		}
 	}
@@ -246,19 +238,17 @@ public class EventService implements IEventService {
 			logger.debug("MQTT Receiving topic " + topic + " " + messageListener);
 		}
 		Set<IMessageListener> topicListeners = messageListeners.get(topic);
-		if(topicListeners == null){
+		if (topicListeners == null) {
 			topicListeners = new HashSet<IMessageListener>();
 			messageListeners.put(topic, topicListeners);
 		}
-		if(topicListeners.isEmpty()){
+		if (topicListeners.isEmpty()) {
 			try {
-				if (mqttClient==null) {
+				if (mqttClient == null) {
 					logger.warn("MqttClient was unexpectedly null.");
-				}
-				else if (!mqttClient.isConnected()) {
+				} else if (!mqttClient.isConnected()) {
 					logger.debug("Could not subscribe to topic " + topic + " since MqttClient is disconnected");
-				}
-				else {
+				} else {
 					/** Quality of Service level of 1 should be the default but just to make it explicit.  Why QoS 1? 
 					 So the queue is not auto-deleted on disconnection. **/
 					mqttClient.subscribe(topic, QOS);
@@ -275,13 +265,13 @@ public class EventService implements IEventService {
 			logger.debug("MQTT Stop Receiving topic " + topic + " " + messageListener);
 		}
 		Set<IMessageListener> topicListeners = messageListeners.get(topic);
-		if(topicListeners == null || !mqttClient.isConnected()){
+		if (topicListeners == null || !mqttClient.isConnected()) {
 			return;
 		}
 		topicListeners.remove(messageListener);
-		if(topicListeners.isEmpty()){
-			try{
-				if(mqttClient!=null){
+		if (topicListeners.isEmpty()) {
+			try {
+				if (mqttClient != null) {
 					mqttClient.unsubscribe(topic);
 				}
 				messageListeners.remove(topic);
@@ -289,7 +279,7 @@ public class EventService implements IEventService {
 				logger.warn("Failure unsubscribing on topic: " + topic, e); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
-		
+
 	}
 
 }
