@@ -51,7 +51,7 @@ public class ComputeTargetCommand implements ICFCommand {
 			}
 		}
 
-		if (targetUrl != null & org != null && space != null) {
+		if (targetUrl != null && org != null && space != null) {
 			List<Object> key = Arrays.asList(new Object[] {userId, targetUrl, org, space});
 			target = targetCache.get(key);
 			if (target != null)
