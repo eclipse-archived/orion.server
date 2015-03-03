@@ -50,24 +50,29 @@ public class ComputeTargetCommand implements ICFCommand {
 				// do nothing
 			}
 		}
-		if (targetUrl == null || org == null || space == null) {
+
+		if (targetUrl != null & org != null && space != null) {
+			List<Object> key = Arrays.asList(new Object[] {userId, targetUrl, org, space});
+			target = targetCache.get(key);
+			if (target != null)
+				return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
+		}
+
+		target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
+		if (target == null)
 			return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
-		}
 
-		List<Object> key = Arrays.asList(new Object[] {targetUrl, org, space});
-		target = targetCache.get(key);
-		if (target == null) {
-			target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
-			IStatus result = new SetOrgCommand(target, org).doIt();
-			if (!result.isOK())
-				return result;
+		IStatus result = new SetOrgCommand(target, org).doIt();
+		if (!result.isOK())
+			return result;
 
-			result = new SetSpaceCommand(target, space).doIt();
-			if (!result.isOK())
-				return result;
+		result = new SetSpaceCommand(target, space).doIt();
+		if (!result.isOK())
+			return result;
 
-			targetCache.put(key, target);
-		}
+		List<Object> key = Arrays.asList(new Object[] {userId, target.getUrl(), target.getOrg().getName(), target.getSpace().getName()});
+		targetCache.put(key, target);
+
 		return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 	}
 
