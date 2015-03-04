@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -12,6 +12,7 @@ package org.eclipse.orion.server.tests.metastore;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,12 +41,12 @@ import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
 /**
- * Create a data set on a remote Orion server by creating users, workspaces, projects, 
- * site configurations and operations. The end result is a set of data that can be used to test
- * migration and observe Orion metadata store operations.
- *   
- * This test is not intended to be added to the nightly Orion JUnit tests. 
- *  
+ * Create a data set on a remote Orion server by creating users, workspaces, projects, site configurations and
+ * operations. The end result is a set of operations that can be used to test a server and observe Orion metadata store
+ * operations.
+ *
+ * This test is not intended to be added to the nightly Orion JUnit tests.
+ *
  * @author Anthony Hunter
  */
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -55,7 +56,7 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Create a file in a project on the Orion server for the test user.
-	 * 
+	 *
 	 * @param webConversation
 	 * @param login
 	 * @param password
@@ -65,9 +66,10 @@ public class RemoteMetaStoreTests {
 	 * @throws IOException
 	 * @throws JSONException
 	 * @throws URISyntaxException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
-	protected int createFile(WebConversation webConversation, String login, String password, String workspace, String project) throws IOException, JSONException, URISyntaxException, SAXException {
+	protected int createFile(WebConversation webConversation, String login, String password, String workspace, String project) throws IOException,
+			JSONException, URISyntaxException, SAXException {
 		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, login, password));
 
 		JSONObject jsonObject = new JSONObject();
@@ -96,7 +98,7 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Create a folder in a project on the Orion server for the test user.
-	 * 
+	 *
 	 * @param webConversation
 	 * @param login
 	 * @param password
@@ -106,9 +108,10 @@ public class RemoteMetaStoreTests {
 	 * @throws IOException
 	 * @throws JSONException
 	 * @throws URISyntaxException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
-	protected int createFolder(WebConversation webConversation, String login, String password, String workspace, String project) throws IOException, JSONException, URISyntaxException, SAXException {
+	protected int createFolder(WebConversation webConversation, String login, String password, String workspace, String project) throws IOException,
+			JSONException, URISyntaxException, SAXException {
 		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, login, password));
 
 		JSONObject jsonObject = new JSONObject();
@@ -126,8 +129,9 @@ public class RemoteMetaStoreTests {
 	}
 
 	/**
-	 * Create a git close on the Orion server for the test user. Also creates an operation in the metastore for the user.
-	 * 
+	 * Create a git close on the Orion server for the test user. Also creates an operation in the metastore for the
+	 * user.
+	 *
 	 * @param webConversation
 	 * @param login
 	 * @param password
@@ -137,14 +141,15 @@ public class RemoteMetaStoreTests {
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
-	protected int createGitClone(WebConversation webConversation, String login, String password, String workspace, String project) throws URISyntaxException, IOException, JSONException, SAXException {
+	protected int createGitClone(WebConversation webConversation, String login, String password, String workspace, String project, String gitUrl)
+			throws URISyntaxException, IOException, JSONException, SAXException {
 		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, login, password));
 
-		String name = "ahunter orion";
 		JSONObject json = new JSONObject();
-		json.put("GitUrl", "https://github.com/ahunter-orion/ahunter-orion.github.com.git");
+		json.put("GitUrl", gitUrl);
+		json.put("Name", project);
 		json.put("Location", "/workspace/" + getWorkspaceId(login, workspace));
 		WebRequest request = new PostMethodWebRequest(getOrionServerURI("/gitapi/clone/"), IOUtilities.toInputStream(json.toString()), "application/json");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
@@ -153,23 +158,36 @@ public class RemoteMetaStoreTests {
 
 		JSONObject responseJsonObject = new JSONObject(response.getText());
 		String location = responseJsonObject.getString("Location");
-		JSONObject task = new JSONObject();
-		task.put("expires", System.currentTimeMillis() + 86400000);
-		task.put("Name", "Cloning repository " + name);
-		json = new JSONObject();
-		json.put(location, task);
-		request = new PutMethodWebRequest(getOrionServerURI("/prefs/user/operations/"), IOUtilities.toInputStream(json.toString()), "application/json");
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+		String status = responseJsonObject.getString("type");
 
-		System.out.println("Created Git Clone: " + name + " at Location: " + location);
+		// a task job has been createdby the post request, next check for completion status
+		while (status != null && !status.equals("loadend")) {
+			// Wait 300 milliseconds before submitting a task status request
+			try {
+				Thread.sleep(300);
+			} catch (InterruptedException e) {
+				break;
+			}
+
+			// Request the task status
+			request = new GetMethodWebRequest(getOrionServerURI(location));
+			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+			responseJsonObject = new JSONObject(response.getText());
+			status = responseJsonObject.getString("type");
+		}
+
+		location = responseJsonObject.getJSONObject("Result").getJSONObject("JsonData").getString("Location");
+
+		System.out.println("Created Git Clone: " + project + " at Location: " + location);
 		return response.getResponseCode();
 	}
 
 	/**
 	 * Create a plugins preference on the Orion server for the test user.
-	 * 
+	 *
 	 * @param webConversation
 	 * @param login
 	 * @param password
@@ -178,14 +196,16 @@ public class RemoteMetaStoreTests {
 	 * @throws IOException
 	 * @throws JSONException
 	 * @throws URISyntaxException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
-	protected int createPluginsPref(WebConversation webConversation, String login, String password) throws IOException, JSONException, URISyntaxException, SAXException {
+	protected int createPluginsPref(WebConversation webConversation, String login, String password) throws IOException, JSONException, URISyntaxException,
+			SAXException {
 		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, login, password));
 
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put("http://mamacdon.github.io/0.3/plugins/bugzilla/plugin.html", true);
-		WebRequest request = new PutMethodWebRequest(getOrionServerURI("/prefs/user/plugins"), IOUtilities.toInputStream(jsonObject.toString()), "application/json");
+		WebRequest request = new PutMethodWebRequest(getOrionServerURI("/prefs/user/plugins"), IOUtilities.toInputStream(jsonObject.toString()),
+				"application/json");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
@@ -196,7 +216,7 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Create a project on the Orion server for the test user.
-	 * 
+	 *
 	 * @param webConversation
 	 * @param login
 	 * @param password
@@ -206,9 +226,10 @@ public class RemoteMetaStoreTests {
 	 * @throws IOException
 	 * @throws JSONException
 	 * @throws URISyntaxException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
-	protected int createProject(WebConversation webConversation, String login, String password, String workspace, String projectName) throws IOException, JSONException, URISyntaxException, SAXException {
+	protected int createProject(WebConversation webConversation, String login, String password, String workspace, String projectName) throws IOException,
+			JSONException, URISyntaxException, SAXException {
 		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, login, password));
 
 		JSONObject jsonObject = new JSONObject();
@@ -228,7 +249,7 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Create a workspace on the Orion server for the test user.
-	 * 
+	 *
 	 * @param webConversation
 	 * @param login
 	 * @param password
@@ -238,9 +259,10 @@ public class RemoteMetaStoreTests {
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
-	protected int createSite(WebConversation webConversation, String login, String password, String workspace, String site) throws URISyntaxException, IOException, JSONException, SAXException {
+	protected int createSite(WebConversation webConversation, String login, String password, String workspace, String site) throws URISyntaxException,
+			IOException, JSONException, SAXException {
 		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, login, password));
 
 		JSONObject json = new JSONObject();
@@ -261,17 +283,18 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Create a test user on the Orion server.
-	 * 
+	 *
 	 * @param webConversation
 	 * @param login
 	 * @param password
 	 * @return
 	 * @throws IOException
 	 * @throws URISyntaxException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 * @throws JSONException
 	 */
-	protected int createUser(WebConversation webConversation, String login, String password) throws IOException, URISyntaxException, SAXException, JSONException {
+	protected int createUser(WebConversation webConversation, String login, String password) throws IOException, URISyntaxException, SAXException,
+			JSONException {
 		JSONObject jsonObject = new JSONObject();
 		jsonObject.put(UserConstants.USER_NAME, login);
 		jsonObject.put(UserConstants.PASSWORD, password);
@@ -288,7 +311,7 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Create a workspace on the Orion server for the test user.
-	 * 
+	 *
 	 * @param webConversation
 	 * @param login
 	 * @param password
@@ -297,9 +320,10 @@ public class RemoteMetaStoreTests {
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
-	protected int createWorkspace(WebConversation webConversation, String login, String password, String workspace) throws URISyntaxException, IOException, JSONException, SAXException {
+	protected int createWorkspace(WebConversation webConversation, String login, String password, String workspace) throws URISyntaxException, IOException,
+			JSONException, SAXException {
 		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, login, password));
 
 		WebRequest request = new PostMethodWebRequest(getOrionServerURI("/workspace"));
@@ -317,13 +341,13 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Get the URI of the remote Orion server. Replace the URI to test different servers.
-	 * 
+	 *
 	 * @param path
 	 * @return
 	 * @throws URISyntaxException
 	 */
 	protected String getOrionServerURI(String path) throws URISyntaxException {
-		//String orionServerHostname = "vottachrh6x64.ottawa.ibm.com";
+		// String orionServerHostname = "vottachrh6x64.ottawa.ibm.com";
 		String orionServerHostname = "localhost";
 		int orionServerPort = 8080;
 
@@ -332,23 +356,23 @@ public class RemoteMetaStoreTests {
 	}
 
 	/**
-	 * Get the test name used for several tests. The username and password will be this name, 
-	 * as well as the workspace name and project name. It is meant to be a unique name so the tests
-	 * can be repeated a number of times on the same server without having to delete content.
-	 * 
+	 * Get the test name used for several tests. The username and password will be this name, as well as the workspace
+	 * name and project name. It is meant to be a unique name so the tests can be repeated a number of times on the same
+	 * server without having to delete content.
+	 *
 	 * @return The test name.
 	 */
 	protected String getOrionTestName() {
 		if (orionTestName == null) {
 			orionTestName = "test" + System.currentTimeMillis();
-			//orionTestName = "anthony";
+			// orionTestName = "anthony";
 		}
 		return orionTestName;
 	}
 
 	/**
-	 * Get the workspace id based on the login name. the
-	 * simple metastore uses the login name and workspace name.
+	 * Get the workspace id based on the login name. the simple metastore uses the login name and workspace name.
+	 *
 	 * @param login
 	 * @return
 	 */
@@ -357,16 +381,16 @@ public class RemoteMetaStoreTests {
 	}
 
 	/**
-	* Login to the Orion server with the provided login and password.
-	* 
-	* @param webConversation
-	* @param login
-	* @param password
-	* @return
-	* @throws URISyntaxException
-	* @throws IOException
-	* @throws SAXException
-	*/
+	 * Login to the Orion server with the provided login and password.
+	 *
+	 * @param webConversation
+	 * @param login
+	 * @param password
+	 * @return
+	 * @throws URISyntaxException
+	 * @throws IOException
+	 * @throws SAXException
+	 */
 	protected int login(WebConversation webConversation, String login, String password) throws URISyntaxException, IOException, SAXException {
 		WebRequest request = new PostMethodWebRequest(getOrionServerURI("/login/form"));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
@@ -378,11 +402,11 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Create a test user on the Orion server. This test needs to run first.
-	 * 
+	 *
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
 	@Test
 	public void testACreateUser() throws URISyntaxException, IOException, JSONException, SAXException {
@@ -392,11 +416,11 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Update a test user on the Orion server.
-	 * 
+	 *
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
 	@Test
 	public void testAUpdateUser() throws URISyntaxException, IOException, JSONException, SAXException {
@@ -405,12 +429,12 @@ public class RemoteMetaStoreTests {
 	}
 
 	/**
-	 * Verify the form based authentication used to login into the server. 
-	 * This authentication is required for each server call, so this test is run second.
-	 *  
+	 * Verify the form based authentication used to login into the server. This authentication is required for each
+	 * server call, so this test is run second.
+	 *
 	 * @throws IOException
 	 * @throws URISyntaxException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
 	@Test
 	public void testBVerifyFormBasedLogin() throws IOException, URISyntaxException, SAXException {
@@ -420,11 +444,11 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Create a workspace on the Orion server for the test user.
-	 * 
+	 *
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
 	@Test
 	public void testCreateAWorkspace() throws URISyntaxException, IOException, JSONException, SAXException {
@@ -434,11 +458,11 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Create a project on the Orion server for the test user.
-	 * 
+	 *
 	 * @throws IOException
 	 * @throws JSONException
 	 * @throws URISyntaxException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
 	@Test
 	public void testCreateProject() throws IOException, JSONException, URISyntaxException, SAXException {
@@ -448,11 +472,11 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Create a site on the Orion server for the test user.
-	 * 
+	 *
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
 	@Test
 	public void testCreateSite() throws URISyntaxException, IOException, JSONException, SAXException {
@@ -462,11 +486,11 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Create a plugins preference on the Orion server for the test user.
-	 * 
+	 *
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
 	@Test
 	public void testCreateTPluginsPref() throws URISyntaxException, IOException, JSONException, SAXException {
@@ -476,11 +500,11 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Create a folder in a project on the Orion server for the test user.
-	 * 
+	 *
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
 	@Test
 	public void testCreateUFolder() throws URISyntaxException, IOException, JSONException, SAXException {
@@ -490,11 +514,11 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Create a file in a project on the Orion server for the test user.
-	 * 
+	 *
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
 	@Test
 	public void testCreateVFile() throws URISyntaxException, IOException, JSONException, SAXException {
@@ -504,25 +528,28 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Create a git clone in a project on the Orion server for the test user.
-	 * 
+	 *
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
 	@Test
 	public void testCreateWGitClone() throws URISyntaxException, IOException, JSONException, SAXException {
 		WebConversation webConversation = new WebConversation();
-		assertEquals(HttpURLConnection.HTTP_NO_CONTENT, createGitClone(webConversation, getOrionTestName(), getOrionTestName(), "Orion Content", "Project"));
+		String gitUrl = "https://github.com/ahunter-orion/ahunter-orion.github.com.git";
+		String gitProjectName = "ahunter-orion.github";
+		assertEquals(HttpURLConnection.HTTP_OK,
+				createGitClone(webConversation, getOrionTestName(), getOrionTestName(), "Orion Content", gitProjectName, gitUrl));
 	}
 
 	/**
 	 * Get the plugins preference for the test user.
-	 * 
+	 *
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
 	@Test
 	public void testGetPluginsPref() throws IOException, URISyntaxException, JSONException, SAXException {
@@ -549,11 +576,12 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Get the list of projects in the specified workspace for the specified user.
+	 *
 	 * @param workspace
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
 	@Test
 	public void testGetProjects() throws IOException, URISyntaxException, JSONException, SAXException {
@@ -582,11 +610,11 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Get the list of workspaces for the test user.
-	 * 
+	 *
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
 	@Test
 	public void testGetSites() throws IOException, URISyntaxException, JSONException, SAXException {
@@ -614,11 +642,11 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Get the list of workspaces for the test user.
-	 * 
+	 *
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
 	@Test
 	public void testGetWorkspaces() throws IOException, URISyntaxException, JSONException, SAXException {
@@ -646,9 +674,9 @@ public class RemoteMetaStoreTests {
 	}
 
 	/**
-	 * Test search against the newly created project. This test fails every time as you need to wait five minutes for the Indexer to
-	 * run before you can search on a file you just saved.
-	 * 
+	 * Test search against the newly created project. This test fails every time as you need to wait five minutes for
+	 * the Indexer to run before you can search on a file you just saved.
+	 *
 	 * @throws URISyntaxException
 	 * @throws IOException
 	 * @throws SAXException
@@ -673,13 +701,13 @@ public class RemoteMetaStoreTests {
 
 	/**
 	 * Create additional users, workspaces and projects to test migration.
-	 * 
+	 *
 	 * @throws IOException
 	 * @throws URISyntaxException
 	 * @throws JSONException
-	 * @throws SAXException 
+	 * @throws SAXException
 	 */
-	//@Test
+	// @Test
 	public void testZCreateMigrationContent() throws IOException, URISyntaxException, JSONException, SAXException {
 		// a user with no workspace or projects
 		String none = "tnow" + System.currentTimeMillis();
@@ -719,19 +747,70 @@ public class RemoteMetaStoreTests {
 
 		// a user with a project with two workspaces
 		// do not currently support two workspaces
-		//String twoworkspaces = "twto" + System.currentTimeMillis();
-		//webConversation = new WebConversation();
-		//assertEquals(HttpURLConnection.HTTP_OK, updateUser(webConversation, twoworkspaces, twoworkspaces, "Test User Two Sites"));
-		//assertEquals(HttpURLConnection.HTTP_OK, createUser(webConversation, twoworkspaces, twoworkspaces));
-		//assertEquals(HttpURLConnection.HTTP_OK, createWorkspace(webConversation, twoworkspaces, twoworkspaces, "Orion Content"));
-		//assertEquals(HttpURLConnection.HTTP_OK, createWorkspace(webConversation, twoworkspaces, twoworkspaces, "Second Workspace"));
-		//assertEquals(HttpURLConnection.HTTP_CREATED, createProject(webConversation, twoworkspaces, twoworkspaces, "Orion Content", "Project"));
-		//assertEquals(HttpURLConnection.HTTP_CREATED, createProject(webConversation, twoworkspaces, twoworkspaces, "Second Workspace", "Second Project"));
+		// String twoworkspaces = "twto" + System.currentTimeMillis();
+		// webConversation = new WebConversation();
+		// assertEquals(HttpURLConnection.HTTP_OK, updateUser(webConversation,
+		// twoworkspaces, twoworkspaces, "Test User Two Sites"));
+		// assertEquals(HttpURLConnection.HTTP_OK, createUser(webConversation,
+		// twoworkspaces, twoworkspaces));
+		// assertEquals(HttpURLConnection.HTTP_OK,
+		// createWorkspace(webConversation, twoworkspaces, twoworkspaces,
+		// "Orion Content"));
+		// assertEquals(HttpURLConnection.HTTP_OK,
+		// createWorkspace(webConversation, twoworkspaces, twoworkspaces,
+		// "Second Workspace"));
+		// assertEquals(HttpURLConnection.HTTP_CREATED,
+		// createProject(webConversation, twoworkspaces, twoworkspaces,
+		// "Orion Content", "Project"));
+		// assertEquals(HttpURLConnection.HTTP_CREATED,
+		// createProject(webConversation, twoworkspaces, twoworkspaces,
+		// "Second Workspace", "Second Project"));
+	}
+
+	public void testZZCreateLongRunningTasks() throws InterruptedException {
+		Runnable runnable = new Runnable() {
+			@Override
+			public void run() {
+				try {
+					String testUser = "user" + System.currentTimeMillis();
+					WebConversation webConversation = new WebConversation();
+					assertEquals(HttpURLConnection.HTTP_CREATED, createUser(webConversation, testUser, testUser));
+					assertEquals(HttpURLConnection.HTTP_OK, createWorkspace(webConversation, testUser, testUser, "Orion Content"));
+					String gitUrl = "https://github.com/ahunter-orion/ahunter-orion.github.com.git";
+					String gitProjectName = "org.eclipse.orion.client";
+					assertEquals(HttpURLConnection.HTTP_OK, createGitClone(webConversation, testUser, testUser, "Orion Content", gitProjectName, gitUrl));
+				} catch (JSONException e) {
+					fail(e.getLocalizedMessage());
+				} catch (IOException e) {
+					fail(e.getLocalizedMessage());
+				} catch (URISyntaxException e) {
+					fail(e.getLocalizedMessage());
+				} catch (SAXException e) {
+					fail(e.getLocalizedMessage());
+				}
+			}
+		};
+
+		Thread threads[] = new Thread[10];
+		for (int i = 0; i < threads.length; i++) {
+			Thread thread = new Thread(runnable, "LongRunningTaskKiller-" + i);
+			thread.start();
+			threads[i] = thread;
+			Thread.sleep(2);
+		}
+
+		for (Thread thread : threads) {
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				// just continue
+			}
+		}
 	}
 
 	/**
 	 * Update the user with a email address and provided full name
-	 * 
+	 *
 	 * @param webConversation
 	 * @param login
 	 * @param password
@@ -742,7 +821,8 @@ public class RemoteMetaStoreTests {
 	 * @throws SAXException
 	 * @throws JSONException
 	 */
-	protected int updateUser(WebConversation webConversation, String login, String password, String fullName) throws URISyntaxException, IOException, SAXException, JSONException {
+	protected int updateUser(WebConversation webConversation, String login, String password, String fullName) throws URISyntaxException, IOException,
+			SAXException, JSONException {
 		assertEquals(HttpURLConnection.HTTP_OK, login(webConversation, login, password));
 
 		String email = login + "@example.com";
