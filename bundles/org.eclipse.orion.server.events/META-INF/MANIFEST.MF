@@ -10,7 +10,7 @@ Require-Bundle: org.eclipse.orion.server.core;bundle-version="1.0.0",
  org.apache.commons.io;bundle-version="2.2.0",
  org.eclipse.core.runtime;bundle-version="3.10.0",
  org.eclipse.core.filesystem;bundle-version="1.4.100"
-Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Import-Package: org.slf4j;version="1.5.11",
  org.osgi.framework;version="1.6.0"
 Bundle-ClassPath: lib/mqtt-client-0.4.0.jar,

@@ -12,16 +12,24 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.io.IOException;
 import java.net.URI;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
-import org.eclipse.orion.server.core.metastore.*;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -45,16 +53,15 @@ public class WorkspaceServlet extends OrionServlet {
 	}
 
 	/**
-	 * Verify that the user name is valid. Returns <code>true</code> if the
-	 * name is valid and false otherwise. If invalid, this method will handle
-	 * filling in the servlet response.
+	 * Verify that the user name is valid. Returns <code>true</code> if the name is valid and false otherwise. If invalid, this method will handle filling in
+	 * the servlet response.
 	 */
 	private boolean checkUser(String userId, HttpServletResponse response) throws ServletException {
 		if (userId == null) {
 			handleException(response, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "User name not specified"), HttpServletResponse.SC_FORBIDDEN);
 			return false;
 		}
-		//if this is the first access for this user, log it
+		// if this is the first access for this user, log it
 		if (logger != null && logger.isInfoEnabled())
 			logger.info("WorkspaceAccess: " + userId); //$NON-NLS-1$
 		return true;
@@ -76,7 +83,7 @@ public class WorkspaceServlet extends OrionServlet {
 				if (workspaceResourceHandler.handleRequest(req, resp, workspace))
 					return;
 			} else if (segmentCount == 3) {
-				//path format is /<wsId>/project/<projectName>
+				// path format is /<wsId>/project/<projectName>
 				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
 				ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(0), path.segment(2));
 
@@ -118,8 +125,9 @@ public class WorkspaceServlet extends OrionServlet {
 
 	/**
 	 * Gets the list of all workspaces for this request's user.
-	 * @return <code>true</code> if the request has handled (successful or otherwise),
-	 * or <code>false</code> if the request could not be handled by this servlet.
+	 * 
+	 * @return <code>true</code> if the request has handled (successful or otherwise), or <code>false</code> if the request could not be handled by this
+	 *         servlet.
 	 */
 	private boolean doGetWorkspaces(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String userId = getUserId(req);
@@ -172,6 +180,9 @@ public class WorkspaceServlet extends OrionServlet {
 			workspace.setFullName(workspaceName);
 			workspace.setUserId(userId);
 			OrionConfiguration.getMetaStore().createWorkspace(workspace);
+			if (logger != null && logger.isInfoEnabled()) {
+				logger.info("Workspace created for " + userId); //$NON-NLS-1$
+			}
 			URI requestLocation = ServletResourceHandler.getURI(req);
 			JSONObject result = WorkspaceResourceHandler.toJSON(workspace, requestLocation, requestLocation);
 			writeJSONResponse(req, resp, result);
