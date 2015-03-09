@@ -274,7 +274,6 @@
 		<module>bundles/org.eclipse.orion.server.logs</module>
 		<module>bundles/org.eclipse.orion.server.hosting</module>
 		<module>bundles/org.eclipse.orion.server.search</module>
-		<module>bundles/org.eclipse.orion.server.npm</module>
 		<module>bundles/org.eclipse.orion.server.logback.config</module>
 		<module>bundles/org.eclipse.orion.server.ui</module>
 		<module>bundles/org.eclipse.orion.server.gerritfs</module>
