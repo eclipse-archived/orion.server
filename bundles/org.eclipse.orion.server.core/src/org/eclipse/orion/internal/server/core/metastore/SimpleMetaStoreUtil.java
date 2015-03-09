@@ -519,7 +519,12 @@ public class SimpleMetaStoreUtil {
 		// the user-tree layout organizes folders user: serverworkspace/an/anthony
 		List<String> userMetaFolders = new ArrayList<String>();
 		for (File file : parent.listFiles()) {
-			if (file.getName().equals(".metadata")) {
+			if (! file.canRead()) {
+				// see Bugzilla 461749
+				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+				logger.error("Cannot read folder, check directory permissions of " + file.getAbsolutePath()); //$NON-NLS-1$
+				continue;
+			} else if (file.getName().equals(".metadata")) {
 				// skip the eclipse workspace metadata folder
 				continue;
 			} else if (file.getName().equals("orion.conf")) {
@@ -542,6 +547,11 @@ public class SimpleMetaStoreUtil {
 						if (isMetaUserFolder(parent, userFolder.getName())) {
 							// user folder directory, folder anthony in serverworkspace/an/anthony
 							userMetaFolders.add(userFolder.getName());
+							continue;
+						} else if (! userFolder.canRead()) {
+							// see Bugzilla 461749
+							Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+							logger.error("Cannot read folder, check directory permissions of " + userFolder.getAbsolutePath()); //$NON-NLS-1$
 							continue;
 						} else {
 							// archive the invalid metadata
