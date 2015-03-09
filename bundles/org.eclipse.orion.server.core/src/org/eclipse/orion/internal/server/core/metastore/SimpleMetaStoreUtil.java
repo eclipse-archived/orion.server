@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 IBM Corporation and others.
+ * Copyright (c) 2013, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,10 +10,17 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core.metastore;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.resources.FileLocker;
 import org.json.JSONException;
@@ -22,18 +29,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A utility class to help with the create, read, update and delete of the files and folders
- * in a simple meta store.
+ * A utility class to help with the create, read, update and delete of the files and folders in a simple meta store.
  * 
  * @author Anthony Hunter
  */
 public class SimpleMetaStoreUtil {
 
 	/**
-	 * The folder where files are invalid metadata is moved rather than deleting outright. 
+	 * The folder where files are invalid metadata is moved rather than deleting outright.
 	 */
 	public static final String ARCHIVE = ".archive";
-	
+
 	/**
 	 * The file scheme name of a URI
 	 */
@@ -65,10 +71,13 @@ public class SimpleMetaStoreUtil {
 	public final static String USER = "user";
 
 	/**
-	 * Archive the provided file to clean the metadata storage of invalid metadata. This is an alternative to
-	 * the warning "root contains invalid metadata", see Bug 437962
-	 * @param root the root folder that will contain the archive.
-	 * @param file the invalid metadata.
+	 * Archive the provided file to clean the metadata storage of invalid metadata. This is an alternative to the
+	 * warning "root contains invalid metadata", see Bug 437962
+	 * 
+	 * @param root
+	 *            the root folder that will contain the archive.
+	 * @param file
+	 *            the invalid metadata.
 	 */
 	protected static void archive(File root, File file) {
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
@@ -100,10 +109,14 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Create a new MetaFile with the provided name under the provided parent folder. 
-	 * @param parent The parent folder.
-	 * @param name The name of the MetaFile
-	 * @param jsonObject The JSON containing the data to save in the MetaFile.
+	 * Create a new MetaFile with the provided name under the provided parent folder.
+	 * 
+	 * @param parent
+	 *            The parent folder.
+	 * @param name
+	 *            The name of the MetaFile
+	 * @param jsonObject
+	 *            The JSON containing the data to save in the MetaFile.
 	 * @return true if the creation was successful.
 	 */
 	public static boolean createMetaFile(File parent, String name, JSONObject jsonObject) {
@@ -156,9 +169,12 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Create a new folder with the provided name under the provided parent folder. 
-	 * @param parent The parent folder.
-	 * @param name The name of the folder.
+	 * Create a new folder with the provided name under the provided parent folder.
+	 * 
+	 * @param parent
+	 *            The parent folder.
+	 * @param name
+	 *            The name of the folder.
 	 * @return true if the creation was successful.
 	 */
 	public static boolean createMetaFolder(File parent, String name) {
@@ -182,8 +198,11 @@ public class SimpleMetaStoreUtil {
 
 	/**
 	 * Create a new user folder with the provided name under the provided parent folder.
-	 * @param parent the parent folder.
-	 * @param userName the user name.
+	 * 
+	 * @param parent
+	 *            the parent folder.
+	 * @param userName
+	 *            the user name.
 	 * @return true if the creation was successful.
 	 */
 	public static boolean createMetaUserFolder(File parent, String userName) {
@@ -194,7 +213,7 @@ public class SimpleMetaStoreUtil {
 			throw new RuntimeException("Meta File Error, parent is not a folder");
 		}
 
-		//the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		// the user-tree layout organises projects by the user who created it: metastore/an/anthony
 		String userPrefix = userName.substring(0, Math.min(2, userName.length()));
 		File orgFolder = new File(parent, userPrefix);
 		if (!orgFolder.exists()) {
@@ -206,9 +225,11 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Decode the project's content location. The variable ${SERVERWORKSPACE} is replaced with the path of the root 
+	 * Decode the project's content location. The variable ${SERVERWORKSPACE} is replaced with the path of the root
 	 * location (serverworkspace).
-	 * @param contentLocation the decoded content location.
+	 * 
+	 * @param contentLocation
+	 *            the decoded content location.
 	 * @return the project's content location.
 	 */
 	public static String decodeProjectContentLocation(String contentLocation) {
@@ -222,10 +243,12 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Decode the project name from the project id. In the current implementation, the project id and
-	 * workspace name are the same value. However, on Windows, we replace the bar character in the project name 
-	 * with three dashes since bar is a reserved character on Windows and cannot be used to save a project to disk. 
-	 * @param projectId The project id.
+	 * Decode the project name from the project id. In the current implementation, the project id and workspace name are
+	 * the same value. However, on Windows, we replace the bar character in the project name with three dashes since bar
+	 * is a reserved character on Windows and cannot be used to save a project to disk.
+	 * 
+	 * @param projectId
+	 *            The project id.
 	 * @return The project id.
 	 */
 	public static String decodeProjectNameFromProjectId(String projectId) {
@@ -237,9 +260,11 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Decode the user id from the workspace id. In the current implementation, the user id and
-	 * workspace name, joined with a dash, is the workspaceId. 
-	 * @param workspaceId The workspace id.
+	 * Decode the user id from the workspace id. In the current implementation, the user id and workspace name, joined
+	 * with a dash, is the workspaceId.
+	 * 
+	 * @param workspaceId
+	 *            The workspace id.
 	 * @return The user id.
 	 */
 	public static String decodeUserIdFromWorkspaceId(String workspaceId) {
@@ -250,10 +275,12 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Decode the workspace name from the workspace id. In the current implementation, the user name and
-	 * workspace name, joined with a dash, is the workspaceId. The workspace name is not the actual workspace
-	 * name as we have removed spaces and pound during the encoding.
-	 * @param workspaceId The workspace id.
+	 * Decode the workspace name from the workspace id. In the current implementation, the user name and workspace name,
+	 * joined with a dash, is the workspaceId. The workspace name is not the actual workspace name as we have removed
+	 * spaces and pound during the encoding.
+	 * 
+	 * @param workspaceId
+	 *            The workspace id.
 	 * @return The workspace name.
 	 */
 	public static String decodeWorkspaceNameFromWorkspaceId(String workspaceId) {
@@ -264,9 +291,12 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Delete the MetaFile with the provided name under the provided parent folder. 
-	 * @param parent The parent folder.
-	 * @param name The name of the MetaFile
+	 * Delete the MetaFile with the provided name under the provided parent folder.
+	 * 
+	 * @param parent
+	 *            The parent folder.
+	 * @param name
+	 *            The name of the MetaFile
 	 * @return true if the deletion was successful.
 	 */
 	public static boolean deleteMetaFile(File parent, String name) {
@@ -290,10 +320,14 @@ public class SimpleMetaStoreUtil {
 
 	/**
 	 * Delete the provided folder. The folder should be empty. If the exceptionWhenNotEmpty is false, then do not throw
-	 * an exception when the folder is not empty, just return false. 
-	 * @param parent The parent folder.
-	 * @param name The name of the folder
-	 * @param exceptionWhenNotEmpty throw a RuntimeException when the provided folder is not empty.
+	 * an exception when the folder is not empty, just return false.
+	 * 
+	 * @param parent
+	 *            The parent folder.
+	 * @param name
+	 *            The name of the folder
+	 * @param exceptionWhenNotEmpty
+	 *            throw a RuntimeException when the provided folder is not empty.
 	 * @return true if the deletion was successful.
 	 */
 	public static boolean deleteMetaFolder(File parent, String name, boolean exceptionWhenNotEmpty) {
@@ -312,8 +346,11 @@ public class SimpleMetaStoreUtil {
 
 	/**
 	 * Delete the user folder with the provided name under the provided parent folder.
-	 * @param parent the parent folder.
-	 * @param userName the user name.
+	 * 
+	 * @param parent
+	 *            the parent folder.
+	 * @param userName
+	 *            the user name.
 	 * @return true if the creation was successful.
 	 */
 	public static boolean deleteMetaUserFolder(File parent, String userName) {
@@ -325,7 +362,7 @@ public class SimpleMetaStoreUtil {
 			throw new RuntimeException("Meta File Error, cannot delete folder.");
 		}
 
-		//the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		// the user-tree layout organises projects by the user who created it: metastore/an/anthony
 		File orgFolder = parent.getParentFile();
 		files = orgFolder.list();
 		if (files.length != 0) {
@@ -339,9 +376,11 @@ public class SimpleMetaStoreUtil {
 
 	/**
 	 * Encode the project's content location. When the project's content location is a URI with a file based schema and
-	 * the project is in the default location, we want to replace the path of the root location (serverworkspace) with a variable
-	 * ${SERVERWORKSPACE}
-	 * @param contentLocation the content location.
+	 * the project is in the default location, we want to replace the path of the root location (serverworkspace) with a
+	 * variable ${SERVERWORKSPACE}
+	 * 
+	 * @param contentLocation
+	 *            the content location.
 	 * @return the project's content location.
 	 */
 	public static String encodeProjectContentLocation(String contentLocation) {
@@ -358,10 +397,12 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Encode the project id from the project name. In the current implementation, the project id and
-	 * project name are the same value. However, on Windows, we replace the bar character in the project name 
-	 * with three dashes since bar is a reserved character on Windows and cannot be used to save a project to disk. 
-	 * @param projectName The project name.
+	 * Encode the project id from the project name. In the current implementation, the project id and project name are
+	 * the same value. However, on Windows, we replace the bar character in the project name with three dashes since bar
+	 * is a reserved character on Windows and cannot be used to save a project to disk.
+	 * 
+	 * @param projectName
+	 *            The project name.
 	 * @return The project id.
 	 */
 	public static String encodeProjectIdFromProjectName(String projectName) {
@@ -373,11 +414,13 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Encode the workspace id from the user id and workspace id. In the current implementation, the 
-	 * user name and workspace name, joined with a dash, is the workspaceId. The workspaceId also cannot 
-	 * contain spaces or pound.
-	 * @param userName The user name id.
-	 * @param workspaceName The workspace name.
+	 * Encode the workspace id from the user id and workspace id. In the current implementation, the user name and
+	 * workspace name, joined with a dash, is the workspaceId. The workspaceId also cannot contain spaces or pound.
+	 * 
+	 * @param userName
+	 *            The user name id.
+	 * @param workspaceName
+	 *            The workspace name.
 	 * @return The workspace id.
 	 */
 	public static String encodeWorkspaceId(String userName, String workspaceName) {
@@ -387,8 +430,11 @@ public class SimpleMetaStoreUtil {
 
 	/**
 	 * Determine if the provided name is a MetaFile under the provided parent folder.
-	 * @param parent The parent folder.
-	 * @param name The name of the MetaFile
+	 * 
+	 * @param parent
+	 *            The parent folder.
+	 * @param name
+	 *            The name of the MetaFile
 	 * @return true if the name is a MetaFile.
 	 */
 	public static boolean isMetaFile(File parent, String name) {
@@ -397,8 +443,11 @@ public class SimpleMetaStoreUtil {
 
 	/**
 	 * Determine if the provided parent folder contains a MetaFile with the provided name
-	 * @param parent The parent folder.
-	 * @param name The name of the MetaFile
+	 * 
+	 * @param parent
+	 *            The parent folder.
+	 * @param name
+	 *            The name of the MetaFile
 	 * @return true if the parent is a folder with a MetaFile.
 	 */
 	public static boolean isMetaFolder(File parent, String name) {
@@ -407,8 +456,11 @@ public class SimpleMetaStoreUtil {
 
 	/**
 	 * Determine if the provided user name is a MetaFolder under the provided parent folder.
-	 * @param parent the parent folder.
-	 * @param userName the user name.
+	 * 
+	 * @param parent
+	 *            the parent folder.
+	 * @param userName
+	 *            the user name.
 	 * @return true if the parent is a folder with a user MetaFile.
 	 */
 	public static boolean isMetaUserFolder(File parent, String userName) {
@@ -419,7 +471,7 @@ public class SimpleMetaStoreUtil {
 			throw new RuntimeException("Meta File Error, parent is not a folder");
 		}
 
-		//the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		// the user-tree layout organises projects by the user who created it: metastore/an/anthony
 		String userPrefix = userName.substring(0, Math.min(2, userName.length()));
 		File orgFolder = new File(parent, userPrefix);
 		if (!orgFolder.exists()) {
@@ -434,7 +486,9 @@ public class SimpleMetaStoreUtil {
 
 	/**
 	 * Retrieve the list of meta files under the parent folder.
-	 * @param parent The parent folder.
+	 * 
+	 * @param parent
+	 *            The parent folder.
 	 * @return list of meta files.
 	 */
 	public static List<String> listMetaFiles(File parent) {
@@ -456,11 +510,13 @@ public class SimpleMetaStoreUtil {
 
 	/**
 	 * Retrieve the list of user folders under the parent folder.
-	 * @param parent The parent folder.
+	 * 
+	 * @param parent
+	 *            The parent folder.
 	 * @return list of user folders.
 	 */
 	public static List<String> listMetaUserFolders(File parent) {
-		//the user-tree layout organizes folders user: serverworkspace/an/anthony
+		// the user-tree layout organizes folders user: serverworkspace/an/anthony
 		List<String> userMetaFolders = new ArrayList<String>();
 		for (File file : parent.listFiles()) {
 			if (file.getName().equals(".metadata")) {
@@ -502,10 +558,14 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Move the MetaFile in the provided parent folder. 
-	 * @param parent The parent folder.
-	 * @param oldName The old name of the MetaFile
-	 * @param newName The new name of the MetaFile
+	 * Move the MetaFile in the provided parent folder.
+	 * 
+	 * @param parent
+	 *            The parent folder.
+	 * @param oldName
+	 *            The old name of the MetaFile
+	 * @param newName
+	 *            The new name of the MetaFile
 	 * @return true if the move was successful.
 	 */
 	public static boolean moveMetaFile(File parent, String oldName, String newName) {
@@ -519,10 +579,14 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Move the MetaFolder in the provided parent folder. 
-	 * @param parent The parent folder.
-	 * @param oldName The old name of the MetaFile
-	 * @param newName The new name of the MetaFile
+	 * Move the MetaFolder in the provided parent folder.
+	 * 
+	 * @param parent
+	 *            The parent folder.
+	 * @param oldName
+	 *            The old name of the MetaFile
+	 * @param newName
+	 *            The new name of the MetaFile
 	 * @return true if the move was successful.
 	 */
 	public static boolean moveMetaFolder(File parent, String oldName, String newName) {
@@ -536,9 +600,12 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Move the MetaFolder to the new named MetaFolder. 
-	 * @param oldUserMetaFolder The old MetaFolder.
-	 * @param newUserMetaFolder The new MetaFolder.
+	 * Move the MetaFolder to the new named MetaFolder.
+	 * 
+	 * @param oldUserMetaFolder
+	 *            The old MetaFolder.
+	 * @param newUserMetaFolder
+	 *            The new MetaFolder.
 	 * @return true if the move was successful.
 	 */
 	public static boolean moveUserMetaFolder(File oldUserMetaFolder, File newUserMetaFolder) {
@@ -560,7 +627,7 @@ public class SimpleMetaStoreUtil {
 		if (!oldUserMetaFolder.renameTo(newUserMetaFolder)) {
 			throw new RuntimeException("Meta File Error, renameTo failed");
 		}
-		//the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		// the user-tree layout organises projects by the user who created it: metastore/an/anthony
 		orgFolder = oldUserMetaFolder.getParentFile();
 		String[] files = orgFolder.list();
 		if (files.length != 0) {
@@ -573,9 +640,12 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Get the JSON from the MetaFile in the provided parent folder. 
-	 * @param parent The parent folder.
-	 * @param name The name of the MetaFile
+	 * Get the JSON from the MetaFile in the provided parent folder.
+	 * 
+	 * @param parent
+	 *            The parent folder.
+	 * @param name
+	 *            The name of the MetaFile
 	 * @return The JSON containing the data in the MetaFile.
 	 */
 	public static JSONObject readMetaFile(File parent, String name) {
@@ -614,9 +684,12 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Get the MetaFolder in the provided parent folder. 
-	 * @param parent The parent folder.
-	 * @param name The name of the MetaFolder
+	 * Get the MetaFolder in the provided parent folder.
+	 * 
+	 * @param parent
+	 *            The parent folder.
+	 * @param name
+	 *            The name of the MetaFolder
 	 * @return The JSON containing the data in the MetaFile.
 	 */
 	public static File readMetaFolder(File parent, String name) {
@@ -628,12 +701,15 @@ public class SimpleMetaStoreUtil {
 
 	/**
 	 * Get the user folder with the provided name under the provided parent folder.
-	 * @param parent the parent folder.
-	 * @param userName the user name.
+	 * 
+	 * @param parent
+	 *            the parent folder.
+	 * @param userName
+	 *            the user name.
 	 * @return the folder.
 	 */
 	public static File readMetaUserFolder(File parent, String userName) {
-		//the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		// the user-tree layout organises projects by the user who created it: metastore/an/anthony
 		String userPrefix = userName.substring(0, Math.min(2, userName.length()));
 		File orgFolder = new File(parent, userPrefix);
 		return new File(orgFolder, userName);
@@ -641,8 +717,11 @@ public class SimpleMetaStoreUtil {
 
 	/**
 	 * Retrieve the MetaFile with the provided name under the parent folder.
-	 * @param parent The parent folder.
-	 * @param name The name of the MetaFile
+	 * 
+	 * @param parent
+	 *            The parent folder.
+	 * @param name
+	 *            The name of the MetaFile
 	 * @return The MetaFile.
 	 */
 	public static File retrieveMetaFile(File parent, String name) {
@@ -650,9 +729,12 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Retrieve the folder with the provided name under the provided parent folder. 
-	 * @param parent The parent folder.
-	 * @param name The name of the folder.
+	 * Retrieve the folder with the provided name under the provided parent folder.
+	 * 
+	 * @param parent
+	 *            The parent folder.
+	 * @param name
+	 *            The name of the folder.
 	 * @return The folder.
 	 */
 	public static File retrieveMetaFolder(File parent, String name) {
@@ -660,10 +742,14 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Update the existing MetaFile with the provided name under the provided parent folder. 
-	 * @param parent The parent folder.
-	 * @param name The name of the MetaFile
-	 * @param jsonObject The JSON containing the data to update in the MetaFile.
+	 * Update the existing MetaFile with the provided name under the provided parent folder.
+	 * 
+	 * @param parent
+	 *            The parent folder.
+	 * @param name
+	 *            The name of the MetaFile
+	 * @param jsonObject
+	 *            The JSON containing the data to update in the MetaFile.
 	 * @return true if the update was successful.
 	 */
 	public static boolean updateMetaFile(File parent, String name, JSONObject jsonObject) {
@@ -701,11 +787,16 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Move the MetaFolder in the provided parent folder to a new parent folder 
-	 * @param parent The parent folder.
-	 * @param oldName The old name of the MetaFolder
-	 * @param newParent The new name of parent folder
-	 * @param newName The new name of the MetaFolder
+	 * Move the MetaFolder in the provided parent folder to a new parent folder
+	 * 
+	 * @param parent
+	 *            The parent folder.
+	 * @param oldName
+	 *            The old name of the MetaFolder
+	 * @param newParent
+	 *            The new name of parent folder
+	 * @param newName
+	 *            The new name of the MetaFolder
 	 * @return true if the move was successful.
 	 */
 	public static boolean moveMetaFolder(File parent, String oldName, File newParent, String newName) {
@@ -721,11 +812,16 @@ public class SimpleMetaStoreUtil {
 	}
 
 	/**
-	 * Move the MetaFile in the provided parent folder to a new parent folder 
-	 * @param parent The parent folder.
-	 * @param oldName The old name of the MetaFile
-	 * @param newParent The new name of parent folder
-	 * @param newName The new name of the MetaFile
+	 * Move the MetaFile in the provided parent folder to a new parent folder
+	 * 
+	 * @param parent
+	 *            The parent folder.
+	 * @param oldName
+	 *            The old name of the MetaFile
+	 * @param newParent
+	 *            The new name of parent folder
+	 * @param newName
+	 *            The new name of the MetaFile
 	 * @return true if the move was successful.
 	 */
 	public static boolean moveMetaFile(File parent, String oldName, File newParent, String newName) {
