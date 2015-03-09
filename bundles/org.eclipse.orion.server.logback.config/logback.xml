@@ -5,28 +5,6 @@
   <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
     <resetJUL>true</resetJUL>
   </contextListener>
-
-  <!-- Import custom properties from the Orion configuration file -->
-  <property file="${orion.core.configFile}" />
-  
-  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    
-    <!-- by default, write to /home/ahunter/orion.log -->
-    <file>${orion.log.directory:-/home/ahunter/}${orion.log.file:-orion.log}</file>
-    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      
-      <!-- daily rollover -->
-      <fileNamePattern>%d{yyyy-MM-dd}.${orion.log.file:-orion.log}</fileNamePattern>
-
-      <!-- keep log history, by default 30 -->
-      <maxHistory>${orion.log.history:-30}</maxHistory>
-    
-    </rollingPolicy>
-
-    <encoder>
-      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-    </encoder>
-  </appender> 
   
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <layout class="ch.qos.logback.classic.PatternLayout">
@@ -46,7 +24,7 @@
   <logger name="org.eclipse.orion.server.login" level="INFO"/>
 
   <!-- Prints access to workspace -->
-  <logger name="org.eclipse.orion.server.workspace" level="INFO"/>
+  <!-- <logger name="org.eclipse.orion.server.workspace" level="INFO"/> -->
 
   <!-- Prints user account creations and deletions -->
   <logger name="org.eclipse.orion.server.account" level="INFO"/>
@@ -62,6 +40,5 @@
 
   <root level="WARN">
     <appender-ref ref="STDOUT" />
-    <appender-ref ref="FILE" />
   </root>
 </configuration>
