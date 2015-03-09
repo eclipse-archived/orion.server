@@ -10,12 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-
 import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.eclipse.core.runtime.*;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.commands.*;
 import org.eclipse.orion.server.cf.jobs.CFJob;
@@ -86,7 +85,9 @@ public class RoutesHandlerV1 extends AbstractRESTHandler<Route> {
 
 	@Override
 	protected CFJob handleGet(Route route, HttpServletRequest request, HttpServletResponse response, final String path) {
+
 		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
+		final JSONObject routeJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_ROUTE));
 
 		return new CFJob(request, false) {
 			@Override
@@ -97,6 +98,10 @@ public class RoutesHandlerV1 extends AbstractRESTHandler<Route> {
 					Target target = computeTargetCommand.getTarget();
 					if (target == null) {
 						return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
+					}
+
+					if (routeJSON != null) {
+						return new GetRouteCommand(target, routeJSON.getString(CFProtocolConstants.KEY_DOMAIN_NAME), routeJSON.getString(CFProtocolConstants.KEY_HOST)).doIt();
 					}
 
 					return new GetRoutesCommand(target, false).doIt();
