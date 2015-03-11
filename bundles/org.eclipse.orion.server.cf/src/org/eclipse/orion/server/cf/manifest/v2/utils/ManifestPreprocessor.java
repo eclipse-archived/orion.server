@@ -55,7 +55,7 @@ public class ManifestPreprocessor implements Preprocessor {
 
 	private String processLine(String inputLine) {
 		/* ignore input comments */
-		int hashIdx = inputLine.indexOf('#');
+		int hashIdx = inputLine.indexOf(" #");
 		String tmp = (hashIdx != -1) ? inputLine.substring(0, hashIdx) : inputLine;
 
 		/* ignore the opening manifest token '---' */
