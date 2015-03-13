@@ -43,3 +43,4 @@ Eclipse Setup
 Set target platform:
 - in Eclipse open the target definition `org.eclipse.orion.server/releng/org.eclipse.orion.target/org.eclipse.orion.target`
 - click "Set as Target Platform"
+
