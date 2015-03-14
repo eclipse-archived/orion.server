@@ -96,9 +96,9 @@ echo "Cleaning up"
 rm eclipse-SDK-4.4.2-linux-gtk-x86_64.tar.gz
 
 # Generate drop files
-qualifiedVersion=$(find $localUpdateSite/features/ -maxdepth 1 | grep "org.eclipse.orion_" | sed 's/.jar$//')
+qualifiedVersion=$(egrep Build ${WORKSPACE}/bundles/org.eclipse.orion.server.core/about.properties | awk -F'[: \\\\]' '{print $4}')
 echo "qualifiedVersion is $qualifiedVersion"
-qualifiedVersion=${qualifiedVersion#*_}
+qualifiedVersion=${qualifiedVersion#*-}
 echo "qualifiedVersion is $qualifiedVersion"
 qualifier=${qualifiedVersion##*.}
 echo "qualifier is $qualifier"
