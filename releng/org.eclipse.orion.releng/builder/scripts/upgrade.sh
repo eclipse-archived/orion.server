@@ -117,8 +117,8 @@ ulimit -c unlimited
 
 pid_eclipse="$!"
 echo "Server started with pid $pid_eclipse"
-echo $pid_eclipse > ${SERVERHOME}/current.pid
 popd
+echo $pid_eclipse > ${SERVERHOME}/current.pid
 
 echo "Upgrade complete"
 

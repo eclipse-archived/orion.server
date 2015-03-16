@@ -50,7 +50,7 @@ ulimit -c unlimited
 
 pid_eclipse="$!"
 echo "Server started with pid $pid_eclipse"
+popd 
 echo $pid_eclipse > ${SERVERHOME}/current.pid
-popd
 
 echo "Restart complete"
