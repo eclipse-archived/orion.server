@@ -63,6 +63,7 @@ esac
 echo "Publishing as $remoteSite ( $buildType ) build"
 remoteUpdateSiteBase="orion/updates/$remoteSite"
 remoteUpdateSite="/home/data/httpd/download.eclipse.org/$remoteUpdateSiteBase"
+remoteStableDir="/home/data/httpd/download.eclipse.org/orion/stable"
 echo "Publishing to remote update-site: $remoteUpdateSite"
 
 if [ -z "$dropFilesLabel" -a "$buildType" != i ]; then
@@ -163,6 +164,13 @@ fi
 
 if [ -e ${WORKSPACE}/releng/org.eclipse.orion.server.repository/gerritfs/gerritfs.jar ] ; then
 	cp ${WORKSPACE}/releng/org.eclipse.orion.server.repository/gerritfs/gerritfs.jar ${localDropDir}/gerritfs.jar
+
+	# copy the gerritfs.jar to the stable location
+	if [ -d ${remoteStableDir} ]; then
+		echo "Update gerritfs.jar in ${remoteStableDir}"
+		cp ${localDropDir}/gerritfs.jar ${remoteStableDir}
+		echo "gerritfs.jar copied from build ${dropDir}" > ${remoteStableDir}/README
+	fi
 else
 	echo "Did not copy gerritfs.jar"
 fi
