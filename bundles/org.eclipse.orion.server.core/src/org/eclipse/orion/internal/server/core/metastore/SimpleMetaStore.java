@@ -276,47 +276,56 @@ public class SimpleMetaStore implements IMetaStore {
 			workspaceInfo.setUniqueId(existingWorkspaceIds);
 			return;
 		}
-		// We create a meta folder for the workspace using the encoded workspace name
-		String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(workspaceInfo.getUserId(), workspaceInfo.getFullName());
-		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
-		// It is possible to have two workspaces with the same name, so append an integer if this is a duplicate name.
-		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userInfo.getUniqueId());
-		workspaceInfo.setUniqueId(workspaceId);
-		JSONObject jsonObject = new JSONObject();
+		// lock the user when creating the workspace and updating the user.
+		ReadWriteLock lock = getLockForUser(userInfo.getUniqueId());
+		lock.writeLock().lock();
 		try {
-			jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
-			jsonObject.put(MetadataInfo.UNIQUE_ID, workspaceInfo.getUniqueId());
-			jsonObject.put("UserId", workspaceInfo.getUserId());
-			jsonObject.put(UserConstants.FULL_NAME, workspaceInfo.getFullName());
-			jsonObject.put("ProjectNames", new JSONArray());
-			JSONObject properties = updateProperties(jsonObject, workspaceInfo);
-			jsonObject.put("Properties", properties);
-		} catch (JSONException e) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
-					"SimpleMetaStore.createWorkspace: could not create workspace: " + encodedWorkspaceName + " for user " + userInfo.getUserName(), e));
-		}
-		if (!SimpleMetaStoreUtil.createMetaFolder(userMetaFolder, encodedWorkspaceName)) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
-					"SimpleMetaStore.createWorkspace: could not create workspace: " + encodedWorkspaceName + " for user " + userInfo.getUserName(), null));
-		}
-		if (SimpleMetaStoreUtil.isMetaFile(userMetaFolder, workspaceId)) {
-			File workspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, workspaceId);
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-			logger.info("SimpleMetaStore.createWorkspace: workspace conflict: while creating a workspace for user id: " + userInfo.getUniqueId()
-					+ ", found existing workspace json, will not overwrite: " + workspaceMetaFile.toString());
-		} else {
-			if (!SimpleMetaStoreUtil.createMetaFile(userMetaFolder, workspaceId, jsonObject)) {
+			// We create a meta folder for the workspace using the encoded workspace name
+			String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(workspaceInfo.getUserId(), workspaceInfo.getFullName());
+			String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
+			// It is possible to have two workspaces with the same name, so append an integer if this is a duplicate
+			// name.
+			File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userInfo.getUniqueId());
+			workspaceInfo.setUniqueId(workspaceId);
+			JSONObject jsonObject = new JSONObject();
+			try {
+				jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
+				jsonObject.put(MetadataInfo.UNIQUE_ID, workspaceInfo.getUniqueId());
+				jsonObject.put("UserId", workspaceInfo.getUserId());
+				jsonObject.put(UserConstants.FULL_NAME, workspaceInfo.getFullName());
+				jsonObject.put("ProjectNames", new JSONArray());
+				JSONObject properties = updateProperties(jsonObject, workspaceInfo);
+				jsonObject.put("Properties", properties);
+			} catch (JSONException e) {
+				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+						"SimpleMetaStore.createWorkspace: could not create workspace: " + encodedWorkspaceName + " for user " + userInfo.getUserName(), e));
+			}
+			if (!SimpleMetaStoreUtil.createMetaFolder(userMetaFolder, encodedWorkspaceName)) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
 						"SimpleMetaStore.createWorkspace: could not create workspace: " + encodedWorkspaceName + " for user " + userInfo.getUserName(), null));
 			}
-		}
+			if (SimpleMetaStoreUtil.isMetaFile(userMetaFolder, workspaceId)) {
+				File workspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, workspaceId);
+				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+				logger.info("SimpleMetaStore.createWorkspace: workspace conflict: while creating a workspace for user id: " + userInfo.getUniqueId()
+						+ ", found existing workspace json, will not overwrite: " + workspaceMetaFile.toString());
+			} else {
+				if (!SimpleMetaStoreUtil.createMetaFile(userMetaFolder, workspaceId, jsonObject)) {
+					throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+							"SimpleMetaStore.createWorkspace: could not create workspace: " + encodedWorkspaceName + " for user " + userInfo.getUserName(),
+							null));
+				}
+			}
 
-		// Update the user with the new workspaceId
-		List<String> newWorkspaceIds = new ArrayList<String>();
-		newWorkspaceIds.addAll(userInfo.getWorkspaceIds());
-		newWorkspaceIds.add(workspaceId);
-		userInfo.setWorkspaceIds(newWorkspaceIds);
-		updateUser(userInfo);
+			// Update the user with the new workspaceId
+			List<String> newWorkspaceIds = new ArrayList<String>();
+			newWorkspaceIds.addAll(userInfo.getWorkspaceIds());
+			newWorkspaceIds.add(workspaceId);
+			userInfo.setWorkspaceIds(newWorkspaceIds);
+			updateUser(userInfo);
+		} finally {
+			lock.writeLock().unlock();
+		}
 	}
 
 	@Override
@@ -746,20 +755,28 @@ public class SimpleMetaStore implements IMetaStore {
 		if (workspaceId == null) {
 			return null;
 		}
-		String userName = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceId);
+		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceId);
 		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
-		if (userName == null || encodedWorkspaceName == null) {
+		if (userId == null || encodedWorkspaceName == null) {
 			// could not decode, so cannot find workspace
 			return null;
 		}
-		if (!SimpleMetaStoreUtil.isMetaUserFolder(getRootLocation(), userName)) {
+		if (!SimpleMetaStoreUtil.isMetaUserFolder(getRootLocation(), userId)) {
 			return null;
 		}
-		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userName);
+		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
 		if (!SimpleMetaStoreUtil.isMetaFolder(userMetaFolder, encodedWorkspaceName)) {
 			return null;
 		}
-		JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, workspaceId);
+		JSONObject jsonObject = null;
+		// add a read lock when reading the the.
+		ReadWriteLock lock = getLockForUser(userId);
+		lock.readLock().lock();
+		try {
+			jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, workspaceId);
+		} finally {
+			lock.readLock().unlock();
+		}
 		if (jsonObject == null) {
 			return null;
 		}
@@ -780,7 +797,7 @@ public class SimpleMetaStore implements IMetaStore {
 			workspaceInfo.flush();
 		} catch (JSONException e) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.readWorkspace: could not read workspace "
-					+ encodedWorkspaceName + " for user id " + userName, e));
+					+ encodedWorkspaceName + " for user id " + userId, e));
 		}
 		return workspaceInfo;
 	}
@@ -924,8 +941,9 @@ public class SimpleMetaStore implements IMetaStore {
 	}
 
 	/**
-	 * Update the properties that have been updated in the provided metadataInfo. The updates are determined by looking at the the list of operations performed
-	 * on the properties of this metadataInfo since the last read. See Bug 426842 for details.
+	 * Update the properties that have been updated in the provided metadataInfo. The updates are determined by looking
+	 * at the the list of operations performed on the properties of this metadataInfo since the last read. See Bug
+	 * 426842 for details.
 	 * 
 	 * @param jsonObject
 	 *            The jsonObject to be updated with the properties changes.
@@ -1103,42 +1121,55 @@ public class SimpleMetaStore implements IMetaStore {
 
 	@Override
 	public void updateWorkspace(WorkspaceInfo workspaceInfo) throws CoreException {
-		String userName = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceInfo.getUniqueId());
-		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceInfo.getUniqueId());
-		boolean renameUser = false;
-		String newWorkspaceId = null;
-		if (!workspaceInfo.getUserId().equals(userName)) {
-			// user id does not equal user name, so we are renaming the user.
-			renameUser = true;
-			newWorkspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(workspaceInfo.getUserId(), encodedWorkspaceName);
-		}
-		JSONObject jsonObject = new JSONObject();
+		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceInfo.getUniqueId());
+		// lock the user when updating the workspace, see Bugzilla 462608.
+		ReadWriteLock lock = getLockForUser(userId);
+		lock.writeLock().lock();
 		try {
-			jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
-			if (renameUser) {
-				jsonObject.put(MetadataInfo.UNIQUE_ID, newWorkspaceId);
-			} else {
-				jsonObject.put(MetadataInfo.UNIQUE_ID, workspaceInfo.getUniqueId());
-			}
-			jsonObject.put("UserId", workspaceInfo.getUserId());
-			jsonObject.put(UserConstants.FULL_NAME, workspaceInfo.getFullName());
-			JSONArray projectNames = new JSONArray(workspaceInfo.getProjectNames());
-			jsonObject.put("ProjectNames", projectNames);
-			JSONObject properties = updateProperties(jsonObject, workspaceInfo);
-			jsonObject.put("Properties", properties);
-		} catch (JSONException e) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
-					"SimpleMetaStore.updateWorkspace: could not update workspace: " + encodedWorkspaceName + " for user " + userName, e));
-		}
-		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userName);
-		if (!SimpleMetaStoreUtil.updateMetaFile(userMetaFolder, workspaceInfo.getUniqueId(), jsonObject)) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
-					"SimpleMetaStore.updateWorkspace: could not update workspace: " + encodedWorkspaceName + " for user " + userName, null));
-		}
-		if (renameUser) {
-			SimpleMetaStoreUtil.moveMetaFile(userMetaFolder, workspaceInfo.getUniqueId(), newWorkspaceId);
 
-			workspaceInfo.setUniqueId(newWorkspaceId);
+			String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceInfo.getUniqueId());
+			boolean renameUser = false;
+			String newWorkspaceId = null;
+			if (!workspaceInfo.getUserId().equals(userId)) {
+				// user id does not equal the user Id in the workspace id, so we are renaming the user.
+				renameUser = true;
+				newWorkspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(workspaceInfo.getUserId(), encodedWorkspaceName);
+			}
+			
+			File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
+			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, workspaceInfo.getUniqueId());
+			if (jsonObject == null) {
+				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateWorkspace: could not find workspace "
+						+ workspaceInfo.getUniqueId(), null));
+			}
+			try {
+				jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
+				if (renameUser) {
+					jsonObject.put(MetadataInfo.UNIQUE_ID, newWorkspaceId);
+				} else {
+					jsonObject.put(MetadataInfo.UNIQUE_ID, workspaceInfo.getUniqueId());
+				}
+				jsonObject.put("UserId", workspaceInfo.getUserId());
+				jsonObject.put(UserConstants.FULL_NAME, workspaceInfo.getFullName());
+				JSONArray projectNames = new JSONArray(workspaceInfo.getProjectNames());
+				jsonObject.put("ProjectNames", projectNames);
+				JSONObject properties = updateProperties(jsonObject, workspaceInfo);
+				jsonObject.put("Properties", properties);
+			} catch (JSONException e) {
+				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+						"SimpleMetaStore.updateWorkspace: could not update workspace: " + encodedWorkspaceName + " for user " + userId, e));
+			}
+			if (!SimpleMetaStoreUtil.updateMetaFile(userMetaFolder, workspaceInfo.getUniqueId(), jsonObject)) {
+				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+						"SimpleMetaStore.updateWorkspace: could not update workspace: " + encodedWorkspaceName + " for user " + userId, null));
+			}
+			if (renameUser) {
+				SimpleMetaStoreUtil.moveMetaFile(userMetaFolder, workspaceInfo.getUniqueId(), newWorkspaceId);
+
+				workspaceInfo.setUniqueId(newWorkspaceId);
+			}
+		} finally {
+			lock.writeLock().unlock();
 		}
 	}
 }

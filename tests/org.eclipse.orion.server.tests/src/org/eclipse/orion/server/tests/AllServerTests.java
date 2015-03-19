@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corporation and others.
+ * Copyright (c) 2010, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,6 +18,7 @@ import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreLiveMigrationTest
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreUserPropertyCacheTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreUtilTest;
+import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreWorkspacePropertyConcurrencyTests;
 import org.eclipse.orion.server.tests.metastore.SimpleUserPasswordUtilTests;
 import org.eclipse.orion.server.tests.metastore.UserInfoTests;
 import org.eclipse.orion.server.tests.metastore.WorkspaceInfoTests;
@@ -53,6 +54,7 @@ import org.junit.runners.Suite.SuiteClasses;
 		SimpleMetaStoreConcurrencyTests.class, //
 		SimpleMetaStoreLiveMigrationTests.class, //
 		SimpleMetaStoreLiveMigrationConcurrencyTests.class, //
+		SimpleMetaStoreWorkspacePropertyConcurrencyTests.class, //
 		SimpleMetaStoreTests.class, //
 		SimpleMetaStoreUserPropertyCacheTests.class, //
 		SimpleMetaStoreUtilTest.class, //
