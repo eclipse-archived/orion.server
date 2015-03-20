@@ -609,14 +609,17 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			return "Password not specified.";
 		}
 
-		if (password.length() < PASSWORD_MIN_LENGTH) {
-			return NLS.bind("Password must be at least {0} characters long", PASSWORD_MIN_LENGTH);
-		}
+		String passwordVerificationDisabled = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_DISABLE_PASSWORD_RULES, "false").toLowerCase(); //$NON-NLS-1$
+		if ("false".equals(passwordVerificationDisabled)) {
 
-		if (Pattern.matches("[a-zA-Z]+", password) || Pattern.matches("[^a-zA-Z]+", password)) {
-			return "Password must contain at least one alpha character and one non alpha character";
-		}
+			if (password.length() < PASSWORD_MIN_LENGTH) {
+				return NLS.bind("Password must be at least {0} characters long", PASSWORD_MIN_LENGTH);
+			}
 
+			if (Pattern.matches("[a-zA-Z]+", password) || Pattern.matches("[^a-zA-Z]+", password)) {
+				return "Password must contain at least one alpha character and one non alpha character";
+			}
+		}
 		return null;
 	}
 }
