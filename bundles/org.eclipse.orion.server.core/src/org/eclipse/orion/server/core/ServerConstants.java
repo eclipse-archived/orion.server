@@ -27,12 +27,13 @@ public class ServerConstants {
 	public static final String CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD = "orion.auth.admin.default.password"; //$NON-NLS-1$
 
 	/**
-	 * The system property name for to disable the default password verification rules. By default passwords must be
-	 * eight characters long and must contain at least one alpha character and one non alpha character. If this
-	 * preference is true these rules are ignored and any password may be used.
+	 * The name of the configuration property to disable the default username and password verification rules. By
+	 * default a username is between three and twenty characters long. By default passwords must be eight characters
+	 * long and must contain at least one alpha character and one non alpha character. If this preference is true these
+	 * rules are ignored and any password may be used.
 	 */
-	public static final String CONFIG_AUTH_DISABLE_PASSWORD_RULES = "orion.auth.disable.password.rules"; //$NON-NLS-1$
-	
+	public static final String CONFIG_AUTH_DISABLE_ACCOUNT_RULES = "orion.auth.disable.account.rules"; //$NON-NLS-1$
+
 	/**
 	 * The name of the configuration property that tells us what server to use for authentication purposes. In a basic
 	 * server configuration this will be undefined, and the direct Orion server will be treated as the authentication

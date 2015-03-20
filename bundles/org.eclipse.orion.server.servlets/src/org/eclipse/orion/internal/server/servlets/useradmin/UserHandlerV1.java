@@ -576,18 +576,20 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (login == null || login.length() == 0) {
 			return "User login not specified";
 		}
-		int length = login.length();
-		if (length < USERNAME_MIN_LENGTH) {
-			return NLS.bind("Username must contain at least {0} characters", USERNAME_MIN_LENGTH);
-		}
-		if (length > USERNAME_MAX_LENGTH) {
-			return NLS.bind("Username must contain no more than {0} characters", USERNAME_MAX_LENGTH);
-		}
-		if (login.equals("ultramegatron")) {
-			return "Nice try, Mark";
+
+		String passwordVerificationDisabled = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_DISABLE_ACCOUNT_RULES, "false").toLowerCase(); //$NON-NLS-1$
+		if ("false".equals(passwordVerificationDisabled)) {
+
+			int length = login.length();
+			if (length < USERNAME_MIN_LENGTH) {
+				return NLS.bind("Username must contain at least {0} characters", USERNAME_MIN_LENGTH);
+			}
+			if (length > USERNAME_MAX_LENGTH) {
+				return NLS.bind("Username must contain no more than {0} characters", USERNAME_MAX_LENGTH);
+			}
 		}
 
-		for (int i = 0; i < length; i++) {
+		for (int i = 0; i < login.length(); i++) {
 			if (!Character.isLetterOrDigit(login.charAt(i))) {
 				return NLS.bind("Username {0} contains invalid character ''{1}''", login, login.charAt(i));
 			}
@@ -609,7 +611,7 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			return "Password not specified.";
 		}
 
-		String passwordVerificationDisabled = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_DISABLE_PASSWORD_RULES, "false").toLowerCase(); //$NON-NLS-1$
+		String passwordVerificationDisabled = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_DISABLE_ACCOUNT_RULES, "false").toLowerCase(); //$NON-NLS-1$
 		if ("false".equals(passwordVerificationDisabled)) {
 
 			if (password.length() < PASSWORD_MIN_LENGTH) {
