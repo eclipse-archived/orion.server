@@ -138,9 +138,6 @@ public class EventService implements IEventService {
 		String clientId = PreferenceHelper.getString(ServerConstants.CONFIG_EVENT_CLIENT_ID, MqttClient.generateClientId());
 		if (serverURI == null) {
 			// no MQTT message broker host defined
-			if (logger.isWarnEnabled()) {
-				logger.warn("No MQTT message broker specified in the orion.conf with " + ServerConstants.CONFIG_EVENT_HOST); //$NON-NLS-1$
-			}
 			return;
 		}
 		if (logger.isInfoEnabled()) {
