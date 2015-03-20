@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -69,14 +69,14 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	private static final String START = "start"; //$NON-NLS-1$
 
 	/**
-	 * The minimum length of a username.
-	 */
-	private static final int USERNAME_MIN_LENGTH = 3;
-
-	/**
 	 * The maximum length of a username.
 	 */
 	private static final int USERNAME_MAX_LENGTH = 20;
+
+	/**
+	 * The minimum length of a username.
+	 */
+	private static final int USERNAME_MIN_LENGTH = 3;
 
 	/**
 	 * JSON representation key for the users list. The value's data type is a String.
@@ -84,9 +84,9 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	public static final String USERS = "Users"; //$NON-NLS-1$
 
 	/**
-	 * JSON representation key for the start number in the users list. The value's data type is an Integer.
+	 * JSON representation key for the number of users in the entire users list. The value's data type is a Integer.
 	 */
-	public static final String USERS_START = "UsersStart"; //$NON-NLS-1$
+	public static final String USERS_LENGTH = "UsersLength"; //$NON-NLS-1$
 
 	/**
 	 * JSON representation key for the rows number in the users list. The value's data type is a Integer.
@@ -94,14 +94,55 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 	public static final String USERS_ROWS = "UsersRows"; //$NON-NLS-1$
 
 	/**
-	 * JSON representation key for the number of users in the entire users list. The value's data type is a Integer.
+	 * JSON representation key for the start number in the users list. The value's data type is an Integer.
 	 */
-	public static final String USERS_LENGTH = "UsersLength"; //$NON-NLS-1$
+	public static final String USERS_START = "UsersStart"; //$NON-NLS-1$
 
 	private ServletResourceHandler<IStatus> statusHandler;
 
 	UserHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
+	}
+
+	private JSONObject formJson(UserInfo userInfo, URI location, String contextPath) throws JSONException, CoreException {
+		JSONObject json = new JSONObject();
+		json.put(UserConstants.USER_NAME, userInfo.getUserName());
+		json.put(UserConstants.FULL_NAME, userInfo.getFullName());
+		json.put(UserConstants.LOCATION, contextPath + location.getPath());
+		String email = userInfo.getProperty(UserConstants.EMAIL);
+		json.put(UserConstants.EMAIL, email);
+		boolean emailConfirmed = (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants.EMAIL_CONFIRMATION_ID) == null : false;
+		json.put(UserConstants.EMAIL_CONFIRMED, emailConfirmed);
+		json.put(UserConstants.HAS_PASSWORD, userInfo.getProperty(UserConstants.PASSWORD) == null ? false : true);
+
+		if (userInfo.getProperty(UserConstants.OAUTH) != null) {
+			json.put(UserConstants.OAUTH, userInfo.getProperty(UserConstants.OAUTH));
+		}
+		if (userInfo.getProperty(UserConstants.OPENID) != null) {
+			json.put(UserConstants.OPENID, userInfo.getProperty(UserConstants.OPENID));
+		}
+
+		json.put(UserConstants.LAST_LOGIN_TIMESTAMP, userInfo.getProperty(UserConstants.LAST_LOGIN_TIMESTAMP));
+		json.put(UserConstants.DISK_USAGE_TIMESTAMP, userInfo.getProperty(UserConstants.DISK_USAGE_TIMESTAMP));
+		json.put(UserConstants.DISK_USAGE, userInfo.getProperty(UserConstants.DISK_USAGE));
+
+		return json;
+	}
+
+	private List<String> getAllUsers() throws CoreException {
+		// For Bug 372270 - changing the admin getUsers() to return a sorted list.
+		List<String> users = OrionConfiguration.getMetaStore().readAllUsers();
+		Collections.sort(users, new Comparator<String>() {
+			@Override
+			public int compare(String userId1, String userId2) {
+				return userId1.compareTo(userId2);
+			}
+		});
+		return users;
+	}
+
+	private String getUniqueEmailConfirmationId() {
+		return System.currentTimeMillis() + "-" + Math.random();
 	}
 
 	@Override
@@ -155,107 +196,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 	}
 
-	private List<String> getAllUsers() throws CoreException {
-		// For Bug 372270 - changing the admin getUsers() to return a sorted list.
-		List<String> users = OrionConfiguration.getMetaStore().readAllUsers();
-		Collections.sort(users, new Comparator<String>() {
-			@Override
-			public int compare(String userId1, String userId2) {
-				return userId1.compareTo(userId2);
-			}
-		});
-		return users;
-	}
-
-	private boolean handleUsersGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, JSONException, CoreException {
-		List<String> users = getAllUsers();
-		String startParam = req.getParameter(START);
-		String rowsParam = req.getParameter(ROWS);
-		int start = 0, rows = 0, count = 0;
-		if (startParam != null && !(startParam.length() == 0)) {
-			start = Integer.parseInt(startParam);
-			if (start < 0)
-				start = 0;
-		} else {
-			start = 0;
-		}
-		if (rowsParam != null && !(rowsParam.length() == 0)) {
-			rows = Integer.parseInt(rowsParam);
-			if (rows < 0)
-				rows = 20; // default is to return 20 at a time
-		} else {
-			// if there's no start and no rows then return the default first 20 users
-			rows = 20; // default is to return 20 at a time
-		}
-		ArrayList<JSONObject> userJSONs = new ArrayList<JSONObject>();
-		URI location = ServletResourceHandler.getURI(req);
-		for (String userId : users) {
-			if (count >= start + rows)
-				break;
-			if (count++ < start)
-				continue;
-			URI userLocation = URIUtil.append(location, userId);
-			UserInfo userInfo = OrionConfiguration.getMetaStore().readUser(userId);
-			userJSONs.add(formJson(userInfo, userLocation, req.getContextPath()));
-		}
-		JSONObject json = new JSONObject();
-		json.put(USERS, userJSONs);
-		json.put(USERS_START, start);
-		json.put(USERS_ROWS, rows);
-		json.put(USERS_LENGTH, users.size());
-		OrionServlet.writeJSONResponse(req, resp, json);
-		return true;
-	}
-
-	private boolean handleUserGet(HttpServletRequest req, HttpServletResponse resp, String username) throws IOException, JSONException, ServletException,
-			CoreException {
-		UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.USER_NAME, username, false, false);
-
-		if (userInfo == null)
-			return statusHandler
-					.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User not found " + username, null));
-
-		URI location = ServletResourceHandler.getURI(req);
-		OrionServlet.writeJSONResponse(req, resp, formJson(userInfo, location, req.getContextPath()));
-		return true;
-	}
-
-	private boolean handleUserReset(HttpServletRequest req, HttpServletResponse resp, String username, JSONObject json) throws ServletException, JSONException {
-		String password = json.getString(UserConstants.PASSWORD);
-
-		if (username == null || username.length() == 0)
-			return statusHandler
-					.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User name not specified.", null));
-
-		UserInfo userInfo = null;
-		try {
-			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.USER_NAME, username, false, false);
-		} catch (CoreException e) {
-			LogHelper.log(e);
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
-		}
-
-		if (userInfo == null)
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User " + username
-					+ " could not be found.", null));
-
-		String passwordMsg = validatePassword(password);
-		if (passwordMsg != null) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, passwordMsg, null));
-		}
-
-		try {
-			userInfo.setProperty(UserConstants.PASSWORD, password);
-			OrionConfiguration.getMetaStore().updateUser(userInfo);
-		} catch (CoreException e) {
-			LogHelper.log(e);
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
-		}
-		return true;
-	}
-
 	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp, JSONObject json) throws ServletException, IOException, JSONException,
-			CoreException {
+	CoreException {
 		String username = json.has(UserConstants.USER_NAME) ? json.getString(UserConstants.USER_NAME) : null;
 		String fullname = json.has(UserConstants.FULL_NAME) ? json.getString(UserConstants.FULL_NAME) : null;
 		String email = json.has(UserConstants.EMAIL) ? json.getString(UserConstants.EMAIL) : null;
@@ -386,59 +328,68 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private String getUniqueEmailConfirmationId() {
-		return System.currentTimeMillis() + "-" + Math.random();
+	private boolean handleUserDelete(HttpServletRequest req, HttpServletResponse resp, String username) throws ServletException {
+		UserInfo userInfo = null;
+		try {
+			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.USER_NAME, username, false, false);
+		} catch (CoreException e) {
+			LogHelper.log(e);
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + username
+					+ " failed.", e));
+		}
+
+		if (userInfo == null) {
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + username
+					+ " could not be found.", null));
+		}
+
+		// Delete user from metadata store
+		try {
+			@SuppressWarnings("unused")
+			Activator r = Activator.getDefault();
+			final IMetaStore metastore = OrionConfiguration.getMetaStore();
+			if (userInfo.getWorkspaceIds().size() > 0) {
+				for (String workspaceId : userInfo.getWorkspaceIds()) {
+					WorkspaceInfo workspaceInfo = metastore.readWorkspace(workspaceId);
+					if (workspaceInfo.getProjectNames().size() > 0) {
+						for (String projectName : workspaceInfo.getProjectNames()) {
+							ProjectInfo projectInfo = metastore.readProject(workspaceId, projectName);
+							if (projectInfo != null) {
+								WorkspaceResourceHandler.removeProject(username, workspaceInfo, projectInfo);
+							}
+						}
+					}
+				}
+			}
+			metastore.deleteUser(username);
+		} catch (CoreException e) {
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + username
+					+ " failed.", e));
+		}
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
+		if (logger.isInfoEnabled()) {
+			logger.info("Account deleted: " + username); //$NON-NLS-1$
+		}
+
+		return true;
 	}
 
-	/**
-	 * Validates that the provided login is valid. Login must consistent of alphanumeric characters only for now.
-	 * 
-	 * @return <code>null</code> if the login is valid, and otherwise a string message stating the reason why it is not valid.
-	 */
-	private String validateLogin(String login) {
-		if (login == null || login.length() == 0)
-			return "User login not specified";
-		int length = login.length();
-		if (length < USERNAME_MIN_LENGTH)
-			return NLS.bind("Username must contain at least {0} characters", USERNAME_MIN_LENGTH);
-		if (length > USERNAME_MAX_LENGTH)
-			return NLS.bind("Username must contain no more than {0} characters", USERNAME_MAX_LENGTH);
-		if (login.equals("ultramegatron"))
-			return "Nice try, Mark";
+	private boolean handleUserGet(HttpServletRequest req, HttpServletResponse resp, String username) throws IOException, JSONException, ServletException,
+	CoreException {
+		UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.USER_NAME, username, false, false);
 
-		for (int i = 0; i < length; i++) {
-			if (!Character.isLetterOrDigit(login.charAt(i)))
-				return NLS.bind("Username {0} contains invalid character ''{1}''", login, login.charAt(i));
-		}
-		return null;
-	}
-
-	/**
-	 * Validates the provided password is valid. The password must be at least PASSWORD_MIN_LENGTH characters long and contain a mix of alpha and non alpha
-	 * characters.
-	 * 
-	 * @param password
-	 *            The provided password
-	 * @return <code>null</code> if the password is valid, and otherwise a string message stating the reason why it is not valid.
-	 */
-	private String validatePassword(String password) {
-		if ((password == null || password.length() == 0)) {
-			return "Password not specified.";
+		if (userInfo == null) {
+			return statusHandler
+					.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User not found " + username, null));
 		}
 
-		if (password.length() < PASSWORD_MIN_LENGTH) {
-			return NLS.bind("Password must be at least {0} characters long", PASSWORD_MIN_LENGTH);
-		}
-
-		if (Pattern.matches("[a-zA-Z]+", password) || Pattern.matches("[^a-zA-Z]+", password)) {
-			return "Password must contain at least one alpha character and one non alpha character";
-		}
-
-		return null;
+		URI location = ServletResourceHandler.getURI(req);
+		OrionServlet.writeJSONResponse(req, resp, formJson(userInfo, location, req.getContextPath()));
+		return true;
 	}
 
 	private boolean handleUserPut(HttpServletRequest req, HttpServletResponse resp, String username) throws ServletException, IOException, CoreException,
-			JSONException {
+	JSONException {
 		JSONObject data = OrionServlet.readJSONRequest(req);
 
 		UserInfo userInfo = null;
@@ -519,6 +470,86 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
+	private boolean handleUserReset(HttpServletRequest req, HttpServletResponse resp, String username, JSONObject json) throws ServletException, JSONException {
+		String password = json.getString(UserConstants.PASSWORD);
+
+		if (username == null || username.length() == 0) {
+			return statusHandler
+					.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User name not specified.", null));
+		}
+
+		UserInfo userInfo = null;
+		try {
+			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.USER_NAME, username, false, false);
+		} catch (CoreException e) {
+			LogHelper.log(e);
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
+		}
+
+		if (userInfo == null) {
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User " + username
+					+ " could not be found.", null));
+		}
+
+		String passwordMsg = validatePassword(password);
+		if (passwordMsg != null) {
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, passwordMsg, null));
+		}
+
+		try {
+			userInfo.setProperty(UserConstants.PASSWORD, password);
+			OrionConfiguration.getMetaStore().updateUser(userInfo);
+		} catch (CoreException e) {
+			LogHelper.log(e);
+			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
+		}
+		return true;
+	}
+
+	private boolean handleUsersGet(HttpServletRequest req, HttpServletResponse resp) throws IOException, JSONException, CoreException {
+		List<String> users = getAllUsers();
+		String startParam = req.getParameter(START);
+		String rowsParam = req.getParameter(ROWS);
+		int start = 0, rows = 0, count = 0;
+		if (startParam != null && !(startParam.length() == 0)) {
+			start = Integer.parseInt(startParam);
+			if (start < 0) {
+				start = 0;
+			}
+		} else {
+			start = 0;
+		}
+		if (rowsParam != null && !(rowsParam.length() == 0)) {
+			rows = Integer.parseInt(rowsParam);
+			if (rows < 0) {
+				rows = 20; // default is to return 20 at a time
+			}
+		} else {
+			// if there's no start and no rows then return the default first 20 users
+			rows = 20; // default is to return 20 at a time
+		}
+		ArrayList<JSONObject> userJSONs = new ArrayList<JSONObject>();
+		URI location = ServletResourceHandler.getURI(req);
+		for (String userId : users) {
+			if (count >= start + rows) {
+				break;
+			}
+			if (count++ < start) {
+				continue;
+			}
+			URI userLocation = URIUtil.append(location, userId);
+			UserInfo userInfo = OrionConfiguration.getMetaStore().readUser(userId);
+			userJSONs.add(formJson(userInfo, userLocation, req.getContextPath()));
+		}
+		JSONObject json = new JSONObject();
+		json.put(USERS, userJSONs);
+		json.put(USERS_START, start);
+		json.put(USERS_ROWS, rows);
+		json.put(USERS_LENGTH, users.size());
+		OrionServlet.writeJSONResponse(req, resp, json);
+		return true;
+	}
+
 	/**
 	 * Returns true if this user is an administrator, and false otherwise
 	 */
@@ -527,80 +558,65 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (creators != null) {
 			String[] admins = creators.split(",");
 			for (String admin : admins) {
-				if (admin.equals(user))
+				if (admin.equals(user)) {
 					return true;
+				}
 			}
 		}
 		return false;
 	}
 
-	private boolean handleUserDelete(HttpServletRequest req, HttpServletResponse resp, String username) throws ServletException {
-		UserInfo userInfo = null;
-		try {
-			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.USER_NAME, username, false, false);
-		} catch (CoreException e) {
-			LogHelper.log(e);
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + username
-					+ " failed.", e));
+	/**
+	 * Validates that the provided login is valid. Login must consistent of alphanumeric characters only for now.
+	 *
+	 * @return <code>null</code> if the login is valid, and otherwise a string message stating the reason why it is not
+	 *         valid.
+	 */
+	private String validateLogin(String login) {
+		if (login == null || login.length() == 0) {
+			return "User login not specified";
+		}
+		int length = login.length();
+		if (length < USERNAME_MIN_LENGTH) {
+			return NLS.bind("Username must contain at least {0} characters", USERNAME_MIN_LENGTH);
+		}
+		if (length > USERNAME_MAX_LENGTH) {
+			return NLS.bind("Username must contain no more than {0} characters", USERNAME_MAX_LENGTH);
+		}
+		if (login.equals("ultramegatron")) {
+			return "Nice try, Mark";
 		}
 
-		if (userInfo == null) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + username
-					+ " could not be found.", null));
-		}
-
-		// Delete user from metadata store
-		try {
-			@SuppressWarnings("unused")
-			Activator r = Activator.getDefault();
-			final IMetaStore metastore = OrionConfiguration.getMetaStore();
-			if (userInfo.getWorkspaceIds().size() > 0) {
-				for (String workspaceId : userInfo.getWorkspaceIds()) {
-					WorkspaceInfo workspaceInfo = metastore.readWorkspace(workspaceId);
-					if (workspaceInfo.getProjectNames().size() > 0) {
-						for (String projectName : workspaceInfo.getProjectNames()) {
-							ProjectInfo projectInfo = metastore.readProject(workspaceId, projectName);
-							if (projectInfo != null) {
-								WorkspaceResourceHandler.removeProject(username, workspaceInfo, projectInfo);
-							}
-						}
-					}
-				}
+		for (int i = 0; i < length; i++) {
+			if (!Character.isLetterOrDigit(login.charAt(i))) {
+				return NLS.bind("Username {0} contains invalid character ''{1}''", login, login.charAt(i));
 			}
-			metastore.deleteUser(username);
-		} catch (CoreException e) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + username
-					+ " failed.", e));
 		}
-		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
-		if (logger.isInfoEnabled())
-			logger.info("Account deleted: " + username); //$NON-NLS-1$ 
-
-		return true;
+		return null;
 	}
 
-	private JSONObject formJson(UserInfo userInfo, URI location, String contextPath) throws JSONException, CoreException {
-		JSONObject json = new JSONObject();
-		json.put(UserConstants.USER_NAME, userInfo.getUserName());
-		json.put(UserConstants.FULL_NAME, userInfo.getFullName());
-		json.put(UserConstants.LOCATION, contextPath + location.getPath());
-		String email = userInfo.getProperty(UserConstants.EMAIL);
-		json.put(UserConstants.EMAIL, email);
-		boolean emailConfirmed = (email != null && email.length() > 0) ? userInfo.getProperty(UserConstants.EMAIL_CONFIRMATION_ID) == null : false;
-		json.put(UserConstants.EMAIL_CONFIRMED, emailConfirmed);
-		json.put(UserConstants.HAS_PASSWORD, userInfo.getProperty(UserConstants.PASSWORD) == null ? false : true);
-
-		if (userInfo.getProperty(UserConstants.OAUTH) != null) {
-			json.put(UserConstants.OAUTH, userInfo.getProperty(UserConstants.OAUTH));
-		}
-		if (userInfo.getProperty(UserConstants.OPENID) != null) {
-			json.put(UserConstants.OPENID, userInfo.getProperty(UserConstants.OPENID));
+	/**
+	 * Validates the provided password is valid. The password must be at least PASSWORD_MIN_LENGTH characters long and
+	 * contain a mix of alpha and non alpha characters.
+	 *
+	 * @param password
+	 *            The provided password
+	 * @return <code>null</code> if the password is valid, and otherwise a string message stating the reason why it is
+	 *         not valid.
+	 */
+	private String validatePassword(String password) {
+		if ((password == null || password.length() == 0)) {
+			return "Password not specified.";
 		}
 
-		json.put(UserConstants.LAST_LOGIN_TIMESTAMP, userInfo.getProperty(UserConstants.LAST_LOGIN_TIMESTAMP));
-		json.put(UserConstants.DISK_USAGE_TIMESTAMP, userInfo.getProperty(UserConstants.DISK_USAGE_TIMESTAMP));
-		json.put(UserConstants.DISK_USAGE, userInfo.getProperty(UserConstants.DISK_USAGE));
+		if (password.length() < PASSWORD_MIN_LENGTH) {
+			return NLS.bind("Password must be at least {0} characters long", PASSWORD_MIN_LENGTH);
+		}
 
-		return json;
+		if (Pattern.matches("[a-zA-Z]+", password) || Pattern.matches("[^a-zA-Z]+", password)) {
+			return "Password must contain at least one alpha character and one non alpha character";
+		}
+
+		return null;
 	}
 }
