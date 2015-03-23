@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.commands.CheckRouteCommand;
 import org.eclipse.orion.server.cf.commands.ComputeTargetCommand;
 import org.eclipse.orion.server.cf.commands.CreateRouteCommand;
 import org.eclipse.orion.server.cf.commands.DeleteRouteCommand;
@@ -100,7 +101,8 @@ public class RoutesHandlerV1 extends AbstractRESTHandler<Route> {
 
 		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
 		final JSONObject routeJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_ROUTE));
-
+		final String globalCheck = IOUtilities.getQueryParameter(request, "GlobalCheck");
+		
 		return new CFJob(request, false) {
 			@Override
 			protected IStatus performJob() {
@@ -113,6 +115,8 @@ public class RoutesHandlerV1 extends AbstractRESTHandler<Route> {
 					}
 
 					if (routeJSON != null) {
+						if(globalCheck !=null && globalCheck.equals("true"))
+							return new CheckRouteCommand(target, routeJSON.getString(CFProtocolConstants.KEY_DOMAIN_NAME), routeJSON.getString(CFProtocolConstants.KEY_HOST)).doIt();
 						return new GetRoutesCommand(target, routeJSON.getString(CFProtocolConstants.KEY_DOMAIN_NAME), routeJSON.getString(CFProtocolConstants.KEY_HOST)).doIt();
 					}
 
