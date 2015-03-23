@@ -22,7 +22,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * Servlet that returns the TID for logging Google Analytics data (if there is one).
+ * Servlet that returns the TID for logging Google Analytics data,
+ * if there is one.
  */
 public class GoogleAnalyticsServlet extends OrionServlet {
 
