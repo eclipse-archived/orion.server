@@ -10,14 +10,26 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.handlers.v1;
 
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
-import java.util.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.cf.commands.*;
+import org.eclipse.orion.server.cf.commands.CheckRouteCommand;
+import org.eclipse.orion.server.cf.commands.ComputeTargetCommand;
+import org.eclipse.orion.server.cf.commands.CreateRouteCommand;
+import org.eclipse.orion.server.cf.commands.DeleteRouteCommand;
+import org.eclipse.orion.server.cf.commands.GetDomainsCommand;
+import org.eclipse.orion.server.cf.commands.GetRouteByGuidCommand;
+import org.eclipse.orion.server.cf.commands.GetRoutesCommand;
 import org.eclipse.orion.server.cf.jobs.CFJob;
 import org.eclipse.orion.server.cf.objects.Route;
 import org.eclipse.orion.server.cf.objects.Target;
@@ -86,7 +98,10 @@ public class RoutesHandlerV1 extends AbstractRESTHandler<Route> {
 
 	@Override
 	protected CFJob handleGet(Route route, HttpServletRequest request, HttpServletResponse response, final String path) {
+		
 		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
+		final JSONObject routeJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_ROUTE));
+		final String globalCheck = IOUtilities.getQueryParameter(request, "GlobalCheck");
 
 		return new CFJob(request, false) {
 			@Override
@@ -97,6 +112,11 @@ public class RoutesHandlerV1 extends AbstractRESTHandler<Route> {
 					Target target = computeTargetCommand.getTarget();
 					if (target == null) {
 						return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
+					}
+
+					if (routeJSON != null) {
+						if(globalCheck !=null && globalCheck.equals("true"))
+							return new CheckRouteCommand(target, routeJSON.getString(CFProtocolConstants.KEY_DOMAIN_NAME), routeJSON.getString(CFProtocolConstants.KEY_HOST)).doIt();
 					}
 
 					return new GetRoutesCommand(target, false).doIt();
