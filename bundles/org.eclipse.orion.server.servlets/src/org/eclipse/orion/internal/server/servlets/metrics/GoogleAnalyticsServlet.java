@@ -27,16 +27,16 @@ import org.json.JSONObject;
  */
 public class GoogleAnalyticsServlet extends OrionServlet {
 
-	private static final String TID_KEY = "orion.metrics.google.tid";
-	private static final String SITESPEEDSAMPLERATE_KEY = "orion.metrics.google.sitespeed.sample";
+	private static final String KEY_TID = "orion.metrics.google.tid";
+	private static final String KEY_SITESPEEDSAMPLERATE = "orion.metrics.google.sitespeed.sample";
 	private static final long serialVersionUID = -76336740020069623L;
 
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 
 		JSONObject result = new JSONObject();
-		String tid = PreferenceHelper.getString(TID_KEY);
-		String sampleRate = PreferenceHelper.getString(SITESPEEDSAMPLERATE_KEY);
+		String tid = PreferenceHelper.getString(KEY_TID);
+		String sampleRate = PreferenceHelper.getString(KEY_SITESPEEDSAMPLERATE);
 		if (tid != null) {
 			try {
 				result.put("tid", tid);
