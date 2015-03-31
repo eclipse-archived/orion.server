@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,6 +12,7 @@ package org.eclipse.orion.server.cf.handlers.v1;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
@@ -46,7 +47,8 @@ public class DomainsHandlerV1 extends AbstractRESTHandler<Domain> {
 	@Override
 	protected CFJob handleGet(Domain domain, HttpServletRequest request, HttpServletResponse response, final String path) {
 		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
-
+		final boolean defaultDomainMode = Boolean.valueOf(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_DEFAULT));
+		
 		return new CFJob(request, false) {
 			@Override
 			protected IStatus performJob() {
@@ -57,7 +59,9 @@ public class DomainsHandlerV1 extends AbstractRESTHandler<Domain> {
 					if (target == null) {
 						return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
 					}
-
+					if (defaultDomainMode) {
+						return new GetDomainsCommand(target, true).doIt();
+					}
 					return new GetDomainsCommand(target).doIt();
 				} catch (Exception e) {
 					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$

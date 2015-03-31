@@ -37,6 +37,7 @@ public class GetDomainsCommand extends AbstractCFCommand {
 
 	private String commandName;
 	private String domainName;
+	private boolean defaultDomainMode;
 
 	private List<Domain> domains;
 
@@ -45,6 +46,12 @@ public class GetDomainsCommand extends AbstractCFCommand {
 		this.commandName = "Get available target domains";
 	}
 
+	public GetDomainsCommand(Target target, boolean defaultDomainMode) {
+		super(target);
+		this.commandName = "Get available target domains";
+		this.defaultDomainMode = defaultDomainMode;
+	}	
+	
 	public GetDomainsCommand(Target target, String domainName) {
 		super(target);
 		this.commandName = "Get available target domains";
@@ -61,41 +68,53 @@ public class GetDomainsCommand extends AbstractCFCommand {
 		try {
 			JSONObject result = new JSONObject();
 			domains = new ArrayList<Domain>();
-
 			URI targetURI = URIUtil.toURI(target.getUrl());
-			String privateDomainsURL = target.getOrg().getCFJSON().getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_PRIVATE_DOMAINS_URL);
-			URI privateDomainsURI = targetURI.resolve(privateDomainsURL);
+			JSONObject domainsPrivateJSON = null;
+			JSONArray resources = null;
+			
+			if (!defaultDomainMode) {
+				// Get private domains
+				String privateDomainsURL = target.getOrg().getCFJSON().getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_PRIVATE_DOMAINS_URL);
+				URI privateDomainsURI = targetURI.resolve(privateDomainsURL);
 
-			GetMethod getPrivateDomainMethod = new GetMethod(privateDomainsURI.toString());
-			HttpUtil.configureHttpMethod(getPrivateDomainMethod, target.getCloud());
+				GetMethod getPrivateDomainMethod = new GetMethod(privateDomainsURI.toString());
+				HttpUtil.configureHttpMethod(getPrivateDomainMethod, target.getCloud());
 
-			if (domainName != null)
-				getPrivateDomainMethod.setQueryString("q=" + URLEncoder.encode(CFProtocolConstants.V2_KEY_NAME + ":" + domainName, ("UTF8")));
+				if (domainName != null)
+					getPrivateDomainMethod.setQueryString("q=" + URLEncoder.encode(CFProtocolConstants.V2_KEY_NAME + ":" + domainName, ("UTF8")));
 
-			ServerStatus getPrivateDomainsStatus = HttpUtil.executeMethod(getPrivateDomainMethod);
-			if (!getPrivateDomainsStatus.isOK())
-				return getPrivateDomainsStatus;
+				ServerStatus getPrivateDomainsStatus = HttpUtil.executeMethod(getPrivateDomainMethod);
+				if (!getPrivateDomainsStatus.isOK())
+					return getPrivateDomainsStatus;
 
-			JSONObject domainsPrivateJSON = getPrivateDomainsStatus.getJsonData();
-			JSONArray resources = domainsPrivateJSON.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
+				domainsPrivateJSON = getPrivateDomainsStatus.getJsonData();
+				resources = domainsPrivateJSON.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES);
 
-			for (int k = 0; k < resources.length(); ++k) {
-				JSONObject domainJSON = resources.getJSONObject(k);
-				Domain domain = new Domain();
-				domain.setCFJSON(domainJSON);
-				domains.add(domain);
-				result.append("Domains", domain.toJSON());
+				for (int k = 0; k < resources.length(); ++k) {
+					JSONObject domainJSON = resources.getJSONObject(k);
+					Domain domain = new Domain();
+					domain.setCFJSON(domainJSON);
+					domains.add(domain);
+					result.append("Domains", domain.toJSON());
+				}				
 			}
 
-			if (domainName == null || domainsPrivateJSON.getInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS) < 1) {
+			if (domainName == null ||
+					defaultDomainMode ||
+					domainsPrivateJSON.getInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS) < 1) {
+				// Get shared domains
 				URI sharedDomainsURI = targetURI.resolve("/v2/shared_domains");
 
 				GetMethod getSharedDomainMethod = new GetMethod(sharedDomainsURI.toString());
 				HttpUtil.configureHttpMethod(getSharedDomainMethod, target.getCloud());
 
-				if (domainName != null)
+				if (domainName != null) {
 					getSharedDomainMethod.setQueryString("q=" + URLEncoder.encode(CFProtocolConstants.V2_KEY_NAME + ":" + domainName, ("UTF8")));
-
+				} else if (defaultDomainMode) {
+					// Return only the first result
+					getSharedDomainMethod.setQueryString("page=1&results-per-page=1");
+				}
+					
 				ServerStatus getSharedDomainsStatus = HttpUtil.executeMethod(getSharedDomainMethod);
 				if (!getSharedDomainsStatus.isOK())
 					return getSharedDomainsStatus;

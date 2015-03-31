@@ -42,6 +42,8 @@ public class CFProtocolConstants {
 
 	public static final String KEY_TARGET = "Target"; //$NON-NLS-1$
 
+	public static final String KEY_DEFAULT = "Default"; //$NON-NLS-1$
+	
 	public static final String KEY_CONTENTS = "Contents"; //$NON-NLS-1$
 
 	public static final String KEY_APPLICATION = "Application"; //$NON-NLS-1$
