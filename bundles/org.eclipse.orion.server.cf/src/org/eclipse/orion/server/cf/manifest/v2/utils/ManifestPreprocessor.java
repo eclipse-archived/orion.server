@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,9 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.manifest.v2.utils;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.eclipse.orion.server.cf.manifest.v2.InputLine;
 import org.eclipse.orion.server.cf.manifest.v2.Preprocessor;
 
@@ -55,7 +59,8 @@ public class ManifestPreprocessor implements Preprocessor {
 
 	private String processLine(String inputLine) {
 		/* ignore input comments */
-		int hashIdx = inputLine.indexOf("#");
+
+		int hashIdx = (inputLine.length() > 0 && inputLine.indexOf("#") == 0) ? 0 : inputLine.indexOf(" #");
 		String tmp = (hashIdx != -1) ? inputLine.substring(0, hashIdx) : inputLine;
 
 		/* ignore the opening manifest token '---' */
