@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,6 +12,9 @@ package org.eclipse.orion.server.cf.nodejs;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.Path;
@@ -23,6 +26,7 @@ import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
 import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -43,17 +47,33 @@ public class NodeJSDeploymentPlanner implements IDeploymentPlanner {
 		return "org.eclipse.orion.client.cf.wizard.nodejs"; //$NON-NLS-1$
 	}
 
-	protected String getApplicationName(IFileStore contentLocation) {
-		String folderName = contentLocation.fetchInfo().getName();
-		folderName = folderName.replaceFirst(" \\| ", " --- ");
-		String[] folderNameParts = folderName.split(" --- ", 2);
+	protected String getApplicationName(IFileStore contentLocation) throws UnsupportedEncodingException {
+		
+		IFileStore rootStore = OrionConfiguration.getRootLocation();
+		Path relativePath = new Path(URLDecoder.decode(contentLocation.toURI().toString(), "UTF8").substring(rootStore.toURI().toString().length()));
+		if (relativePath.segmentCount() < 4) {
+			// not a change to a file in a project
+			return null;
+		}
+		
+		String projectDirectory = relativePath.segment(3);
+		projectDirectory = projectDirectory.replaceFirst(" \\| ", " --- ");
+		String[] folderNameParts = projectDirectory.split(" --- ", 2);
 		if (folderNameParts.length > 1)
 			return folderNameParts[1];
 		return folderNameParts[0];
 	}
 
-	protected String getApplicationHost(IFileStore contentLocation) {
-		String folderName = contentLocation.fetchInfo().getName();
+	protected String getApplicationHost(IFileStore contentLocation) throws UnsupportedEncodingException {
+
+		IFileStore rootStore = OrionConfiguration.getRootLocation();
+		Path relativePath = new Path(URLDecoder.decode(contentLocation.toURI().toString(), "UTF8").substring(rootStore.toURI().toString().length()));
+		if (relativePath.segmentCount() < 4) {
+			// not a change to a file in a project
+			return null;
+		}
+		
+		String folderName = relativePath.segment(3);
 		folderName = folderName.replaceFirst(" \\| ", " --- ");
 		return ManifestUtils.slugify(folderName);
 	}
