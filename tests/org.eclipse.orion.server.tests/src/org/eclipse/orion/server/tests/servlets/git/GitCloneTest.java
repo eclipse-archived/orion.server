@@ -315,7 +315,7 @@ public class GitCloneTest extends GitTest {
 		IPath clonePath = getClonePath(workspaceId, project);
 
 		// see bug 369282
-		WebRequest request = new PostGitCloneRequest().setURIish("ssh://git.eclipse.org:29418/orion/org.eclipse.orion.server").setFilePath(clonePath).getWebRequest();
+		WebRequest request = new PostGitCloneRequest().setURIish("ssh://git.eclipse.org/gitroot/www.eclipse.org/orion.git").setFilePath(clonePath).getWebRequest();
 		setAuthentication(request);
 		WebResponse response = webConversation.getResponse(request);
 		ServerStatus status = waitForTask(response);
