@@ -12,13 +12,25 @@ package org.eclipse.orion.server.cf.commands;
 
 import java.io.IOException;
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.cf.manifest.v2.*;
+import org.eclipse.orion.server.cf.manifest.v2.Analyzer;
+import org.eclipse.orion.server.cf.manifest.v2.AnalyzerException;
+import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
+import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
+import org.eclipse.orion.server.cf.manifest.v2.ParserException;
+import org.eclipse.orion.server.cf.manifest.v2.TokenizerException;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
 import org.eclipse.orion.server.cf.objects.Target;
@@ -102,16 +114,13 @@ public class ParseManifestCommand extends AbstractCFCommand {
 				return accessStatus;
 
 			IFileStore fileStore = NewFileServlet.getFileStore(null, contentPath);
-			if (!fileStore.fetchInfo().isDirectory() && !strict) {
-				fileStore = fileStore.getParent();
-				contentPath = contentPath.removeLastSegments(1);
-			}
-
-			if (fileStore == null)
+			if (strict && !fileStore.fetchInfo().exists() && fileStore.fetchInfo().isDirectory()) {
 				return cannotFindManifest(contentPath);
+			}
+			
+			manifestStore = fileStore.fetchInfo().isDirectory() ?  fileStore.getChild(ManifestConstants.MANIFEST_FILE_NAME) : fileStore;
 
 			/* lookup the manifest description */
-			manifestStore = strict ? fileStore : fileStore.getChild(ManifestConstants.MANIFEST_FILE_NAME);
 			if (!manifestStore.fetchInfo().exists())
 				return cannotFindManifest(contentPath);
 
