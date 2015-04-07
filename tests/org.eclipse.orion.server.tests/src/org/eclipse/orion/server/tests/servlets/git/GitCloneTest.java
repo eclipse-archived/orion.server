@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2014 IBM Corporation and others
+ * Copyright (c) 2011, 2015 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -315,17 +315,13 @@ public class GitCloneTest extends GitTest {
 		IPath clonePath = getClonePath(workspaceId, project);
 
 		// see bug 369282
-		WebRequest request = new PostGitCloneRequest().setURIish("ssh://git.eclipse.org/gitroot/platform/eclipse.platform.news.git").setFilePath(clonePath).getWebRequest();
+		WebRequest request = new PostGitCloneRequest().setURIish("ssh://git.eclipse.org:29418/orion/org.eclipse.orion.server").setFilePath(clonePath).getWebRequest();
 		setAuthentication(request);
 		WebResponse response = webConversation.getResponse(request);
 		ServerStatus status = waitForTask(response);
 		assertFalse(status.toString(), status.isOK());
 
 		assertEquals(status.toString(), HttpURLConnection.HTTP_BAD_REQUEST, status.getHttpCode());
-		// TODO: Commented out, the message has changed, see Bug 431154
-		//assertEquals("ssh://git.eclipse.org/gitroot/platform/eclipse.platform.news.git: username must not be null.", status.getMessage());
-		//assertNotNull(status.getJsonData());
-		//assertTrue(status.getJsonData().toString(), status.getException().getMessage().contains("username must not be null"));
 	}
 
 	@Test
