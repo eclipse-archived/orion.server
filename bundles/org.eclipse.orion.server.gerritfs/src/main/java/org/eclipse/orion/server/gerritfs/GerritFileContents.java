@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -22,6 +24,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -32,6 +35,8 @@ import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
+import org.eclipse.orion.server.gerritfs.GerritListFile;
+import org.eclipse.orion.server.gerritfs.JSONUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -129,6 +134,7 @@ public class GerritFileContents  extends HttpServlet {
 			} else {
 				NameKey projName = NameKey.parse(projectName);
 				Repository repo = repoManager.openRepository(projName);
+				Git git = new Git(repo);
 				Ref head = repo.getRef(refName);
 				RevWalk walk = new RevWalk(repo);
 				RevCommit commit = walk.parseCommit(head.getObjectId());
@@ -144,10 +150,25 @@ public class GerritFileContents  extends HttpServlet {
 				
 				ObjectId objId = treeWalk.getObjectId(0);
 				ObjectLoader loader = repo.open(objId);
-				resp.setHeader("Cache-Control", "no-cache");
-				resp.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
-				resp.setContentType("application/octet-stream");
-				loader.copyTo(out);
+				
+				// even though this request is for "contents"
+				// if the filepath being requested is a directory
+				// return a listing just as if it was a "list" request
+				if (treeWalk.next()) {
+					ArrayList<HashMap<String, Object>> contents = GerritListFile.getListEntries(treeWalk, repo, git, head, filePath, projectName);
+					String response = JSONUtil.write(contents);
+					resp.setContentType("application/json");
+					resp.setHeader("Cache-Control", "no-cache");
+					resp.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
+					out.print(response);
+				}
+				else {
+					resp.setHeader("Cache-Control", "no-cache");
+					resp.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
+					resp.setContentType("application/octet-stream");
+					loader.copyTo(out);
+				}
+				
 				walk.release();
 				treeWalk.release();
 			}
@@ -192,5 +213,4 @@ public class GerritFileContents  extends HttpServlet {
 		    }
 		}
 	}
-
 }

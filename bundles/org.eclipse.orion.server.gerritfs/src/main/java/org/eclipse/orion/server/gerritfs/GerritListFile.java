@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.CorruptObjectException;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
@@ -216,25 +217,7 @@ public class GerritListFile extends HttpServlet {
 						// if (treeWalk.isSubtree()) {
 						// treeWalk.enterSubtree();
 						// }
-						ArrayList<HashMap<String, Object>> contents = new ArrayList<HashMap<String, Object>>();
-						do {
-							if (treeWalk.isSubtree()) {
-								String test = new String(treeWalk.getRawPath());
-								if (test.length() /*treeWalk.getPathLength()*/ > filePath
-										.length()) {
-									listEntry(treeWalk.getNameString(), "dir", "0", treeWalk.getPathString(), projectName, head.getName(), git, contents);
-								}
-								if (test.length() /*treeWalk.getPathLength()*/ <= filePath
-										.length()) {
-									treeWalk.enterSubtree();
-								}
-							} else {
-								ObjectId objId = treeWalk.getObjectId(0);
-								ObjectLoader loader = repo.open(objId);
-								long size = loader.getSize();
-								listEntry(treeWalk.getNameString(), "file", Long.toString(size), treeWalk.getPathString(), projectName, head.getName(), git, contents);
-							}
-						} while (treeWalk.next());
+						ArrayList<HashMap<String, Object>> contents = getListEntries(treeWalk, repo, git, head, filePath, projectName);
 						String response = JSONUtil.write(contents);
 						resp.setContentType("application/json");
 						resp.setHeader("Cache-Control", "no-cache");
@@ -262,7 +245,7 @@ public class GerritListFile extends HttpServlet {
 		}
 	}
 	
-	private void listEntry(String name, String type, String size, String path, String projectName, String ref, Git git,
+	private static void listEntry(String name, String type, String size, String path, String projectName, String ref, Git git,
 			ArrayList<HashMap<String, Object>> contents) {
 		HashMap<String, Object> jsonObject = new HashMap<String, Object>();
 		jsonObject.put("name", name);
@@ -278,7 +261,7 @@ public class GerritListFile extends HttpServlet {
 		contents.add(jsonObject);
 	}
 
-	private void lastCommit(Git git, String path, AnyObjectId revId,
+	private static void lastCommit(Git git, String path, AnyObjectId revId,
 			HashMap<String, Object> jsonObject) {
 		HashMap<String, Object> latestCommitObj = new HashMap<String, Object>();
 		HashMap<String, String> authorObj = new HashMap<String, String>();
@@ -389,6 +372,29 @@ public class GerritListFile extends HttpServlet {
 		//Default to "mystery man" icon if the user has no gravatar, and use a 40 pixel image
 		result.append("?d=mm"); //$NON-NLS-1$
 		return result.toString();
+	}
+	
+	public static ArrayList<HashMap<String, Object>> getListEntries(TreeWalk treeWalk, Repository repo, Git git, Ref head, String filePath, String projectName) throws MissingObjectException, IncorrectObjectTypeException, CorruptObjectException, IOException {
+		ArrayList<HashMap<String, Object>> contents = new ArrayList<HashMap<String, Object>>();
+		do {
+			if (treeWalk.isSubtree()) {
+				String test = new String(treeWalk.getRawPath());
+				if (test.length() /*treeWalk.getPathLength()*/ > filePath
+						.length()) {
+					listEntry(treeWalk.getNameString(), "dir", "0", treeWalk.getPathString(), projectName, head.getName(), git, contents);
+				}
+				if (test.length() /*treeWalk.getPathLength()*/ <= filePath
+						.length()) {
+					treeWalk.enterSubtree();
+				}
+			} else {
+				ObjectId objId = treeWalk.getObjectId(0);
+				ObjectLoader loader = repo.open(objId);
+				long size = loader.getSize();
+				listEntry(treeWalk.getNameString(), "file", Long.toString(size), treeWalk.getPathString(), projectName, head.getName(), git, contents);
+			}
+		} while (treeWalk.next());
+		return contents;
 	}
 
 }
