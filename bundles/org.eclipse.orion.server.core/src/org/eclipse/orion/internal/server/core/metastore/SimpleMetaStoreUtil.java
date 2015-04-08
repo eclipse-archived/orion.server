@@ -536,7 +536,7 @@ public class SimpleMetaStoreUtil {
 			} else if (file.isFile() && file.getName().endsWith(METAFILE_EXTENSION) && file.getName().startsWith(SimpleMetaStore.ROOT)) {
 				// skip the root meta file (metastore.json)
 				continue;
-			} else if (file.isDirectory() && file.getName().length() == 2) {
+			} else if (file.isDirectory() && file.getName().length() <= 2) {
 				// organizational folder directory, folder an in serverworkspace/an/anthony
 				File orgFolder = file;
 				if (file.list().length == 0) {
