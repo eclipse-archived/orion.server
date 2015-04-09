@@ -13,19 +13,14 @@
 # Hudson build id: ${BUILD_ID}
 # Hudson workspace: ${WORKSPACE}
 # $1: Build type: n(ightly), m(aintenance), s(table), r(elease)
-# $2: An optional label to append to the version string when creating drop files, e.g. M5 or RC1
 # 
 set -e
 
 if [ $# -eq 1 -o $# -eq 2 ]; then
 	buildType=$1
-	if [ -n "$2" ]; then
-		dropFilesLabel=$2
-	fi
 else
-	echo "Usage: $0 [i | s | r | m] [qualifier]"
+	echo "Usage: $0 [i | s | r | m]"
 	echo "Example: $0 i"
-	echo "Example: $0 s M7"
 	exit 1
 	if [ $# -ne 0 ]; then
 		exit 1
@@ -66,6 +61,15 @@ remoteUpdateSite="/home/data/httpd/download.eclipse.org/$remoteUpdateSiteBase"
 remoteStableDir="/home/data/httpd/download.eclipse.org/orion/stable"
 echo "Publishing to remote update-site: $remoteUpdateSite"
 
+#figure out the next stable build number
+if [ "$buildType" = "s" -o "$buildType" = "S" ]; then
+	remoteDropDir="/home/data/httpd/download.eclipse.org/orion/drops/$(echo $buildType | tr '[:lower:]' '[:upper:]')*"
+        existingStableBuilds=`ls -d ${remoteDropDir} 2> /dev/null | wc -l`
+	nextStableBuild=$((existingStableBuilds + 1))
+	dropFilesLabel=$(echo $buildType | tr '[:lower:]' '[:upper:]')$nextStableBuild
+	echo "Publishing the next stable build as $dropFilesLabel"
+fi
+
 if [ -z "$dropFilesLabel" -a "$buildType" != i ]; then
 	echo "Please provide a drop files label to append to the version (e.g. M5, RC1) if this is not an I build."
 	exit 0
@@ -98,14 +102,12 @@ rm eclipse-SDK-4.4.2-linux-gtk-x86_64.tar.gz
 
 # Generate drop files
 qualifiedVersion=$(egrep Build ${WORKSPACE}/bundles/org.eclipse.orion.server.core/about.properties | awk -F'[: \\\\]' '{print $4}')
-echo "qualifiedVersion is $qualifiedVersion"
-qualifiedVersion=${qualifiedVersion#*-}
-echo "qualifiedVersion is $qualifiedVersion"
-qualifier=${qualifiedVersion##*.}
+echo "qualifiedVersion from the about.properties is $qualifiedVersion"
+qualifier=${qualifiedVersion#*-}
 echo "qualifier is $qualifier"
 qualifier=${qualifier#v}
-echo "qualifier is $qualifier"
-version=${qualifiedVersion%.*}
+echo "qualifier without the v is $qualifier"
+version=${qualifiedVersion%%-*}
 echo "version is $version"
 dropDir="$(echo $buildType | tr '[:lower:]' '[:upper:]')$qualifier"
 echo "dropDir is $dropDir"
@@ -210,7 +212,9 @@ else
 	echo "Did not copy consoleText"
 fi
 
+#copy the build to the final drop location
 remoteDropDir=/home/data/httpd/download.eclipse.org/orion/drops/$dropDir
+echo "copy build ${dropDir} to ${remoteDropDir}"
 mkdir -p $remoteDropDir
 cp -R $localDropDir/* $remoteDropDir/
 
