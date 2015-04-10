@@ -57,11 +57,30 @@ IBM Corporation - initial API and implementation
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.3.2</version>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>1.7</source>
+					<target>1.7</target>
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
+			
+			<plugin>
+		        <groupId>org.apache.maven.plugins</groupId>
+		        <artifactId>maven-shade-plugin</artifactId>
+		        <version>2.3</version>
+		        <configuration>
+		           <source>1.7</source>
+		          <target>1.7</target>
+		          <encoding>UTF-8</encoding>
+		        </configuration>
+		        <executions>
+		          <execution>
+		            <phase>package</phase>
+		            <goals>
+		              <goal>shade</goal>
+		            </goals>
+		          </execution>
+		        </executions>
+		      </plugin>
 
 			<plugin>
 				<groupId>org.eclipse.cbi.maven.plugins</groupId>
@@ -84,6 +103,12 @@ IBM Corporation - initial API and implementation
 			<version>${Gerrit-ApiVersion}</version>
 			<scope>provided</scope>
 		</dependency>
+		
+		<dependency>
+	      <groupId>org.json</groupId>
+	      <artifactId>json</artifactId>
+	      <version>20131018</version>
+	    </dependency>
 	</dependencies>
 
 	<repositories>

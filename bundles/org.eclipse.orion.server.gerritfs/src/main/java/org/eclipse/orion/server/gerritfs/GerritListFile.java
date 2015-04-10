@@ -15,8 +15,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -48,6 +46,9 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -144,23 +145,25 @@ public class GerritListFile extends HttpServlet {
 				}
 				Repository repo = repoManager.openRepository(projName);
 				if (refName == null) {
-					ArrayList<HashMap<String, Object>> contents = new ArrayList<HashMap<String, Object>>();
+					JSONArray contents = new JSONArray();
 					List<Ref> call;
 					try {
 						call = new Git(repo).branchList().call();
 						Git git = new Git(repo);
 						for (Ref ref : call) {
-							HashMap<String, Object> jsonObject = new HashMap<String, Object>();
-							jsonObject.put("name", ref.getName());
-							jsonObject.put("type", "ref");
-							jsonObject.put("size", "0");
-							jsonObject.put("path", "");
-							jsonObject.put("project", projectName);
-							jsonObject.put("ref", ref.getName());
-							lastCommit(git, null, ref.getObjectId(), jsonObject);
-							contents.add(jsonObject);
+							JSONObject jsonObject = new JSONObject();
+							try {
+								jsonObject.put("name", ref.getName());
+								jsonObject.put("type", "ref");
+								jsonObject.put("size", "0");
+								jsonObject.put("path", "");
+								jsonObject.put("project", projectName);
+								jsonObject.put("ref", ref.getName());
+								lastCommit(git, null, ref.getObjectId(), jsonObject);
+							} catch (JSONException e){}
+							contents.put(jsonObject);
 						}
-						String response = JSONUtil.write(contents);
+						String response = contents.toString();
 						resp.setContentType("application/json");
 						resp.setHeader("Cache-Control", "no-cache");
 						resp.setHeader("ETag", "W/\"" + response.length() + "-" + response.hashCode() + "\"");
@@ -171,8 +174,8 @@ public class GerritListFile extends HttpServlet {
 				} else {
 					Ref head = repo.getRef(refName);
 					if (head == null) {
-						ArrayList<HashMap<String, String>> contents = new ArrayList<HashMap<String, String>>();
-						String response = JSONUtil.write(contents);
+						JSONArray contents = new JSONArray();
+						String response = contents.toString();
 						resp.setContentType("application/json");
 						resp.setHeader("Cache-Control", "no-cache");
 						resp.setHeader("ETag", "W/\"" + response.length() + "-" + response.hashCode() + "\"");
@@ -195,7 +198,7 @@ public class GerritListFile extends HttpServlet {
 					if (!treeWalk.next()) {
 						CanonicalTreeParser canonicalTreeParser = treeWalk
 								.getTree(0, CanonicalTreeParser.class);
-						ArrayList<HashMap<String, Object>> contents = new ArrayList<HashMap<String, Object>>();
+						JSONArray contents = new JSONArray();
 						if (canonicalTreeParser != null) {
 							while (!canonicalTreeParser.eof()) {
 								String path = canonicalTreeParser
@@ -207,7 +210,7 @@ public class GerritListFile extends HttpServlet {
 								canonicalTreeParser.next();
 							}
 						}
-						String response = JSONUtil.write(contents);
+						String response = contents.toString();
 						resp.setContentType("application/json");
 						resp.setHeader("Cache-Control", "no-cache");
 						resp.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
@@ -217,8 +220,10 @@ public class GerritListFile extends HttpServlet {
 						// if (treeWalk.isSubtree()) {
 						// treeWalk.enterSubtree();
 						// }
-						ArrayList<HashMap<String, Object>> contents = getListEntries(treeWalk, repo, git, head, filePath, projectName);
-						String response = JSONUtil.write(contents);
+
+						JSONArray contents contents = getListEntries(treeWalk, repo, git, head, filePath, projectName);
+						String response = contents.toString();
+
 						resp.setContentType("application/json");
 						resp.setHeader("Cache-Control", "no-cache");
 						resp.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
@@ -245,27 +250,29 @@ public class GerritListFile extends HttpServlet {
 		}
 	}
 	
-	private static void listEntry(String name, String type, String size, String path, String projectName, String ref, Git git,
-			ArrayList<HashMap<String, Object>> contents) {
-		HashMap<String, Object> jsonObject = new HashMap<String, Object>();
-		jsonObject.put("name", name);
-		jsonObject
-				.put("type", type);
-		jsonObject.put("size", size);
-		jsonObject.put("path", path);
-		jsonObject.put("project", projectName);
-		jsonObject.put("ref", ref);
-		//if (type.equals("dir")) {
-			lastCommit(git, path, null, jsonObject);
-		//}
-		contents.add(jsonObject);
+	private void listEntry(String name, String type, String size, String path, String projectName, String ref, Git git,
+			JSONArray contents) {
+		JSONObject jsonObject = new JSONObject();
+		try {
+			jsonObject.put("name", name);
+			jsonObject
+					.put("type", type);
+			jsonObject.put("size", size);
+			jsonObject.put("path", path);
+			jsonObject.put("project", projectName);
+			jsonObject.put("ref", ref);
+			//if (type.equals("dir")) {
+				lastCommit(git, path, null, jsonObject);
+			//}
+		} catch (JSONException e) {}
+		contents.put(jsonObject);
 	}
 
-	private static void lastCommit(Git git, String path, AnyObjectId revId,
-			HashMap<String, Object> jsonObject) {
-		HashMap<String, Object> latestCommitObj = new HashMap<String, Object>();
-		HashMap<String, String> authorObj = new HashMap<String, String>();
-		HashMap<String, String> committerObj = new HashMap<String, String>();
+	private void lastCommit(Git git, String path, AnyObjectId revId,
+			JSONObject jsonObject) {
+		JSONObject latestCommitObj = new JSONObject();
+		JSONObject authorObj = new JSONObject();
+		JSONObject committerObj = new JSONObject();
 		Iterable<RevCommit> log = null;
 		try {
 			if (path != null) {
@@ -298,6 +305,7 @@ public class GerritListFile extends HttpServlet {
 		} catch (GitAPIException e) {
 		} catch (MissingObjectException e) {
 		} catch (IncorrectObjectTypeException e) {
+		} catch (JSONException e) {
 		}
 	}
 
@@ -341,10 +349,13 @@ public class GerritListFile extends HttpServlet {
 	private void handleException(HttpServletResponse resp, Exception e, int status) throws IOException {
 		log.error(e.getMessage());
 		PrintWriter out = resp.getWriter();
-		HashMap<String, Object> jsonObject = new HashMap<String, Object>();
-		jsonObject.put("Severity", "Error");
-		jsonObject.put("Message", e.getMessage());
-		String response = JSONUtil.write(jsonObject);
+		JSONObject jsonObject = new JSONObject();
+		try {
+			jsonObject.put("Severity", "Error");
+			jsonObject.put("Message", e.getMessage());
+		} catch (JSONException e1) {
+		}
+		String response = jsonObject.toString();
 		resp.setStatus(status);
 		resp.setContentType("application/json");
 		out.write(response);
