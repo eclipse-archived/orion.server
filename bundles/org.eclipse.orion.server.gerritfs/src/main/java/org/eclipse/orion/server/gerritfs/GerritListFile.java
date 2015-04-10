@@ -221,7 +221,7 @@ public class GerritListFile extends HttpServlet {
 						// treeWalk.enterSubtree();
 						// }
 
-						JSONArray contents contents = getListEntries(treeWalk, repo, git, head, filePath, projectName);
+						JSONArray contents = getListEntries(treeWalk, repo, git, head, filePath, projectName);
 						String response = contents.toString();
 
 						resp.setContentType("application/json");
@@ -250,7 +250,7 @@ public class GerritListFile extends HttpServlet {
 		}
 	}
 	
-	private void listEntry(String name, String type, String size, String path, String projectName, String ref, Git git,
+	private static void listEntry(String name, String type, String size, String path, String projectName, String ref, Git git,
 			JSONArray contents) {
 		JSONObject jsonObject = new JSONObject();
 		try {
@@ -268,7 +268,7 @@ public class GerritListFile extends HttpServlet {
 		contents.put(jsonObject);
 	}
 
-	private void lastCommit(Git git, String path, AnyObjectId revId,
+	private static void lastCommit(Git git, String path, AnyObjectId revId,
 			JSONObject jsonObject) {
 		JSONObject latestCommitObj = new JSONObject();
 		JSONObject authorObj = new JSONObject();
@@ -385,8 +385,8 @@ public class GerritListFile extends HttpServlet {
 		return result.toString();
 	}
 	
-	public static ArrayList<HashMap<String, Object>> getListEntries(TreeWalk treeWalk, Repository repo, Git git, Ref head, String filePath, String projectName) throws MissingObjectException, IncorrectObjectTypeException, CorruptObjectException, IOException {
-		ArrayList<HashMap<String, Object>> contents = new ArrayList<HashMap<String, Object>>();
+	public static JSONArray getListEntries(TreeWalk treeWalk, Repository repo, Git git, Ref head, String filePath, String projectName) throws MissingObjectException, IncorrectObjectTypeException, CorruptObjectException, IOException {
+		JSONArray contents = new JSONArray();
 		do {
 			if (treeWalk.isSubtree()) {
 				String test = new String(treeWalk.getRawPath());

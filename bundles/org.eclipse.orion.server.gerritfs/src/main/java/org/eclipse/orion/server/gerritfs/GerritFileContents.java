@@ -15,8 +15,6 @@ import java.io.IOException;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.ArrayList;
-import java.util.HashMap;
 
 import javax.servlet.ServletException;
 import javax.servlet.ServletOutputStream;
@@ -35,8 +33,7 @@ import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
-import org.eclipse.orion.server.gerritfs.GerritListFile;
-import org.eclipse.orion.server.gerritfs.JSONUtil;
+import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -155,8 +152,8 @@ public class GerritFileContents  extends HttpServlet {
 				// if the filepath being requested is a directory
 				// return a listing just as if it was a "list" request
 				if (treeWalk.next()) {
-					ArrayList<HashMap<String, Object>> contents = GerritListFile.getListEntries(treeWalk, repo, git, head, filePath, projectName);
-					String response = JSONUtil.write(contents);
+					JSONArray contents = GerritListFile.getListEntries(treeWalk, repo, git, head, filePath, projectName);
+					String response = contents.toString();
 					resp.setContentType("application/json");
 					resp.setHeader("Cache-Control", "no-cache");
 					resp.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
