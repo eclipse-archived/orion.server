@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -30,7 +30,6 @@ import org.eclipse.orion.server.cf.manifest.v2.AnalyzerException;
 import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.manifest.v2.ParserException;
-import org.eclipse.orion.server.cf.manifest.v2.TokenizerException;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
 import org.eclipse.orion.server.cf.objects.Target;
@@ -169,8 +168,6 @@ public class ParseManifestCommand extends AbstractCFCommand {
 
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 
-		} catch (TokenizerException e) {
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), e.getDetails(), null);
 		} catch (ParserException e) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), e.getDetails(), null);
 		} catch (AnalyzerException e) {

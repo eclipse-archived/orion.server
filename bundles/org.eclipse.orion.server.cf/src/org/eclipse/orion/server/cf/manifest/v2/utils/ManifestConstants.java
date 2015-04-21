@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -32,19 +32,8 @@ public class ManifestConstants {
 	public static final String INHERITANCE_CYCLE_ERROR = "Could not parse the manifest. Inheritance cycle detected.";
 
 	/* Manifest error messages */
-	public static final String UNEXPECTED_INPUT_ERROR = "Unexpected token around line {0}.";
 
 	public static final String UNSUPPORTED_TOKEN_ERROR = "Unsupported token around line {0}.";
-
-	public static final String ILLEGAL_ITEM_TOKEN = "Unexpected token \"{1}\" around line {0}. Instead, expected a string literal.";
-
-	public static final String ILLEGAL_ITEM_TOKEN_MIX = "Unexpected item token \"{1}\" around line {0}. Instead, expected a string literal mapping, i.e. \"property : value\".";
-
-	public static final String ILLEGAL_MAPPING_TOKEN_MIX = "Unexpected string literal mapping \"{1}\" around line {0}. Instead, expected an item token, i.e. \" - property: value\".";
-
-	public static final String ILLEGAL_MAPPING_TOKEN = "Unexpected token \"{1}\" around line {0}. Instead, expected \":\".";
-
-	public static final String DUPLICATE_MAPPING_TOKEN = "Unexpected token \"{1}\" around line {0}. Instead, expected a string literal or item symbol \"- \".";
 
 	public static final String MISSING_ITEM_ACCESS = "Expected {0} to have at least {1} item members.";
 

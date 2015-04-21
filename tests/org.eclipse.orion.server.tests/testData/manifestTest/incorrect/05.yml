@@ -1,4 +1,0 @@
----
-applications:
- - name: myTestApp
- someProperty: testValue
