@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,19 +20,11 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.util.List;
 
 import org.eclipse.core.runtime.FileLocator;
-import org.eclipse.orion.server.cf.manifest.v2.InputLine;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
-import org.eclipse.orion.server.cf.manifest.v2.Parser;
 import org.eclipse.orion.server.cf.manifest.v2.ParserException;
-import org.eclipse.orion.server.cf.manifest.v2.Preprocessor;
-import org.eclipse.orion.server.cf.manifest.v2.Tokenizer;
-import org.eclipse.orion.server.cf.manifest.v2.TokenizerException;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestParser;
-import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestPreprocessor;
-import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestTokenizer;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestTransformator;
 import org.eclipse.orion.server.cf.manifest.v2.utils.SymbolResolver;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
@@ -90,8 +82,6 @@ public class ManifestParserTest {
 			try {
 				exportManifest(inputStream);
 			} catch (IOException ex) {
-				failure = true;
-			} catch (TokenizerException ex) {
 				failure = true;
 			} catch (ParserException ex) {
 				failure = true;
@@ -206,16 +196,11 @@ public class ManifestParserTest {
 		assertEquals("Redis-two", service); //$NON-NLS-1$
 	}
 
-	private ManifestParseTree parse(InputStream inputStream) throws IOException, TokenizerException, ParserException {
-		Preprocessor preprocessor = new ManifestPreprocessor();
-		List<InputLine> contents = preprocessor.process(inputStream);
-		Tokenizer tokenizer = new ManifestTokenizer(contents);
-
-		Parser parser = new ManifestParser();
-		return parser.parse(tokenizer);
+	private ManifestParseTree parse(InputStream inputStream) throws IOException, ParserException {
+		return new ManifestParser().parse(inputStream);
 	}
 
-	private String exportManifest(InputStream inputStream) throws IOException, TokenizerException, ParserException {
+	private String exportManifest(InputStream inputStream) throws IOException, ParserException {
 		return parse(inputStream).toString();
 	}
 }

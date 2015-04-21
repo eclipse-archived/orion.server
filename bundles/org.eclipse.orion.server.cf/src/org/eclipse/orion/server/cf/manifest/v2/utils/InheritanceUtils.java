@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,7 +12,8 @@ package org.eclipse.orion.server.cf.manifest.v2.utils;
 
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.orion.server.cf.manifest.v2.*;
+import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
+import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 
 /**
  * Manifest inheritance utilities.
@@ -58,7 +59,7 @@ public class InheritanceUtils {
 
 			if (!child.has(ManifestConstants.ENV)) {
 				ManifestParseTree env = new ManifestParseTree();
-				env.getTokens().add(new Token(ManifestConstants.ENV, TokenType.LITERAL));
+				env.setLabel(ManifestConstants.ENV);
 				child.getChildren().add(0, env);
 			}
 
@@ -81,7 +82,7 @@ public class InheritanceUtils {
 
 			if (!child.has(ManifestConstants.APPLICATIONS)) {
 				ManifestParseTree applications = new ManifestParseTree();
-				applications.getTokens().add(new Token(ManifestConstants.APPLICATIONS, TokenType.LITERAL));
+				applications.setLabel(ManifestConstants.APPLICATIONS);
 				child.getChildren().add(applications);
 			}
 
@@ -108,7 +109,7 @@ public class InheritanceUtils {
 
 						if (!application.has(ManifestConstants.SERVICES)) {
 							ManifestParseTree services = new ManifestParseTree();
-							services.getTokens().add(new Token(ManifestConstants.SERVICES, TokenType.LITERAL));
+							services.setLabel(ManifestConstants.SERVICES);
 							application.getChildren().add(services);
 						}
 
