@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,12 +11,20 @@
 package org.eclipse.orion.server.cf.commands;
 
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.cf.manifest.v2.*;
+import org.eclipse.orion.server.cf.manifest.v2.AnalyzerException;
+import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
+import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
+import org.eclipse.orion.server.cf.manifest.v2.ParserException;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
@@ -120,8 +128,6 @@ public class ParseManifestJSONCommand implements ICFCommand {
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
 
 		} catch (IllegalArgumentException e) {
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
-		} catch (TokenizerException e) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);
 		} catch (ParserException e) {
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, e.getMessage(), null);

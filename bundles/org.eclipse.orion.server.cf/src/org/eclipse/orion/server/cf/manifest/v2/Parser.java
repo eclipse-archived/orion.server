@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.manifest.v2;
 
+import java.io.InputStream;
+
 public interface Parser {
 
 	/**
@@ -18,5 +20,5 @@ public interface Parser {
 	 * @throws TokenizerException Underlying tokenizer exception.
 	 * @throws ParserException Underlying parser exception with additional token information.
 	 */
-	public ManifestParseTree parse(Tokenizer tokenizer) throws TokenizerException, ParserException;
+	public ManifestParseTree parse(InputStream inuptStream) throws ParserException;
 }

@@ -1,4 +1,4 @@
 ---
 applications:
-  <html>
-  </html>
+ - name: myTestApp
+ someProperty: testValue
