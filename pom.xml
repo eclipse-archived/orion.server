@@ -279,6 +279,7 @@
 		<module>bundles/org.eclipse.orion.server.gerritfs</module>
 		<module>bundles/org.eclipse.orion.server.events</module>
 		<module>bundles/org.eclipse.jetty9.websocket</module>
+		<module>bundles/org.yaml.snakeyaml</module>
 
 		<module>tests/org.eclipse.orion.server.tests</module>
 

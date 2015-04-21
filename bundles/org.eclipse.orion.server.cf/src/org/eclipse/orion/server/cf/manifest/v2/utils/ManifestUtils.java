@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,15 +10,28 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.manifest.v2.utils;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-import org.eclipse.core.filesystem.*;
-import org.eclipse.core.runtime.*;
-import org.eclipse.orion.server.cf.manifest.v2.*;
+
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.server.cf.manifest.v2.Analyzer;
+import org.eclipse.orion.server.cf.manifest.v2.AnalyzerException;
+import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
+import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
+import org.eclipse.orion.server.cf.manifest.v2.ParserException;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class ManifestUtils {
 
@@ -62,16 +75,11 @@ public class ManifestUtils {
 	/**
 	 * Inner helper method parsing single manifests with additional semantic analysis.
 	 */
-	protected static ManifestParseTree parseManifest(InputStream inputStream, String targetBase, Analyzer analyzer) throws IOException, TokenizerException, ParserException, AnalyzerException {
-
-		/* run preprocessor */
-		ManifestPreprocessor preprocessor = new ManifestPreprocessor();
-		List<InputLine> inputLines = preprocessor.process(inputStream);
+	protected static ManifestParseTree parseManifest(InputStream inputStream, String targetBase, Analyzer analyzer) throws IOException, ParserException, AnalyzerException {
 
 		/* run parser */
-		ManifestTokenizer tokenizer = new ManifestTokenizer(inputLines);
 		ManifestParser parser = new ManifestParser();
-		ManifestParseTree parseTree = parser.parse(tokenizer);
+		ManifestParseTree parseTree = parser.parse(inputStream);
 
 		/* perform inheritance transformations */
 		ManifestTransformator transformator = new ManifestTransformator();
@@ -90,7 +98,7 @@ public class ManifestUtils {
 	/**
 	 * Inner helper method parsing single manifests with additional semantic analysis.
 	 */
-	protected static ManifestParseTree parseManifest(IFileStore manifestFileStore, String targetBase, Analyzer analyzer) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException {
+	protected static ManifestParseTree parseManifest(IFileStore manifestFileStore, String targetBase, Analyzer analyzer) throws CoreException, IOException, ParserException, AnalyzerException {
 
 		/* basic sanity checks */
 		IFileInfo manifestFileInfo = manifestFileStore.fetchInfo();
@@ -123,7 +131,7 @@ public class ManifestUtils {
 	 * @throws AnalyzerException
 	 * @throws InvalidAccessException
 	 */
-	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore, String targetBase, Analyzer analyzer, List<IPath> manifestList) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException, InvalidAccessException {
+	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore, String targetBase, Analyzer analyzer, List<IPath> manifestList) throws CoreException, IOException, ParserException, AnalyzerException, InvalidAccessException {
 		ManifestParseTree manifest = parseManifest(manifestStore, targetBase, analyzer);
 
 		if (!manifest.has(ManifestConstants.INHERIT))
@@ -163,7 +171,7 @@ public class ManifestUtils {
 	 * @throws AnalyzerException
 	 * @throws InvalidAccessException
 	 */
-	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException, InvalidAccessException {
+	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore) throws CoreException, IOException, ParserException, AnalyzerException, InvalidAccessException {
 		return parse(sandbox, manifestStore, null, null, new ArrayList<IPath>());
 	}
 
@@ -180,7 +188,7 @@ public class ManifestUtils {
 	 * @throws AnalyzerException
 	 * @throws InvalidAccessException
 	 */
-	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore, String targetBase) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException, InvalidAccessException {
+	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore, String targetBase) throws CoreException, IOException, ParserException, AnalyzerException, InvalidAccessException {
 		return parse(sandbox, manifestStore, targetBase, null, new ArrayList<IPath>());
 	}
 
@@ -197,7 +205,7 @@ public class ManifestUtils {
 	 * @throws AnalyzerException
 	 * @throws InvalidAccessException
 	 */
-	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore, String targetBase, Analyzer analyzer) throws CoreException, IOException, TokenizerException, ParserException, AnalyzerException, InvalidAccessException {
+	public static ManifestParseTree parse(IFileStore sandbox, IFileStore manifestStore, String targetBase, Analyzer analyzer) throws CoreException, IOException, ParserException, AnalyzerException, InvalidAccessException {
 		return parse(sandbox, manifestStore, targetBase, analyzer, new ArrayList<IPath>());
 	}
 
@@ -246,7 +254,7 @@ public class ManifestUtils {
 	 * @throws ParserException
 	 * @throws AnalyzerException
 	 */
-	public static ManifestParseTree parse(JSONObject manifestJSON) throws IllegalArgumentException, JSONException, IOException, TokenizerException, ParserException, AnalyzerException {
+	public static ManifestParseTree parse(JSONObject manifestJSON) throws IllegalArgumentException, JSONException, IOException, ParserException, AnalyzerException {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("---").append(System.getProperty("line.separator")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -331,7 +339,7 @@ public class ManifestUtils {
 	 * @throws ParserException
 	 * @throws AnalyzerException
 	 */
-	public static ManifestParseTree createBoilerplate(String applicationName) throws IllegalArgumentException, JSONException, IOException, TokenizerException, ParserException, AnalyzerException {
+	public static ManifestParseTree createBoilerplate(String applicationName) throws IllegalArgumentException, JSONException, IOException, ParserException, AnalyzerException {
 
 		JSONObject application = new JSONObject();
 		application.put(ManifestConstants.NAME, applicationName);

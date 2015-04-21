@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,58 +16,40 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.server.core.IOUtilities;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Intermediate manifest file representation.
- * 
- * Representation details:
- * 1) Line indentation forms a natural forest representation of the manifest.
- *    In order to facilitate accessing single trees in the forest, an additional root node is
- *    introduced in order to bind the forest into a single rooted tree.
- * 2) Tree nodes carry associated token lists.
  */
 public class ManifestParseTree {
 
 	private static final Pattern memoryPattern = Pattern.compile("[1-9][0-9]*(M|MB|G|GB|m|mb|g|gb)"); //$NON-NLS-1$
 	private static final Pattern nonNegativePattern = Pattern.compile("[1-9][0-9]*"); //$NON-NLS-1$
 
-	private List<Token> tokens;
 	private List<ManifestParseTree> children;
 	private ManifestParseTree parent;
-	private int level;
+	private String label = "";
+	private boolean itemNode;
+	private int lineNumber;
 
 	public ManifestParseTree() {
 		children = new ArrayList<ManifestParseTree>();
-		tokens = new ArrayList<Token>();
 		parent = this;
-		level = 0;
-	}
-
-	public ManifestParseTree(int level) {
-		children = new ArrayList<ManifestParseTree>();
-		tokens = new ArrayList<Token>();
-		parent = this;
-		this.level = level;
 	}
 
 	public ManifestParseTree(ManifestParseTree node) {
 
-		level = node.getLevel();
 		setParent(this);
 
-		/* copy tokens */
-		tokens = new ArrayList<Token>();
-		for (Token token : node.getTokens()) {
-			Token newToken = new Token(token.getContent(), token.getType());
-			newToken.setIndentation(token.getIndentation());
-			newToken.setLineNumber(token.getLineNumber());
-			tokens.add(newToken);
-		}
+		setItemNode(node.isItemNode());
+		setLabel(node.getLabel());
 
 		/* copy children recursively */
 		children = new ArrayList<ManifestParseTree>();
@@ -95,17 +77,14 @@ public class ManifestParseTree {
 			}
 		}
 
-		ManifestParseTree keyNode = new ManifestParseTree(getLevel());
+		ManifestParseTree keyNode = new ManifestParseTree();
+		keyNode.setLabel(key);
 
-		Token keyToken = new Token(key, TokenType.LITERAL);
-		keyNode.getTokens().add(keyToken);
-
-		ManifestParseTree valueNode = new ManifestParseTree(getLevel());
+		ManifestParseTree valueNode = new ManifestParseTree();
 		keyNode.getChildren().add(valueNode);
 		valueNode.setParent(keyNode);
 
-		Token valueToken = new Token(value, TokenType.LITERAL);
-		valueNode.getTokens().add(valueToken);
+		valueNode.setLabel(value);
 
 		getChildren().add(keyNode);
 		keyNode.setParent(this);
@@ -114,8 +93,8 @@ public class ManifestParseTree {
 	/**
 	 * Inserts or updates a (key, value) pair to the manifest node.
 	 * @param key
-	 * @param value
-	 * @throws JSONException 
+	 * @param object
+	 * @throws JSONException
 	 */
 	public void put(String key, JSONObject object) throws JSONException {
 		if (has(key)) {
@@ -132,10 +111,8 @@ public class ManifestParseTree {
 			}
 		}
 
-		ManifestParseTree keyNode = new ManifestParseTree(getLevel());
-
-		Token keyToken = new Token(key, TokenType.LITERAL);
-		keyNode.getTokens().add(keyToken);
+		ManifestParseTree keyNode = new ManifestParseTree();
+		keyNode.setLabel(key);
 
 		for (String k : JSONObject.getNames(object)) {
 			String v = object.getString(k);
@@ -155,25 +132,15 @@ public class ManifestParseTree {
 			return;
 
 		ManifestParseTree child = getChildren().get(0);
-		child.getTokens().clear();
-		child.getTokens().add(new Token(value, TokenType.LITERAL));
+		child.setLabel(value);
 	}
 
-	/**
-	 * @return Token content concatenation.
-	 */
+	public void setLabel(String label) {
+		this.label = label;
+	}
+
 	public String getLabel() {
-		StringBuilder sb = new StringBuilder();
-		int n = tokens.size();
-		for (int i = 0; i < n; ++i) {
-			Token token = tokens.get(i);
-			sb.append(token.getContent());
-
-			if (TokenType.SYMBOL != token.getType() && (i + 1 < n && TokenType.SYMBOL != tokens.get(i + 1).getType()))
-				sb.append(" "); //$NON-NLS-1$
-		}
-
-		return sb.toString().trim();
+		return label;
 	}
 
 	/**
@@ -183,7 +150,7 @@ public class ManifestParseTree {
 	 * @throws InvalidAccessException If no matching child could be found.
 	 */
 	public ManifestParseTree get(String childName) throws InvalidAccessException {
-		/* TODO: Consider constant (or amortized constant) 
+		/* TODO: Consider constant (or amortized constant)
 		 * time access using additional memory. */
 
 		for (ManifestParseTree child : children)
@@ -199,7 +166,7 @@ public class ManifestParseTree {
 	 * @return The first child node matching the childName label or <code>null</code> if none present.
 	 */
 	public ManifestParseTree getOpt(String childName) {
-		/* TODO: Consider constant (or amortized constant) 
+		/* TODO: Consider constant (or amortized constant)
 		 * time access using additional memory. */
 
 		for (ManifestParseTree child : children)
@@ -225,7 +192,7 @@ public class ManifestParseTree {
 	 * @throws InvalidAccessException If no matching child could be found.
 	 */
 	public ManifestParseTree get(int kthChild) throws InvalidAccessException {
-		/* TODO: Consider constant (or amortized constant) 
+		/* TODO: Consider constant (or amortized constant)
 		 * time access using additional memory. */
 
 		int curretChild = -1;
@@ -337,7 +304,6 @@ public class ManifestParseTree {
 		for (int i = 0; i < indentation; ++i)
 			sb.append(" "); //$NON-NLS-1$
 
-		/* print tokens */
 		sb.append(getLabel());
 
 		/* print mapping symbol if required */
@@ -371,8 +337,8 @@ public class ManifestParseTree {
 	/**
 	 * Externalization to JSON format.
 	 * @return JSON representation.
-	 * @throws JSONException 
-	 * @throws InvalidAccessException 
+	 * @throws JSONException
+	 * @throws InvalidAccessException
 	 */
 	public JSONObject toJSON() throws JSONException, InvalidAccessException {
 
@@ -455,8 +421,12 @@ public class ManifestParseTree {
 		return parent == this;
 	}
 
+	public void setItemNode(boolean itemNode) {
+		this.itemNode = itemNode;
+	}
+
 	public boolean isItemNode() {
-		return (tokens.size() == 1 && TokenType.ITEM_CONSTANT == tokens.get(0).getType());
+		return itemNode;
 	}
 
 	public List<ManifestParseTree> getChildren() {
@@ -471,12 +441,12 @@ public class ManifestParseTree {
 		this.parent = father;
 	}
 
-	public int getLevel() {
-		return level;
+	public void setLineNumber(int lineNumber) {
+		this.lineNumber = lineNumber;
 	}
 
-	public List<Token> getTokens() {
-		return tokens;
+	public int getLineNumber() {
+		return lineNumber;
 	}
 
 	@Override

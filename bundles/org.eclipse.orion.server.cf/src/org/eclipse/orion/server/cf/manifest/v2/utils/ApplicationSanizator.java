@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,10 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.manifest.v2.utils;
 
-import org.eclipse.orion.server.cf.manifest.v2.*;
+import org.eclipse.orion.server.cf.manifest.v2.Analyzer;
+import org.eclipse.orion.server.cf.manifest.v2.AnalyzerException;
+import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
+import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -78,7 +81,7 @@ public class ApplicationSanizator implements Analyzer {
 	protected void checkEmptyProperties(String applicationName, ManifestParseTree application) throws AnalyzerException {
 		for (ManifestParseTree property : application.getChildren())
 			if (property.getChildren().isEmpty())
-				throw new AnalyzerException(NLS.bind("Empty property \"{0}\" in application \"{1}\".", property.getLabel(), applicationName), property.getTokens().get(0));
+				throw new AnalyzerException(NLS.bind("Empty property \"{0}\" in application \"{1}\".", property.getLabel(), applicationName), property.getLineNumber());
 	}
 
 	protected void checkServices(String applicationName, ManifestParseTree services) throws AnalyzerException {
@@ -86,7 +89,7 @@ public class ApplicationSanizator implements Analyzer {
 			return;
 
 		if (services.isStringProperty())
-			throw new AnalyzerException(NLS.bind("Invalid services declaration for application \"{0}\". Expected a list of service names.", applicationName), services.getTokens().get(0));
+			throw new AnalyzerException(NLS.bind("Invalid services declaration for application \"{0}\". Expected a list of service names.", applicationName), services.getLineNumber());
 	}
 
 	protected void checkBuildpack(String applicationName, ManifestParseTree buildpack) throws AnalyzerException {
@@ -94,7 +97,7 @@ public class ApplicationSanizator implements Analyzer {
 			return;
 
 		if (!buildpack.isStringProperty())
-			throw new AnalyzerException(NLS.bind("Invalid \"buildpack\" value for application \"{0}\". Expected a string literal.", applicationName), buildpack.getTokens().get(0));
+			throw new AnalyzerException(NLS.bind("Invalid \"buildpack\" value for application \"{0}\". Expected a string literal.", applicationName), buildpack.getLineNumber());
 	}
 
 	protected void checkCommand(String applicationName, ManifestParseTree command) throws AnalyzerException {
@@ -102,7 +105,7 @@ public class ApplicationSanizator implements Analyzer {
 			return;
 
 		if (!command.isStringProperty())
-			throw new AnalyzerException(NLS.bind("Invalid \"command\" value for application \"{0}\". Expected a string literal.", applicationName), command.getTokens().get(0));
+			throw new AnalyzerException(NLS.bind("Invalid \"command\" value for application \"{0}\". Expected a string literal.", applicationName), command.getLineNumber());
 	}
 
 	protected void checkDomain(String applicationName, ManifestParseTree domain) throws AnalyzerException {
@@ -110,7 +113,7 @@ public class ApplicationSanizator implements Analyzer {
 			return;
 
 		if (!domain.isStringProperty())
-			throw new AnalyzerException(NLS.bind("Invalid \"domain\" value for application \"{0}\". Expected a string literal.", applicationName), domain.getTokens().get(0));
+			throw new AnalyzerException(NLS.bind("Invalid \"domain\" value for application \"{0}\". Expected a string literal.", applicationName), domain.getLineNumber());
 	}
 
 	protected void checkHost(String applicationName, ManifestParseTree host) throws AnalyzerException {
@@ -118,7 +121,7 @@ public class ApplicationSanizator implements Analyzer {
 			return;
 
 		if (!host.isStringProperty())
-			throw new AnalyzerException(NLS.bind("Invalid \"host\" value for application \"{0}\". Expected a string literal.", applicationName), host.getTokens().get(0));
+			throw new AnalyzerException(NLS.bind("Invalid \"host\" value for application \"{0}\". Expected a string literal.", applicationName), host.getLineNumber());
 	}
 
 	protected void checkPath(String applicationName, ManifestParseTree path) throws AnalyzerException {
@@ -126,7 +129,7 @@ public class ApplicationSanizator implements Analyzer {
 			return;
 
 		if (!path.isStringProperty())
-			throw new AnalyzerException(NLS.bind("Invalid \"path\" value for application \"{0}\". Expected a path string.", applicationName), path.getTokens().get(0));
+			throw new AnalyzerException(NLS.bind("Invalid \"path\" value for application \"{0}\". Expected a path string.", applicationName), path.getLineNumber());
 	}
 
 	protected void checkMemory(String applicationName, ManifestParseTree memory) throws AnalyzerException, InvalidAccessException {
@@ -134,10 +137,10 @@ public class ApplicationSanizator implements Analyzer {
 			return;
 
 		if (!memory.isStringProperty())
-			throw new AnalyzerException(NLS.bind("Invalid \"memory\" value for application \"{0}\". Expected a memory limit.", applicationName), memory.getTokens().get(0));
+			throw new AnalyzerException(NLS.bind("Invalid \"memory\" value for application \"{0}\". Expected a memory limit.", applicationName), memory.getLineNumber());
 
 		if (!memory.isValidMemoryProperty())
-			throw new AnalyzerException(NLS.bind("Invalid memory limit for application \"{0}\". Supported measurement units are M/MB, G/GB.", applicationName), memory.getTokens().get(0));
+			throw new AnalyzerException(NLS.bind("Invalid memory limit for application \"{0}\". Supported measurement units are M/MB, G/GB.", applicationName), memory.getLineNumber());
 	}
 
 	protected void checkInstances(String applicationName, ManifestParseTree instances) throws AnalyzerException, InvalidAccessException {
@@ -145,10 +148,10 @@ public class ApplicationSanizator implements Analyzer {
 			return;
 
 		if (!instances.isStringProperty())
-			throw new AnalyzerException(NLS.bind("Invalid \"instances\" value for application \"{0}\". Expected a non-negative integer value.", applicationName), instances.getTokens().get(0));
+			throw new AnalyzerException(NLS.bind("Invalid \"instances\" value for application \"{0}\". Expected a non-negative integer value.", applicationName), instances.getLineNumber());
 
 		if (!instances.isValidNonNegativeProperty())
-			throw new AnalyzerException(NLS.bind("Invalid \"instances\" value for application \"{0}\". Expected a non-negative integer value.", applicationName), instances.getTokens().get(0));
+			throw new AnalyzerException(NLS.bind("Invalid \"instances\" value for application \"{0}\". Expected a non-negative integer value.", applicationName), instances.getLineNumber());
 	}
 
 	protected void checkTimeout(String applicationName, ManifestParseTree timeout) throws AnalyzerException, InvalidAccessException {
@@ -156,10 +159,10 @@ public class ApplicationSanizator implements Analyzer {
 			return;
 
 		if (!timeout.isStringProperty())
-			throw new AnalyzerException(NLS.bind("Invalid \"timeout\" value for application \"{0}\". Expected a non-negative integer value.", applicationName), timeout.getTokens().get(0));
+			throw new AnalyzerException(NLS.bind("Invalid \"timeout\" value for application \"{0}\". Expected a non-negative integer value.", applicationName), timeout.getLineNumber());
 
 		if (!timeout.isValidNonNegativeProperty())
-			throw new AnalyzerException(NLS.bind("Invalid \"timeout\" value for application \"{0}\". Expected a non-negative integer value.", applicationName), timeout.getTokens().get(0));
+			throw new AnalyzerException(NLS.bind("Invalid \"timeout\" value for application \"{0}\". Expected a non-negative integer value.", applicationName), timeout.getLineNumber());
 	}
 
 	protected void checkNoRoute(String applicationName, ManifestParseTree noRoute) throws AnalyzerException, InvalidAccessException {
@@ -167,10 +170,10 @@ public class ApplicationSanizator implements Analyzer {
 			return;
 
 		if (!noRoute.isStringProperty())
-			throw new AnalyzerException(NLS.bind("Invalid \"no-route\" value for application \"{0}\". Expected a string literal \"true\".", applicationName), noRoute.getTokens().get(0));
+			throw new AnalyzerException(NLS.bind("Invalid \"no-route\" value for application \"{0}\". Expected a string literal \"true\".", applicationName), noRoute.getLineNumber());
 
 		String noRouteValue = noRoute.getValue();
 		if (!"true".equals(noRouteValue)) //$NON-NLS-1$
-			throw new AnalyzerException(NLS.bind("Invalid \"no-route\" value for application \"{0}\". Expected a string literal \"true\".", applicationName), noRoute.getTokens().get(0));
+			throw new AnalyzerException(NLS.bind("Invalid \"no-route\" value for application \"{0}\". Expected a string literal \"true\".", applicationName), noRoute.getLineNumber());
 	}
 }
