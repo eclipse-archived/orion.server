@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: SnakeYAML
 Bundle-SymbolicName: org.yaml.snakeyaml
 Bundle-Version: 1.14.0.qualifier
-Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: org.yaml.snakeyaml,
  org.yaml.snakeyaml.composer,
  org.yaml.snakeyaml.constructor,
