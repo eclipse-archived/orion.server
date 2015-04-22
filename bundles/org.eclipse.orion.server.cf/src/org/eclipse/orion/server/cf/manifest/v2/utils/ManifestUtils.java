@@ -112,7 +112,15 @@ public class ManifestUtils {
 			throw new IOException(ManifestConstants.MANIFEST_FILE_SIZE_EXCEEDED);
 
 		InputStream inputStream = manifestFileStore.openInputStream(EFS.NONE, null);
-		return parseManifest(inputStream, targetBase, analyzer);
+		ManifestParseTree manifestTree = null;
+		try {
+			manifestTree = parseManifest(inputStream, targetBase, analyzer);
+		} finally {
+			if (inputStream != null) {
+				inputStream.close();
+			}
+		}
+		return manifestTree;
 	}
 
 	/**
@@ -262,7 +270,15 @@ public class ManifestUtils {
 
 		String manifestYAML = sb.toString();
 		InputStream inputStream = new ByteArrayInputStream(manifestYAML.getBytes("UTF-8")); //$NON-NLS-1$
-		return parseManifest(inputStream, null, null);
+		ManifestParseTree manifestTree = null;
+		try {
+			manifestTree = parseManifest(inputStream, null, null);
+		} finally {
+			if (inputStream != null) {
+				inputStream.close();
+			}
+		}
+		return manifestTree;
 	}
 
 	private static void appendIndentation(StringBuilder sb, int indentation) {
