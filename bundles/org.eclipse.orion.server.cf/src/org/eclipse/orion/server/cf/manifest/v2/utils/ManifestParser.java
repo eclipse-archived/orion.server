@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.manifest.v2.utils;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.List;
@@ -32,10 +33,18 @@ public class ManifestParser implements Parser {
 	@Override
 	public ManifestParseTree parse(InputStream inputStream) throws ParserException {
 		Node snakeRootNode;
+		InputStreamReader reader = null;
 		try {
-			snakeRootNode = new Yaml().compose(new InputStreamReader(inputStream));
+			reader = new InputStreamReader(inputStream);
+			snakeRootNode = new Yaml().compose(reader);
 		} catch (MarkedYAMLException e) {
 			throw new ParserException(e.getMessage(), e.getProblemMark().getLine() + 1);
+		} finally {
+			if (reader != null) {
+				try {
+					reader.close();
+				} catch (IOException e) {}
+			}
 		}
 		ManifestParseTree root = new ManifestParseTree();
 		addChild(snakeRootNode, root);
