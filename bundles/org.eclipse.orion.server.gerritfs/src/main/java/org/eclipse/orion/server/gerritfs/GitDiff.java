@@ -42,6 +42,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.AbstractTreeIterator;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
+import org.eclipse.jgit.treewalk.EmptyTreeIterator;
 import org.eclipse.jgit.treewalk.filter.AndTreeFilter;
 import org.eclipse.jgit.treewalk.filter.OrTreeFilter;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
@@ -430,19 +431,19 @@ public class GitDiff extends HttpServlet {
 		// cloneLocation.getUserInfo(), cloneLocation.getHost(),
 		// cloneLocation.getPort(), result.makeAbsolute()
 		// .toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
-		return new URI("orion", "hub.jazz.net", "", "");
+		return new URI("orion", "hub.jazz.net", "", ""); 
 	}
 
 	private DiffCommand getDiff(HttpServletRequest request,
 			HttpServletResponse response, Repository db, String scope,
-			String pattern, OutputStream out) throws Exception {
+			String pattern, OutputStream out) {
 		boolean ignoreWS = Boolean.parseBoolean(request
 				.getParameter("ignoreWS")); //$NON-NLS-1$
 		// Git git = new Git(db);
 		DiffCommand diff = new DiffCommand(db);
 		diff.setOutputStream(out);
 		diff.setIgnoreWhiteSpace(ignoreWS);
-		AbstractTreeIterator oldTree;
+		AbstractTreeIterator oldTree = null;
 		AbstractTreeIterator newTree = null;// = new
 											// FileTreeIterator(currentTree.getT);
 		if (scope.contains("..")) { //$NON-NLS-1$
@@ -455,11 +456,24 @@ public class GitDiff extends HttpServlet {
 				// HttpServletResponse.SC_BAD_REQUEST, msg, null));
 				return null;
 			}
-			
-			oldTree = getTreeIterator(db, java.net.URLDecoder.decode(commits[0],"UTF-8"));
-			newTree = getTreeIterator(db, java.net.URLDecoder.decode(commits[1],"UTF-8"));
+			try {
+				oldTree = getTreeIterator(db, java.net.URLDecoder.decode(commits[0],"UTF-8"));
+			} catch (Exception ex) {
+				try {
+					//sha doesn't have a parent, use empty iterator
+					oldTree = new EmptyTreeIterator();
+				} catch (Exception e) {
+				}
+			}
+			try {
+				newTree = getTreeIterator(db, java.net.URLDecoder.decode(commits[1],"UTF-8"));
+			} catch (Exception e) {
+			}
 		} else {
-			oldTree = getTreeIterator(db, scope); 
+			try {
+				oldTree = getTreeIterator(db, scope);
+			} catch (Exception e) {
+			} 
 		}
 
 		String[] paths = request.getParameterValues(GitDiff.KEY_PATH);
