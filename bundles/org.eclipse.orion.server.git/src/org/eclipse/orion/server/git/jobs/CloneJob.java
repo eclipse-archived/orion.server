@@ -126,7 +126,7 @@ public class CloneJob extends GitJob {
 			cc.setRemote(Constants.DEFAULT_REMOTE_NAME);
 			cc.setURI(clone.getUrl());
 			
-			if (this.user.equals("grant_gayed@ca.ibm.com")) {
+			if (this.user.equals("ggayed")) {
 				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.git");
 				logger.info("--------------------------\nstart");
 				String gitAdminUser = PreferenceHelper.getString("jazz.gitadmin.user"); //$NON-NLS-1$
