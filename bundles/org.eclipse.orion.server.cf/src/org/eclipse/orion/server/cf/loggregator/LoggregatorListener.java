@@ -10,24 +10,41 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.loggregator;
 
-import java.util.*;
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
 import org.json.JSONArray;
 
 public class LoggregatorListener {
 
-	private List<String> messages;
+	private SortedSet<LoggregatorMessage.Message> messages;
 
-	public void add(String msg) {
-		if (messages == null)
-			messages = new ArrayList<String>();
+	public void add(LoggregatorMessage.Message msg) {
+		if (messages == null) {
+			Comparator<LoggregatorMessage.Message> comparator = new Comparator<LoggregatorMessage.Message>() {
+				public int compare(LoggregatorMessage.Message o1, LoggregatorMessage.Message o2) {
+					if (o1.getTimestamp() < o2.getTimestamp())
+						return -1;
+					else if (o1.getTimestamp() > o2.getTimestamp())
+						return 1;
+					else
+						return 0;
+				}
+			};
+			messages = new TreeSet<LoggregatorMessage.Message>(comparator);
+		}
+
 		messages.add(msg);
 	}
 
 	public JSONArray getMessagesJSON() {
 		JSONArray messagesJSON = new JSONArray();
 		if (messages != null)
-			for (Iterator<String> iterator = messages.iterator(); iterator.hasNext();) {
-				messagesJSON.put(iterator.next());
+			for (Iterator<LoggregatorMessage.Message> iterator = messages.iterator(); iterator.hasNext();) {
+				String message = iterator.next().getMessage().toStringUtf8();
+				messagesJSON.put(message);
 			}
 		return messagesJSON;
 	}
@@ -35,8 +52,9 @@ public class LoggregatorListener {
 	public String getString() {
 		StringBuffer buff = new StringBuffer();
 		if (messages != null)
-			for (Iterator<String> iterator = messages.iterator(); iterator.hasNext();) {
-				buff.append(iterator.next()).append("\n");
+			for (Iterator<LoggregatorMessage.Message> iterator = messages.iterator(); iterator.hasNext();) {
+				String message = iterator.next().getMessage().toStringUtf8();
+				buff.append(message).append("\n");
 			}
 		return buff.toString();
 	}

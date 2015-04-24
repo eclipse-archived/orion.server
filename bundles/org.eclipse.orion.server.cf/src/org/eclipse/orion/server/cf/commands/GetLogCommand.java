@@ -10,13 +10,19 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.commands;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.loggregator.LoggregatorListener;
 import org.eclipse.orion.server.cf.loggregator.LoggregatorMessage;
 import org.eclipse.orion.server.cf.objects.Target;
@@ -88,7 +94,7 @@ public class GetLogCommand extends AbstractCFCommand {
 				while (multipartReader.readNextPart()) {
 					try {
 						LoggregatorMessage.Message message = LoggregatorMessage.Message.parseFrom(multipartReader.getPart());
-						listener.add(message.getMessage().toStringUtf8());
+						listener.add(message);
 					} catch (Exception ex) {
 						logger.error("Problem while reading logs", ex);
 					}
