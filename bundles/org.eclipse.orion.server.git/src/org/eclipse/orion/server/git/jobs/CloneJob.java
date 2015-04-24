@@ -126,8 +126,7 @@ public class CloneJob extends GitJob {
 			cc.setRemote(Constants.DEFAULT_REMOTE_NAME);
 			cc.setURI(clone.getUrl());
 			
-			if (this.user.equals("ggayed")) {
-				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.git");
+				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.workspace");
 				logger.info("--------------------------\nstart");
 				String gitAdminUser = PreferenceHelper.getString("jazz.gitadmin.user"); //$NON-NLS-1$
 				logger.info("got an admin user: " + (gitAdminUser != null && gitAdminUser.length() > 0));
@@ -150,7 +149,6 @@ public class CloneJob extends GitJob {
 				} finally {
 					getMethod.releaseConnection();
 				}
-			}
 			
 			if (this.cookie != null) {
 				cc.setTransportConfigCallback(new TransportConfigCallback() {
