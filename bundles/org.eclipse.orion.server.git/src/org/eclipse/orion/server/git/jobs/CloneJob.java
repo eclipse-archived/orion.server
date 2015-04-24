@@ -21,13 +21,6 @@ import java.util.concurrent.TimeUnit;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HostConfiguration;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.params.HttpClientParams;
-import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -45,7 +38,6 @@ import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.TransportHttp;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
@@ -56,8 +48,6 @@ import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitCloneHandlerV1;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A job to perform a clone operation in the background
@@ -96,19 +86,6 @@ public class CloneJob extends GitJob {
 		this(clone, userRunningTask, credentials, user, cloneLocation, project, gitUserName, gitUserMail, initProject);
 		this.cookie = (Cookie) cookie;
 	}
-	
-	public HttpClient createHttpClient() {
-		//see http://hc.apache.org/httpclient-3.x/threading.html
-		MultiThreadedHttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
-		HttpConnectionManagerParams params = connectionManager.getParams();
-		params.setMaxConnectionsPerHost(HostConfiguration.ANY_HOST_CONFIGURATION, 100);
-		connectionManager.setParams(params);
-
-		HttpClientParams clientParams = new HttpClientParams();
-		clientParams.setConnectionManagerTimeout(300000); // 5 minutes
-//		HttpClient httpClient = new HttpClient(connectionManager);
-		return new HttpClient(clientParams, connectionManager);
-	}
 
 	private IStatus doClone(IProgressMonitor monitor) {
 		EclipseGitProgressTransformer gitMonitor = new EclipseGitProgressTransformer(monitor);
@@ -125,33 +102,7 @@ public class CloneJob extends GitJob {
 			cc.setDirectory(cloneFolder);
 			cc.setRemote(Constants.DEFAULT_REMOTE_NAME);
 			cc.setURI(clone.getUrl());
-			
-				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.workspace");
-				logger.info("--------------------------\nstart");
-				String gitAdminUser = PreferenceHelper.getString("jazz.gitadmin.user"); //$NON-NLS-1$
-				String gitAdminPassword = PreferenceHelper.getString("jazz.gitadmin.password"); //$NON-NLS-1$
-				logger.info(gitAdminPassword + "..." + gitAdminUser + "...");
-	//			logger.info("got an admin user: " + (gitAdminUser != null && gitAdminUser.length() > 0));
-				String jazzHubUrl = "https://beta3.hub.jazz.net/manage/service/com.ibm.team.jazzhub.common.service.IGithubService/tokens?userId=" + gitAdminUser;
-	//			if (jazzHubUrl != null) {
-	//			jazzHubUrl = jazzHubUrl + "manage/service/com.ibm.team.jazzhub.common.service.IGithubService/tokens?userId=";
-	//				logger.info("url, before adding admin user: " + jazzHubUrl);
-	//			jazzHubUrl += gitAdminUser;
-					
-				GetMethod getMethod = new GetMethod(jazzHubUrl);
-				getMethod.addRequestHeader(new Header("Accept", "application/json,text/json"));//$NON-NLS-1$ //$NON-NLS-2$
-				getMethod.addRequestHeader(new Header("Accept-Charset", "UTF-8"));//$NON-NLS-1$ //$NON-NLS-2$
-				getMethod.addRequestHeader(new Header("X-com-ibm-team-yo", "bogus"));//$NON-NLS-1$ //$NON-NLS-2$
-				try {
-					int statusCode = createHttpClient().executeMethod(getMethod);
-					String response = getMethod.getResponseBodyAsString(67108864);
-					logger.info("Status Code: " + statusCode);
-					logger.info("Response: " + response); //$NON-NLS-1$
-					logger.info("--------------------------\nFINISHED InitGitProjectCommand.doClone()");
-				} finally {
-					getMethod.releaseConnection();
-				}
-			
+
 			if (this.cookie != null) {
 				cc.setTransportConfigCallback(new TransportConfigCallback() {
 					@Override
