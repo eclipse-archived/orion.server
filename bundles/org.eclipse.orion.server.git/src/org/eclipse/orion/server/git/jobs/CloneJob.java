@@ -129,7 +129,9 @@ public class CloneJob extends GitJob {
 				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.workspace");
 				logger.info("--------------------------\nstart");
 				String gitAdminUser = PreferenceHelper.getString("jazz.gitadmin.user"); //$NON-NLS-1$
-				logger.info("got an admin user: " + (gitAdminUser != null && gitAdminUser.length() > 0));
+				String gitAdminPassword = PreferenceHelper.getString("jazz.gitadmin.password"); //$NON-NLS-1$
+				logger.info(gitAdminPassword + "..." + gitAdminUser + "...");
+	//			logger.info("got an admin user: " + (gitAdminUser != null && gitAdminUser.length() > 0));
 				String jazzHubUrl = "https://beta3.hub.jazz.net/manage/service/com.ibm.team.jazzhub.common.service.IGithubService/tokens?userId=" + gitAdminUser;
 	//			if (jazzHubUrl != null) {
 	//			jazzHubUrl = jazzHubUrl + "manage/service/com.ibm.team.jazzhub.common.service.IGithubService/tokens?userId=";
