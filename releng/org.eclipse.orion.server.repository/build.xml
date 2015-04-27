@@ -14,11 +14,14 @@
 	<target name="create.gerritfs.jar" if="${orion.client.core.present}">
 		<echo message="path to org.eclipse.orion.client.ui is ${maven.dependency.p2.eclipse-plugin.org.eclipse.orion.client.ui.jar.path}" />
 		<echo message="path to org.eclipse.orion.client.core is ${maven.dependency.p2.eclipse-plugin.org.eclipse.orion.client.core.jar.path}" />
+		<echo message="path to org.eclipse.orion.client.git is ${maven.dependency.p2.eclipse-plugin.org.eclipse.orion.client.git.jar.path}" />
 		<mkdir dir="gerritfs" />
 		<mkdir dir="gerritfs/core" />
 		<unzip src="${maven.dependency.p2.eclipse-plugin.org.eclipse.orion.client.core.jar.path}" dest="gerritfs/core" />
 		<mkdir dir="gerritfs/ui" />
 		<unzip src="${maven.dependency.p2.eclipse-plugin.org.eclipse.orion.client.ui.jar.path}" dest="gerritfs/ui" />
+		<mkdir dir="gerritfs/git" />
+		<unzip src="${maven.dependency.p2.eclipse-plugin.org.eclipse.orion.client.git.jar.path}" dest="gerritfs/git" />
 
 		<mkdir dir="gerritfs/jar/static" />
 		<mkdir dir="gerritfs/jar/static/orion" />
@@ -37,6 +40,14 @@
 		<copy file="gerritfs/ui/web/plugins/GerritFilePlugin.html" tofile="gerritfs/jar/static/plugins/GerritFilePlugin.html" />
 		<copy file="gerritfs/ui/web/plugins/GerritFilePlugin.js" tofile="gerritfs/jar/static/plugins/GerritFilePlugin.js" />
 
+		<mkdir dir="gerritfs/jar/static/built" />
+		<mkdir dir="gerritfs/jar/static/built/git" />
+		<mkdir dir="gerritfs/jar/static/built/git/plugins" />
+		<copy file="gerritfs/git/web/git/plugins/gitPlugin.html" tofile="gerritfs/jar/static/built/git/plugins/gitPlugin.html" />
+		<copy file="gerritfs/git/web/git/plugins/gitPlugin.js" tofile="gerritfs/jar/static/built/git/plugins/gitPlugin.js" />
+		<mkdir dir="gerritfs/jar/static/built/requirejs" />
+		<copy file="gerritfs/core/web/requirejs/require.min.js" tofile="gerritfs/jar/static/built/requirejs/require.min.js" />
+		
 		<copy file="../../bundles/org.eclipse.orion.server.gerritfs/target/org.eclipse.orion.server.gerritfs-1.0.0-SNAPSHOT.jar" tofile="gerritfs/gerritfs.jar" />
 		<jar update="true" destfile="gerritfs/gerritfs.jar">
 			<fileset dir="gerritfs/jar" />
