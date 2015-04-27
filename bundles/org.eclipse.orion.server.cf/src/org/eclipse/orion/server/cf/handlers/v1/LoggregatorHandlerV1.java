@@ -12,14 +12,23 @@ package org.eclipse.orion.server.cf.handlers.v1;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.cf.commands.*;
+import org.eclipse.orion.server.cf.commands.ComputeTargetCommand;
+import org.eclipse.orion.server.cf.commands.GetAppCommand;
+import org.eclipse.orion.server.cf.commands.GetInfoCommand;
+import org.eclipse.orion.server.cf.commands.GetLogCommand;
 import org.eclipse.orion.server.cf.jobs.CFJob;
-import org.eclipse.orion.server.cf.loggregator.LoggregatorClient;
 import org.eclipse.orion.server.cf.loggregator.LoggregatorListener;
-import org.eclipse.orion.server.cf.objects.*;
+import org.eclipse.orion.server.cf.loggregator.LoggregatorRegistry;
+import org.eclipse.orion.server.cf.objects.App;
+import org.eclipse.orion.server.cf.objects.Log;
+import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -31,6 +40,8 @@ import org.slf4j.LoggerFactory;
 public class LoggregatorHandlerV1 extends AbstractRESTHandler<Log> {
 
 	final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
+	
+	private LoggregatorRegistry loggregatorRegistry = new LoggregatorRegistry();
 
 	public LoggregatorHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		super(statusHandler);
@@ -74,14 +85,14 @@ public class LoggregatorHandlerV1 extends AbstractRESTHandler<Log> {
 					String loggingEndpoint = getInfoStatus.getJsonData().getString("logging_endpoint");
 
 					JSONObject messages = new JSONObject();
-					LoggregatorListener listener = new LoggregatorListener();
+					LoggregatorListener listener = loggregatorRegistry.getListener(app.getGuid());
 
 					GetLogCommand getLogCommand = new GetLogCommand(target, loggingEndpoint, app.getAppJSON().getString("guid"), listener);
 					IStatus getLogStatus = getLogCommand.doIt();
 
-					if (!getLogStatus.isOK()) {
-						new LoggregatorClient().start(target, loggingEndpoint + "/dump/?app=" + app.getAppJSON().get("guid"), listener);
-					}
+//					if (!getLogStatus.isOK()) {
+//						new LoggregatorClient().start(target, loggingEndpoint + "/dump/?app=" + app.getAppJSON().get("guid"), listener);
+//					}
 
 					messages.put("Messages", listener.getMessagesJSON());
 

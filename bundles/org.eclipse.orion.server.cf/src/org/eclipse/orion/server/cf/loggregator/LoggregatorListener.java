@@ -20,6 +20,8 @@ import org.json.JSONArray;
 public class LoggregatorListener {
 
 	private SortedSet<LoggregatorMessage.Message> messages;
+	
+	private long lastTimestamp = -1;
 
 	public void add(LoggregatorMessage.Message msg) {
 		if (messages == null) {
@@ -41,12 +43,22 @@ public class LoggregatorListener {
 
 	public JSONArray getMessagesJSON() {
 		JSONArray messagesJSON = new JSONArray();
-		if (messages != null)
+		long timestamp = -1;
+		if (messages != null){
 			for (Iterator<LoggregatorMessage.Message> iterator = messages.iterator(); iterator.hasNext();) {
-				String message = iterator.next().getMessage().toStringUtf8();
+				LoggregatorMessage.Message loggregatorMessage = iterator.next();
+				String message = loggregatorMessage.getMessage().toStringUtf8();
 				messagesJSON.put(message);
+				timestamp = loggregatorMessage.getTimestamp();
 			}
-		return messagesJSON;
+		}
+		
+		if (timestamp > lastTimestamp){
+			lastTimestamp = timestamp;
+			return messagesJSON;
+		}
+		
+		return new JSONArray();
 	}
 
 	public String getString() {
