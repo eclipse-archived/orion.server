@@ -33,6 +33,7 @@ import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,6 +56,8 @@ public class LoggregatorHandlerV1 extends AbstractRESTHandler<Log> {
 	@Override
 	protected CFJob handleGet(final Log log, HttpServletRequest request, HttpServletResponse response, final String pathString) {
 		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
+		final String timestampStr = IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TIMESTAMP);
+		
 		IPath path = new Path(pathString);
 		final String appName = path.segment(0);
 
@@ -93,9 +96,12 @@ public class LoggregatorHandlerV1 extends AbstractRESTHandler<Log> {
 //					if (!getLogStatus.isOK()) {
 //						new LoggregatorClient().start(target, loggingEndpoint + "/dump/?app=" + app.getAppJSON().get("guid"), listener);
 //					}
-
-					messages.put("Messages", listener.getMessagesJSON());
-
+					
+					long timestamp = timestampStr != null ? Long.parseLong(timestampStr) : -1;
+					JSONArray listenerMessages = listener.getMessagesJSON();
+					messages.put("Messages", timestamp < listener.getLastTimestamp() ? listenerMessages : new JSONArray());
+					messages.put("Timestamp", new Long(listener.getLastTimestamp()).toString());
+					
 					return new ServerStatus(IStatus.OK, HttpServletResponse.SC_OK, null, messages, null);
 				} catch (Exception e) {
 					String msg = "Unable to retrieve the application logs from the Cloud Foundry runtime.  Please try again later."; //$NON-NLS-1$

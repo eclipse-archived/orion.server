@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -41,24 +41,24 @@ public class LoggregatorListener {
 		messages.add(msg);
 	}
 
+	/**
+	 * @return the lastTimestamp
+	 */
+	public long getLastTimestamp() {
+		return lastTimestamp;
+	}
+
 	public JSONArray getMessagesJSON() {
 		JSONArray messagesJSON = new JSONArray();
-		long timestamp = -1;
 		if (messages != null){
 			for (Iterator<LoggregatorMessage.Message> iterator = messages.iterator(); iterator.hasNext();) {
 				LoggregatorMessage.Message loggregatorMessage = iterator.next();
 				String message = loggregatorMessage.getMessage().toStringUtf8();
 				messagesJSON.put(message);
-				timestamp = loggregatorMessage.getTimestamp();
+				lastTimestamp = loggregatorMessage.getTimestamp();
 			}
 		}
-		
-		if (timestamp > lastTimestamp){
-			lastTimestamp = timestamp;
-			return messagesJSON;
-		}
-		
-		return new JSONArray();
+		return messagesJSON;
 	}
 
 	public String getString() {

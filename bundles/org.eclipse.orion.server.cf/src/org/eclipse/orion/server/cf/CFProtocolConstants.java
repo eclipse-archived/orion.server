@@ -83,6 +83,8 @@ public class CFProtocolConstants {
 	public static final String KEY_PACKAGER = "Packager"; //$NON-NLS-1$
 
 	public static final String KEY_INSTRUMENTATION = "Instrumentation"; //$NON-NLS-1$
+	
+	public static final String KEY_TIMESTAMP = "Timestamp"; //$NON-NLS-1$
 
 	// CF REST API protocol constants
 
