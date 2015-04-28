@@ -21,7 +21,7 @@ public class LoggregatorListener {
 
 	private SortedSet<LoggregatorMessage.Message> messages;
 	
-	private long lastTimestamp = -1;
+	private long lastAccess;
 
 	public void add(LoggregatorMessage.Message msg) {
 		if (messages == null) {
@@ -37,27 +37,33 @@ public class LoggregatorListener {
 			};
 			messages = new TreeSet<LoggregatorMessage.Message>(comparator);
 		}
-
 		messages.add(msg);
+		lastAccess = System.currentTimeMillis();
 	}
 
 	/**
 	 * @return the lastTimestamp
 	 */
 	public long getLastTimestamp() {
-		return lastTimestamp;
+		if (messages != null)
+			return messages.last().getTimestamp();
+		return -1;
+	}
+	
+	public long getLastAccess() {
+		return lastAccess;
 	}
 
 	public JSONArray getMessagesJSON() {
 		JSONArray messagesJSON = new JSONArray();
-		if (messages != null){
+		if (messages != null) {
 			for (Iterator<LoggregatorMessage.Message> iterator = messages.iterator(); iterator.hasNext();) {
 				LoggregatorMessage.Message loggregatorMessage = iterator.next();
 				String message = loggregatorMessage.getMessage().toStringUtf8();
 				messagesJSON.put(message);
-				lastTimestamp = loggregatorMessage.getTimestamp();
 			}
 		}
+		lastAccess = System.currentTimeMillis();
 		return messagesJSON;
 	}
 
@@ -68,6 +74,7 @@ public class LoggregatorListener {
 				String message = iterator.next().getMessage().toStringUtf8();
 				buff.append(message).append("\n");
 			}
+		lastAccess = System.currentTimeMillis();
 		return buff.toString();
 	}
 }
