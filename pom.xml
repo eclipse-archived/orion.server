@@ -108,12 +108,25 @@
 			</build>
 		</profile>
 		<profile>
-			<id>local-build</id>
+			<id>local-build-eclipse</id>
 			<activation>
-				<activeByDefault>true</activeByDefault>
+				<file>
+					<exists>../org.eclipse.orion.client</exists>
+				</file>
 			</activation>
 			<modules>
 				<module>../org.eclipse.orion.client</module>
+			</modules>
+		</profile>
+		<profile>
+			<id>local-build-github</id>
+			<activation>
+				<file>
+					<exists>../orion.client</exists>
+				</file>
+			</activation>
+			<modules>
+				<module>../orion.client</module>
 			</modules>
 		</profile>
 		<profile>
