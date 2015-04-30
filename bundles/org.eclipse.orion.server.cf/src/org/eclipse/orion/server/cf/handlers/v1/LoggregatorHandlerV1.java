@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -24,8 +24,6 @@ import org.eclipse.orion.server.cf.commands.GetAppCommand;
 import org.eclipse.orion.server.cf.commands.GetInfoCommand;
 import org.eclipse.orion.server.cf.commands.GetLogCommand;
 import org.eclipse.orion.server.cf.jobs.CFJob;
-import org.eclipse.orion.server.cf.loggregator.LoggregatorListener;
-import org.eclipse.orion.server.cf.loggregator.LoggregatorRegistry;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Log;
 import org.eclipse.orion.server.cf.objects.Target;
@@ -33,7 +31,6 @@ import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +38,6 @@ import org.slf4j.LoggerFactory;
 public class LoggregatorHandlerV1 extends AbstractRESTHandler<Log> {
 
 	final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
-	
-	private LoggregatorRegistry loggregatorRegistry = new LoggregatorRegistry();
 
 	public LoggregatorHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		super(statusHandler);
@@ -87,22 +82,18 @@ public class LoggregatorHandlerV1 extends AbstractRESTHandler<Log> {
 					logger.debug(NLS.bind("Cloud info: {0}", getInfoStatus.getJsonData().toString()));
 					String loggingEndpoint = getInfoStatus.getJsonData().getString("logging_endpoint");
 
-					JSONObject messages = new JSONObject();
-					LoggregatorListener listener = loggregatorRegistry.getListener(app.getGuid());
-
-					GetLogCommand getLogCommand = new GetLogCommand(target, loggingEndpoint, app.getAppJSON().getString("guid"), listener);
-					IStatus getLogStatus = getLogCommand.doIt();
-
-//					if (!getLogStatus.isOK()) {
-//						new LoggregatorClient().start(target, loggingEndpoint + "/dump/?app=" + app.getAppJSON().get("guid"), listener);
-//					}
-					
 					long timestamp = timestampStr != null ? Long.parseLong(timestampStr) : -1;
-					JSONArray listenerMessages = listener.getMessagesJSON();
-					messages.put("Messages", timestamp < listener.getLastTimestamp() ? listenerMessages : new JSONArray());
-					messages.put("Timestamp", new Long(listener.getLastTimestamp()).toString());
+					GetLogCommand getLogCommand = new GetLogCommand(target, loggingEndpoint, app.getAppJSON().getString("guid"), timestamp/*, listener*/);
+					IStatus getLogStatus = getLogCommand.doIt();
 					
-					return new ServerStatus(IStatus.OK, HttpServletResponse.SC_OK, null, messages, null);
+					if (!getLogStatus.isOK())
+						return getLogStatus;
+
+					JSONObject logs = new JSONObject();
+					logs.put("Messages", getLogCommand.getMessages());
+					logs.put("Timestamp", new Long(getLogCommand.getLastTimestamp()).toString());
+					
+					return new ServerStatus(IStatus.OK, HttpServletResponse.SC_OK, null, logs, null);
 				} catch (Exception e) {
 					String msg = "Unable to retrieve the application logs from the Cloud Foundry runtime.  Please try again later."; //$NON-NLS-1$
 					ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);

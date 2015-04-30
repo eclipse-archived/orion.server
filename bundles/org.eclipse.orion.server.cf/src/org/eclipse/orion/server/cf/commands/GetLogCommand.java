@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -25,11 +25,13 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.loggregator.LoggregatorListener;
 import org.eclipse.orion.server.cf.loggregator.LoggregatorMessage;
+import org.eclipse.orion.server.cf.loggregator.LoggregatorRegistry;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.cf.utils.MultipartMessageReader;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,13 +43,15 @@ public class GetLogCommand extends AbstractCFCommand {
 	private String appId;
 	private String loggingEndpoint;
 	private LoggregatorListener listener;
+	private long timestamp = -1;
 
-	public GetLogCommand(Target target, String loggingEndpoint, String appId, LoggregatorListener listener) {
+	public GetLogCommand(Target target, String loggingEndpoint, String appId, long timestamp/*, LoggregatorListener listener*/) {
 		super(target);
 		this.commandName = "Get App Log"; //$NON-NLS-1$
 		this.loggingEndpoint = loggingEndpoint;
 		this.appId = appId;
-		this.listener = listener;
+		this.listener = LoggregatorRegistry.getDefault().getListener(appId);
+		this.timestamp = timestamp;
 	}
 
 	public ServerStatus _doIt() {
@@ -121,5 +125,13 @@ public class GetLogCommand extends AbstractCFCommand {
 
 		byte[] messageBody = buffer.toByteArray();
 		return messageBody;
+	}
+	
+	public JSONArray getMessages() {
+		return timestamp < listener.getLastTimestamp() ? this.listener.getMessagesJSON() : new JSONArray();
+	}
+	
+	public long getLastTimestamp() {
+		return this.listener.getLastTimestamp();
 	}
 }

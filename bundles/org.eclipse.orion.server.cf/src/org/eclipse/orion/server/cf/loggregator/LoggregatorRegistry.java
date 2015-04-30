@@ -30,6 +30,8 @@ import org.slf4j.LoggerFactory;
 public class LoggregatorRegistry {
 
 	private final Logger logger = LoggerFactory.getLogger(CFActivator.PI_CF); //$NON-NLS-1$
+	
+	private static LoggregatorRegistry instance = new LoggregatorRegistry();
 
 	private static final long CLEANER_DELAY = TimeUnit.SECONDS.toMillis(5);
 	private static final long LOG_TTL = TimeUnit.MINUTES.toMillis(10);
@@ -37,8 +39,12 @@ public class LoggregatorRegistry {
 	private Map<String, LoggregatorListener> logsMap;
 	private Cleaner cleaner = new Cleaner();
 
-	public LoggregatorRegistry() {
+	private LoggregatorRegistry() {
 		this.logsMap = Collections.synchronizedMap(new HashMap<String, LoggregatorListener>());
+	}
+	
+	public static LoggregatorRegistry getDefault(){
+		return instance;
 	}
 
 	public LoggregatorListener getListener(String appId) {
