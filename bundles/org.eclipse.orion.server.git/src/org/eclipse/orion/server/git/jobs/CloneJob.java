@@ -49,11 +49,13 @@ import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitCloneHandlerV1;
+import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -132,11 +134,13 @@ public class CloneJob extends GitJob {
 				String gitAdminPassword = PreferenceHelper.getString("jazz.jazzadmin.password"); //$NON-NLS-1$
 				logger.info(gitAdminPassword + "..." + gitAdminUser + "...");
 				
-				String jazzHubUrl = "https://beta3.hub.jazz.net/manage/service/com.ibm.team.jazzhub.common.service.IGithubService/tokens?userId=" + gitAdminUser;
+				String jazzHubUrl = "https://beta3.hub.jazz.net/manage/service/com.ibm.team.jazzhub.common.service.IGithubService/tokens?userId=" + GitUtils.encode(user)/*gitAdminUser*/;
 				GetMethod getMethod = new GetMethod(jazzHubUrl);
 				getMethod.addRequestHeader(new Header("Accept", "application/json,text/json"));//$NON-NLS-1$ //$NON-NLS-2$
 				getMethod.addRequestHeader(new Header("Accept-Charset", "UTF-8"));//$NON-NLS-1$ //$NON-NLS-2$
 				getMethod.addRequestHeader(new Header("X-com-ibm-team-yo", "bogus"));//$NON-NLS-1$ //$NON-NLS-2$
+				//getMethod.addRequestHeader(new Header(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue()));//$NON-NLS-1$ //$NON-NLS-2$
+				getMethod.addRequestHeader(new Header("Authorization", "Basic " + new String(Base64.encode((gitAdminUser + ":" + gitAdminPassword).getBytes()))));
 				try {
 					int statusCode = createHttpClient().executeMethod(getMethod);
 					String response = getMethod.getResponseBodyAsString(67108864);
@@ -148,11 +152,13 @@ public class CloneJob extends GitJob {
 					getMethod.releaseConnection();
 				}
 				
-				jazzHubUrl = "https://beta3.hub.jazz.net/manage/service/com.ibm.team.jazzhub.common.service.IGithubService/token?userId=" + gitAdminUser;
+				jazzHubUrl = "https://beta3.hub.jazz.net/manage/service/com.ibm.team.jazzhub.common.service.IGithubService/token?userId=" + GitUtils.encode(user)/*gitAdminUser*/;
 				getMethod = new GetMethod(jazzHubUrl);
 				getMethod.addRequestHeader(new Header("Accept", "application/json,text/json"));//$NON-NLS-1$ //$NON-NLS-2$
 				getMethod.addRequestHeader(new Header("Accept-Charset", "UTF-8"));//$NON-NLS-1$ //$NON-NLS-2$
 				getMethod.addRequestHeader(new Header("X-com-ibm-team-yo", "bogus"));//$NON-NLS-1$ //$NON-NLS-2$
+				//getMethod.addRequestHeader(new Header(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue()));//$NON-NLS-1$ //$NON-NLS-2$
+				getMethod.addRequestHeader(new Header("Authorization", "Basic " + new String(Base64.encode((gitAdminUser + ":" + gitAdminPassword).getBytes()))));
 				try {
 					int statusCode = createHttpClient().executeMethod(getMethod);
 					String response = getMethod.getResponseBodyAsString(67108864);
