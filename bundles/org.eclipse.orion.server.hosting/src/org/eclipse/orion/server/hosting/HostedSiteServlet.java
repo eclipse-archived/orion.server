@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,25 +10,43 @@
  *******************************************************************************/
 package org.eclipse.orion.server.hosting;
 
-import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-
-import org.eclipse.orion.server.servlets.OrionServlet;
-import org.eclipse.orion.internal.server.hosting.*;
 import java.io.IOException;
-import java.net.*;
-import java.util.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
-import javax.servlet.http.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletResponseWrapper;
+
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jetty.servlets.ProxyServlet;
+import org.eclipse.orion.internal.server.hosting.HostingActivator;
+import org.eclipse.orion.internal.server.hosting.HostingConstants;
+import org.eclipse.orion.internal.server.hosting.IHostedSite;
+import org.eclipse.orion.internal.server.hosting.NotFoundException;
+import org.eclipse.orion.internal.server.hosting.RemoteURLProxyServlet;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.ServletFileStoreHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -326,14 +344,10 @@ public class HostedSiteServlet extends OrionServlet {
 		try {
 			// Special case: remote URI with host name "localhost" is deemed to refer to a resource on this server,
 			// so we simply forward the URI within the servlet container.
-			// Rewrite request URI from "/cc/hosted/siteName/resource" to "/resource"
 			if ("localhost".equals(remoteURI.getHost())) { //$NON-NLS-1$
 				req.setAttribute(HostingConstants.REQUEST_ATTRIBUTE_HOSTING_FORWARDED, ""); //$NON-NLS-1$
 
-				// Remove contextPath from the siteURI's path as the CP does not appear in request params
-				String cp = req.getContextPath();
-				IPath newPath = new Path(remoteURI.getRawPath().substring(cp.length())).makeAbsolute();
-				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(newPath.toString());
+				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(remoteURI.getRawPath());
 				dispatcher.forward(req, resp);
 				return true;
 			}
