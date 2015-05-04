@@ -344,10 +344,14 @@ public class HostedSiteServlet extends OrionServlet {
 		try {
 			// Special case: remote URI with host name "localhost" is deemed to refer to a resource on this server,
 			// so we simply forward the URI within the servlet container.
+			// Rewrite request URI from "/contextRoot/hosted/siteName/resource" to "/resource"
 			if ("localhost".equals(remoteURI.getHost())) { //$NON-NLS-1$
 				req.setAttribute(HostingConstants.REQUEST_ATTRIBUTE_HOSTING_FORWARDED, ""); //$NON-NLS-1$
 
-				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(remoteURI.getRawPath());
+				// Remove contextRoot from the siteURI's path as the CP does not appear in request params
+				String cp = req.getContextPath();
+				IPath newPath = new Path(remoteURI.getRawPath().substring(cp.length())).makeAbsolute();
+				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(newPath.toString());
 				dispatcher.forward(req, resp);
 				return true;
 			}
