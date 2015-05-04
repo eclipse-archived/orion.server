@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 public class LogHelper {
 
-	private static final String LOGGER_ID = "org.eclipse.orion.server.core";// see logback.xml
+	public static final String LOGGER_ID = "org.eclipse.orion.server.core";// see logback.xml
 	private static Logger logger = LoggerFactory.getLogger(LOGGER_ID);
 
 	/**

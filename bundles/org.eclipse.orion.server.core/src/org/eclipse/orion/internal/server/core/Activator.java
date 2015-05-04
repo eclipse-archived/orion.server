@@ -63,6 +63,8 @@ public class Activator implements BundleActivator {
 	private URI rootStoreURI;
 	private DiskUsageJob diskUsageJob;
 
+	private static final Logger logger = LoggerFactory.getLogger(LogHelper.LOGGER_ID);
+
 	private ServiceTracker<Location, Location> instanceLocationTracker;
 
 	public static Activator getDefault() {
@@ -150,7 +152,9 @@ public class Activator implements BundleActivator {
 			// reading all users will automatically add all user names to the username cache
 			metastore.readAllUsers();
 		} catch (CoreException e) {
-			throw new RuntimeException("Cannot initialize MetaStore", e); //$NON-NLS-1$
+			String msg = "Cannot initialize MetaStore";
+			logger.error(msg, e);
+			throw new RuntimeException(msg, e); // $NON-NLS-1$
 		}
 		bundleContext.registerService(IMetaStore.class, metastore, null);
 	}
@@ -226,15 +230,20 @@ public class Activator implements BundleActivator {
 
 	private void initializeFileSystem() {
 		IPath location = getFileSystemLocation();
-		if (location == null)
-			throw new RuntimeException("Unable to compute base file system location"); //$NON-NLS-1$
+		if (location == null) {
+			RuntimeException e = new RuntimeException("Unable to compute base file system location");
+			logger.error("Failed to initialize server file system", e);
+			throw e; // $NON-NLS-1$
+		}
 
 		IFileStore rootStore = EFS.getLocalFileSystem().getStore(location);
 		try {
 			rootStore.mkdir(EFS.NONE, null);
 			rootStoreURI = rootStore.toURI();
 		} catch (CoreException e) {
-			throw new RuntimeException("Instance location is read only: " + rootStore, e); //$NON-NLS-1$
+			String msg = "Instance location is read only: " + rootStore;
+			logger.error(msg, e);
+			throw new RuntimeException(msg, e); // $NON-NLS-1$
 		}
 	}
 

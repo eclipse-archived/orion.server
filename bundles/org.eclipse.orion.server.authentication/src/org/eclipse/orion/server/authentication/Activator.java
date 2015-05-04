@@ -13,6 +13,7 @@ package org.eclipse.orion.server.authentication;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.users.UserConstants;
@@ -42,17 +43,19 @@ public class Activator implements BundleActivator {
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
 		bundleContext = context;
-		IMetaStore metastore =  OrionConfiguration.getMetaStore();
+		Logger logger = LoggerFactory.getLogger(LogHelper.LOGGER_ID); // $NON-NLS-1$
+		IMetaStore metastore = OrionConfiguration.getMetaStore();
+		if (metastore == null) {
+			String msg = "Fatal error starting authentication service. Server metastore is unavailable!";
+			logger.error(msg);
+			throw new RuntimeException(msg);
+		}
 		List<String> keys = new ArrayList<String>();
 		keys.add(UserConstants.EMAIL);
 		keys.add(UserConstants.OAUTH);
 		keys.add(UserConstants.OPENID);
 		metastore.registerUserProperties(keys);
-		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-		if (logger.isDebugEnabled()) {
-			logger.debug("Started orion server authentication."); //$NON-NLS-1$
-		}
-
+		logger.debug("Started orion server authentication."); //$NON-NLS-1$
 	}
 
 	public void stop(BundleContext context) throws Exception {
