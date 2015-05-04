@@ -206,7 +206,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 		boolean force = requestObject.optBoolean(GitConstants.KEY_FORCE, false);
 
 		// prepare creds
-		GitCredentialsProvider cp = GitUtils.createGitCredentialsProvider(requestObject);
+		GitCredentialsProvider cp = GitUtils.createGitCredentialsProvider(requestObject, request);
 
 		// if all went well, continue with fetch or push
 		if (fetch) {

@@ -121,8 +121,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		// make sure required fields are set
 		JSONObject toAdd = OrionServlet.readJSONRequest(request);
 		if (toAdd.optBoolean(GitConstants.KEY_PULL, false)) {
-			GitUtils.createGitCredentialsProvider(toAdd);
-			GitCredentialsProvider cp = GitUtils.createGitCredentialsProvider(toAdd);
+			GitCredentialsProvider cp = GitUtils.createGitCredentialsProvider(toAdd, request);
 			boolean force = toAdd.optBoolean(GitConstants.KEY_FORCE, false);
 			return pull(request, response, cp, pathString, force);
 		}
@@ -238,7 +237,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		}
 		// git clone
 		// prepare creds
-		GitCredentialsProvider cp = GitUtils.createGitCredentialsProvider(toAdd);
+		GitCredentialsProvider cp = GitUtils.createGitCredentialsProvider(toAdd, request);
 		cp.setUri(new URIish(clone.getUrl()));
 
 		// if all went well, clone

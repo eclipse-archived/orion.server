@@ -22,6 +22,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
@@ -205,7 +207,7 @@ public class GitUtils {
 		return sb.toString();
 	}
 
-	static GitCredentialsProvider createGitCredentialsProvider(final JSONObject json) {
+	static GitCredentialsProvider createGitCredentialsProvider(final JSONObject json, HttpServletRequest request) {
 		String username = json.optString(GitConstants.KEY_USERNAME, null);
 		char[] password = json.optString(GitConstants.KEY_PASSWORD, "").toCharArray(); //$NON-NLS-1$
 		String knownHosts = json.optString(GitConstants.KEY_KNOWN_HOSTS, null);
@@ -213,7 +215,8 @@ public class GitUtils {
 		byte[] publicKey = json.optString(GitConstants.KEY_PUBLIC_KEY, "").getBytes(); //$NON-NLS-1$
 		byte[] passphrase = json.optString(GitConstants.KEY_PASSPHRASE, "").getBytes(); //$NON-NLS-1$
 
-		GitCredentialsProvider cp = new GitCredentialsProvider(null /* set by caller */, username, password, knownHosts);
+
+		GitCredentialsProvider cp = new GitCredentialsProvider(null /* set by caller */, request.getRemoteUser(), username, password, knownHosts);
 		cp.setPrivateKey(privateKey);
 		cp.setPublicKey(publicKey);
 		cp.setPassphrase(passphrase);
