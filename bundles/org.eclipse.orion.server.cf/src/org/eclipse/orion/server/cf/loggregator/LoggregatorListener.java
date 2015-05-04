@@ -20,7 +20,6 @@ import org.json.JSONArray;
 public class LoggregatorListener {
 
 	private SortedSet<LoggregatorMessage.Message> messages;
-	
 	private long lastAccess;
 
 	public void add(LoggregatorMessage.Message msg) {
@@ -49,31 +48,37 @@ public class LoggregatorListener {
 			return messages.last().getTimestamp();
 		return -1;
 	}
-	
+
 	public long getLastAccess() {
 		return lastAccess;
 	}
 
-	public JSONArray getMessagesJSON() {
+	public JSONArray getMessagesJSON(Long timestamp) {
 		JSONArray messagesJSON = new JSONArray();
 		if (messages != null) {
 			for (Iterator<LoggregatorMessage.Message> iterator = messages.iterator(); iterator.hasNext();) {
 				LoggregatorMessage.Message loggregatorMessage = iterator.next();
-				String message = loggregatorMessage.getMessage().toStringUtf8();
-				messagesJSON.put(message);
+				if (timestamp == -1 || loggregatorMessage.getTimestamp() > timestamp) {
+					String message = loggregatorMessage.getMessage().toStringUtf8();
+					messagesJSON.put(message);
+				}
 			}
 		}
 		lastAccess = System.currentTimeMillis();
 		return messagesJSON;
 	}
 
-	public String getString() {
+	public String getString(Long timestamp) {
 		StringBuffer buff = new StringBuffer();
-		if (messages != null)
+		if (messages != null) {
 			for (Iterator<LoggregatorMessage.Message> iterator = messages.iterator(); iterator.hasNext();) {
-				String message = iterator.next().getMessage().toStringUtf8();
-				buff.append(message).append("\n");
+				LoggregatorMessage.Message loggregatorMessage = iterator.next();
+				if (timestamp == -1 || loggregatorMessage.getTimestamp() > timestamp) {
+					String message = loggregatorMessage.getMessage().toStringUtf8();
+					buff.append(message).append("\n");
+				}
 			}
+		}
 		lastAccess = System.currentTimeMillis();
 		return buff.toString();
 	}

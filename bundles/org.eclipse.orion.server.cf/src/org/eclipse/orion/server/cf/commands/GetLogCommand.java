@@ -128,7 +128,7 @@ public class GetLogCommand extends AbstractCFCommand {
 	}
 	
 	public JSONArray getMessages() {
-		return timestamp < listener.getLastTimestamp() ? this.listener.getMessagesJSON() : new JSONArray();
+		return this.listener.getMessagesJSON(this.timestamp);
 	}
 	
 	public long getLastTimestamp() {
