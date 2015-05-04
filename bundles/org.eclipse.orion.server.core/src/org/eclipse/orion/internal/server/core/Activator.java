@@ -35,7 +35,6 @@ import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.users.UserConstants;
-import org.eclipse.osgi.framework.log.FrameworkLog;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
@@ -57,7 +56,6 @@ public class Activator implements BundleActivator {
 	private static volatile BundleContext bundleContext;
 
 	private static Activator singleton;
-	private ServiceTracker<FrameworkLog, FrameworkLog> logTracker;
 	private ServiceTracker<IPreferencesService, IPreferencesService> prefTracker;
 	private ServiceRegistration<ITaskService> taskServiceRegistration;
 	private ITaskService taskService;
@@ -69,20 +67,6 @@ public class Activator implements BundleActivator {
 
 	public static Activator getDefault() {
 		return singleton;
-	}
-
-	/**
-	 * Returns the framework log, or null if not available
-	 */
-	public static FrameworkLog getFrameworkLog() {
-		// protect against concurrent shutdown
-		Activator a = singleton;
-		if (a == null)
-			return null;
-		ServiceTracker<FrameworkLog, FrameworkLog> tracker = a.getLogTracker();
-		if (tracker == null)
-			return null;
-		return tracker.getService();
 	}
 
 	/**
@@ -115,17 +99,6 @@ public class Activator implements BundleActivator {
 
 	public BundleContext getContext() {
 		return bundleContext;
-	}
-
-	private ServiceTracker<FrameworkLog, FrameworkLog> getLogTracker() {
-		if (logTracker != null)
-			return logTracker;
-		// lazy init if the bundle has been started
-		if (bundleContext == null)
-			return null;
-		logTracker = new ServiceTracker<FrameworkLog, FrameworkLog>(bundleContext, FrameworkLog.class, null);
-		logTracker.open();
-		return logTracker;
 	}
 
 	private ServiceTracker<IPreferencesService, IPreferencesService> getPrefTracker() {
@@ -218,10 +191,6 @@ public class Activator implements BundleActivator {
 		if (prefTracker != null) {
 			prefTracker.close();
 			prefTracker = null;
-		}
-		if (logTracker != null) {
-			logTracker.close();
-			logTracker = null;
 		}
 		bundleContext = null;
 	}

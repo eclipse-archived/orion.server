@@ -35,6 +35,9 @@
   <!-- Prints details on sftp connections -->
   <!--   <logger name="org.eclipse.orion.server.sftp" level="INFO"/> -->
 
+  <!-- Core server infrastructure failures and events  -->
+  <logger name="org.eclipse.orion.server.core" level="WARN"/>
+
   <!-- Prints information on locating and reading the server configuration file -->
   <logger name="org.eclipse.orion.server.config" level="INFO"/>
 
