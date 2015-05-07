@@ -126,16 +126,16 @@ public class GerritGitFileContents  extends HttpServlet {
 				treeWalk.addTree(tree);
 				treeWalk.setRecursive(true);
 				treeWalk.setFilter(PathFilter.create(filePath));
-				if (!treeWalk.next()){
-					throw new IllegalStateException("No file found");
+				if (treeWalk.next()){
+					ObjectId objId = treeWalk.getObjectId(0);
+					ObjectLoader loader = repo.open(objId);
+					loader.copyTo(out);
+				} else {
+					resp.sendError(HttpServletResponse.SC_NOT_FOUND, "File not found");
 				}
-				
-				ObjectId objId = treeWalk.getObjectId(0);
-				ObjectLoader loader = repo.open(objId);
 				resp.setHeader("Cache-Control", "no-cache");
 				resp.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
 				resp.setContentType("application/javascript");
-				loader.copyTo(out);
 				walk.release();
 				treeWalk.release();
 			}
