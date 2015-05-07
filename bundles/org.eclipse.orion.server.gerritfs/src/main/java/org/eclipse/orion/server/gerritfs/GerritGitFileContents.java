@@ -118,26 +118,30 @@ public class GerritGitFileContents  extends HttpServlet {
 				NameKey projName = NameKey.parse(projectName);
 				Repository repo = repoManager.openRepository(projName);
 				ObjectId commitId = repo.resolve(refName);
-				RevWalk walk = new RevWalk(repo);
-				RevCommit commit = walk.parseCommit(commitId);
-				RevTree tree = commit.getTree();
-
-				TreeWalk treeWalk = new TreeWalk(repo);
-				treeWalk.addTree(tree);
-				treeWalk.setRecursive(true);
-				treeWalk.setFilter(PathFilter.create(filePath));
-				if (treeWalk.next()){
-					ObjectId objId = treeWalk.getObjectId(0);
-					ObjectLoader loader = repo.open(objId);
-					loader.copyTo(out);
+				if (commitId != null){
+					RevWalk walk = new RevWalk(repo);
+					RevCommit commit = walk.parseCommit(commitId);
+					RevTree tree = commit.getTree();
+	
+					TreeWalk treeWalk = new TreeWalk(repo);
+					treeWalk.addTree(tree);
+					treeWalk.setRecursive(true);
+					treeWalk.setFilter(PathFilter.create(filePath));
+					if (treeWalk.next()){
+						ObjectId objId = treeWalk.getObjectId(0);
+						ObjectLoader loader = repo.open(objId);
+						loader.copyTo(out);
+					} else {
+						resp.sendError(HttpServletResponse.SC_NOT_FOUND, "File not found");
+					}
+					resp.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
+					walk.release();
+					treeWalk.release();
 				} else {
 					resp.sendError(HttpServletResponse.SC_NOT_FOUND, "File not found");
 				}
 				resp.setHeader("Cache-Control", "no-cache");
-				resp.setHeader("ETag", "\"" + tree.getId().getName() + "\"");
 				resp.setContentType("application/javascript");
-				walk.release();
-				treeWalk.release();
 			}
 		} finally {
 			out.close();
