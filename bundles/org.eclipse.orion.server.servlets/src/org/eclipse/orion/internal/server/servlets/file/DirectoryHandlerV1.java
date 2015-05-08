@@ -69,7 +69,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		return true;
 	}
 
-	private void encodeChildren(IFileStore dir, URI location, JSONObject result, int depth) throws CoreException {
+	public static void encodeChildren(IFileStore dir, URI location, JSONObject result, int depth) throws CoreException {
 		if (depth <= 0)
 			return;
 		JSONArray children = new JSONArray();

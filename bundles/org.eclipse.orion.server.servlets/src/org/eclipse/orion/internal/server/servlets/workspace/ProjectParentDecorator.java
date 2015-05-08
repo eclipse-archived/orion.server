@@ -15,8 +15,15 @@ import java.net.URISyntaxException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.internal.server.servlets.file.DirectoryHandlerV1;
+import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
+import org.eclipse.orion.internal.server.servlets.file.ServletFileStoreHandler;
+import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.IWebResourceDecorator;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -67,7 +74,8 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 			if (project == null) {
 				return;
 			}
-			addParents(base, representation, project, path);
+			String full = IOUtilities.getQueryParameter(request, "full");
+			addParents(base, representation, project, path, request, "true".equals(full));
 			//set the name of the project file to be the project name
 			if (path.segmentCount() == 2) {
 				String projectName = project.getFullName();
@@ -80,7 +88,7 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		}
 	}
 
-	private void addParents(URI resource, JSONObject representation, ProjectInfo project, IPath resourcePath) throws JSONException {
+	private void addParents(URI resource, JSONObject representation, ProjectInfo project, IPath resourcePath, HttpServletRequest request, boolean full) throws JSONException {
 		//start at parent of current resource
 		resourcePath = resourcePath.removeLastSegments(1).addTrailingSeparator();
 		JSONArray parents = new JSONArray();
@@ -88,7 +96,7 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		while (resourcePath.segmentCount() > 2) {
 			try {
 				URI uri = resource.resolve(new URI(null, null, resourcePath.toString(), null));
-				addParent(parents, resourcePath.lastSegment(), new URI(resource.getScheme(), resource.getAuthority(), uri.getPath(), uri.getQuery(), uri.getFragment()));
+				addParent(parents, resourcePath.lastSegment(), new URI(resource.getScheme(), resource.getAuthority(), uri.getPath(), uri.getQuery(), uri.getFragment()), resourcePath, request, full);
 			} catch (URISyntaxException e) {
 				//ignore this parent
 				LogHelper.log(e);
@@ -99,7 +107,7 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		if (resourcePath.segmentCount() == 2) {
 			try {
 				URI uri = resource.resolve(new URI(null, null, resourcePath.toString(), null));
-				addParent(parents, project.getFullName(), new URI(resource.getScheme(), resource.getAuthority(), uri.getPath(), uri.getQuery(), uri.getFragment()));
+				addParent(parents, project.getFullName(), new URI(resource.getScheme(), resource.getAuthority(), uri.getPath(), uri.getQuery(), uri.getFragment()), resourcePath, request, full);
 			} catch (URISyntaxException e) {
 				//ignore this project
 				LogHelper.log(e);
@@ -111,17 +119,28 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 	/**
 	 * Adds a parent resource representation to the parent array
 	 */
-	private void addParent(JSONArray parents, String name, URI location) throws JSONException {
-		JSONObject parent = new JSONObject();
-		parent.put(ProtocolConstants.KEY_NAME, name);
-		parent.put(ProtocolConstants.KEY_LOCATION, location);
-		URI childLocation;
-		try {
-			childLocation = new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), location.getPath(), "depth=1", location.getFragment()); //$NON-NLS-1$
-		} catch (URISyntaxException e) {
-			throw new RuntimeException(e);
+	private void addParent(JSONArray parents, String name, URI location, IPath resourcePath, HttpServletRequest request, boolean full) throws JSONException {
+		JSONObject parent;
+		if (full) {
+			try {
+				IFileStore dir = full ? NewFileServlet.getFileStore(request, resourcePath) : null;
+				parent = ServletFileStoreHandler.toJSON(dir, dir.fetchInfo(EFS.NONE, null), location);
+				DirectoryHandlerV1.encodeChildren(dir, location, parent, 1);
+			} catch (CoreException e) {
+				return;
+			}
+		} else {
+			parent = new JSONObject();
+			parent.put(ProtocolConstants.KEY_NAME, name);
+			parent.put(ProtocolConstants.KEY_LOCATION, location);
+			URI childLocation;
+			try {
+				childLocation = new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), location.getPath(), "depth=1", location.getFragment()); //$NON-NLS-1$
+			} catch (URISyntaxException e) {
+				throw new RuntimeException(e);
+			}
+			parent.put(ProtocolConstants.KEY_CHILDREN_LOCATION, childLocation);
 		}
-		parent.put(ProtocolConstants.KEY_CHILDREN_LOCATION, childLocation);
 		parents.put(parent);
 	}
 }
