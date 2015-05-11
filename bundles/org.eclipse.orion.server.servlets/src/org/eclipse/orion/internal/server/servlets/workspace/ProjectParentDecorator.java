@@ -29,6 +29,7 @@ import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -126,6 +127,7 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 				IFileStore dir = full ? NewFileServlet.getFileStore(request, resourcePath) : null;
 				parent = ServletFileStoreHandler.toJSON(dir, dir.fetchInfo(EFS.NONE, null), location);
 				DirectoryHandlerV1.encodeChildren(dir, location, parent, 1);
+				OrionServlet.decorateResponse(request, parent, this);
 			} catch (CoreException e) {
 				return;
 			}

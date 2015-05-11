@@ -32,7 +32,6 @@ import org.eclipse.orion.server.core.IWebResourceDecorator;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.IURIUnqualificationStrategy;
-import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -106,10 +105,20 @@ public abstract class OrionServlet extends HttpServlet {
 	 * service location to the result object.
 	 */
 	public static void decorateResponse(HttpServletRequest req, JSONObject result) {
+		decorateResponse(req, result, (IWebResourceDecorator)null);
+	}
+	
+	/**
+	 * If there is a search provider for this request resource, then add the search
+	 * service location to the result object.
+	 */
+	public static void decorateResponse(HttpServletRequest req, JSONObject result, IWebResourceDecorator skip) {
 		Collection<IWebResourceDecorator> decorators = Activator.getDefault().getWebResourceDecorators();
 		URI requestURI = ServletResourceHandler.getURI(req);
-		for (IWebResourceDecorator decorator : decorators)
+		for (IWebResourceDecorator decorator : decorators) {
+			if (decorator == skip) continue;
 			decorator.addAtributesFor(req, requestURI, result);
+		}
 	}
 
 	/**
