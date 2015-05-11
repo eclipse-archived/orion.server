@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 IBM Corporation and others 
+ * Copyright (c) 2013, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,15 +13,33 @@ package org.eclipse.orion.server.cf.handlers.v1;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.cf.CFActivator;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.cf.commands.*;
+import org.eclipse.orion.server.cf.commands.ComputeTargetCommand;
+import org.eclipse.orion.server.cf.commands.GetAppByGuidCommand;
+import org.eclipse.orion.server.cf.commands.GetAppCommand;
+import org.eclipse.orion.server.cf.commands.GetRouteByGuidCommand;
+import org.eclipse.orion.server.cf.commands.MapRouteCommand;
+import org.eclipse.orion.server.cf.commands.ParseManifestCommand;
+import org.eclipse.orion.server.cf.commands.ParseManifestJSONCommand;
+import org.eclipse.orion.server.cf.commands.PushAppCommand;
+import org.eclipse.orion.server.cf.commands.RestartAppCommand;
+import org.eclipse.orion.server.cf.commands.StartAppCommand;
+import org.eclipse.orion.server.cf.commands.StopAppCommand;
+import org.eclipse.orion.server.cf.commands.UnmapRouteCommand;
 import org.eclipse.orion.server.cf.ds.IDeploymentPackager;
 import org.eclipse.orion.server.cf.ds.IDeploymentService;
 import org.eclipse.orion.server.cf.jobs.CFJob;
@@ -29,12 +47,19 @@ import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestConstants;
 import org.eclipse.orion.server.cf.manifest.v2.utils.ManifestUtils;
-import org.eclipse.orion.server.cf.objects.*;
+import org.eclipse.orion.server.cf.objects.App;
+import org.eclipse.orion.server.cf.objects.App2;
+import org.eclipse.orion.server.cf.objects.Route;
+import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.servlets.AbstractRESTHandler;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
