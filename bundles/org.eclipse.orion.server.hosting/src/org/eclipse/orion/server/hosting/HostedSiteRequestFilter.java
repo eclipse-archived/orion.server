@@ -10,11 +10,22 @@
  *******************************************************************************/
 package org.eclipse.orion.server.hosting;
 
-import org.eclipse.orion.internal.server.hosting.*;
-
 import java.io.IOException;
-import javax.servlet.*;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+
+import org.eclipse.orion.internal.server.hosting.HostingActivator;
+import org.eclipse.orion.internal.server.hosting.HostingConstants;
+import org.eclipse.orion.internal.server.hosting.ISiteHostingService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * If an incoming request is for a path on a running hosted site (based on Host header), 
@@ -23,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 public class HostedSiteRequestFilter implements Filter {
 
 	private static final String HOSTED_SITE_ALIAS = "/hosted"; //$NON-NLS-1$
+	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config");
 
 	private ISiteHostingService siteHostingService;
 
@@ -38,13 +50,17 @@ public class HostedSiteRequestFilter implements Filter {
 			String host = getHost(httpReq);
 			if (host != null) {
 				String requestUri = httpReq.getRequestURI();
+				logger.info("HostedSiteRequestFilter: Host: " + host + " " + requestUri);
 				String service = httpReq.getServletPath();
+				logger.info("HostedSiteRequestFilter: Host: " + host + " " + requestUri);
 				boolean isForSite = siteHostingService.isHosted(host) || siteHostingService.matchesVirtualHost(host);
 				// If the HostedSite handler has already forwarded this request, do not attempt to forward it again
 				boolean alreadyForwarded = httpReq.getAttribute(HostingConstants.REQUEST_ATTRIBUTE_HOSTING_FORWARDED) != null;
 				if (isForSite && !service.equals(HOSTED_SITE_ALIAS) && !alreadyForwarded) {
 					// Forward to /hosted/<host>
-					RequestDispatcher rd = httpReq.getRequestDispatcher(HOSTED_SITE_ALIAS + "/" + host + requestUri); //$NON-NLS-1$
+					String hosted = HOSTED_SITE_ALIAS + "/" + host + requestUri;
+					logger.info("HostedSiteRequestFilter: Forward request to: " + hosted);
+					RequestDispatcher rd = httpReq.getRequestDispatcher(hosted); //$NON-NLS-1$
 					rd.forward(req, resp);
 					return;
 				}

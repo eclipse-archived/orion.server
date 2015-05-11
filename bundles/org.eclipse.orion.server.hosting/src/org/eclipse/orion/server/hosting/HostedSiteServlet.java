@@ -55,7 +55,7 @@ import org.slf4j.LoggerFactory;
  * Handles requests for URIs that are part of a running hosted site.
  */
 public class HostedSiteServlet extends OrionServlet {
-	private final Logger logger = LoggerFactory.getLogger(HostingActivator.PI_SERVER_HOSTING);
+	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config");
 
 	static class LocationHeaderServletResponseWrapper extends HttpServletResponseWrapper {
 
@@ -159,7 +159,7 @@ public class HostedSiteServlet extends OrionServlet {
 
 	@Override
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		traceRequest(req);
+		logger.info("HostedSiteServlet: " + req.getMethod() + " " + req.getRequestURI());
 		String pathInfoString = req.getPathInfo();
 		IPath pathInfo = new Path(null /*don't parse host:port as device*/, pathInfoString == null ? "" : pathInfoString); //$NON-NLS-1$
 		if (pathInfo.segmentCount() > 0) {
@@ -245,6 +245,7 @@ public class HostedSiteServlet extends OrionServlet {
 	private void serve(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, URI[] mappedURIs) throws ServletException, IOException {
 		for (int i = 0; i < mappedURIs.length; i++) {
 			URI uri = mappedURIs[i];
+			logger.info("HostedSiteServlet: Serve: " + req.getMethod() + " " + req.getRequestURI());
 			// Bypass a 404 if any workspace or remote paths remain to be checked.
 			boolean failEarlyOn404 = i + 1 < mappedURIs.length;
 			if (uri.getScheme() == null) {
@@ -288,13 +289,18 @@ public class HostedSiteServlet extends OrionServlet {
 			IPath filePath = pathInfo == null ? Path.ROOT : new Path(pathInfo);
 			IFileStore file = tempGetFileStore(filePath);
 			if (file == null || !file.fetchInfo().exists()) {
+				logger.info("HostedSiteServlet: serveOrionFile:" + filePath + " : " + file);
 				if (failEarlyOn404) {
 					return false;
 				}
+				logger.info("HostedSiteServlet: 404 is here " + filePath);
 				handleException(resp, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", filePath), null));
 				return true;
 			}
 			if (fileSerializer.handleRequest(req, resp, file)) {
+				if (resp.getStatus() == 200) {
+					logger.info("HostedSiteServlet: serveOrionFile: SUCCESS " + file);
+				}
 				//return;
 			}
 			// end copied
@@ -379,6 +385,7 @@ public class HostedSiteServlet extends OrionServlet {
 	 */
 	private boolean proxyRemoteUrl(HttpServletRequest req, HttpServletResponse resp, final URL mappedURL, boolean failEarlyOn404) throws IOException, ServletException, UnknownHostException {
 		ProxyServlet proxy = new RemoteURLProxyServlet(mappedURL, failEarlyOn404);
+		logger.info("HostedSiteServlet: proxyRemoteUrl: " + mappedURL + " " + failEarlyOn404);
 		proxy.init(getServletConfig());
 		try {
 			// TODO: May want to avoid console noise from 4xx response codes?
