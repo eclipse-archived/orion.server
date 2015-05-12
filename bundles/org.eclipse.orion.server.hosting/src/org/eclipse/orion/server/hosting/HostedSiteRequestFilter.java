@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 public class HostedSiteRequestFilter implements Filter {
 
 	private static final String HOSTED_SITE_ALIAS = "/hosted"; //$NON-NLS-1$
-	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config");
 
 	private ISiteHostingService siteHostingService;
 
@@ -50,17 +49,13 @@ public class HostedSiteRequestFilter implements Filter {
 			String host = getHost(httpReq);
 			if (host != null) {
 				String requestUri = httpReq.getRequestURI();
-				logger.info("HostedSiteRequestFilter: Host: " + host + " " + requestUri);
 				String service = httpReq.getServletPath();
-				logger.info("HostedSiteRequestFilter: Host: " + host + " " + requestUri);
 				boolean isForSite = siteHostingService.isHosted(host) || siteHostingService.matchesVirtualHost(host);
 				// If the HostedSite handler has already forwarded this request, do not attempt to forward it again
 				boolean alreadyForwarded = httpReq.getAttribute(HostingConstants.REQUEST_ATTRIBUTE_HOSTING_FORWARDED) != null;
 				if (isForSite && !service.equals(HOSTED_SITE_ALIAS) && !alreadyForwarded) {
 					// Forward to /hosted/<host>
-					String hosted = HOSTED_SITE_ALIAS + "/" + host + requestUri;
-					logger.info("HostedSiteRequestFilter: Forward request to: " + hosted);
-					RequestDispatcher rd = httpReq.getRequestDispatcher(hosted); //$NON-NLS-1$
+					RequestDispatcher rd = httpReq.getRequestDispatcher(HOSTED_SITE_ALIAS + "/" + host + requestUri); //$NON-NLS-1$
 					rd.forward(req, resp);
 					return;
 				}
