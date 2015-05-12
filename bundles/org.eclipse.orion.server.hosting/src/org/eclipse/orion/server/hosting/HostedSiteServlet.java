@@ -160,7 +160,13 @@ public class HostedSiteServlet extends OrionServlet {
 	@Override
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
-			traceRequest(req);
+			StringBuffer result = new StringBuffer(req.getMethod());
+			result.append(' ');
+			result.append(req.getRequestURI());
+			String query = req.getQueryString();
+			if (query != null)
+				result.append('?').append(query);
+			logger.info("HostedSiteServlet: service = " + result);
 		}
 		String pathInfoString = req.getPathInfo();
 		IPath pathInfo = new Path(null /*don't parse host:port as device*/, pathInfoString == null ? "" : pathInfoString); //$NON-NLS-1$
@@ -248,7 +254,7 @@ public class HostedSiteServlet extends OrionServlet {
 		for (int i = 0; i < mappedURIs.length; i++) {
 			URI uri = mappedURIs[i];
 			if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
-				logger.info("HostedSiteServlet: serve uri = " + uri.getRawPath());
+				logger.info("HostedSiteServlet: serve uri = " + uri.getPath());
 			}
 			// Bypass a 404 if any workspace or remote paths remain to be checked.
 			boolean failEarlyOn404 = i + 1 < mappedURIs.length;
@@ -347,7 +353,7 @@ public class HostedSiteServlet extends OrionServlet {
 	 */
 	private boolean serveURI(final HttpServletRequest req, HttpServletResponse resp, URI remoteURI, boolean failEarlyOn404) throws IOException, ServletException, UnknownHostException {
 		if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
-			logger.info("HostedSiteServlet: serveURI = " + remoteURI.toString());
+			logger.info("HostedSiteServlet: serveURI = " + remoteURI.getPath());
 		}
 		try {
 			// Special case: remote URI with host name "localhost" is deemed to refer to a resource on this server,
@@ -358,7 +364,7 @@ public class HostedSiteServlet extends OrionServlet {
 
 				// Remove contextRoot from the siteURI's path as the CP does not appear in request params
 				String cp = req.getContextPath();
-				IPath newPath = new Path(remoteURI.getRawPath().substring(cp.length())).makeAbsolute();
+				IPath newPath = new Path(remoteURI.getPath().substring(cp.length())).makeAbsolute();
 				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(newPath.toString());
 				if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
 					String query = req.getQueryString();
