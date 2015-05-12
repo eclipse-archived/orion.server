@@ -11,8 +11,13 @@
 package org.eclipse.orion.server.cf.utils;
 
 import java.io.IOException;
+
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.httpclient.*;
+
+import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpException;
+import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.HttpMethodBase;
 import org.apache.commons.httpclient.params.HttpMethodParams;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -87,6 +92,19 @@ public class HttpUtil {
 		try {
 			errorJSON.put(CFProtocolConstants.V2_KEY_ERROR_CODE, errorCode);
 			errorJSON.put(CFProtocolConstants.V2_KEY_ERROR_DESCRIPTION, description);
+		} catch (JSONException e) {
+			// do nothing
+		}
+
+		return new ServerStatus(severity, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, description, errorJSON, null);
+	}
+	
+	public static ServerStatus createErrorStatus(int severity, String errorCode, String description, JSONObject metadata) {
+		JSONObject errorJSON = new JSONObject();
+		try {
+			errorJSON.put(CFProtocolConstants.V2_KEY_ERROR_CODE, errorCode);
+			errorJSON.put(CFProtocolConstants.V2_KEY_ERROR_DESCRIPTION, description);
+			errorJSON.put(CFProtocolConstants.V2_KEY_METADATA, metadata);
 		} catch (JSONException e) {
 			// do nothing
 		}

@@ -11,9 +11,13 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.NameValuePair;
-import org.apache.commons.httpclient.methods.*;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
@@ -25,7 +29,9 @@ import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.cf.utils.MultiServerStatus;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -210,7 +216,9 @@ public class BindServicesCommand extends AbstractCFApplicationCommand {
 						}
 
 						if (serviceInstanceGUID == null) {
-							status.add(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Service instance " + nameService + " can not be found in target space", null));
+							JSONObject error = new JSONObject();
+							error.put("service", nameService);
+							status.add(HttpUtil.createErrorStatus(IStatus.ERROR, "ServiceNotFound", "Service instance " + nameService + " cannot be found in target space", error));
 							return status;
 						}
 
