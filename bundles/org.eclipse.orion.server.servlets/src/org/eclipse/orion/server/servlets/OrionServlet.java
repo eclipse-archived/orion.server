@@ -38,8 +38,7 @@ import org.json.JSONObject;
 import org.slf4j.LoggerFactory;
 
 /**
- * Common base class for servlets that defines convenience API for (de)serialization
- * of requests and responses.
+ * Common base class for servlets that defines convenience API for (de)serialization of requests and responses.
  */
 public abstract class OrionServlet extends HttpServlet {
 	/**
@@ -55,7 +54,7 @@ public abstract class OrionServlet extends HttpServlet {
 			if (result instanceof JSONObject)
 				return ((JSONObject) result).toString(2);
 		} catch (JSONException e) {
-			//fall through below
+			// fall through below
 		}
 		return result.toString();
 	}
@@ -64,7 +63,8 @@ public abstract class OrionServlet extends HttpServlet {
 		writeJSONResponse(req, resp, result, JsonURIUnqualificationStrategy.ALL);
 	}
 
-	public static void writeJSONResponse(HttpServletRequest req, HttpServletResponse resp, Object result, IURIUnqualificationStrategy strategy) throws IOException {
+	public static void writeJSONResponse(HttpServletRequest req, HttpServletResponse resp, Object result, IURIUnqualificationStrategy strategy)
+			throws IOException {
 		Assert.isLegal(result instanceof JSONObject || result instanceof JSONArray);
 		resp.setCharacterEncoding("UTF-8"); //$NON-NLS-1$
 		resp.setStatus(HttpServletResponse.SC_OK);
@@ -78,7 +78,7 @@ public abstract class OrionServlet extends HttpServlet {
 		}
 		strategy.run(req, result);
 
-		//TODO look at accept header and chose appropriate response representation
+		// TODO look at accept header and chose appropriate response representation
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
 		String response = prettyPrint(result);
 		resp.getWriter().print(response);
@@ -87,6 +87,7 @@ public abstract class OrionServlet extends HttpServlet {
 
 	/**
 	 * Decorates a JSON response and rewrites URLs found in it.
+	 * 
 	 * @param req
 	 * @param result
 	 * @param strategy
@@ -96,34 +97,35 @@ public abstract class OrionServlet extends HttpServlet {
 		strategy.run(req, result);
 		//if ("XMLHttpRequest".equals(req.getHeader("X-Requested-With"))) { //$NON-NLS-1$ //$NON-NLS-2$
 		// In JSON that is sent to in-Browser clients, remove scheme/userInfo/port information from URLs.
-		//strategy.run(req, result);
-		//}
+		// strategy.run(req, result);
+		// }
 	}
 
 	/**
-	 * If there is a search provider for this request resource, then add the search
-	 * service location to the result object.
+	 * If there is a search provider for this request resource, then add the search service location to the result
+	 * object.
 	 */
 	public static void decorateResponse(HttpServletRequest req, JSONObject result) {
-		decorateResponse(req, result, (IWebResourceDecorator)null);
+		decorateResponse(req, result, (IWebResourceDecorator) null);
 	}
-	
+
 	/**
-	 * If there is a search provider for this request resource, then add the search
-	 * service location to the result object.
+	 * If there is a search provider for this request resource, then add the search service location to the result
+	 * object.
 	 */
 	public static void decorateResponse(HttpServletRequest req, JSONObject result, IWebResourceDecorator skip) {
 		Collection<IWebResourceDecorator> decorators = Activator.getDefault().getWebResourceDecorators();
 		URI requestURI = ServletResourceHandler.getURI(req);
 		for (IWebResourceDecorator decorator : decorators) {
-			if (decorator == skip) continue;
+			if (decorator == skip)
+				continue;
 			decorator.addAtributesFor(req, requestURI, result);
 		}
 	}
 
 	/**
-	 * Returns the JSON object that is serialized in the request stream. Returns an
-	 * empty JSON object if the request body is empty. Never returns null.
+	 * Returns the JSON object that is serialized in the request stream. Returns an empty JSON object if the request
+	 * body is empty. Never returns null.
 	 */
 	public static JSONObject readJSONRequest(HttpServletRequest request) throws IOException, JSONException {
 		JSONObject jsonRequest = (JSONObject) request.getAttribute("JSONRequest");
@@ -156,14 +158,14 @@ public abstract class OrionServlet extends HttpServlet {
 	}
 
 	/**
-	 * Generic handler for exceptions. 
+	 * Generic handler for exceptions.
 	 */
 	protected void handleException(HttpServletResponse resp, String msg, Exception e) throws ServletException {
 		handleException(resp, msg, e, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 	}
 
 	/**
-	 * Generic handler for exceptions. 
+	 * Generic handler for exceptions.
 	 */
 	protected void handleException(HttpServletResponse resp, String msg, Exception e, int httpCode) throws ServletException {
 		handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, msg, e), httpCode);
@@ -178,14 +180,16 @@ public abstract class OrionServlet extends HttpServlet {
 	 * Helper method to print the request when debugging.
 	 */
 	protected void traceRequest(HttpServletRequest req) {
-		StringBuffer result = new StringBuffer(req.getMethod());
-		result.append(' ');
-		result.append(req.getRequestURI());
-		String query = req.getQueryString();
-		if (query != null)
-			result.append('?').append(query);
-		if (DEBUG_VEBOSE)
-			printHeaders(req, result);
-		LoggerFactory.getLogger(OrionServlet.class).debug(result.toString());
+		if (req.getRequestURI().contains("/code/file/anthonyh")) {
+			StringBuffer result = new StringBuffer(req.getMethod());
+			result.append(' ');
+			result.append(req.getRequestURI());
+			String query = req.getQueryString();
+			if (query != null)
+				result.append('?').append(query);
+			if (DEBUG_VEBOSE)
+				printHeaders(req, result);
+			LoggerFactory.getLogger("org.eclipse.orion.server.config").info(result.toString());
+		}
 	}
 }
