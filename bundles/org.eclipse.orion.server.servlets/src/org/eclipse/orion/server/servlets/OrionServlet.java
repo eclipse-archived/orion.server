@@ -180,7 +180,7 @@ public abstract class OrionServlet extends HttpServlet {
 	 * Helper method to print the request when debugging.
 	 */
 	protected void traceRequest(HttpServletRequest req) {
-		if (req.getRequestURI().contains("/code/file/anthonyh")) {
+		if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
 			StringBuffer result = new StringBuffer(req.getMethod());
 			result.append(' ');
 			result.append(req.getRequestURI());

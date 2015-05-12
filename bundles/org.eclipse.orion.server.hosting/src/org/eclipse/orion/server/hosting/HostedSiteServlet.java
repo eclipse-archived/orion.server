@@ -159,7 +159,7 @@ public class HostedSiteServlet extends OrionServlet {
 
 	@Override
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		if (req.getRequestURI().contains("/code/file/anthonyh")) {
+		if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
 			traceRequest(req);
 		}
 		String pathInfoString = req.getPathInfo();
@@ -251,11 +251,14 @@ public class HostedSiteServlet extends OrionServlet {
 	private void serve(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, URI[] mappedURIs) throws ServletException, IOException {
 		for (int i = 0; i < mappedURIs.length; i++) {
 			URI uri = mappedURIs[i];
+			if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
+				logger.info("HostedSiteServlet: serve uri = " + uri.getRawPath());
+			}
 			// Bypass a 404 if any workspace or remote paths remain to be checked.
 			boolean failEarlyOn404 = i + 1 < mappedURIs.length;
 			if (uri.getScheme() == null) {
 				if ("GET".equals(req.getMethod())) { //$NON-NLS-1$
-					if (serveOrionFile(req, resp, site, new Path(uri.getPath()), failEarlyOn404))
+					if (serveOrionFile(req, resp, site, new Path(uri.getRawPath()), failEarlyOn404))
 						return;
 				} else {
 					String message = "Only GET method is supported for workspace paths";
@@ -349,6 +352,9 @@ public class HostedSiteServlet extends OrionServlet {
 	 */
 	private boolean serveURI(final HttpServletRequest req, HttpServletResponse resp, URI remoteURI, boolean failEarlyOn404) throws IOException,
 			ServletException, UnknownHostException {
+		if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
+			logger.info("HostedSiteServlet: serveURI = " + remoteURI.toString());
+		}
 		try {
 			// Special case: remote URI with host name "localhost" is deemed to refer to a resource on this server,
 			// so we simply forward the URI within the servlet container.
@@ -360,7 +366,7 @@ public class HostedSiteServlet extends OrionServlet {
 				String cp = req.getContextPath();
 				IPath newPath = new Path(remoteURI.getRawPath().substring(cp.length())).makeAbsolute();
 				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(newPath.toString());
-				if (req.getRequestURI().contains("/code/file/anthonyh")) {
+				if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
 					String query = req.getQueryString();
 					if (query != null) {
 						logger.info("HostedSiteServlet: serveURI forward: " + req.getRequestURI() + "?" + query + " TO " + newPath.toString());
