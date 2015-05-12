@@ -159,7 +159,7 @@ public class HostedSiteServlet extends OrionServlet {
 
 	@Override
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		logger.info("HostedSiteServlet: " + req.getMethod() + " " + req.getRequestURI());
+		//traceRequest(req);
 		String pathInfoString = req.getPathInfo();
 		IPath pathInfo = new Path(null /*don't parse host:port as device*/, pathInfoString == null ? "" : pathInfoString); //$NON-NLS-1$
 		if (pathInfo.segmentCount() > 0) {
@@ -247,7 +247,6 @@ public class HostedSiteServlet extends OrionServlet {
 			URI uri = mappedURIs[i];
 			// Bypass a 404 if any workspace or remote paths remain to be checked.
 			boolean failEarlyOn404 = i + 1 < mappedURIs.length;
-			logger.info("HostedSiteServlet: serve: " + failEarlyOn404 + "-" + req.getMethod() + " " + req.getRequestURI());
 			if (uri.getScheme() == null) {
 				if ("GET".equals(req.getMethod())) { //$NON-NLS-1$
 					if (serveOrionFile(req, resp, site, new Path(uri.getPath()), failEarlyOn404))
@@ -266,7 +265,6 @@ public class HostedSiteServlet extends OrionServlet {
 
 	// returns true if the request has been served, false if not (only if failEarlyOn404 is true)
 	private boolean serveOrionFile(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, IPath path, boolean failEarlyOn404) throws ServletException {
-		logger.info("HostedSiteServlet: serveOrionFile: " + path);
 		String userId = site.getUserId();
 		String fileURI = FILE_SERVLET_ALIAS + path.toString();
 		boolean allow = false;
@@ -290,18 +288,13 @@ public class HostedSiteServlet extends OrionServlet {
 			IPath filePath = pathInfo == null ? Path.ROOT : new Path(pathInfo);
 			IFileStore file = tempGetFileStore(filePath);
 			if (file == null || !file.fetchInfo().exists()) {
-				logger.info("HostedSiteServlet: serveOrionFile:" + filePath + " : " + file);
 				if (failEarlyOn404) {
 					return false;
 				}
-				logger.info("HostedSiteServlet: 404 is here " + filePath);
 				handleException(resp, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", filePath), null));
 				return true;
 			}
 			if (fileSerializer.handleRequest(req, resp, file)) {
-				if (resp.getStatus() == 200) {
-					logger.info("HostedSiteServlet: serveOrionFile: SUCCESS " + file);
-				}
 				//return;
 			}
 			// end copied
@@ -348,7 +341,6 @@ public class HostedSiteServlet extends OrionServlet {
 	 * @return true if the request was served.
 	 */
 	private boolean serveURI(final HttpServletRequest req, HttpServletResponse resp, URI remoteURI, boolean failEarlyOn404) throws IOException, ServletException, UnknownHostException {
-		logger.info("HostedSiteServlet: serveURI: " + remoteURI);
 		try {
 			// Special case: remote URI with host name "localhost" is deemed to refer to a resource on this server,
 			// so we simply forward the URI within the servlet container.
@@ -360,6 +352,12 @@ public class HostedSiteServlet extends OrionServlet {
 				String cp = req.getContextPath();
 				IPath newPath = new Path(remoteURI.getRawPath().substring(cp.length())).makeAbsolute();
 				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(newPath.toString());
+				String query = req.getQueryString();
+				if (query != null) {
+					logger.info("HostedSiteServlet: serveURI forward: " + req.getRequestURI() + "?" + query);
+				} else {
+					logger.info("HostedSiteServlet: serveURI forward: " + req.getRequestURI());
+				}
 				dispatcher.forward(req, resp);
 				return true;
 			}
@@ -387,7 +385,6 @@ public class HostedSiteServlet extends OrionServlet {
 	 */
 	private boolean proxyRemoteUrl(HttpServletRequest req, HttpServletResponse resp, final URL mappedURL, boolean failEarlyOn404) throws IOException, ServletException, UnknownHostException {
 		ProxyServlet proxy = new RemoteURLProxyServlet(mappedURL, failEarlyOn404);
-		logger.info("HostedSiteServlet: proxyRemoteUrl: " + mappedURL + " " + failEarlyOn404);
 		proxy.init(getServletConfig());
 		try {
 			// TODO: May want to avoid console noise from 4xx response codes?
