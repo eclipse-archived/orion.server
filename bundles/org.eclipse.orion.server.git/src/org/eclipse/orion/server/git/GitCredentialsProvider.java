@@ -12,13 +12,10 @@ package org.eclipse.orion.server.git;
 
 import java.util.Locale;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.transport.CredentialItem;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.metastore.MetadataInfo;
 
 public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider {
 
@@ -79,27 +76,27 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 			 * If there aren't credentials of any kind and the repository is hosted at GitHub
 			 * then check for a pre-set GitHub token and use it if present.
 			 */
-			if (item instanceof CredentialItem.Username) {
-				if ((this.privateKey == null || this.privateKey.length == 0) && (this.publicKey == null || this.publicKey.length == 0) && (this.passphrase == null || this.passphrase.length == 0)) {
-					CredentialItem.Username u = new CredentialItem.Username();
-					CredentialItem.Password p = new CredentialItem.Password();
-					super.get(uri, u, p);
-					if ((u.getValue() == null || u.getValue().length() == 0) && (p.getValue() == null || p.getValue().length == 0)) {
-						if (uri != null && uri.getHost().equalsIgnoreCase(GitConstants.KEY_GITHUB_HOST)) {
-							if (this.remoteUser != null) {
-								try {
-									MetadataInfo info = OrionConfiguration.getMetaStore().readUser(remoteUser);
-									String token = info.getProperty(GitConstants.KEY_GITHUB_ACCESS_TOKEN);
-									if (token != null) {
-										((CredentialItem.Username)item).setValue(token);
-										continue;
-									}
-								} catch (CoreException e) {}
-							}
-						}
-					}
-				}
-			}
+//			if (item instanceof CredentialItem.Username) {
+//				if ((this.privateKey == null || this.privateKey.length == 0) && (this.publicKey == null || this.publicKey.length == 0) && (this.passphrase == null || this.passphrase.length == 0)) {
+//					CredentialItem.Username u = new CredentialItem.Username();
+//					CredentialItem.Password p = new CredentialItem.Password();
+//					super.get(uri, u, p);
+//					if ((u.getValue() == null || u.getValue().length() == 0) && (p.getValue() == null || p.getValue().length == 0)) {
+//						if (uri != null && uri.getHost().equalsIgnoreCase(GitConstants.KEY_GITHUB_HOST)) {
+//							if (this.remoteUser != null) {
+//								try {
+//									MetadataInfo info = OrionConfiguration.getMetaStore().readUser(remoteUser);
+//									String token = info.getProperty(GitConstants.KEY_GITHUB_ACCESS_TOKEN);
+//									if (token != null) {
+//										((CredentialItem.Username)item).setValue(token);
+//										continue;
+//									}
+//								} catch (CoreException e) {}
+//							}
+//						}
+//					}
+//				}
+//			}
 			if (super.supports(item)) {
 				super.get(uri, item);
 			} else if (item instanceof CredentialItem.StringType) {
