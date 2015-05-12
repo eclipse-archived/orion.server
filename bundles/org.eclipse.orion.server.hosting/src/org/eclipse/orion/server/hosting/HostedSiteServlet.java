@@ -245,9 +245,9 @@ public class HostedSiteServlet extends OrionServlet {
 	private void serve(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, URI[] mappedURIs) throws ServletException, IOException {
 		for (int i = 0; i < mappedURIs.length; i++) {
 			URI uri = mappedURIs[i];
-			logger.info("HostedSiteServlet: Serve: " + req.getMethod() + " " + req.getRequestURI());
 			// Bypass a 404 if any workspace or remote paths remain to be checked.
 			boolean failEarlyOn404 = i + 1 < mappedURIs.length;
+			logger.info("HostedSiteServlet: serve: " + failEarlyOn404 + "-" + req.getMethod() + " " + req.getRequestURI());
 			if (uri.getScheme() == null) {
 				if ("GET".equals(req.getMethod())) { //$NON-NLS-1$
 					if (serveOrionFile(req, resp, site, new Path(uri.getPath()), failEarlyOn404))
@@ -266,6 +266,7 @@ public class HostedSiteServlet extends OrionServlet {
 
 	// returns true if the request has been served, false if not (only if failEarlyOn404 is true)
 	private boolean serveOrionFile(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, IPath path, boolean failEarlyOn404) throws ServletException {
+		logger.info("HostedSiteServlet: serveOrionFile: " + path);
 		String userId = site.getUserId();
 		String fileURI = FILE_SERVLET_ALIAS + path.toString();
 		boolean allow = false;
@@ -347,6 +348,7 @@ public class HostedSiteServlet extends OrionServlet {
 	 * @return true if the request was served.
 	 */
 	private boolean serveURI(final HttpServletRequest req, HttpServletResponse resp, URI remoteURI, boolean failEarlyOn404) throws IOException, ServletException, UnknownHostException {
+		logger.info("HostedSiteServlet: serveURI: " + remoteURI);
 		try {
 			// Special case: remote URI with host name "localhost" is deemed to refer to a resource on this server,
 			// so we simply forward the URI within the servlet container.
