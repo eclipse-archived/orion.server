@@ -24,8 +24,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.eclipse.orion.internal.server.hosting.HostingActivator;
 import org.eclipse.orion.internal.server.hosting.HostingConstants;
 import org.eclipse.orion.internal.server.hosting.ISiteHostingService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * If an incoming request is for a path on a running hosted site (based on Host header), 
