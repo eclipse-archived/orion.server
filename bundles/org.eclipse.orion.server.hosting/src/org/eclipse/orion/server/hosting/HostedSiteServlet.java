@@ -163,7 +163,7 @@ public class HostedSiteServlet extends OrionServlet {
 			traceRequest(req);
 		}
 		String pathInfoString = req.getPathInfo();
-		IPath pathInfo = new Path(null /* don't parse host:port as device */, pathInfoString == null ? "" : pathInfoString); //$NON-NLS-1$
+		IPath pathInfo = new Path(null /*don't parse host:port as device*/, pathInfoString == null ? "" : pathInfoString); //$NON-NLS-1$
 		if (pathInfo.segmentCount() > 0) {
 			String hostedHost = pathInfo.segment(0);
 			IHostedSite site = HostingActivator.getDefault().getHostingService().get(hostedHost);
@@ -196,21 +196,17 @@ public class HostedSiteServlet extends OrionServlet {
 	}
 
 	/**
-	 * Returns paths constructed by rewriting pathInfo using rules from the hosted site's mappings. Paths are ordered
-	 * from most to least specific match.
-	 * 
-	 * @param site
-	 *            The hosted site.
-	 * @param pathInfo
-	 *            Path to be rewritten.
-	 * @param queryString
-	 * @return The rewritten path. May be either:
-	 *         <ul>
-	 *         <li>A path to a file in the Orion workspace, eg. <code>/ProjectA/foo/bar.txt</code></li>
-	 *         <li>An absolute URL pointing to another site, eg. <code>http://foo.com/bar.txt</code></li>
-	 *         </ul>
-	 * @return The rewritten paths.
-	 * @throws URISyntaxException
+	 * Returns paths constructed by rewriting pathInfo using rules from the hosted site's mappings.
+	 * Paths are ordered from most to least specific match.
+	 * @param site The hosted site.
+	 * @param pathInfo Path to be rewritten.
+	 * @param queryString 
+	 * @return The rewritten path. May be either:<ul>
+	 * <li>A path to a file in the Orion workspace, eg. <code>/ProjectA/foo/bar.txt</code></li>
+	 * <li>An absolute URL pointing to another site, eg. <code>http://foo.com/bar.txt</code></li>
+	 * </ul>
+	 * @return The rewritten paths. 
+	 * @throws URISyntaxException 
 	 */
 	private URI[] getMapped(IHostedSite site, IPath pathInfo, String queryString) throws URISyntaxException {
 		final Map<String, List<String>> map = site.getMappings();
@@ -258,7 +254,7 @@ public class HostedSiteServlet extends OrionServlet {
 			boolean failEarlyOn404 = i + 1 < mappedURIs.length;
 			if (uri.getScheme() == null) {
 				if ("GET".equals(req.getMethod())) { //$NON-NLS-1$
-					if (serveOrionFile(req, resp, site, new Path(uri.getRawPath()), failEarlyOn404))
+					if (serveOrionFile(req, resp, site, new Path(uri.getPath()), failEarlyOn404))
 						return;
 				} else {
 					String message = "Only GET method is supported for workspace paths";
@@ -273,8 +269,7 @@ public class HostedSiteServlet extends OrionServlet {
 	}
 
 	// returns true if the request has been served, false if not (only if failEarlyOn404 is true)
-	private boolean serveOrionFile(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, IPath path, boolean failEarlyOn404)
-			throws ServletException {
+	private boolean serveOrionFile(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, IPath path, boolean failEarlyOn404) throws ServletException {
 		String userId = site.getUserId();
 		String fileURI = FILE_SERVLET_ALIAS + path.toString();
 		boolean allow = false;
@@ -305,7 +300,7 @@ public class HostedSiteServlet extends OrionServlet {
 				return true;
 			}
 			if (fileSerializer.handleRequest(req, resp, file)) {
-				// return;
+				//return;
 			}
 			// end copied
 
@@ -332,7 +327,7 @@ public class HostedSiteServlet extends OrionServlet {
 
 	// temp code for grabbing files from filesystem
 	protected IFileStore tempGetFileStore(IPath path) {
-		// path format is /workspaceId/projectName/[suffix]
+		//path format is /workspaceId/projectName/[suffix]
 		if (path.segmentCount() <= 1)
 			return null;
 		try {
@@ -350,8 +345,7 @@ public class HostedSiteServlet extends OrionServlet {
 	/**
 	 * @return true if the request was served.
 	 */
-	private boolean serveURI(final HttpServletRequest req, HttpServletResponse resp, URI remoteURI, boolean failEarlyOn404) throws IOException,
-			ServletException, UnknownHostException {
+	private boolean serveURI(final HttpServletRequest req, HttpServletResponse resp, URI remoteURI, boolean failEarlyOn404) throws IOException, ServletException, UnknownHostException {
 		if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
 			logger.info("HostedSiteServlet: serveURI = " + remoteURI.toString());
 		}
@@ -399,8 +393,7 @@ public class HostedSiteServlet extends OrionServlet {
 	/**
 	 * @return true if the request was served.
 	 */
-	private boolean proxyRemoteUrl(HttpServletRequest req, HttpServletResponse resp, final URL mappedURL, boolean failEarlyOn404) throws IOException,
-			ServletException, UnknownHostException {
+	private boolean proxyRemoteUrl(HttpServletRequest req, HttpServletResponse resp, final URL mappedURL, boolean failEarlyOn404) throws IOException, ServletException, UnknownHostException {
 		ProxyServlet proxy = new RemoteURLProxyServlet(mappedURL, failEarlyOn404);
 		proxy.init(getServletConfig());
 		try {
