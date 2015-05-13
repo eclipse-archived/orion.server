@@ -26,6 +26,9 @@
       <filter
             alias="/"
             class="org.eclipse.orion.server.hosting.HostedSiteRequestFilter">
+            <init-param
+                  name="filter-priority"
+                  value="-100"/>
       </filter>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
