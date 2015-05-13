@@ -15,6 +15,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -353,7 +354,7 @@ public class HostedSiteServlet extends OrionServlet {
 	 */
 	private boolean serveURI(final HttpServletRequest req, HttpServletResponse resp, URI remoteURI, boolean failEarlyOn404) throws IOException, ServletException, UnknownHostException {
 		if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
-			logger.info("HostedSiteServlet: serveURI = " + remoteURI.getPath());
+			logger.info("HostedSiteServlet: serveURI remoteURI.getPath() = " + remoteURI.getPath());
 		}
 		try {
 			// Special case: remote URI with host name "localhost" is deemed to refer to a resource on this server,
@@ -364,14 +365,15 @@ public class HostedSiteServlet extends OrionServlet {
 
 				// Remove contextRoot from the siteURI's path as the CP does not appear in request params
 				String cp = req.getContextPath();
-				IPath newPath = new Path(remoteURI.getPath().substring(cp.length())).makeAbsolute();
-				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(newPath.toString());
+				String oldPath = URLDecoder.decode(remoteURI.getPath(), "UTF8");
+				String newPath = oldPath.substring(cp.length());
+				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(newPath);
 				if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
 					String query = req.getQueryString();
 					if (query != null) {
-						logger.info("HostedSiteServlet: serveURI forward: " + req.getRequestURI() + "?" + query + " TO " + newPath.toString());
+						logger.info("HostedSiteServlet: serveURI forward: " + req.getRequestURI() + "?" + query + " TO " + newPath);
 					} else {
-						logger.info("HostedSiteServlet: serveURI forward: " + req.getRequestURI() + " TO " + newPath.toString());
+						logger.info("HostedSiteServlet: serveURI forward: " + req.getRequestURI() + " TO " + newPath);
 					}
 				}
 				dispatcher.forward(req, resp);
