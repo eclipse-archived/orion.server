@@ -351,7 +351,11 @@ public class HostedSiteServlet extends OrionServlet {
 
 				// Remove contextRoot from the siteURI's path as the CP does not appear in request params
 				String cp = req.getContextPath();
-				String oldPath = URLDecoder.decode(remoteURI.getPath(), "UTF8");
+				String oldPath = remoteURI.getRawPath();
+				if (oldPath.contains("%2520")) {
+					// hack for the git API, see bug 467166
+					oldPath = URLDecoder.decode(remoteURI.getPath(), "UTF8");
+				}
 				StringBuffer forward = new StringBuffer(oldPath.substring(cp.length()));
 				String queryString = req.getQueryString();
 				if (queryString != null) {
