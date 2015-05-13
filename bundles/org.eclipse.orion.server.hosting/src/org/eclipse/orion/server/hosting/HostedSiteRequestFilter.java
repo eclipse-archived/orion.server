@@ -10,11 +10,21 @@
  *******************************************************************************/
 package org.eclipse.orion.server.hosting;
 
-import org.eclipse.orion.internal.server.hosting.*;
-
 import java.io.IOException;
-import javax.servlet.*;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+
+import org.eclipse.orion.internal.server.hosting.HostingActivator;
+import org.eclipse.orion.internal.server.hosting.HostingConstants;
+import org.eclipse.orion.internal.server.hosting.ISiteHostingService;
+import org.slf4j.LoggerFactory;
 
 /**
  * If an incoming request is for a path on a running hosted site (based on Host header), 
@@ -44,6 +54,7 @@ public class HostedSiteRequestFilter implements Filter {
 				boolean alreadyForwarded = httpReq.getAttribute(HostingConstants.REQUEST_ATTRIBUTE_HOSTING_FORWARDED) != null;
 				if (isForSite && !service.equals(HOSTED_SITE_ALIAS) && !alreadyForwarded) {
 					// Forward to /hosted/<host>
+					traceRequest(httpReq);
 					RequestDispatcher rd = httpReq.getRequestDispatcher(HOSTED_SITE_ALIAS + "/" + host + requestUri); //$NON-NLS-1$
 					rd.forward(req, resp);
 					return;
@@ -67,4 +78,14 @@ public class HostedSiteRequestFilter implements Filter {
 	public void destroy() {
 	}
 
+	protected void traceRequest(HttpServletRequest req) {
+		StringBuffer result = new StringBuffer(req.getMethod());
+		result.append(' ');
+		result.append(req.getRequestURI());
+		String query = req.getQueryString();
+		if (query != null)
+			result.append('?').append(query);
+		result.append(" HostedSiteRequestFilter ");
+		LoggerFactory.getLogger("org.eclipse.orion.server.config").info(result.toString());
+	}
 }
