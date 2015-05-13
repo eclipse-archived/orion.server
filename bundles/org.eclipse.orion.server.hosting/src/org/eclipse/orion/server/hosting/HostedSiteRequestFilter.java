@@ -54,8 +54,22 @@ public class HostedSiteRequestFilter implements Filter {
 				boolean alreadyForwarded = httpReq.getAttribute(HostingConstants.REQUEST_ATTRIBUTE_HOSTING_FORWARDED) != null;
 				if (isForSite && !service.equals(HOSTED_SITE_ALIAS) && !alreadyForwarded) {
 					// Forward to /hosted/<host>
-					traceRequest(httpReq);
-					RequestDispatcher rd = httpReq.getRequestDispatcher(HOSTED_SITE_ALIAS + "/" + host + requestUri); //$NON-NLS-1$
+					StringBuffer forward = new StringBuffer(HOSTED_SITE_ALIAS);
+					forward.append('/');
+					forward.append(host);
+					forward.append(requestUri);
+					String queryString = httpReq.getQueryString();
+					if (queryString != null) {
+						forward.append('?');
+						forward.append(queryString);
+					}
+					RequestDispatcher rd = httpReq.getRequestDispatcher(forward.toString()); //$NON-NLS-1$
+					// temporary log message
+					StringBuffer result = new StringBuffer(httpReq.getMethod());
+					result.append(' ');
+					result.append(forward);
+					result.append(" HostedSiteRequestFilter ");
+					LoggerFactory.getLogger("org.eclipse.orion.server.config").info(result.toString());
 					rd.forward(req, resp);
 					return;
 				}
@@ -76,16 +90,5 @@ public class HostedSiteRequestFilter implements Filter {
 
 	@Override
 	public void destroy() {
-	}
-
-	protected void traceRequest(HttpServletRequest req) {
-		StringBuffer result = new StringBuffer(req.getMethod());
-		result.append(' ');
-		result.append(req.getRequestURI());
-		String query = req.getQueryString();
-		if (query != null)
-			result.append('?').append(query);
-		result.append(" HostedSiteRequestFilter ");
-		LoggerFactory.getLogger("org.eclipse.orion.server.config").info(result.toString());
 	}
 }
