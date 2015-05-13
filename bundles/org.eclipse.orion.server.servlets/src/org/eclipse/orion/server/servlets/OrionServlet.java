@@ -186,6 +186,6 @@ public abstract class OrionServlet extends HttpServlet {
 			result.append('?').append(query);
 		if (DEBUG_VEBOSE)
 			printHeaders(req, result);
-		LoggerFactory.getLogger("org.eclipse.orion.server.config").info(result.toString());
+		LoggerFactory.getLogger(OrionServlet.class).debug(result.toString());
 	}
 }
