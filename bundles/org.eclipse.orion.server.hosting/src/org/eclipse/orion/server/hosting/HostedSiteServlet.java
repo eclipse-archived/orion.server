@@ -15,6 +15,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -350,8 +351,9 @@ public class HostedSiteServlet extends OrionServlet {
 
 				// Remove contextRoot from the siteURI's path as the CP does not appear in request params
 				String cp = req.getContextPath();
-				IPath newPath = new Path(remoteURI.getRawPath().substring(cp.length())).makeAbsolute();
-				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(newPath.toString());
+				String oldPath = URLDecoder.decode(remoteURI.getPath(), "UTF8");
+				String newPath = oldPath.substring(cp.length());
+				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(newPath);
 				dispatcher.forward(req, resp);
 				return true;
 			}
