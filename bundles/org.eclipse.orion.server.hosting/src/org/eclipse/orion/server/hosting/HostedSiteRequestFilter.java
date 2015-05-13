@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -24,7 +24,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.eclipse.orion.internal.server.hosting.HostingActivator;
 import org.eclipse.orion.internal.server.hosting.HostingConstants;
 import org.eclipse.orion.internal.server.hosting.ISiteHostingService;
-import org.slf4j.LoggerFactory;
 
 /**
  * If an incoming request is for a path on a running hosted site (based on Host header), 
@@ -64,12 +63,6 @@ public class HostedSiteRequestFilter implements Filter {
 						forward.append(queryString);
 					}
 					RequestDispatcher rd = httpReq.getRequestDispatcher(forward.toString()); //$NON-NLS-1$
-					// temporary log message
-					StringBuffer result = new StringBuffer(httpReq.getMethod());
-					result.append(' ');
-					result.append(forward);
-					result.append(" HostedSiteRequestFilter ");
-					LoggerFactory.getLogger("org.eclipse.orion.server.config").info(result.toString());
 					rd.forward(req, resp);
 					return;
 				}
