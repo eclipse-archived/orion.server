@@ -15,7 +15,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLDecoder;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -56,7 +55,7 @@ import org.slf4j.LoggerFactory;
  * Handles requests for URIs that are part of a running hosted site.
  */
 public class HostedSiteServlet extends OrionServlet {
-	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config");
+	private final Logger logger = LoggerFactory.getLogger(HostingActivator.PI_SERVER_HOSTING);
 
 	static class LocationHeaderServletResponseWrapper extends HttpServletResponseWrapper {
 
@@ -160,15 +159,7 @@ public class HostedSiteServlet extends OrionServlet {
 
 	@Override
 	protected void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
-			StringBuffer result = new StringBuffer(req.getMethod());
-			result.append(' ');
-			result.append(req.getRequestURI());
-			String query = req.getQueryString();
-			if (query != null)
-				result.append('?').append(query);
-			logger.info("HostedSiteServlet: service = " + result);
-		}
+		traceRequest(req);
 		String pathInfoString = req.getPathInfo();
 		IPath pathInfo = new Path(null /*don't parse host:port as device*/, pathInfoString == null ? "" : pathInfoString); //$NON-NLS-1$
 		if (pathInfo.segmentCount() > 0) {
@@ -254,9 +245,6 @@ public class HostedSiteServlet extends OrionServlet {
 	private void serve(HttpServletRequest req, HttpServletResponse resp, IHostedSite site, URI[] mappedURIs) throws ServletException, IOException {
 		for (int i = 0; i < mappedURIs.length; i++) {
 			URI uri = mappedURIs[i];
-			if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
-				logger.info("HostedSiteServlet: serve uri = " + uri.getPath());
-			}
 			// Bypass a 404 if any workspace or remote paths remain to be checked.
 			boolean failEarlyOn404 = i + 1 < mappedURIs.length;
 			if (uri.getScheme() == null) {
@@ -353,9 +341,6 @@ public class HostedSiteServlet extends OrionServlet {
 	 * @return true if the request was served.
 	 */
 	private boolean serveURI(final HttpServletRequest req, HttpServletResponse resp, URI remoteURI, boolean failEarlyOn404) throws IOException, ServletException, UnknownHostException {
-		if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
-			logger.info("HostedSiteServlet: serveURI remoteURI.getPath() = " + remoteURI.getPath());
-		}
 		try {
 			// Special case: remote URI with host name "localhost" is deemed to refer to a resource on this server,
 			// so we simply forward the URI within the servlet container.
@@ -365,17 +350,8 @@ public class HostedSiteServlet extends OrionServlet {
 
 				// Remove contextRoot from the siteURI's path as the CP does not appear in request params
 				String cp = req.getContextPath();
-				String oldPath = URLDecoder.decode(remoteURI.getPath(), "UTF8");
-				String newPath = oldPath.substring(cp.length());
-				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(newPath);
-				if (req.getRequestURI().contains("/code/file/anthonyh-OrionContent/anthonyh")) {
-					String query = req.getQueryString();
-					if (query != null) {
-						logger.info("HostedSiteServlet: serveURI forward: " + req.getRequestURI() + "?" + query + " TO " + newPath);
-					} else {
-						logger.info("HostedSiteServlet: serveURI forward: " + req.getRequestURI() + " TO " + newPath);
-					}
-				}
+				IPath newPath = new Path(remoteURI.getRawPath().substring(cp.length())).makeAbsolute();
+				RequestDispatcher dispatcher = getServletContext().getRequestDispatcher(newPath.toString());
 				dispatcher.forward(req, resp);
 				return true;
 			}
