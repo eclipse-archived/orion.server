@@ -11,18 +11,24 @@
 package org.eclipse.orion.internal.server.servlets.xfer;
 
 import java.io.UnsupportedEncodingException;
-import java.net.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.IWebResourceDecorator;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ProtocolConstants;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Adds links to the import and export services for files in the workspace.
@@ -45,7 +51,7 @@ public class TransferResourceDecorator implements IWebResourceDecorator {
 			if (children != null) {
 				for (int i = 0; i < children.length(); i++) {
 					JSONObject child = children.getJSONObject(i);
-					if (child.getBoolean(ProtocolConstants.KEY_DIRECTORY)) {
+					if (child.has(ProtocolConstants.KEY_DIRECTORY) && child.getBoolean(ProtocolConstants.KEY_DIRECTORY)) {
 						addTransferLinks(request, resource, child);
 					}
 				}
@@ -57,6 +63,7 @@ public class TransferResourceDecorator implements IWebResourceDecorator {
 	}
 
 	private void addTransferLinks(HttpServletRequest request, URI resource, JSONObject representation) throws URISyntaxException, JSONException, UnsupportedEncodingException {
+		if (!representation.has(ProtocolConstants.KEY_LOCATION)) return;
 		URI location = new URI(representation.getString(ProtocolConstants.KEY_LOCATION));
 		IPath targetPath = new Path(location.getPath()).removeFirstSegments(1).removeTrailingSeparator();
 		IPath path = new Path("/xfer/import").append(targetPath); //$NON-NLS-1$
@@ -73,9 +80,9 @@ public class TransferResourceDecorator implements IWebResourceDecorator {
 		}
 		representation.put(ProtocolConstants.KEY_IMPORT_LOCATION, link);
 		//Bug 348073: don't add export links for empty directories
-		if (isEmptyDirectory(request, targetPath)) {
-			return;
-		}
+//		if (isEmptyDirectory(request, targetPath)) {
+//			return;
+//		}
 		path = new Path("/xfer/export").append(targetPath).addFileExtension("zip"); //$NON-NLS-1$ //$NON-NLS-2$
 		link = new URI(resource.getScheme(), resource.getAuthority(), path.toString(), null, null);
 		if (representation.has(ProtocolConstants.KEY_EXCLUDED_IN_EXPORT)) {
