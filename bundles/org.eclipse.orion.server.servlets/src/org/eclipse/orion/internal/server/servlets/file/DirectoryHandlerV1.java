@@ -70,10 +70,6 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 	}
 
 	public static void encodeChildren(IFileStore dir, URI location, JSONObject result, int depth) throws CoreException {
-		encodeChildren(dir, location, result, depth, true);
-	}
-	
-	public static void encodeChildren(IFileStore dir, URI location, JSONObject result, int depth, boolean addLocation) throws CoreException {
 		if (depth <= 0)
 			return;
 		JSONArray children = new JSONArray();
@@ -85,7 +81,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			if (childInfo.isDirectory())
 				name += "/"; //$NON-NLS-1$
 			URI childLocation = URIUtil.append(location, name);
-			JSONObject childResult = ServletFileStoreHandler.toJSON(childStore, childInfo, addLocation ? childLocation : null);
+			JSONObject childResult = ServletFileStoreHandler.toJSON(childStore, childInfo, childLocation);
 			if (childInfo.isDirectory())
 				encodeChildren(childStore, childLocation, childResult, depth - 1);
 			children.put(childResult);
