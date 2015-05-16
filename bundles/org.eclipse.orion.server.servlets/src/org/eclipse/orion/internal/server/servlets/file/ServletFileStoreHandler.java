@@ -91,7 +91,7 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 		try {
 			result.put(ProtocolConstants.KEY_NAME, info.getName());
 			result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, info.getLastModified());
-			if (info.isDirectory()) {
+			if (location != null || info.isDirectory()) {
 				result.put(ProtocolConstants.KEY_DIRECTORY, true);
 			}
 			result.put(ProtocolConstants.KEY_LENGTH, info.getLength());
@@ -107,7 +107,7 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 						throw new RuntimeException(e);
 					}
 			}
-			JSONObject attributes = getAttributes(store, info);
+			JSONObject attributes = getAttributes(store, info, location == null);
 			if (attributes.keys().hasNext()) {
 				result.put(ProtocolConstants.KEY_ATTRIBUTES, attributes);
 			}
@@ -121,12 +121,12 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 	/**
 	 * Returns a JSON Object containing the attributes supported and defined by the given file.
 	 */
-	private static JSONObject getAttributes(IFileStore store, IFileInfo info) throws JSONException {
+	private static JSONObject getAttributes(IFileStore store, IFileInfo info, boolean optional) throws JSONException {
 		int supported = store.getFileSystem().attributes();
 		JSONObject attributes = new JSONObject();
 		for (int i = 0; i < ATTRIBUTE_KEYS.length; i++)
-			if ((supported & ATTRIBUTE_BITS[i]) != 0 && info.getAttribute(ATTRIBUTE_BITS[i]))
-				attributes.put(ATTRIBUTE_KEYS[i], true);
+			if ((supported & ATTRIBUTE_BITS[i]) != 0 && (!optional || info.getAttribute(ATTRIBUTE_BITS[i])))
+				attributes.put(ATTRIBUTE_KEYS[i], info.getAttribute(ATTRIBUTE_BITS[i]));
 		return attributes;
 	}
 
