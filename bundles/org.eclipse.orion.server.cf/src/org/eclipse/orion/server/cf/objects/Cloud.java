@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others.
+ * Copyright (c) 2014, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,7 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.objects;
 
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -21,33 +25,35 @@ public class Cloud extends CFObject {
 	public static final String RESOURCE = "cloud"; //$NON-NLS-1$
 	public static final String TYPE = "Cloud"; //$NON-NLS-1$
 
-	private URL url;
+	private URL targetUrl;
 	private URL manageUrl;
 	private URL uaaUrl;
 	private String userId;
 	private JSONObject accessToken;
 
-	protected Cloud(URL apiUrl, URL manageUrl, String userId) {
+	protected Cloud(URL targetUrl, URL manageUrl, String userId) {
 		super();
-		this.url = apiUrl;
+		this.targetUrl = targetUrl;
 		this.manageUrl = manageUrl;
 		this.userId = userId;
 	}
 
 	public URL getUrl() {
-		return url;
+		String[] urlParts = targetUrl.toString().split("#");
+		try {
+			return new URL(urlParts[0]);
+		} catch (MalformedURLException e) {
+			return targetUrl;
+		}
 	}
-
-	public void setUrl(URL url) {
-		this.url = url;
+	
+	public String getRegion(){
+		String[] urlParts = targetUrl.toString().split("#");
+		return urlParts.length > 1 ? urlParts[1] : null;
 	}
 
 	public URL getManageUrl() {
 		return manageUrl;
-	}
-
-	public void setManageUrl(URL manageUrl) {
-		this.manageUrl = manageUrl;
 	}
 
 	public URL getUaaUrl() {
@@ -86,7 +92,7 @@ public class Cloud extends CFObject {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((url == null) ? 0 : url.hashCode());
+		result = prime * result + ((targetUrl == null) ? 0 : targetUrl.hashCode());
 		result = prime * result + ((manageUrl == null) ? 0 : manageUrl.hashCode());
 		result = prime * result + ((userId == null) ? 0 : userId.hashCode());
 		return result;
@@ -101,10 +107,10 @@ public class Cloud extends CFObject {
 		if (getClass() != obj.getClass())
 			return false;
 		Cloud other = (Cloud) obj;
-		if (url == null) {
-			if (other.url != null)
+		if (targetUrl == null) {
+			if (other.targetUrl != null)
 				return false;
-		} else if (!url.equals(other.url))
+		} else if (!targetUrl.equals(other.targetUrl))
 			return false;
 		if (manageUrl == null) {
 			if (other.manageUrl != null)

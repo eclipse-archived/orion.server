@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,12 +13,18 @@ package org.eclipse.orion.server.cf.commands;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.ConnectTimeoutException;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
-import org.eclipse.orion.server.cf.objects.*;
+import org.eclipse.orion.server.cf.objects.OrgWithSpaces;
+import org.eclipse.orion.server.cf.objects.Space;
+import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
@@ -63,10 +69,17 @@ public class GetOrgsCommand extends AbstractCFCommand {
 			int resources = orgs.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).length();
 			for (int k = 0; k < resources; ++k) {
 				JSONObject orgJSON = orgs.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).getJSONObject(k);
+				if (orgJSON.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).has(CFProtocolConstants.V2_KEY_REGION)){
+					String region = orgJSON.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_REGION);
+					if (!region.equals(target.getCloud().getRegion()))
+						continue;
+				}
+				
 				List<Space> spaces = new ArrayList<Space>();
 				status = getSpaces(spaces, orgJSON);
 				if (!status.isOK())
 					return status;
+				
 				OrgWithSpaces orgWithSpaces = new OrgWithSpaces();
 				orgWithSpaces.setCFJSON(orgJSON);
 				orgWithSpaces.setSpaces(spaces);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2014 IBM Corporation and others 
+ * Copyright (c) 2013, 2015 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,7 +11,10 @@
 package org.eclipse.orion.server.cf.utils;
 
 import java.net.URL;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.eclipse.orion.server.cf.CFExtServiceHelper;
 import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.cf.objects.Target;
@@ -101,7 +104,7 @@ public class TargetRegistry {
 					}
 				}
 
-				userCloudMap.put(cloud.getUrl(), cloud);
+				userCloudMap.put(url, cloud);
 			}
 			setAuthToken(cloud);
 			return cloud;

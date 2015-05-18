@@ -183,6 +183,8 @@ public class CFProtocolConstants {
 	public static final String V2_KEY_TIMEOUT = "timeout"; //$NON-NLS-1$
 
 	public static final String V2_KEY_NEXT_URL = "next_url"; //$NON-NLS-1$
+	
+	public static final String V2_KEY_REGION = "region"; //$NON-NLS-1$
 
 	/* Deployment planners */
 	public static final String KEY_DEPLOYMENT_PLANNER = "Planner"; //$NON-NLS-1$
