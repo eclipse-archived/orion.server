@@ -91,7 +91,9 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 		try {
 			result.put(ProtocolConstants.KEY_NAME, info.getName());
 			result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, info.getLastModified());
-			result.put(ProtocolConstants.KEY_DIRECTORY, info.isDirectory());
+			if (location != null || info.isDirectory()) {
+				result.put(ProtocolConstants.KEY_DIRECTORY, info.isDirectory());
+			}
 			result.put(ProtocolConstants.KEY_LENGTH, info.getLength());
 			if (location != null) {
 				if (info.isDirectory() && !location.getPath().endsWith("/")) {
@@ -105,7 +107,10 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 						throw new RuntimeException(e);
 					}
 			}
-			result.put(ProtocolConstants.KEY_ATTRIBUTES, getAttributes(store, info));
+			JSONObject attributes = getAttributes(store, info, location == null);
+			if (attributes.keys().hasNext()) {
+				result.put(ProtocolConstants.KEY_ATTRIBUTES, attributes);
+			}
 		} catch (JSONException e) {
 			//cannot happen because the key is non-null and the values are strings
 			throw new RuntimeException(e);
@@ -116,11 +121,11 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 	/**
 	 * Returns a JSON Object containing the attributes supported and defined by the given file.
 	 */
-	private static JSONObject getAttributes(IFileStore store, IFileInfo info) throws JSONException {
+	private static JSONObject getAttributes(IFileStore store, IFileInfo info, boolean optional) throws JSONException {
 		int supported = store.getFileSystem().attributes();
 		JSONObject attributes = new JSONObject();
 		for (int i = 0; i < ATTRIBUTE_KEYS.length; i++)
-			if ((supported & ATTRIBUTE_BITS[i]) != 0)
+			if ((supported & ATTRIBUTE_BITS[i]) != 0 && (!optional || info.getAttribute(ATTRIBUTE_BITS[i])))
 				attributes.put(ATTRIBUTE_KEYS[i], info.getAttribute(ATTRIBUTE_BITS[i]));
 		return attributes;
 	}
