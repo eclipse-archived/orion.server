@@ -44,10 +44,15 @@ public class EventService implements IEventService {
 
 	private class Callback implements MqttCallback {
 
+		private ReconnectMQTTClientJob reconnectMQTTClientJob = null;
+
 		@Override
 		public void connectionLost(Throwable e) {
 			logger.warn("Connection to MQTT broker was lost. Scheduling job to reconnect.", e);
-			new ReconnectMQTTClientJob(EventService.this).schedule();
+			if (reconnectMQTTClientJob == null) {
+				reconnectMQTTClientJob = new ReconnectMQTTClientJob(EventService.this);
+			}
+			reconnectMQTTClientJob.schedule();
 		}
 
 		@Override
@@ -250,7 +255,7 @@ public class EventService implements IEventService {
 	@Override
 	public void reconnectMQTTClient() {
 		if (!mqttClient.isConnected() && reconnectionLock.compareAndSet(false, true)) {
-			this.logger.warn("MQTT client was disconnected. Attempting to reconnect.");
+			this.logger.warn("MQTT client was disconnected. Attempting to reconnect. " + this.toString());
 			try {
 				new Thread(new Runnable() {
 					@Override
