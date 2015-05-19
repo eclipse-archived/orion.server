@@ -326,8 +326,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 				return sendNotification(request, response, db, reviewReqLogin, ReviewReqCommit, reviewReqUrl, ReviewReqAuthorName, ReviewMessage);
 			}
 
-			ObjectId refId = db.resolve(gitSegment);
-			if (refId == null || !Constants.HEAD.equals(gitSegment)) {
+			if (!Constants.HEAD.equals(gitSegment)) {
 				String msg = NLS.bind("Commit failed. Ref must be HEAD and is {0}", gitSegment);
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 			}
