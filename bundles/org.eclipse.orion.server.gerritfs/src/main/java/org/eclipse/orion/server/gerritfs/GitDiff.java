@@ -374,13 +374,15 @@ public class GitDiff extends HttpServlet {
 			result.put(KEY_TYPE, TYPE);
 			result.put(KEY_CHILDREN, diffs);
 			result.put(KEY_LENGTH, l.size());
+			IPath diffPath = new Path(request.getContextPath() + "/" 
+					+ diffLocation.getPath());
 			if (i < l.size()) {
 				URI nextLocation = new URI(
 						diffLocation.getScheme(),
 						diffLocation.getUserInfo(),
 						diffLocation.getHost(),
 						diffLocation.getPort(),
-						diffLocation.getPath(),
+						diffPath.toString(),
 						"pageSize=" + pageSize + "&page=" + (page + 1), diffLocation.getFragment()); //$NON-NLS-1$ //$NON-NLS-2$
 				result.put(KEY_NEXT_LOCATION, nextLocation);
 			}
