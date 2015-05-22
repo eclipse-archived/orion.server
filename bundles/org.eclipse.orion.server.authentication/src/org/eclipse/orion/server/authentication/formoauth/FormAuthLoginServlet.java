@@ -15,6 +15,7 @@ import java.io.PrintWriter;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -120,6 +121,12 @@ public class FormAuthLoginServlet extends HttpServlet {
 				// try to store the login timestamp in the user profile
 				UserInfo userInfo = OrionConfiguration.getMetaStore().readUser(user);
 				userInfo.setProperty(UserConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
+				Cookie[] cookies = req.getCookies();
+				for(int i = 0; i < cookies.length; i++){
+					if(cookies[i].getName() != null && cookies[i].getValue() != null){
+						userInfo.setProperty(cookies[i].getName().toString(), cookies[i].getValue().toString());
+					}
+				}
 				OrionConfiguration.getMetaStore().updateUser(userInfo);
 			} catch (CoreException e) {
 				// just log that the login timestamp was not stored
