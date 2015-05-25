@@ -124,9 +124,8 @@ public class FormAuthLoginServlet extends HttpServlet {
 				
 				Cookie[] cookies = req.getCookies();
 				for(int i = 0; i < cookies.length; i++){
-					if("JSESSIONID".equals(cookies[i].getName()) && cookies[i].getValue() != null){
+					if(cookies[i].getName() != null && cookies[i].getValue() != null){
 						userInfo.setProperty(cookies[i].getName().toString(), cookies[i].getValue().toString());
-						break;
 					}
 				}
 				
