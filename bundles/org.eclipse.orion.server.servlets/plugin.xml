@@ -101,14 +101,14 @@
                value="^/(file|hosted|gitapi|requirejs)/.*">
          </init-param>
       </filter>
-      <filter
+      <!--filter
             alias="/"
             class="org.eclipse.orion.server.servlets.WelcomeFileFilter">
          <init-param
                name="includes"
                value="/">
          </init-param>
-      </filter>
+      </filter-->
       <filter
             alias="/prefs"
             class="org.eclipse.orion.server.servlets.LoggedInUserFilter">

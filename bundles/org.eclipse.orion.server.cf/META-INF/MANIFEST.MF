@@ -18,8 +18,11 @@ Require-Bundle: org.eclipse.osgi,
  org.apache.commons.httpclient,
  org.apache.commons.codec;bundle-version="1.3.0",
  com.google.protobuf;bundle-version="2.4.0",
- org.eclipse.jetty9.websocket;bundle-version="1.0.0";resolution:=optional,
- org.yaml.snakeyaml;bundle-version="1.14.0"
+ org.yaml.snakeyaml;bundle-version="1.14.0",
+ org.eclipse.jetty.util;bundle-version="9.2.0",
+ org.eclipse.jetty.websocket.client;bundle-version="9.2.0",
+ org.eclipse.jetty.io;bundle-version="9.2.0",
+ org.eclipse.jetty.websocket.api;bundle-version="9.2.0"
 Import-Package: javax.servlet;version="2.6.0",
  javax.servlet.http;version="2.6.0",
  org.eclipse.jgit.ignore;version="3.0.0",

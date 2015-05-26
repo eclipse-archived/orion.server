@@ -12,13 +12,21 @@ package org.eclipse.orion.internal.server.hosting;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.util.Enumeration;
-import javax.servlet.*;
+
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.jetty.http.HttpURI;
-import org.eclipse.jetty.servlets.ProxyServlet;
+import org.eclipse.jetty.proxy.ProxyServlet;
 import org.eclipse.jetty.util.IO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +41,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 
 	{
 		// Bug 346139
-		_DontProxyHeaders.add("host");
+		////_DontProxyHeaders.add("host");
 	}
 
 	private HttpURI url;
@@ -49,25 +57,25 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 		}
 	}
 
-	@Override
+/*	@Override
 	protected HttpURI proxyHttpURI(final String scheme, final String serverName, int serverPort, final String uri) throws MalformedURLException {
 		return url;
 	}
 
-	/* (non-Javadoc)
+*/	/* (non-Javadoc)
 	 * @see javax.servlet.Servlet#service(javax.servlet.ServletRequest, javax.servlet.ServletResponse)
 	 */
 	public void service(ServletRequest req, ServletResponse res) throws ServletException, IOException {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) res;
 		if ("CONNECT".equalsIgnoreCase(request.getMethod())) {
-			handleConnect(request, response);
+			////handleConnect(request, response);
 		} else {
 			String uri = request.getRequestURI();
 			if (request.getQueryString() != null)
 				uri += "?" + request.getQueryString();
 
-			HttpURI url = proxyHttpURI(request.getScheme(), request.getServerName(), request.getServerPort(), uri);
+			////HttpURI url = proxyHttpURI(request.getScheme(), request.getServerName(), request.getServerPort(), uri);
 
 			URL rawURL = new URL(url.toString());
 			URLConnection connection = rawURL.openConnection();
@@ -108,8 +116,8 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 					connection.addRequestProperty("Host", realHost);
 				}
 
-				if (_DontProxyHeaders.contains(lhdr))
-					continue;
+				////if (_DontProxyHeaders.contains(lhdr))
+				////	continue;
 				if (connectionHdr != null && connectionHdr.indexOf(lhdr) >= 0)
 					continue;
 
@@ -206,8 +214,8 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 			String val = connection.getHeaderField(h);
 			while (hdr != null || val != null) {
 				String lhdr = hdr != null ? hdr.toLowerCase() : null;
-				if (hdr != null && val != null && !_DontProxyHeaders.contains(lhdr))
-					response.addHeader(hdr, val);
+				////if (hdr != null && val != null && !_DontProxyHeaders.contains(lhdr))
+				////	response.addHeader(hdr, val);
 
 				h++;
 				hdr = connection.getHeaderFieldKey(h);

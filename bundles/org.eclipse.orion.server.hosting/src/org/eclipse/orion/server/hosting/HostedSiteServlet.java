@@ -35,7 +35,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.jetty.servlets.ProxyServlet;
+import org.eclipse.jetty.proxy.ProxyServlet;
 import org.eclipse.orion.internal.server.hosting.HostingActivator;
 import org.eclipse.orion.internal.server.hosting.HostingConstants;
 import org.eclipse.orion.internal.server.hosting.IHostedSite;
