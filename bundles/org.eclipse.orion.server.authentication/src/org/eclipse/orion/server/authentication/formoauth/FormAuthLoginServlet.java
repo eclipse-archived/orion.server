@@ -26,6 +26,7 @@ import org.eclipse.orion.server.authentication.form.FormAuthHelper.LoginResult;
 import org.eclipse.orion.server.authentication.oauth.OAuthException;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.core.users.UserConstants;
@@ -122,10 +123,11 @@ public class FormAuthLoginServlet extends HttpServlet {
 				UserInfo userInfo = OrionConfiguration.getMetaStore().readUser(user);
 				userInfo.setProperty(UserConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
 				
+				String cookieToCache = PreferenceHelper.getString("orion.cookie.cached"); //$NON-NLS-1$
 				Cookie[] cookies = req.getCookies();
 				for(int i = 0; i < cookies.length; i++){
-					if(cookies[i].getName() != null && cookies[i].getValue() != null){
-						userInfo.setProperty(cookies[i].getName().toString(), cookies[i].getValue().toString());
+					if(cookieToCache != null && cookieToCache.equals(cookies[i].getName()) && cookies[i].getValue() != null){
+						userInfo.setProperty("/cookie/cached/" + cookieToCache, cookies[i].getValue().toString());
 					}
 				}
 				
