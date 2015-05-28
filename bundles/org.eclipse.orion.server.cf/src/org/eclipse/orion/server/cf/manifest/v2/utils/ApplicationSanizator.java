@@ -38,8 +38,7 @@ public class ApplicationSanizator implements Analyzer {
 			ManifestParseTree applications = node.get(ManifestConstants.APPLICATIONS);
 			for (ManifestParseTree application : applications.getChildren()) {
 
-				String applicationName = application.get(ManifestConstants.NAME).getValue();
-
+				String applicationName = application.has(ManifestConstants.NAME)? application.get(ManifestConstants.NAME).getValue() : null;
 				checkEmptyProperties(applicationName, application);
 
 				ManifestParseTree buildpack = application.getOpt(ManifestConstants.BUILDPACK);
