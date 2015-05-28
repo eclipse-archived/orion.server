@@ -33,6 +33,7 @@ import org.eclipse.jgit.lib.Constants;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Diff;
 import org.eclipse.orion.server.git.servlets.GitServlet;
@@ -763,8 +764,10 @@ public class GitDiffTest extends GitTest {
 
 		request = getGetGitStatusRequest(parentObject.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_STATUS));
 		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
+		assertTrue(HttpURLConnection.HTTP_OK == response.getResponseCode() || HttpURLConnection.HTTP_ACCEPTED == response.getResponseCode());
+		ServerStatus status = waitForTask(response);
+		assertTrue(status.toString(), status.isOK());
+		JSONObject statusResponse = status.getJsonData();
 
 		// find entry for the file
 		JSONArray changed = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
