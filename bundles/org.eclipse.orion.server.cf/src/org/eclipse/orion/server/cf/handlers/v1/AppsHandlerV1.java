@@ -224,7 +224,6 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 
 						/* check for non-manifest deployment */
 						if (manifestJSON != null) {
-
 							ParseManifestJSONCommand parseManifestJSONCommand = new ParseManifestJSONCommand(manifestJSON, userId, contentLocation);
 							status = parseManifestJSONCommand.doIt();
 							if (!status.isOK())
@@ -233,15 +232,7 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 							/* get the manifest name */
 							manifest = parseManifestJSONCommand.getManifest();
 							appStore = parseManifestJSONCommand.getAppStore();
-
-							if (manifest != null) {
-								ManifestParseTree applications = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS);
-								if (applications.getChildren().size() > 0)
-									manifestAppName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
-							}
-
 						} else {
-
 							ParseManifestCommand parseManifestCommand = new ParseManifestCommand(target, userId, contentLocation);
 							status = parseManifestCommand.doIt();
 							if (!status.isOK())
@@ -250,13 +241,12 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 							/* get the manifest name */
 							manifest = parseManifestCommand.getManifest();
 							appStore = parseManifestCommand.getAppStore();
-
-							if (manifest != null) {
-								ManifestParseTree applications = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS);
-								if (applications.getChildren().size() > 0)
-									manifestAppName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
-							}
-
+						}
+						
+						if (manifest != null) {
+							ManifestParseTree applications = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS);
+							if (applications.getChildren().size() > 0 && applications.get(0).has(CFProtocolConstants.V2_KEY_NAME))
+								manifestAppName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
 						}
 					}
 
