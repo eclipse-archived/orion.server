@@ -197,7 +197,6 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 		/* non-manifest deployments using a .json representation */
 		final JSONObject manifestJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_MANIFEST);
 		final JSONObject instrumentationJSON = jsonData.optJSONObject(CFProtocolConstants.KEY_INSTRUMENTATION);
-		final boolean persistManifest = jsonData.optBoolean(CFProtocolConstants.KEY_PERSIST, false);
 
 		/* default application startup is one minute */
 		int userTimeout = jsonData.optInt(CFProtocolConstants.KEY_TIMEOUT, 60);
@@ -239,13 +238,6 @@ public class AppsHandlerV1 extends AbstractRESTHandler<App> {
 								ManifestParseTree applications = manifest.get(CFProtocolConstants.V2_KEY_APPLICATIONS);
 								if (applications.getChildren().size() > 0)
 									manifestAppName = applications.get(0).get(CFProtocolConstants.V2_KEY_NAME).getValue();
-
-								if (persistManifest) {
-									/* non-manifest deployment - persist at contentLocation/manifest.yml */
-									IFileStore persistBaseLocation = parseManifestJSONCommand.getPersistBaseLocation();
-									IFileStore persistLocation = persistBaseLocation.getChild(ManifestConstants.MANIFEST_FILE_NAME);
-									manifest.persist(persistLocation);
-								}
 							}
 
 						} else {

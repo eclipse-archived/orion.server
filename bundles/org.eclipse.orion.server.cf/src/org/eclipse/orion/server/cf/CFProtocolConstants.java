@@ -78,8 +78,6 @@ public class CFProtocolConstants {
 
 	public static final String KEY_MANIFEST = "Manifest"; //$NON-NLS-1$
 
-	public static final String KEY_PERSIST = "Persist"; //$NON-NLS-1$
-
 	public static final String KEY_PACKAGER = "Packager"; //$NON-NLS-1$
 
 	public static final String KEY_INSTRUMENTATION = "Instrumentation"; //$NON-NLS-1$
