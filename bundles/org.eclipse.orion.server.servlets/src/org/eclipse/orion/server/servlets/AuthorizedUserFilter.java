@@ -37,6 +37,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;
 import org.osgi.service.http.HttpContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The filter checks whether the request is made by an authorized user.
@@ -59,6 +61,13 @@ public class AuthorizedUserFilter implements Filter {
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
+		
+		if (httpRequest.getRemoteUser() == null) {
+			//// See Bugzilla 468670, this code is temporary
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
+			logger.warn("Login hard coded to: ahunter"); //$NON-NLS-1$ 
+			httpRequest.getSession().setAttribute("user", "ahunter");
+		}
 
 		String remoteUser = httpRequest.getRemoteUser();
 

@@ -27,6 +27,8 @@ import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.server.authentication.IAuthenticationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.osgi.service.http.HttpContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The filter checks whether the request is done by an authenticated user.
@@ -55,6 +57,13 @@ public class LoggedInUserFilter implements Filter {
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
+
+		if (httpRequest.getRemoteUser() == null) {
+			//// See Bugzilla 468670, this code is temporary
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
+			logger.warn("Login hard coded to: ahunter"); //$NON-NLS-1$ 
+			httpRequest.getSession().setAttribute("user", "ahunter");
+		}
 
 		if (httpRequest.getRemoteUser() != null) {
 			chain.doFilter(request, response);
