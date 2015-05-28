@@ -40,6 +40,7 @@ public class WebApplication implements IApplication {
 	private static final String HTTPS_PORT = JETTY + '.' + JettyConstants.HTTPS_PORT;
 	private static final String SSL_KEYPASSWORD = JETTY + '.' + JettyConstants.SSL_KEYPASSWORD;
 	private static final String SSL_KEYSTORE = JETTY + '.' + JettyConstants.SSL_KEYSTORE;
+	private static final String SSL_KEYSTORETYPE = JETTY + '.' + JettyConstants.SSL_KEYSTORETYPE;
 
 	private static final String SSL_PASSWORD = JETTY + '.' + JettyConstants.SSL_PASSWORD;
 	private static final String SSL_PROTOCOL = JETTY + '.' + JettyConstants.SSL_PROTOCOL;
@@ -76,12 +77,15 @@ public class WebApplication implements IApplication {
 			properties.put(JettyConstants.CUSTOMIZER_CLASS, "org.eclipse.orion.server.jettycustomizer.OrionJettyCustomizer");
 		}
 
+		String port = null;
+
 		if (httpsEnabled) {
 			LogHelper.log(new Status(IStatus.INFO, Activator.PI_JETTY, "Https is enabled", null)); //$NON-NLS-1$
 
 			properties.put(JettyConstants.HTTPS_ENABLED, true);
+			port = preferences.get(HTTPS_PORT, System.getProperty("org.eclipse.equinox.http.jetty.https.port", "8443")); //$NON-NLS-1$//$NON-NLS-2$
 			properties.put(JettyConstants.HTTPS_PORT,
-					new Integer(preferences.get(HTTPS_PORT, System.getProperty("org.eclipse.equinox.http.jetty.https.port", "8443")))); //$NON-NLS-1$//$NON-NLS-2$
+					new Integer(port));
 			properties.put(JettyConstants.SSL_KEYSTORE, preferences.get(SSL_KEYSTORE, "keystore")); //$NON-NLS-1$
 
 			LogHelper.log(new Status(IStatus.INFO, Activator.PI_JETTY, "Keystore absolute path is " + preferences.get(SSL_KEYSTORE, "keystore"))); //$NON-NLS-1$ //$NON-NLS-2$
@@ -89,6 +93,7 @@ public class WebApplication implements IApplication {
 			properties.put(JettyConstants.SSL_PASSWORD, preferences.get(SSL_PASSWORD, "password")); //$NON-NLS-1$
 			properties.put(JettyConstants.SSL_KEYPASSWORD, preferences.get(SSL_KEYPASSWORD, "password")); //$NON-NLS-1$
 			properties.put(JettyConstants.SSL_PROTOCOL, preferences.get(SSL_PROTOCOL, "SSLv3")); //$NON-NLS-1$
+			properties.put(JettyConstants.SSL_KEYSTORETYPE, preferences.get(SSL_KEYSTORETYPE, "JKS")); //$NON-NLS-1$
 
 			String httpsHost = System.getProperty("org.eclipse.equinox.http.jetty.https.host"); //$NON-NLS-1$
 			if (httpsHost != null) {
@@ -96,7 +101,6 @@ public class WebApplication implements IApplication {
 			}
 		}
 
-		String port = null;
 		if (!httpsEnabled) {
 			properties.put(JettyConstants.HTTP_ENABLED, true);
 			port = preferences.get(HTTP_PORT, System.getProperty("org.eclipse.equinox.http.jetty.http.port", "8080"));//$NON-NLS-1$ //$NON-NLS-2$
@@ -106,6 +110,8 @@ public class WebApplication implements IApplication {
 			if (httpHost != null) {
 				properties.put(JettyConstants.HTTP_HOST, httpHost);
 			}
+		} else {
+			properties.put(JettyConstants.HTTP_ENABLED, false);
 		}
 
 		// properties to help us filter orion content
