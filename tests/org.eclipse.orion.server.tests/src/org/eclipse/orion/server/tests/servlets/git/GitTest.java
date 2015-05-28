@@ -373,8 +373,10 @@ public abstract class GitTest extends FileSystemTest {
 		assertStatusUri(statusUri);
 		WebRequest request = getGetGitStatusRequest(statusUri);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject status = new JSONObject(response.getText());
+		assertTrue(HttpURLConnection.HTTP_OK == response.getResponseCode() || HttpURLConnection.HTTP_ACCEPTED == response.getResponseCode());
+		ServerStatus serverStatus = waitForTask(response);
+		assertTrue(serverStatus.toString(), serverStatus.isOK());
+		JSONObject status = serverStatus.getJsonData();
 		String cloneUri = status.getString(GitConstants.KEY_CLONE);
 		assertCloneUri(cloneUri);
 		return cloneUri;
@@ -1356,8 +1358,10 @@ public abstract class GitTest extends FileSystemTest {
 		assertStatusUri(statusUri);
 		WebRequest request = getGetGitStatusRequest(statusUri);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		JSONObject statusResponse = new JSONObject(response.getText());
+		assertTrue(HttpURLConnection.HTTP_OK == response.getResponseCode() || HttpURLConnection.HTTP_ACCEPTED == response.getResponseCode());
+		ServerStatus status = waitForTask(response);
+		assertTrue(status.toString(), status.isOK());
+		JSONObject statusResponse = status.getJsonData();
 
 		JSONArray statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_ADDED);
 		assertEquals(expected.getAdded(), statusArray.length());

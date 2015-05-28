@@ -642,8 +642,10 @@ public class GitStatusTest extends GitTest {
 			// get status
 			request = getGetGitStatusRequest(folder.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_STATUS));
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			JSONObject statusResponse = new JSONObject(response.getText());
+			assertTrue(HttpURLConnection.HTTP_OK == response.getResponseCode() || HttpURLConnection.HTTP_ACCEPTED == response.getResponseCode());
+			ServerStatus status = waitForTask(response);
+			assertTrue(status.toString(), status.isOK());
+			JSONObject statusResponse = status.getJsonData();
 			String cloneLocation = statusResponse.getString(GitConstants.KEY_CLONE);
 			assertCloneUri(cloneLocation);
 
@@ -660,7 +662,7 @@ public class GitStatusTest extends GitTest {
 			String branchLocation = clone.getString(GitConstants.KEY_BRANCH);
 			request = getGetRequest(branchLocation);
 			response = webConversation.getResponse(request);
-			ServerStatus status = waitForTask(response);
+			status = waitForTask(response);
 			assertTrue(status.toString(), status.isOK());
 			JSONObject branches = status.getJsonData();
 			assertEquals(Constants.MASTER, GitBranchTest.getCurrentBranch(branches).getString(ProtocolConstants.KEY_NAME));
