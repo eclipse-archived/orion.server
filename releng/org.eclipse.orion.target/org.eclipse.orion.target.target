@@ -4,9 +4,15 @@
 <unit id="org.eclipse.jetty.client" version="0.0.0"/>
 <unit id="org.eclipse.jetty.http" version="0.0.0"/>
 <unit id="org.eclipse.jetty.io" version="0.0.0"/>
+<unit id="org.eclipse.jetty.osgi.npn.fragment" version="0.0.0"/>
 <unit id="org.eclipse.jetty.proxy" version="0.0.0"/>
 <unit id="org.eclipse.jetty.server" version="0.0.0"/>
 <unit id="org.eclipse.jetty.servlet" version="0.0.0"/>
+<unit id="org.eclipse.jetty.spdy.client" version="0.0.0"/>
+<unit id="org.eclipse.jetty.spdy.core" version="0.0.0"/>
+<unit id="org.eclipse.jetty.spdy.http.server" version="0.0.0"/>
+<unit id="org.eclipse.jetty.spdy.http.common" version="0.0.0"/>
+<unit id="org.eclipse.jetty.spdy.server" version="0.0.0"/>
 <unit id="org.eclipse.jetty.websocket.api" version="0.0.0"/>
 <unit id="org.eclipse.jetty.websocket.client" version="0.0.0"/>
 <unit id="org.eclipse.jetty.websocket.common" version="0.0.0"/>
