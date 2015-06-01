@@ -34,7 +34,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.jetty.continuation"
+         id="org.eclipse.jetty.osgi.npn.fragment"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -55,7 +55,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.jetty.security"
+         id="org.eclipse.jetty.proxy"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -76,7 +76,56 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.jetty.servlets"
+         id="org.eclipse.jetty.spdy.client"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.jetty.spdy.core"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.jetty.spdy.http.server"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.jetty.spdy.http.common"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.jetty.spdy.server"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.jetty.websocket.api"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.jetty.websocket.client"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.jetty.websocket.common"
          download-size="0"
          install-size="0"
          version="0.0.0"
