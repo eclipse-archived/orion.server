@@ -156,7 +156,7 @@ echo "hudson client job is ${CLIENT_JOB}"
 CLIENT_WORKSPACE=${HUDSON_HOME}/jobs/${CLIENT_JOB}/workspace
 				
 if [ -d ${CLIENT_WORKSPACE}/built-js ] ; then
-	for file in built-editor.zip built-compare.zip ; do \
+	for file in built-editor.zip built-compare.zip built-codeEdit.zip ; do \
 		cp ${CLIENT_WORKSPACE}/built-js/${file} ${localDropDir}/${file}
 	echo "Copied ${file}"
 	done
