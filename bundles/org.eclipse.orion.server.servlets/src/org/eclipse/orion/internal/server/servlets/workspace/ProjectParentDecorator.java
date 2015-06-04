@@ -75,8 +75,7 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 			if (project == null) {
 				return;
 			}
-			String full = IOUtilities.getQueryParameter(request, "full");
-			addParents(base, representation, project, path, request, full);
+			addParents(base, representation, project, path, request, IOUtilities.getQueryParameter(request, "tree"));
 			//set the name of the project file to be the project name
 			if (path.segmentCount() == 2) {
 				String projectName = project.getFullName();
@@ -89,7 +88,7 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		}
 	}
 
-	private void addParents(URI resource, JSONObject representation, ProjectInfo project, IPath resourcePath, HttpServletRequest request, String full) throws JSONException {
+	private void addParents(URI resource, JSONObject representation, ProjectInfo project, IPath resourcePath, HttpServletRequest request, String tree) throws JSONException {
 		//start at parent of current resource
 		resourcePath = resourcePath.removeLastSegments(1).addTrailingSeparator();
 		JSONArray parents = new JSONArray();
@@ -97,7 +96,7 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		while (resourcePath.segmentCount() > 2) {
 			try {
 				URI uri = resource.resolve(new URI(null, null, resourcePath.toString(), null));
-				addParent(parents, resourcePath.lastSegment(), new URI(resource.getScheme(), resource.getAuthority(), uri.getPath(), uri.getQuery(), uri.getFragment()), resourcePath, request, full);
+				addParent(parents, resourcePath.lastSegment(), new URI(resource.getScheme(), resource.getAuthority(), uri.getPath(), uri.getQuery(), uri.getFragment()), resourcePath, request, tree);
 			} catch (URISyntaxException e) {
 				//ignore this parent
 				LogHelper.log(e);
@@ -108,7 +107,7 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		if (resourcePath.segmentCount() == 2) {
 			try {
 				URI uri = resource.resolve(new URI(null, null, resourcePath.toString(), null));
-				addParent(parents, project.getFullName(), new URI(resource.getScheme(), resource.getAuthority(), uri.getPath(), uri.getQuery(), uri.getFragment()), resourcePath, request, full);
+				addParent(parents, project.getFullName(), new URI(resource.getScheme(), resource.getAuthority(), uri.getPath(), uri.getQuery(), uri.getFragment()), resourcePath, request, tree);
 			} catch (URISyntaxException e) {
 				//ignore this project
 				LogHelper.log(e);
@@ -120,15 +119,16 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 	/**
 	 * Adds a parent resource representation to the parent array
 	 */
-	private void addParent(JSONArray parents, String name, URI location, IPath resourcePath, HttpServletRequest request, String full) throws JSONException {
+	private void addParent(JSONArray parents, String name, URI location, IPath resourcePath, HttpServletRequest request, String tree) throws JSONException {
 		JSONObject parent;
-		if (full != null) {
+		if (tree != null) {
 			try {
-				boolean compressed = "compressed".equals(full);
-				IFileStore dir = full != null ? NewFileServlet.getFileStore(request, resourcePath) : null;
+				boolean compressed = "compressed".equals(tree);
+				boolean decorated = "decorated".equals(tree);
+				IFileStore dir = NewFileServlet.getFileStore(request, resourcePath);
 				parent = ServletFileStoreHandler.toJSON(dir, dir.fetchInfo(EFS.NONE, null), compressed ? null : location);
 				DirectoryHandlerV1.encodeChildren(dir, location, parent, 1, !compressed);
-				if ("decorate".equals(full)) OrionServlet.decorateResponse(request, parent, this);
+				if (decorated) OrionServlet.decorateResponse(request, parent, this);
 			} catch (CoreException e) {
 				return;
 			}
