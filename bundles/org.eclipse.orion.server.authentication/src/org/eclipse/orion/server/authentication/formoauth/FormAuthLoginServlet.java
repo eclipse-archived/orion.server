@@ -33,6 +33,8 @@ import org.eclipse.orion.server.core.users.UserConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class FormAuthLoginServlet extends HttpServlet {
 
@@ -112,10 +114,14 @@ public class FormAuthLoginServlet extends HttpServlet {
 			return;
 		}
 
-		String user = req.getRemoteUser();
-		if (user == null) {
-			user = authenticationService.getAuthenticatedUser(req, resp);
-		}
+		//String user = req.getRemoteUser();
+		//// See Bugzilla 468670, this code is temporary
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
+		logger.warn("Login hard coded to: ahunter"); //$NON-NLS-1$ 
+		String user = "ahunter";
+		//if (user == null) {
+		//	user = authenticationService.getAuthenticatedUser(req, resp);
+		//}
 
 		if (user != null && ! pathInfo.startsWith("/oauth")) {
 			try {
