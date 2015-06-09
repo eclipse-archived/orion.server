@@ -71,7 +71,7 @@ public class GetOrgsCommand extends AbstractCFCommand {
 				JSONObject orgJSON = orgs.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).getJSONObject(k);
 				if (orgJSON.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).has(CFProtocolConstants.V2_KEY_REGION)){
 					String region = orgJSON.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_REGION);
-					if (!region.equals(target.getCloud().getRegion()))
+					if (target.getCloud().getRegion() != null && !target.getCloud().getRegion().endsWith(region))
 						continue;
 				}
 				
