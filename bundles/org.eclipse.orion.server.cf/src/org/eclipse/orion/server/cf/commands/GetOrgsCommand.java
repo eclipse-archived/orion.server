@@ -17,6 +17,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.httpclient.ConnectTimeoutException;
+import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -51,7 +52,13 @@ public class GetOrgsCommand extends AbstractCFCommand {
 
 			GetMethod getDomainsMethod = new GetMethod(orgsURI.toString());
 			HttpUtil.configureHttpMethod(getDomainsMethod, target.getCloud());
-			getDomainsMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
+			
+			List<NameValuePair> params = new ArrayList<NameValuePair>();
+			params.add(new NameValuePair("inline-relations-depth", "1"));
+			if (target.getCloud().getRegion() != null){
+				params.add(new NameValuePair("region", target.getCloud().getRegion()));
+			}
+			getDomainsMethod.setQueryString(params.toArray(new NameValuePair[params.size()]));
 
 			ServerStatus status = HttpUtil.executeMethod(getDomainsMethod);
 			if (!status.isOK())
@@ -69,11 +76,6 @@ public class GetOrgsCommand extends AbstractCFCommand {
 			int resources = orgs.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).length();
 			for (int k = 0; k < resources; ++k) {
 				JSONObject orgJSON = orgs.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).getJSONObject(k);
-				if (orgJSON.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).has(CFProtocolConstants.V2_KEY_REGION)){
-					String region = orgJSON.getJSONObject(CFProtocolConstants.V2_KEY_ENTITY).getString(CFProtocolConstants.V2_KEY_REGION);
-					if (target.getCloud().getRegion() != null && !target.getCloud().getRegion().endsWith(region))
-						continue;
-				}
 				
 				List<Space> spaces = new ArrayList<Space>();
 				status = getSpaces(spaces, orgJSON);
