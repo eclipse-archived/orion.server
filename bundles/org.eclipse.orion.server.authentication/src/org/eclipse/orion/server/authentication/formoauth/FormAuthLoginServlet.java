@@ -128,15 +128,6 @@ public class FormAuthLoginServlet extends HttpServlet {
 				// try to store the login timestamp in the user profile
 				UserInfo userInfo = OrionConfiguration.getMetaStore().readUser(user);
 				userInfo.setProperty(UserConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
-				
-				String cookieToCache = PreferenceHelper.getString("orion.cookie.cached"); //$NON-NLS-1$
-				Cookie[] cookies = req.getCookies();
-				for(int i = 0; i < cookies.length; i++){
-					if(cookieToCache != null && cookieToCache.equals(cookies[i].getName()) && cookies[i].getValue() != null){
-						userInfo.setProperty("/cookie/cached/" + cookieToCache, cookies[i].getValue().toString());
-					}
-				}
-				
 				OrionConfiguration.getMetaStore().updateUser(userInfo);
 			} catch (CoreException e) {
 				// just log that the login timestamp was not stored
