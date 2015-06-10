@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corporation and others.
+ * Copyright (c) 2010, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -91,8 +91,8 @@ public class PreferencesServlet extends OrionServlet {
 				result = toJSON(req, prefix.toString(), node);
 				//empty result should be treated as not found
 				if (result.length() == 0) {
-					handleNotFound(req, resp, HttpServletResponse.SC_NOT_FOUND);
-					return;
+					//the preference is not found, return an empty JSON object.
+					result = new JSONObject();
 				}
 			}
 			writeJSONResponse(req, resp, result);
