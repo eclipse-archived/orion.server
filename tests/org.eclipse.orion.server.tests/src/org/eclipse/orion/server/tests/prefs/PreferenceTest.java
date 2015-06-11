@@ -293,11 +293,12 @@ public class PreferenceTest extends FileSystemTest {
 	public void testGetNode() throws IOException, JSONException {
 		List<String> locations = getTestPreferenceNodes();
 		for (String location : locations) {
-			//unknown node should return 404
+			//unknown node should empty JSON
 			WebRequest request = new GetMethodWebRequest(location);
 			setAuthentication(request);
 			WebResponse response = webConversation.getResource(request);
-			assertEquals("1." + location, HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+			assertEquals("1." + location, HttpURLConnection.HTTP_OK, response.getResponseCode());
+			assertEquals("1." + location, "{}", response.getText());
 
 			//put a value
 			request = createSetPreferenceRequest(location, "Name", "Frodo");
