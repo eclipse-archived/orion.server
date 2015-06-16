@@ -124,20 +124,22 @@ public class Branch extends GitObject {
 	private JSONArray getRemotes() throws URISyntaxException, JSONException, IOException, CoreException {
 		String branchName = Repository.shortenRefName(ref.getName());
 		String remoteName = getConfig().getString(ConfigConstants.CONFIG_BRANCH_SECTION, branchName, ConfigConstants.CONFIG_KEY_REMOTE);
-		JSONArray result = new JSONArray();
 		List<RemoteConfig> remoteConfigs = RemoteConfig.getAllRemoteConfigs(getConfig());
 		ArrayList<JSONObject> remotes = new ArrayList<JSONObject>();
 		for (RemoteConfig remoteConfig : remoteConfigs) {
 			if (!remoteConfig.getFetchRefSpecs().isEmpty()) {
 				Remote r = new Remote(cloneLocation, db, remoteConfig.getName());
 				r.setNewBranch(branchName);
-				if (remoteConfig.getName().equals(remoteName)) {
+				// Ensure that the remote tracking branch is the first in the list.
+				// Insert at the beginning of the list as well when the remote tracking branch is not set but the branch has been pushed to the remote
+				if (remoteConfig.getName().equals(remoteName) || (remoteName == null && db.resolve(Constants.R_REMOTES + remoteConfig.getName() + "/" + branchName) != null)) {
 					remotes.add(0, r.toJSON());
 				} else {
 					remotes.add(r.toJSON());
 				}
 			}
 		}
+		JSONArray result = new JSONArray();
 		for (JSONObject remote : remotes) {
 			result.put(remote);
 		}
