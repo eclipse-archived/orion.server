@@ -65,7 +65,9 @@ public class CheckRouteCommand extends AbstractCFCommand {
 
 			URI routesURI = targetURI.resolve("/v2/routes/reserved/domain/" + domainId + "/host/" + hostName);
 			GetMethod getRouteMethod = new GetMethod(routesURI.toString());
-			HttpUtil.configureHttpMethod(getRouteMethod, target.getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(getRouteMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
 
 			getRouteStatus = HttpUtil.executeMethod(getRouteMethod);
 

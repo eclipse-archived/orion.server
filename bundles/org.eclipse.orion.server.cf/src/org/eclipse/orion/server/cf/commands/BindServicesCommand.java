@@ -65,7 +65,10 @@ public class BindServicesCommand extends AbstractCFApplicationCommand {
 				/* fetch all services */
 				URI servicesURI = targetURI.resolve("/v2/services"); //$NON-NLS-1$
 				GetMethod getServicesMethod = new GetMethod(servicesURI.toString());
-				HttpUtil.configureHttpMethod(getServicesMethod, target.getCloud());
+				ServerStatus confStatus = HttpUtil.configureHttpMethod(getServicesMethod, target.getCloud());
+				if (!confStatus.isOK())
+					return confStatus;
+				
 				getServicesMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 
 				/* send request */
@@ -99,7 +102,9 @@ public class BindServicesCommand extends AbstractCFApplicationCommand {
 
 						GetMethod getServiceMethod = new GetMethod(serviceInstancesURI2.toString());
 						getServiceMethod.setQueryString(pa);
-						HttpUtil.configureHttpMethod(getServiceMethod, target.getCloud());
+						confStatus = HttpUtil.configureHttpMethod(getServiceMethod, target.getCloud());
+						if (!confStatus.isOK())
+							return confStatus;
 
 						/* send request */
 						jobStatus = HttpUtil.executeMethod(getServiceMethod);
@@ -143,7 +148,9 @@ public class BindServicesCommand extends AbstractCFApplicationCommand {
 							/* create service instance */
 							URI serviceInstancesURI = targetURI.resolve("/v2/service_instances"); //$NON-NLS-1$
 							PostMethod createServiceMethod = new PostMethod(serviceInstancesURI.toString());
-							HttpUtil.configureHttpMethod(createServiceMethod, target.getCloud());
+							confStatus = HttpUtil.configureHttpMethod(createServiceMethod, target.getCloud());
+							if (!confStatus.isOK())
+								return confStatus;
 
 							/* set request body */
 							JSONObject createServiceRequest = new JSONObject();
@@ -165,7 +172,9 @@ public class BindServicesCommand extends AbstractCFApplicationCommand {
 						/* bind service to the application */
 						URI serviceBindingsURI = targetURI.resolve("/v2/service_bindings"); //$NON-NLS-1$
 						PostMethod bindServiceMethod = new PostMethod(serviceBindingsURI.toString());
-						HttpUtil.configureHttpMethod(bindServiceMethod, target.getCloud());
+						confStatus = HttpUtil.configureHttpMethod(bindServiceMethod, target.getCloud());
+						if (!confStatus.isOK())
+							return confStatus;
 
 						/* set request body */
 						JSONObject bindServiceRequest = new JSONObject();
@@ -194,7 +203,9 @@ public class BindServicesCommand extends AbstractCFApplicationCommand {
 
 						GetMethod getServiceMethod = new GetMethod(serviceInstancesURI.toString());
 						getServiceMethod.setQueryString(pa);
-						HttpUtil.configureHttpMethod(getServiceMethod, target.getCloud());
+						confStatus = HttpUtil.configureHttpMethod(getServiceMethod, target.getCloud());
+						if (!confStatus.isOK())
+							return confStatus;
 
 						/* send request */
 						jobStatus = HttpUtil.executeMethod(getServiceMethod);
@@ -225,7 +236,9 @@ public class BindServicesCommand extends AbstractCFApplicationCommand {
 						/* bind service to the application */
 						URI serviceBindingsURI = targetURI.resolve("/v2/service_bindings"); //$NON-NLS-1$
 						PostMethod bindServiceMethod = new PostMethod(serviceBindingsURI.toString());
-						HttpUtil.configureHttpMethod(bindServiceMethod, target.getCloud());
+						confStatus = HttpUtil.configureHttpMethod(bindServiceMethod, target.getCloud());
+						if (!confStatus.isOK())
+							return confStatus;
 
 						/* set request body */
 						JSONObject bindServiceRequest = new JSONObject();

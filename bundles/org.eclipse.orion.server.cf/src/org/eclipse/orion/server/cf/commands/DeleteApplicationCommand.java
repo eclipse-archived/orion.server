@@ -12,10 +12,14 @@ package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
 import java.util.ArrayList;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
@@ -57,7 +61,10 @@ public class DeleteApplicationCommand extends AbstractCFCommand {
 			String appsUrl = target.getSpace().getCFJSON().getJSONObject("entity").getString("apps_url"); //$NON-NLS-1$//$NON-NLS-2$
 			URI appsURI = targetURI.resolve(appsUrl);
 			GetMethod getAppsMethod = new GetMethod(appsURI.toString());
-			HttpUtil.configureHttpMethod(getAppsMethod, target.getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(getAppsMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
+			
 			getAppsMethod.setQueryString("q=name:" + appName + "&inline-relations-depth=1"); //$NON-NLS-1$ //$NON-NLS-2$
 
 			ServerStatus appsStatus = HttpUtil.executeMethod(getAppsMethod);
@@ -77,7 +84,9 @@ public class DeleteApplicationCommand extends AbstractCFCommand {
 				URI summaryAppURI = targetURI.resolve(summaryAppUrl);
 
 				GetMethod getSummaryMethod = new GetMethod(summaryAppURI.toString());
-				HttpUtil.configureHttpMethod(getSummaryMethod, target.getCloud());
+				confStatus = HttpUtil.configureHttpMethod(getSummaryMethod, target.getCloud());
+				if (!confStatus.isOK())
+					return confStatus;
 
 				ServerStatus getStatus = HttpUtil.executeMethod(getSummaryMethod);
 				if (!getStatus.isOK())
@@ -101,7 +110,10 @@ public class DeleteApplicationCommand extends AbstractCFCommand {
 			URI appURI = targetURI.resolve("/v2/apps/" + application.getGuid()); //$NON-NLS-1$
 
 			DeleteMethod deleteAppMethod = new DeleteMethod(appURI.toString());
-			HttpUtil.configureHttpMethod(deleteAppMethod, target.getCloud());
+			confStatus = HttpUtil.configureHttpMethod(deleteAppMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
+			
 			deleteAppMethod.setQueryString("recursive=true"); //$NON-NLS-1$
 
 			ServerStatus status = HttpUtil.executeMethod(deleteAppMethod);

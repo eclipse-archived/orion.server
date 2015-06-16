@@ -12,8 +12,12 @@ package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
 import java.util.Iterator;
+
 import javax.servlet.http.HttpServletResponse;
-import org.apache.commons.httpclient.methods.*;
+
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PutMethod;
+import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
@@ -59,7 +63,10 @@ public class StartAppCommand extends AbstractCFCommand {
 			URI appURI = targetURI.resolve(appUrl);
 
 			PutMethod startMethod = new PutMethod(appURI.toString());
-			HttpUtil.configureHttpMethod(startMethod, target.getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(startMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
+			
 			startMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 
 			JSONObject startCommand = new JSONObject();
@@ -98,7 +105,9 @@ public class StartAppCommand extends AbstractCFCommand {
 				URI appInstancesURI = targetURI.resolve(appInstancesUrl);
 
 				GetMethod getInstancesMethod = new GetMethod(appInstancesURI.toString());
-				HttpUtil.configureHttpMethod(getInstancesMethod, target.getCloud());
+				confStatus = HttpUtil.configureHttpMethod(getInstancesMethod, target.getCloud());
+				if (!confStatus.isOK())
+					return confStatus;
 
 				checkAppStatus = HttpUtil.executeMethod(getInstancesMethod);
 				if (!checkAppStatus.isOK()) {

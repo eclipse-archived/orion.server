@@ -11,7 +11,9 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
@@ -40,8 +42,8 @@ public class GetInfoCommand extends AbstractCFCommand {
 			URI infoURI = URIUtil.toURI(getCloud().getUrl()).resolve("/v2/info");
 
 			GetMethod getInfoMethod = new GetMethod(infoURI.toString());
-			HttpUtil.configureHttpMethod(getInfoMethod, getCloud());
-
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(getInfoMethod, getCloud());
+			/* Getting info when not authenticated should not fail */
 			ServerStatus status = HttpUtil.executeMethod(getInfoMethod);
 			return status;
 		} catch (Exception e) {

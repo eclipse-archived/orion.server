@@ -76,7 +76,10 @@ public class GetRoutesCommand extends AbstractCFCommand {
 
 				URI routesURI = targetURI.resolve("/v2/routes");
 				GetMethod getRouteMethod = new GetMethod(routesURI.toString());
-				HttpUtil.configureHttpMethod(getRouteMethod, target.getCloud());
+				ServerStatus confStatus = HttpUtil.configureHttpMethod(getRouteMethod, target.getCloud());
+				if (!confStatus.isOK())
+					return confStatus;
+				
 				getRouteMethod.setQueryString("inline-relations-depth=1&q=" + URLEncoder.encode(CFProtocolConstants.V2_KEY_HOST + ":" + hostName + ";" + CFProtocolConstants.V2_KEY_DOMAIN_GUID + ":" + domainId, "UTF8"));
 
 				getRouteStatus = HttpUtil.executeMethod(getRouteMethod);
@@ -88,7 +91,10 @@ public class GetRoutesCommand extends AbstractCFCommand {
 
 				URI routesURI = targetURI.resolve(routesURL);
 				GetMethod getRoutesMethod = new GetMethod(routesURI.toString());
-				HttpUtil.configureHttpMethod(getRoutesMethod, target.getCloud());
+				ServerStatus confStatus = HttpUtil.configureHttpMethod(getRoutesMethod, target.getCloud());
+				if (!confStatus.isOK())
+					return confStatus;
+				
 				getRoutesMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 
 				getRouteStatus = HttpUtil.executeMethod(getRoutesMethod);

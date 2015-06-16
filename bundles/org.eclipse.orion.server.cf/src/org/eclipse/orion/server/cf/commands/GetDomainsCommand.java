@@ -78,7 +78,9 @@ public class GetDomainsCommand extends AbstractCFCommand {
 				URI privateDomainsURI = targetURI.resolve(privateDomainsURL);
 
 				GetMethod getPrivateDomainMethod = new GetMethod(privateDomainsURI.toString());
-				HttpUtil.configureHttpMethod(getPrivateDomainMethod, target.getCloud());
+				ServerStatus confStatus = HttpUtil.configureHttpMethod(getPrivateDomainMethod, target.getCloud());
+				if (!confStatus.isOK())
+					return confStatus;
 
 				if (domainName != null)
 					getPrivateDomainMethod.setQueryString("q=" + URLEncoder.encode(CFProtocolConstants.V2_KEY_NAME + ":" + domainName, ("UTF8")));
@@ -106,7 +108,9 @@ public class GetDomainsCommand extends AbstractCFCommand {
 				URI sharedDomainsURI = targetURI.resolve("/v2/shared_domains");
 
 				GetMethod getSharedDomainMethod = new GetMethod(sharedDomainsURI.toString());
-				HttpUtil.configureHttpMethod(getSharedDomainMethod, target.getCloud());
+				ServerStatus confStatus = HttpUtil.configureHttpMethod(getSharedDomainMethod, target.getCloud());
+				if (!confStatus.isOK())
+					return confStatus;
 
 				if (domainName != null) {
 					getSharedDomainMethod.setQueryString("q=" + URLEncoder.encode(CFProtocolConstants.V2_KEY_NAME + ":" + domainName, ("UTF8")));

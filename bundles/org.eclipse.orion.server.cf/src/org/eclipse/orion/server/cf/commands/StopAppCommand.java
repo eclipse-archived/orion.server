@@ -11,7 +11,9 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
 import org.eclipse.core.runtime.IStatus;
@@ -47,7 +49,10 @@ public class StopAppCommand extends AbstractCFCommand {
 			URI appURI = targetURI.resolve(appUrl);
 
 			PutMethod stopMethod = new PutMethod(appURI.toString());
-			HttpUtil.configureHttpMethod(stopMethod, target.getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(stopMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
+			
 			stopMethod.setQueryString("inline-relations-depth=1");
 
 			JSONObject stopComand = new JSONObject();

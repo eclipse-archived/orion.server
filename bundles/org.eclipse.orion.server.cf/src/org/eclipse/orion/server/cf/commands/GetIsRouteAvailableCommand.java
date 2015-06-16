@@ -11,7 +11,9 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
@@ -52,7 +54,9 @@ public class GetIsRouteAvailableCommand extends AbstractCFCommand {
 			URI requestURI = targetURI.resolve(path);
 
 			GetMethod getIsRouteAvailableMethod = new GetMethod(requestURI.toString());
-			HttpUtil.configureHttpMethod(getIsRouteAvailableMethod, target.getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(getIsRouteAvailableMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
 
 			return HttpUtil.executeMethod(getIsRouteAvailableMethod);
 

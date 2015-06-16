@@ -11,10 +11,14 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
@@ -57,7 +61,9 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 			URI appsURI = targetURI.resolve("/v2/apps"); //$NON-NLS-1$
 
 			PostMethod createAppMethod = new PostMethod(appsURI.toString());
-			HttpUtil.configureHttpMethod(createAppMethod, target.getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(createAppMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
 
 			/* set request body */
 			JSONObject createAppRequst = new JSONObject();

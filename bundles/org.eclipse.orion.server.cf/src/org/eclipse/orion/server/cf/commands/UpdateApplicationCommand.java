@@ -11,10 +11,14 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.apache.commons.httpclient.methods.StringRequestEntity;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
@@ -55,7 +59,10 @@ public class UpdateApplicationCommand extends AbstractCFCommand {
 			URI appURI = targetURI.resolve(application.getAppJSON().getString(CFProtocolConstants.V2_KEY_URL));
 
 			PutMethod updateApplicationMethod = new PutMethod(appURI.toString());
-			HttpUtil.configureHttpMethod(updateApplicationMethod, target.getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(updateApplicationMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
+			
 			updateApplicationMethod.setQueryString("async=true&inline-relations-depth=1"); //$NON-NLS-1$
 
 			/* set request body */

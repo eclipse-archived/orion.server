@@ -11,11 +11,15 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.methods.DeleteMethod;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.orion.server.cf.objects.*;
+import org.eclipse.orion.server.cf.objects.App;
+import org.eclipse.orion.server.cf.objects.Route;
+import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
@@ -46,7 +50,10 @@ public class UnmapRouteCommand extends AbstractCFCommand {
 			/* unmap route from application */
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			DeleteMethod unmapRouteMethod = new DeleteMethod(targetURI.resolve("/v2/apps/" + app.getGuid() + "/routes/" + route.getGuid()).toString()); //$NON-NLS-1$//$NON-NLS-2$
-			HttpUtil.configureHttpMethod(unmapRouteMethod, target.getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(unmapRouteMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
+			
 			return HttpUtil.executeMethod(unmapRouteMethod);
 
 		} catch (Exception e) {

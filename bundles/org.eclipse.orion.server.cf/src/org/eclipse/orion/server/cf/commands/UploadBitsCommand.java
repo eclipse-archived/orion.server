@@ -12,11 +12,16 @@ package org.eclipse.orion.server.cf.commands;
 
 import java.io.File;
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.httpclient.methods.PutMethod;
-import org.apache.commons.httpclient.methods.multipart.*;
+import org.apache.commons.httpclient.methods.multipart.FilePart;
+import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
+import org.apache.commons.httpclient.methods.multipart.Part;
+import org.apache.commons.httpclient.methods.multipart.StringPart;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
@@ -24,7 +29,9 @@ import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.ds.IDeploymentPackager;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
-import org.eclipse.orion.server.cf.utils.*;
+import org.eclipse.orion.server.cf.utils.HttpUtil;
+import org.eclipse.orion.server.cf.utils.MultiServerStatus;
+import org.eclipse.orion.server.cf.utils.PackageUtils;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
@@ -110,7 +117,9 @@ public class UploadBitsCommand extends AbstractCFApplicationCommand {
 				/* check whether job has finished */
 				URI jobLocation = targetURI.resolve(resp.getJSONObject(CFProtocolConstants.V2_KEY_METADATA).getString(CFProtocolConstants.V2_KEY_URL));
 				GetMethod jobRequest = new GetMethod(jobLocation.toString());
-				HttpUtil.configureHttpMethod(jobRequest, target.getCloud());
+				ServerStatus confStatus = HttpUtil.configureHttpMethod(jobRequest, target.getCloud());
+				if (!confStatus.isOK())
+					return confStatus;
 
 				/* send request */
 				jobStatus = HttpUtil.executeMethod(jobRequest);

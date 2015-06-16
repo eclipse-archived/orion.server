@@ -11,9 +11,13 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -42,7 +46,9 @@ public class GetServiceCommand extends AbstractCFCommand {
 			URI serviceInstanceURI = targetURI.resolve("/v2/services/" + serviceGuid); //$NON-NLS-1$//$NON-NLS-2$
 
 			GetMethod getServiceMethod = new GetMethod(serviceInstanceURI.toString());
-			HttpUtil.configureHttpMethod(getServiceMethod, target.getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(getServiceMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
 
 			ServerStatus getStatus = HttpUtil.executeMethod(getServiceMethod);
 			if (!getStatus.isOK())

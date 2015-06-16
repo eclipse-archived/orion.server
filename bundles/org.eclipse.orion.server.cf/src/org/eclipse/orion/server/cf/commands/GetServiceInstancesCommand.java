@@ -11,10 +11,14 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.objects.Service;
 import org.eclipse.orion.server.cf.objects.Target;
@@ -63,7 +67,9 @@ public class GetServiceInstancesCommand extends AbstractCFCommand {
 
 				GetMethod getServiceInstancesMethod = new GetMethod(serviceInstancesURI.toString());
 				getServiceInstancesMethod.setQueryString(pa);
-				HttpUtil.configureHttpMethod(getServiceInstancesMethod, target.getCloud());
+				ServerStatus confStatus = HttpUtil.configureHttpMethod(getServiceInstancesMethod, target.getCloud());
+				if (!confStatus.isOK())
+					return confStatus;
 
 				/* send request */
 				ServerStatus jobStatus = HttpUtil.executeMethod(getServiceInstancesMethod);

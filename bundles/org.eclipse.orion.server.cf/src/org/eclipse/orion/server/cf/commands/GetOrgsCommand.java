@@ -51,7 +51,9 @@ public class GetOrgsCommand extends AbstractCFCommand {
 			URI orgsURI = targetURI.resolve("/v2/organizations");
 
 			GetMethod getDomainsMethod = new GetMethod(orgsURI.toString());
-			HttpUtil.configureHttpMethod(getDomainsMethod, target.getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(getDomainsMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
 			
 			List<NameValuePair> params = new ArrayList<NameValuePair>();
 			params.add(new NameValuePair("inline-relations-depth", "1"));
@@ -106,7 +108,10 @@ public class GetOrgsCommand extends AbstractCFCommand {
 		URI spaceURI = targetURI.resolve(orgJSON.getJSONObject("entity").getString("spaces_url"));
 
 		GetMethod getDomainsMethod = new GetMethod(spaceURI.toString());
-		HttpUtil.configureHttpMethod(getDomainsMethod, target.getCloud());
+		ServerStatus confStatus = HttpUtil.configureHttpMethod(getDomainsMethod, target.getCloud());
+		if (!confStatus.isOK())
+			return confStatus;
+		
 		getDomainsMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 
 		ServerStatus status = HttpUtil.executeMethod(getDomainsMethod);

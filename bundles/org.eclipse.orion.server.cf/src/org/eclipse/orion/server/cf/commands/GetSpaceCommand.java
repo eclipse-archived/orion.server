@@ -11,10 +11,14 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.ConnectTimeoutException;
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.cf.objects.Space;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -48,7 +52,10 @@ public class GetSpaceCommand extends AbstractCFCommand {
 			URI spacesURI = targetURI.resolve("/v2/spaces/" + this.spaceId);
 
 			GetMethod getSpaceMethod = new GetMethod(spacesURI.toString());
-			HttpUtil.configureHttpMethod(getSpaceMethod, getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(getSpaceMethod, getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
+			
 			getSpaceMethod.setQueryString("inline-relations-depth=1"); //$NON-NLS-1$
 
 			ServerStatus status = HttpUtil.executeMethod(getSpaceMethod);

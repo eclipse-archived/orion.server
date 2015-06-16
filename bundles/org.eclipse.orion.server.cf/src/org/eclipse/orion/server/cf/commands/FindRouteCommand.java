@@ -11,9 +11,13 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.CFProtocolConstants;
 import org.eclipse.orion.server.cf.manifest.v2.InvalidAccessException;
 import org.eclipse.orion.server.cf.manifest.v2.ManifestParseTree;
@@ -59,7 +63,10 @@ public class FindRouteCommand extends AbstractCFCommand {
 			URI routesURI = targetURI.resolve("/v2/routes"); //$NON-NLS-1$
 
 			GetMethod findRouteMethod = new GetMethod(routesURI.toString());
-			HttpUtil.configureHttpMethod(findRouteMethod, target.getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(findRouteMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
+			
 			findRouteMethod.setQueryString("inline-relations-depth=1&q=host:" + appHost + ";domain_guid:" + domainGUID); //$NON-NLS-1$ //$NON-NLS-2$
 
 			ServerStatus status = HttpUtil.executeMethod(findRouteMethod);

@@ -11,7 +11,9 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.NameValuePair;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.IStatus;
@@ -48,7 +50,10 @@ public class GetServiceByNameCommand extends AbstractCFCommand {
 			};
 			getServicesMethod.setQueryString(params);
 
-			HttpUtil.configureHttpMethod(getServicesMethod, target.getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(getServicesMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
+			
 			return HttpUtil.executeMethod(getServicesMethod);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when performing operation {0}", commandName); //$NON-NLS-1$

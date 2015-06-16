@@ -11,7 +11,9 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.methods.PutMethod;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
@@ -47,7 +49,10 @@ public class MapRouteCommand extends AbstractCFCommand {
 			/* attach route to application */
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			PutMethod attachRouteMethod = new PutMethod(targetURI.resolve("/v2/apps/" + application.getGuid() + "/routes/" + routeGUID).toString()); //$NON-NLS-1$//$NON-NLS-2$
-			HttpUtil.configureHttpMethod(attachRouteMethod, target.getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(attachRouteMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
+			
 			return HttpUtil.executeMethod(attachRouteMethod);
 
 		} catch (Exception e) {

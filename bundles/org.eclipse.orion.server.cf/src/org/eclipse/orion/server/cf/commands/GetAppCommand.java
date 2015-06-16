@@ -14,9 +14,13 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.ExpiryCache;
 import org.eclipse.orion.server.cf.objects.App;
 import org.eclipse.orion.server.cf.objects.Target;
@@ -65,7 +69,10 @@ public class GetAppCommand extends AbstractCFCommand {
 			String appsUrl = target.getSpace().getCFJSON().getJSONObject("entity").getString("apps_url");
 			URI appsURI = targetURI.resolve(appsUrl);
 			GetMethod getAppsMethod = new GetMethod(appsURI.toString());
-			HttpUtil.configureHttpMethod(getAppsMethod, target.getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(getAppsMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
+			
 			getAppsMethod.setQueryString("q=name:" + URLEncoder.encode(name, "UTF8") + "&inline-relations-depth=1");
 
 			ServerStatus getStatus = HttpUtil.executeMethod(getAppsMethod);
@@ -84,7 +91,9 @@ public class GetAppCommand extends AbstractCFCommand {
 			URI summaryAppURI = targetURI.resolve(summaryAppUrl);
 
 			GetMethod getSummaryMethod = new GetMethod(summaryAppURI.toString());
-			HttpUtil.configureHttpMethod(getSummaryMethod, target.getCloud());
+			confStatus = HttpUtil.configureHttpMethod(getSummaryMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
 
 			getStatus = HttpUtil.executeMethod(getSummaryMethod);
 			if (!getStatus.isOK())

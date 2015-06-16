@@ -11,9 +11,13 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.cf.objects.Route;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
@@ -44,7 +48,9 @@ public class GetRouteByGuidCommand extends AbstractCFCommand {
 			// Get the app
 			URI appsURI = targetURI.resolve("/v2/routes/" + routeGuid);
 			GetMethod getRoutesMethod = new GetMethod(appsURI.toString());
-			HttpUtil.configureHttpMethod(getRoutesMethod, getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(getRoutesMethod, getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
 
 			ServerStatus getStatus = HttpUtil.executeMethod(getRoutesMethod);
 			if (!getStatus.isOK())

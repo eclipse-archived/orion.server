@@ -11,15 +11,21 @@
 package org.eclipse.orion.server.cf.commands;
 
 import java.net.URI;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.httpclient.methods.GetMethod;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.server.cf.objects.Space;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +97,10 @@ public class SetSpaceCommand extends AbstractCFCommand {
 			URI spaceURI = targetURI.resolve(spaceUrl);
 
 			GetMethod getMethod = new GetMethod(spaceURI.toString());
-			HttpUtil.configureHttpMethod(getMethod, target.getCloud());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(getMethod, target.getCloud());
+			if (!confStatus.isOK())
+				return confStatus;
+			
 			ServerStatus getStatus = HttpUtil.executeMethod(getMethod);
 			if (!getStatus.isOK())
 				return getStatus;

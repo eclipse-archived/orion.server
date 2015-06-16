@@ -34,15 +34,26 @@ public class HttpUtil {
 	 */
 	private static final int DEFAULT_SOCKET_TIMEOUT = 300000;//five minutes
 
-	public static void configureHttpMethod(HttpMethod method, Cloud cloud) throws JSONException {
+	public static ServerStatus configureHttpMethod(HttpMethod method, Cloud cloud) throws JSONException {
 		method.addRequestHeader(new Header("Accept", "application/json"));
 		method.addRequestHeader(new Header("Content-Type", "application/json"));
 		//set default socket timeout for connection
 		HttpMethodParams params = method.getParams();
 		params.setSoTimeout(DEFAULT_SOCKET_TIMEOUT);
 		method.setParams(params);
-		if (cloud.getAccessToken() != null)
+		if (cloud.getAccessToken() != null){
 			method.addRequestHeader(new Header("Authorization", "bearer " + cloud.getAccessToken().getString("access_token")));
+			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK);
+		}
+		
+		JSONObject errorJSON = new JSONObject();
+		try {
+			errorJSON.put(CFProtocolConstants.V2_KEY_ERROR_CODE, "CF-NotAuthenticated");
+			errorJSON.put(CFProtocolConstants.V2_KEY_ERROR_DESCRIPTION, "Not authenticated");
+		} catch (JSONException e) {
+			// do nothing
+		}
+		return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, "Not authenticated", errorJSON, null);
 	}
 
 	public static ServerStatus executeMethod(HttpMethodBase method) throws HttpException, IOException, JSONException {
