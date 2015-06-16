@@ -50,8 +50,8 @@ public class GetOrgsCommand extends AbstractCFCommand {
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			URI orgsURI = targetURI.resolve("/v2/organizations");
 
-			GetMethod getDomainsMethod = new GetMethod(orgsURI.toString());
-			ServerStatus confStatus = HttpUtil.configureHttpMethod(getDomainsMethod, target.getCloud());
+			GetMethod getOrgsMethod = new GetMethod(orgsURI.toString());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(getOrgsMethod, target.getCloud());
 			if (!confStatus.isOK())
 				return confStatus;
 			
@@ -60,14 +60,14 @@ public class GetOrgsCommand extends AbstractCFCommand {
 			if (target.getCloud().getRegion() != null){
 				params.add(new NameValuePair("region", target.getCloud().getRegion()));
 			}
-			getDomainsMethod.setQueryString(params.toArray(new NameValuePair[params.size()]));
+			getOrgsMethod.setQueryString(params.toArray(new NameValuePair[params.size()]));
 
-			ServerStatus status = HttpUtil.executeMethod(getDomainsMethod);
-			if (!status.isOK())
-				return status;
+			ServerStatus getOrgsStatus = HttpUtil.executeMethod(getOrgsMethod);
+			if (!getOrgsStatus.isOK() && getOrgsStatus.getHttpCode() != HttpServletResponse.SC_PARTIAL_CONTENT)
+				return getOrgsStatus;
 
 			/* extract available orgs */
-			JSONObject orgs = status.getJsonData();
+			JSONObject orgs = getOrgsStatus.getJsonData();
 
 			if (orgs == null || orgs.optInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS, 0) < 1) {
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NO_CONTENT, "Server did not return any organizations.", null);
@@ -80,9 +80,9 @@ public class GetOrgsCommand extends AbstractCFCommand {
 				JSONObject orgJSON = orgs.getJSONArray(CFProtocolConstants.V2_KEY_RESOURCES).getJSONObject(k);
 				
 				List<Space> spaces = new ArrayList<Space>();
-				status = getSpaces(spaces, orgJSON);
-				if (!status.isOK())
-					return status;
+				ServerStatus getSpacesStatus = getSpaces(spaces, orgJSON);
+				if (!getSpacesStatus.isOK())
+					return getSpacesStatus;
 				
 				OrgWithSpaces orgWithSpaces = new OrgWithSpaces();
 				orgWithSpaces.setCFJSON(orgJSON);

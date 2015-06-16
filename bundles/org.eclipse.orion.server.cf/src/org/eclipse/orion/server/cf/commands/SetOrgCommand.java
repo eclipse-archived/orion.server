@@ -92,19 +92,19 @@ public class SetOrgCommand extends AbstractCFCommand {
 	public ServerStatus _doIt() {
 		try {
 
-			URI infoURI = URIUtil.toURI(target.getUrl());
-			infoURI = infoURI.resolve("/v2/organizations"); //$NON-NLS-1$
+			URI targetURI = URIUtil.toURI(target.getUrl());
+			URI orgsURI = targetURI.resolve("/v2/organizations"); //$NON-NLS-1$
 
-			GetMethod getMethod = new GetMethod(infoURI.toString());
-			ServerStatus confStatus = HttpUtil.configureHttpMethod(getMethod, target.getCloud());
+			GetMethod getOrgsMethod = new GetMethod(orgsURI.toString());
+			ServerStatus confStatus = HttpUtil.configureHttpMethod(getOrgsMethod, target.getCloud());
 			if (!confStatus.isOK())
 				return confStatus;
 			
-			ServerStatus getStatus = HttpUtil.executeMethod(getMethod);
-			if (!getStatus.isOK())
-				return getStatus;
+			ServerStatus getOrgsStatus = HttpUtil.executeMethod(getOrgsMethod);
+			if (!getOrgsStatus.isOK() && confStatus.getHttpCode() != HttpServletResponse.SC_PARTIAL_CONTENT)
+				return getOrgsStatus;
 
-			JSONObject result = getStatus.getJsonData();
+			JSONObject result = getOrgsStatus.getJsonData();
 			JSONArray orgs = result.getJSONArray("resources"); //$NON-NLS-1$
 
 			if (orgs.length() == 0)
