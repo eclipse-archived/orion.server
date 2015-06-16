@@ -13,12 +13,14 @@ package org.eclipse.orion.server.git.objects;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
@@ -121,14 +123,23 @@ public class Branch extends GitObject {
 	@PropertyDescription(name = GitConstants.KEY_REMOTE)
 	private JSONArray getRemotes() throws URISyntaxException, JSONException, IOException, CoreException {
 		String branchName = Repository.shortenRefName(ref.getName());
+		String remoteName = getConfig().getString(ConfigConstants.CONFIG_BRANCH_SECTION, branchName, ConfigConstants.CONFIG_KEY_REMOTE);
 		JSONArray result = new JSONArray();
 		List<RemoteConfig> remoteConfigs = RemoteConfig.getAllRemoteConfigs(getConfig());
+		ArrayList<JSONObject> remotes = new ArrayList<JSONObject>();
 		for (RemoteConfig remoteConfig : remoteConfigs) {
 			if (!remoteConfig.getFetchRefSpecs().isEmpty()) {
 				Remote r = new Remote(cloneLocation, db, remoteConfig.getName());
 				r.setNewBranch(branchName);
-				result.put(r.toJSON());
+				if (remoteConfig.getName().equals(remoteName)) {
+					remotes.add(0, r.toJSON());
+				} else {
+					remotes.add(r.toJSON());
+				}
 			}
+		}
+		for (JSONObject remote : remotes) {
+			result.put(remote);
 		}
 		return result;
 	}
