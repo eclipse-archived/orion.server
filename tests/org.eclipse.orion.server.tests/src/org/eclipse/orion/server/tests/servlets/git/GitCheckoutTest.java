@@ -588,7 +588,7 @@ public class GitCheckoutTest extends GitTest {
 			response = branch(branchesLocation, "branch", remoteBranchName);
 			JSONObject branch = new JSONObject(response.getText());
 			JSONArray remoteBranchLocations = branch.getJSONArray(GitConstants.KEY_REMOTE);
-			assertEquals(1, remoteBranchLocations.length());
+			assertTrue(remoteBranchLocations.length() >= 1);
 			assertEquals("secondary", remoteBranchLocations.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
 			assertEquals("secondary/branch", remoteBranchLocations.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
 
@@ -609,7 +609,7 @@ public class GitCheckoutTest extends GitTest {
 			response = branch(branchesLocation, "test", remoteBranchName);
 			branch = new JSONObject(response.getText());
 			remoteBranchLocations = branch.getJSONArray(GitConstants.KEY_REMOTE);
-			assertEquals(1, remoteBranchLocations.length());
+			assertTrue(remoteBranchLocations.length() >= 1);
 			assertEquals("origin", remoteBranchLocations.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
 			assertEquals("origin/test", remoteBranchLocations.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
 		}

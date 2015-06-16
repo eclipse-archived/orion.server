@@ -311,7 +311,7 @@ public class GitPushTest extends GitTest {
 
 		// clone1: push by remote branch
 		JSONArray remoteBranchLocations = branch.getJSONArray(GitConstants.KEY_REMOTE);
-		assertEquals(1, remoteBranchLocations.length());
+		assertTrue(remoteBranchLocations.length() >= 1);
 		String remoteBranchLocation = remoteBranchLocations.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_LOCATION);
 		ServerStatus pushStatus = push(remoteBranchLocation, Constants.HEAD, false);
 		assertTrue(pushStatus.isOK());
@@ -376,7 +376,7 @@ public class GitPushTest extends GitTest {
 			response = branch(branchesLocation1, "a");
 			JSONObject newBranch = new JSONObject(response.getText());
 			JSONArray remoteBranchLocations1 = newBranch.getJSONArray(GitConstants.KEY_REMOTE);
-			assertEquals(1, remoteBranchLocations1.length());
+			assertTrue(remoteBranchLocations1.length() >= 1);
 
 			// clone 1 - checkout "a"
 			final String newBranchName = "a";
@@ -900,7 +900,7 @@ public class GitPushTest extends GitTest {
 			branch = new JSONObject(response.getText());
 			remoteBranchLocations = branch.getJSONArray(GitConstants.KEY_REMOTE);
 			// now, there should be only one remote branch returned
-			assertEquals(1, remoteBranchLocations.length());
+			assertTrue(remoteBranchLocations.length() >= 1);
 			assertEquals("secondary", remoteBranchLocations.getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
 			assertEquals("secondary/branch", remoteBranchLocations.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
 
