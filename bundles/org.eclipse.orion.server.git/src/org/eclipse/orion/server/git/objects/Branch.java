@@ -19,7 +19,6 @@ import java.util.List;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Ref;
@@ -123,26 +122,12 @@ public class Branch extends GitObject {
 	private JSONArray getRemotes() throws URISyntaxException, JSONException, IOException, CoreException {
 		String branchName = Repository.shortenRefName(ref.getName());
 		JSONArray result = new JSONArray();
-		String remoteName = getConfig().getString(ConfigConstants.CONFIG_BRANCH_SECTION, branchName, ConfigConstants.CONFIG_KEY_REMOTE);
-		if (remoteName != null) {
-			RemoteConfig remoteConfig = new RemoteConfig(getConfig(), remoteName);
+		List<RemoteConfig> remoteConfigs = RemoteConfig.getAllRemoteConfigs(getConfig());
+		for (RemoteConfig remoteConfig : remoteConfigs) {
 			if (!remoteConfig.getFetchRefSpecs().isEmpty()) {
-				Remote remote = new Remote(cloneLocation, db, remoteName);
-				remote.setNewBranch(branchName);
-				result.put(remote.toJSON());
-			}
-		} else {
-			List<RemoteConfig> remoteConfigs = RemoteConfig.getAllRemoteConfigs(getConfig());
-			for (RemoteConfig remoteConfig : remoteConfigs) {
-				if (!remoteConfig.getFetchRefSpecs().isEmpty()) {
-					Remote r = new Remote(cloneLocation, db, remoteConfig.getName());
-					r.setNewBranch(branchName);
-					if (db.resolve(Constants.R_REMOTES + remoteConfig.getName() + "/" + branchName) != null) { //$NON-NLS-1$
-						// it's an existing branch, not a new one, use it as filter
-						return new JSONArray().put(r.toJSON());
-					}
-					result.put(r.toJSON());
-				}
+				Remote r = new Remote(cloneLocation, db, remoteConfig.getName());
+				r.setNewBranch(branchName);
+				result.put(r.toJSON());
 			}
 		}
 		return result;
