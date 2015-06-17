@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.objects;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -25,6 +24,7 @@ public class Cloud extends CFObject {
 	public static final String RESOURCE = "cloud"; //$NON-NLS-1$
 	public static final String TYPE = "Cloud"; //$NON-NLS-1$
 
+	private String regionId;
 	private URL targetUrl;
 	private URL manageUrl;
 	private URL uaaUrl;
@@ -37,19 +37,21 @@ public class Cloud extends CFObject {
 		this.manageUrl = manageUrl;
 		this.userId = userId;
 	}
+	
+	protected Cloud(String regionId, URL targetUrl, URL manageUrl, String userId) {
+		super();
+		this.regionId = regionId;
+		this.targetUrl = targetUrl;
+		this.manageUrl = manageUrl;
+		this.userId = userId;
+	}
 
 	public URL getUrl() {
-		String[] urlParts = targetUrl.toString().split("#");
-		try {
-			return new URL(urlParts[0]);
-		} catch (MalformedURLException e) {
-			return targetUrl;
-		}
+		return targetUrl;
 	}
 	
 	public String getRegion(){
-		String[] urlParts = targetUrl.toString().split("#");
-		return urlParts.length > 1 ? urlParts[1] : null;
+		return regionId;
 	}
 
 	public URL getManageUrl() {

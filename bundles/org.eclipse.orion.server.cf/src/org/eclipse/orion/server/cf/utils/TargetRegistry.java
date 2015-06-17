@@ -155,9 +155,13 @@ public class TargetRegistry {
 		protected DarkCloud(URL apiUrl, URL manageUrl, String userId) {
 			super(apiUrl, manageUrl, userId);
 		}
+		
+		protected DarkCloud(String regionId, URL apiUrl, URL manageUrl, String userId) {
+			super(regionId, apiUrl, manageUrl, userId);
+		}
 
 		protected DarkCloud(Cloud cloud, String userId) {
-			super(cloud.getUrl(), cloud.getManageUrl(), userId);
+			super(cloud.getRegion(), cloud.getUrl(), cloud.getManageUrl(), userId);
 		}
 	}
 }
