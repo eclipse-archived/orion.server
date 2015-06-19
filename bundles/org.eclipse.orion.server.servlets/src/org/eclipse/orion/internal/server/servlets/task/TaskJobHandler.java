@@ -32,6 +32,8 @@ import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Use this handler to handle jobs extending {@link TaskJob}
@@ -45,6 +47,7 @@ public class TaskJobHandler {
 	 * (Accepted, 202).
 	 */
 	public static final long WAIT_TIME = 100;
+	private static Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.task");
 
 	private static URI createTaskLocation(URI baseLocation, String taskId, boolean keep) throws URISyntaxException {
 		return new URI(baseLocation.getScheme(), baseLocation.getAuthority(), (keep ? "/task/id/" : "/task/temp/") + taskId, null, null); //$NON-NLS-1$
@@ -80,10 +83,13 @@ public class TaskJobHandler {
 	 * @throws JSONException
 	 */
 	public static boolean handleTaskJob(HttpServletRequest request, HttpServletResponse response, TaskJob job, ServletResourceHandler<IStatus> statusHandler, IURIUnqualificationStrategy strategy) throws IOException, ServletException, URISyntaxException, JSONException {
-		job.schedule();
-
+		final boolean scheduled[] = new boolean[1];
 		final Object jobIsDone = new Object();
 		final JobChangeAdapter jobListener = new JobChangeAdapter() {
+			public void scheduled(IJobChangeEvent event) {
+				scheduled[0] = true;
+			}
+			
 			public void done(IJobChangeEvent event) {
 				synchronized (jobIsDone) {
 					jobIsDone.notify();
@@ -91,6 +97,8 @@ public class TaskJobHandler {
 			}
 		};
 		job.addJobChangeListener(jobListener);
+
+		job.schedule();
 
 		try {
 			synchronized (jobIsDone) {
@@ -103,6 +111,9 @@ public class TaskJobHandler {
 		job.removeJobChangeListener(jobListener);
 
 		if (job.getState() == Job.NONE || job.getRealResult() != null) {
+			if (job.getRealResult() == null) {
+				logger.info("Job Result null scheduled=" + scheduled[0]);
+			}
 			return writeResult(request, response, job, statusHandler, strategy);
 		} else {
 			TaskInfo task = job.startTask();
