@@ -83,13 +83,8 @@ public class TaskJobHandler {
 	 * @throws JSONException
 	 */
 	public static boolean handleTaskJob(HttpServletRequest request, HttpServletResponse response, TaskJob job, ServletResourceHandler<IStatus> statusHandler, IURIUnqualificationStrategy strategy) throws IOException, ServletException, URISyntaxException, JSONException {
-		final boolean scheduled[] = new boolean[1];
 		final Object jobIsDone = new Object();
 		final JobChangeAdapter jobListener = new JobChangeAdapter() {
-			public void scheduled(IJobChangeEvent event) {
-				scheduled[0] = true;
-			}
-			
 			public void done(IJobChangeEvent event) {
 				synchronized (jobIsDone) {
 					jobIsDone.notify();
@@ -112,7 +107,7 @@ public class TaskJobHandler {
 
 		if (job.getState() == Job.NONE || job.getRealResult() != null) {
 			if (job.getRealResult() == null) {
-				logger.info("Job Result null scheduled=" + scheduled[0] + " result=" + job.getResult());
+				logger.error("Job RealResult is null result=" + job.getResult(), job.getResult() != null ? job.getResult().getException() : null);
 			}
 			return writeResult(request, response, job, statusHandler, strategy);
 		} else {

@@ -108,6 +108,7 @@ public class LogJob extends GitJob {
 		Repository db = null;
 		LogCommand logCommand = null;
 		try {
+			if (true) throw new Error("Crap");
 			File gitDir = GitUtils.getGitDir(filePath);
 			db = FileRepositoryBuilder.create(gitDir);
 			int aheadCount = 0, behindCount = 0;
