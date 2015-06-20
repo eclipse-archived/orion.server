@@ -112,7 +112,7 @@ public class TaskJobHandler {
 
 		if (job.getState() == Job.NONE || job.getRealResult() != null) {
 			if (job.getRealResult() == null) {
-				logger.info("Job Result null scheduled=" + scheduled[0]);
+				logger.info("Job Result null scheduled=" + scheduled[0] + " result=" + job.getResult());
 			}
 			return writeResult(request, response, job, statusHandler, strategy);
 		} else {
