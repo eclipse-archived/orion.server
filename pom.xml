@@ -422,10 +422,10 @@
 									<available file="orion.product" />
 									<then>
 										<echo
-											message="Replacing @qualifier@ token within about.properties with build id 9.0.0-v${build-timestamp}" />
+											message="Replacing @qualifier@ token within about.properties with build id 10.0.0-v${build-timestamp}" />
 										<replace file="orion.product">
 											<replacefilter token="@qualifier@"
-												value="9.0.0-v${build-timestamp}" />
+												value="10.0.0-v${build-timestamp}" />
 										</replace>
 									</then>
 								</if>
@@ -433,10 +433,10 @@
 									<available file="about.properties" />
 									<then>
 										<echo
-											message="Replacing @qualifier@ token within about.properties with build id 9.0.0-v${build-timestamp}" />
+											message="Replacing @qualifier@ token within about.properties with build id 10.0.0-v${build-timestamp}" />
 										<replace file="about.properties">
 											<replacefilter token="@qualifier@"
-												value="9.0.0-v${build-timestamp}" />
+												value="10.0.0-v${build-timestamp}" />
 										</replace>
 									</then>
 								</if>
