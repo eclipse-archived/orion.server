@@ -101,7 +101,7 @@ public class SetOrgCommand extends AbstractCFCommand {
 				return confStatus;
 			
 			ServerStatus getOrgsStatus = HttpUtil.executeMethod(getOrgsMethod);
-			if (!getOrgsStatus.isOK() && confStatus.getHttpCode() != HttpServletResponse.SC_PARTIAL_CONTENT)
+			if (!getOrgsStatus.isOK() && getOrgsStatus.getHttpCode() != HttpServletResponse.SC_PARTIAL_CONTENT)
 				return getOrgsStatus;
 
 			JSONObject result = getOrgsStatus.getJsonData();
