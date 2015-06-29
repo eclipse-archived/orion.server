@@ -201,7 +201,7 @@ public class LogJob extends GitJob {
 			// return the commits log as status message
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 		} catch (Exception e) {
-			String msg = NLS.bind("An error occured when generating log for ref {0}", logCommand.getRepository());
+			String msg = NLS.bind("An error occured when generating log for ref {0}", logCommand != null ? logCommand.getRepository() : filePath);
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, msg, e);
 		} finally {
 			if (db != null) {
