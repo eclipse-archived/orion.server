@@ -46,7 +46,7 @@ public class TargetRegistry {
 	public Cloud createTempCloud(URL url) {
 		CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
 		if (helper != null && helper.getService() != null) {
-			Cloud someCloud = helper.getService().getClouds().get(url);
+			Cloud someCloud = helper.getService().getClouds(null).get(url);
 			if (someCloud != null)
 				return new DarkCloud(someCloud, null);
 		}
@@ -89,7 +89,7 @@ public class TargetRegistry {
 			if (cloud == null) {
 				CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
 				if (helper != null && helper.getService() != null) {
-					Cloud someCloud = helper.getService().getClouds().get(url);
+					Cloud someCloud = helper.getService().getClouds(userId).get(url);
 					if (someCloud != null) {
 						cloud = new DarkCloud(someCloud, userId);
 					}
