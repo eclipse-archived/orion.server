@@ -140,11 +140,11 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 			@Override
 			protected IStatus performJob() {
 				try {
-					
+
 					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
 					IStatus result = computeTarget.doIt();
 					Target target = computeTarget.getTarget();
-					
+
 					if (target == null) {
 						String msg = "Target not set"; //$NON-NLS-1$
 						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
