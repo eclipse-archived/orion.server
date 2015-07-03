@@ -134,12 +134,17 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 	@Override
 	protected CFJob handleDelete(Target resource, HttpServletRequest request, HttpServletResponse response, final String path) {
 		final String invalidate = IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_INVALIDATE);
+		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
 
 		return new CFJob(request, false) {
 			@Override
 			protected IStatus performJob() {
 				try {
-					Target target = CFActivator.getDefault().getTargetRegistry().getDefaultTarget(this.userId);
+					
+					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
+					IStatus result = computeTarget.doIt();
+					Target target = computeTarget.getTarget();
+					
 					if (target == null) {
 						String msg = "Target not set"; //$NON-NLS-1$
 						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
