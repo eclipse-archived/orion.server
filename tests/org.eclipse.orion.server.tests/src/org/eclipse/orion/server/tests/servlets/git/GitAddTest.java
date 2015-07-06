@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.tests.servlets.git;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -127,6 +128,38 @@ public class GitAddTest extends GitTest {
 	}
 
 	@Test
+	public void testAddFolderAndCheckGit() throws Exception {
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+
+		String projectName = getMethodName().concat("Project");
+		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
+
+		JSONObject testTxt = getChild(project, "test.txt");
+		JSONObject gitSection = testTxt.getJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+
+		modifyFile(testTxt, "hello");
+
+		JSONObject folder = getChild(project, "folder");
+		gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+
+		JSONObject folderTxt = getChild(folder, "folder.txt");
+		gitSection = folderTxt.getJSONObject(GitConstants.KEY_GIT);
+		assertNotNull(gitSection);
+		modifyFile(folderTxt, "hello");
+
+		gitSection = project.getJSONObject(GitConstants.KEY_GIT);
+		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
+
+		assertStatus(new StatusResult().setModified(2), gitStatusUri);
+
+		addFile(folder);
+
+		assertStatus(new StatusResult().setChanged(1).setModified(1), gitStatusUri);
+	}
+	
+	@Test
 	public void testAddAllWhenInFolder() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		IPath[] clonePaths = createTestProjects(workspaceLocation);
@@ -166,6 +199,7 @@ public class GitAddTest extends GitTest {
 		}
 	}
 
+	
 	@Test
 	public void testAddSelected() throws Exception {
 		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
