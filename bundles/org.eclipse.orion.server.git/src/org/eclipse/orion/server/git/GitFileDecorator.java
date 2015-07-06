@@ -109,19 +109,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 					addGitLinks(request, resource, representation, cloneLocation, db, defaultRemoteBranch, branch);
 
 					JSONArray children = representation.optJSONArray(ProtocolConstants.KEY_CHILDREN);
-					if (children != null) {
-						for (int i = 0; i < children.length(); i++) {
-							JSONObject child = children.getJSONObject(i);
-							String location = child.getString(ProtocolConstants.KEY_LOCATION);
-							if (db != null) {
-								// if parent was a git repository we can reuse information computed above
-								addGitLinks(request, new URI(location), child, cloneLocation, db, defaultRemoteBranch, branch);
-							} else {
-								// maybe the child is the root of a git repository
-								addGitLinks(request, new URI(location), child);
-							}
-						}
-					}
+					calcGitLinks(children, representation, cloneLocation, db, defaultRemoteBranch, branch, request);			
 				} finally {
 					if (db != null) {
 						db.close();
@@ -133,6 +121,29 @@ public class GitFileDecorator implements IWebResourceDecorator {
 			LogHelper.log(e);
 		}
 	}
+
+	       private void calcGitLinks(JSONArray children, JSONObject representation, URI cloneLocation, Repository db, RemoteBranch defaultRemoteBranch, String branch,	
+                HttpServletRequest request) throws JSONException, URISyntaxException, CoreException, IOException {	
+    
+           if (children != null) {	
+                for (int i = 0; i < children.length(); i++) {
+                     JSONObject child = children.getJSONObject(i);
+                     String location = child.getString(ProtocolConstants.KEY_LOCATION);
+                     if (db != null) {
+                          // if parent was a git repository we can reuse information computed above\
+                          addGitLinks(request, new URI(location), child, cloneLocation, db, defaultRemoteBranch, branch);
+                          JSONArray childItems = child.optJSONArray(ProtocolConstants.KEY_CHILDREN);
+                          if (childItems != null) {
+                               calcGitLinks(childItems, representation, cloneLocation, db, defaultRemoteBranch, branch, request);
+                          }
+                     } else {
+                          // maybe the child is the root of a git repository
+                          addGitLinks(request, new URI(location), child);
+                     }
+                }
+           }
+      }
+
 
 	private void addGitLinks(HttpServletRequest request, URI location, JSONObject representation) throws URISyntaxException, JSONException, CoreException,
 			IOException {
