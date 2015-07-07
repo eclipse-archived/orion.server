@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2014 IBM Corporation and others.
+ * Copyright (c) 2011, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -74,6 +74,8 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String gitPathInfo) throws ServletException {
 
 		String[] infoParts = gitPathInfo.split("\\/", 3); //$NON-NLS-1$
+		if (infoParts.length < 3)
+			return false; // malformed request, we don't know how to handle this
 
 		String pathString = infoParts[2];
 		if (request.getContextPath().length() != 0) {
