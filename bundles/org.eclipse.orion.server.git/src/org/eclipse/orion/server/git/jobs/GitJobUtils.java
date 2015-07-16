@@ -24,13 +24,16 @@ public class GitJobUtils {
 	 * 
 	 * @param Repository
 	 *            the git repository
-	 * @throws IOException
 	 */
-	public static void packRefs(Repository repo, ProgressMonitor monitor) throws IOException {
+	public static void packRefs(Repository repo, ProgressMonitor monitor) {
 		if (repo != null && repo instanceof FileRepository) {
 			GC gc = new GC(((FileRepository) repo));
 			gc.setProgressMonitor(monitor);
-			gc.packRefs();
+			try {
+				gc.packRefs();
+			} catch (IOException ex) {
+				// ignore IOException since packing is an optimization (not essential for the callers doClone/doFetch) 
+			}
 		}
 	}
 
