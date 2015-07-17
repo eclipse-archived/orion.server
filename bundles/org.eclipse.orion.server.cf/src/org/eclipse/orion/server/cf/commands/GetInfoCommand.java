@@ -56,7 +56,7 @@ public class GetInfoCommand extends AbstractCFCommand {
 	@Override
 	protected ServerStatus retryIfNeeded(ServerStatus doItStatus) {
 		CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
-		if (!doItStatus.getJsonData().has("user") && getCloud().getAccessToken() != null && helper != null && helper.getService() != null) {
+		if (!doItStatus.getJsonData().has("user") && helper != null && helper.getService() != null) {
 			getCloud().setAccessToken(helper.getService().getToken(getCloud()));
 			return _doIt();
 		}

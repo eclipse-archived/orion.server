@@ -10,7 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf.commands;
 
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.cf.CFExtServiceHelper;
 import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.cf.objects.Target;
@@ -63,7 +65,7 @@ public abstract class AbstractCFCommand implements ICFCommand {
 			return doItStatus;
 
 		CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
-		if (doItStatus.getHttpCode() == 401 && getCloud().getAccessToken() != null && helper != null && helper.getService() != null) {
+		if (doItStatus.getHttpCode() == 401 && helper != null && helper.getService() != null) {
 			getCloud().setAccessToken(helper.getService().getToken(getCloud()));
 			return _doIt();
 		}
