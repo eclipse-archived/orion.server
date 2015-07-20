@@ -43,6 +43,7 @@ public class UpdateApplicationCommand extends AbstractCFCommand {
 	private int appInstances;
 	private int appMemory;
 	private String buildPack;
+	private String stack;
 	private JSONObject env;
 
 	public UpdateApplicationCommand(Target target, App app) {
@@ -54,6 +55,18 @@ public class UpdateApplicationCommand extends AbstractCFCommand {
 	@Override
 	protected ServerStatus _doIt() {
 		try {
+			// get stack object
+			Object stackId = JSONObject.NULL;
+			if (stack != null) {
+				GetStackByNameCommand getStackCommand = new GetStackByNameCommand(target, stack);
+				ServerStatus getStackStatus = (ServerStatus) getStackCommand.doIt();
+				if (!getStackStatus.isOK())
+					return getStackStatus;
+				if (getStackCommand.getStack() == null)
+					return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Stack {0} not found", stack), null);
+				stackId = getStackCommand.getStack().getGuid();
+			}
+
 			/* get application URL */
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			URI appURI = targetURI.resolve(application.getAppJSON().getString(CFProtocolConstants.V2_KEY_URL));
@@ -62,7 +75,7 @@ public class UpdateApplicationCommand extends AbstractCFCommand {
 			ServerStatus confStatus = HttpUtil.configureHttpMethod(updateApplicationMethod, target.getCloud());
 			if (!confStatus.isOK())
 				return confStatus;
-			
+
 			updateApplicationMethod.setQueryString("async=true&inline-relations-depth=1"); //$NON-NLS-1$
 
 			/* set request body */
@@ -73,6 +86,7 @@ public class UpdateApplicationCommand extends AbstractCFCommand {
 			updateAppRequest.put(CFProtocolConstants.V2_KEY_MEMORY, appMemory);
 			updateAppRequest.put(CFProtocolConstants.V2_KEY_ENVIRONMENT_JSON, env != null ? env : new JSONObject());
 			updateAppRequest.put(CFProtocolConstants.V2_KEY_BUILDPACK, buildPack != null ? buildPack : JSONObject.NULL);
+			updateAppRequest.put(CFProtocolConstants.V2_KEY_STACK_GUID, stackId);
 
 			updateApplicationMethod.setRequestEntity(new StringRequestEntity(updateAppRequest.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -123,6 +137,9 @@ public class UpdateApplicationCommand extends AbstractCFCommand {
 
 			ManifestParseTree buildpackNode = app.getOpt(CFProtocolConstants.V2_KEY_BUILDPACK);
 			buildPack = (buildpackNode != null) ? buildpackNode.getValue() : null;
+
+			ManifestParseTree stackNode = app.getOpt(CFProtocolConstants.V2_KEY_STACK);
+			stack = (stackNode != null) ? stackNode.getValue() : null;
 
 			/* look for environment variables */
 			ManifestParseTree envNode = manifest.getOpt(CFProtocolConstants.V2_KEY_ENV);

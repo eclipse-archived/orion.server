@@ -44,6 +44,7 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 	private int appInstances;
 	private int appMemory;
 	private String buildPack;
+	private String stack;
 	private JSONObject env;
 
 	public CreateApplicationCommand(Target target, App app) {
@@ -55,6 +56,17 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 	@Override
 	protected ServerStatus _doIt() {
 		try {
+			// get stack object
+			Object stackId = JSONObject.NULL;
+			if (stack != null){
+				GetStackByNameCommand getStackCommand = new GetStackByNameCommand(target, stack);
+				ServerStatus getStackStatus = (ServerStatus) getStackCommand.doIt();
+				if (!getStackStatus.isOK())
+					return getStackStatus;
+				if (getStackCommand.getStack() == null)
+					return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, NLS.bind("Stack {0} not found", stack), null);
+				stackId = getStackCommand.getStack().getGuid();
+			}
 
 			/* create cloud foundry application */
 			URI targetURI = URIUtil.toURI(target.getUrl());
@@ -73,7 +85,7 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 			createAppRequst.put(CFProtocolConstants.V2_KEY_BUILDPACK, buildPack != null ? buildPack : JSONObject.NULL);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_COMMAND, appCommand);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_MEMORY, appMemory);
-			createAppRequst.put(CFProtocolConstants.V2_KEY_STACK_GUID, JSONObject.NULL);
+			createAppRequst.put(CFProtocolConstants.V2_KEY_STACK_GUID, stackId);
 			createAppRequst.put(CFProtocolConstants.V2_KEY_ENVIRONMENT_JSON, env != null ? env : new JSONObject());
 
 			createAppMethod.setRequestEntity(new StringRequestEntity(createAppRequst.toString(), "application/json", "utf-8")); //$NON-NLS-1$ //$NON-NLS-2$
@@ -129,6 +141,9 @@ public class CreateApplicationCommand extends AbstractCFCommand {
 
 			ManifestParseTree buildpackNode = app.getOpt(CFProtocolConstants.V2_KEY_BUILDPACK);
 			buildPack = (buildpackNode != null) ? buildpackNode.getValue() : null;
+			
+			ManifestParseTree stackNode = app.getOpt(CFProtocolConstants.V2_KEY_STACK);
+			stack = (stackNode != null) ? stackNode.getValue() : null;
 
 			/* look for environment variables */
 			ManifestParseTree envNode = manifest.getOpt(CFProtocolConstants.V2_KEY_ENV);
