@@ -33,6 +33,8 @@ import org.eclipse.orion.server.git.objects.Log;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A job to perform a git log in the background.
@@ -56,6 +58,7 @@ public class LogJob extends GitJob {
 	private String fromDate;
 	private String toDate;
 	private boolean mergeBaseFilter;
+	private static Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.git");
 
 	/**
 	 * Creates job with given page range and adding <code>commitsSize</code> commits to every branch.
@@ -202,6 +205,7 @@ public class LogJob extends GitJob {
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 		} catch (Exception e) {
 			String msg = NLS.bind("An error occured when generating log for ref {0}", logCommand != null ? logCommand.getRepository() : filePath);
+			logger.error(msg, e);
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, msg, e);
 		} finally {
 			if (db != null) {
