@@ -65,12 +65,7 @@ public class GetOrgsCommand extends AbstractCFCommand {
 				new Job("Validating cache") {
 					@Override
 					protected IStatus run(IProgressMonitor monitor) {
-						logger.debug(NLS.bind("Validating {1} cache for user {0}", userId, target.getUrl().toString()));
-						check.add(key);
-						ServerStatus getOrgsSatus = getOrgs();
-						check.remove(key);
-						logger.debug(NLS.bind("Validation for {1} cache for user {0} finished", userId, target.getUrl().toString()));
-						return getOrgsSatus;
+						return getOrgs();
 					}
 				}.schedule();
 			}
@@ -83,7 +78,11 @@ public class GetOrgsCommand extends AbstractCFCommand {
 	}
 
 	private ServerStatus getOrgs() {
+		List<Object> key = Arrays.asList(target, userId);
 		try {
+			logger.debug(NLS.bind("Validating {1} cache for user {0}", userId, target.getUrl().toString()));
+			check.add(key);
+			
 			/* get available orgs */
 			URI targetURI = URIUtil.toURI(target.getUrl());
 			URI orgsURI = targetURI.resolve("/v2/organizations");
@@ -127,19 +126,22 @@ public class GetOrgsCommand extends AbstractCFCommand {
 				orgWithSpaces.setSpaces(spaces);
 				result.append("Orgs", orgWithSpaces.toJSON());
 			}
-
-			List<Object> key = Arrays.asList(target, userId);
+			
 			orgsCache.put(key, result);
-
 			return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 		} catch (ConnectTimeoutException e) {
+			orgsCache.remove(key);
 			String msg = NLS.bind("An error occurred when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_GATEWAY_TIMEOUT, msg, e);
 		} catch (Exception e) {
+			orgsCache.remove(key);
 			String msg = NLS.bind("An error occurred when performing operation {0}", commandName); //$NON-NLS-1$
 			logger.error(msg, e);
 			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+		} finally {
+			check.remove(key);
+			logger.debug(NLS.bind("Validation for {1} cache for user {0} finished", userId, target.getUrl().toString()));
 		}
 	}
 
