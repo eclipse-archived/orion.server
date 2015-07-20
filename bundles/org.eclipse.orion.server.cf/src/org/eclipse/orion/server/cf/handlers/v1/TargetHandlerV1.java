@@ -133,14 +133,12 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 
 	@Override
 	protected CFJob handleDelete(Target resource, HttpServletRequest request, HttpServletResponse response, final String path) {
-		final String invalidate = IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_INVALIDATE);
 		final JSONObject targetJSON = extractJSONData(IOUtilities.getQueryParameter(request, CFProtocolConstants.KEY_TARGET));
 
 		return new CFJob(request, false) {
 			@Override
 			protected IStatus performJob() {
 				try {
-					
 					ComputeTargetCommand computeTarget = new ComputeTargetCommand(this.userId, targetJSON);
 					IStatus result = computeTarget.doIt();
 					Target target = computeTarget.getTarget();
@@ -150,7 +148,7 @@ public class TargetHandlerV1 extends AbstractRESTHandler<Target> {
 						return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null);
 					}
 
-					LogoutCommand logoutCommand = new LogoutCommand(target, Boolean.parseBoolean(invalidate));
+					LogoutCommand logoutCommand = new LogoutCommand(target);
 					return logoutCommand.doIt();
 				} catch (Exception e) {
 					String msg = NLS.bind("Failed to handle request for {0}", path); //$NON-NLS-1$
