@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.orion.server.cf.CFExtServiceHelper;
 import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -54,6 +55,11 @@ public class GetInfoCommand extends AbstractCFCommand {
 
 	@Override
 	protected ServerStatus retryIfNeeded(ServerStatus doItStatus) {
+		CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
+		if (!doItStatus.getJsonData().has("user") && helper != null && helper.getService() != null) {
+			getCloud().setAccessToken(helper.getService().getToken(getCloud()));
+			return _doIt();
+		}
 		return doItStatus;
 	}
 }
