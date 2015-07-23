@@ -126,7 +126,7 @@ public class FormAuthLoginServlet extends HttpServlet {
 				String cookieToCache = PreferenceHelper.getString("orion.cookie.cached"); //$NON-NLS-1$
 				if (cookieToCache != null) {
 					Cookie[] cookies = req.getCookies();
-					if (cookieToCache != null) {
+					if (cookies != null) {
 						for (int i = 0; i < cookies.length; i++) {
 							if (cookieToCache.equals(cookies[i].getName()) && cookies[i].getValue() != null) {
 								userInfo.setProperty("/cookie/cached/" + cookieToCache, cookies[i].getValue().toString());
