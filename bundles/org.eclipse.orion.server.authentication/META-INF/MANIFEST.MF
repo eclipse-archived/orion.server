@@ -17,7 +17,8 @@ Require-Bundle: org.eclipse.osgi.services;bundle-version="3.2.100",
  org.eclipse.equinox.common;bundle-version="3.6.0",
  org.json;bundle-version="1.0.0",
  org.apache.oltu.oauth2.client;bundle-version="1.0.0",
- org.apache.oltu.oauth2.common;bundle-version="1.0.0"
+ org.apache.oltu.oauth2.common;bundle-version="1.0.0",
+ org.eclipse.core.jobs;bundle-version="3.6.0"
 Bundle-ActivationPolicy: lazy
 Export-Package: org.eclipse.orion.server.authentication,
  org.eclipse.orion.server.authentication.formoauth
