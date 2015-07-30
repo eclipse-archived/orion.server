@@ -17,8 +17,10 @@ import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.transport.CredentialItem;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
+import org.eclipse.orion.internal.server.core.metastore.SimpleUserPasswordUtil;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.MetadataInfo;
+import org.json.JSONObject;
 
 public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider {
 
@@ -85,11 +87,24 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 					CredentialItem.Password p = new CredentialItem.Password();
 					super.get(uri, u, p);
 					if ((u.getValue() == null || u.getValue().length() == 0) && (p.getValue() == null || p.getValue().length == 0)) {
-						if (uri != null && uri.getHost().equalsIgnoreCase(GitConstants.KEY_GITHUB_HOST)) {
+						if (uri != null) {
 							if (this.remoteUser != null) {
 								try {
 									MetadataInfo info = OrionConfiguration.getMetaStore().readUser(remoteUser);
-									String token = info.getProperty(GitConstants.KEY_GITHUB_ACCESS_TOKEN);
+									String property = info.getProperty(GitConstants.KEY_GITHUB_ACCESS_TOKEN);
+									String token = null;
+									try {
+										JSONObject tokens = new JSONObject(SimpleUserPasswordUtil.decryptPassword(property));
+										token = tokens.optString(uri.getHost());
+									} catch (Exception e) {
+										if (property != null && property.length() > 0 && GitConstants.KEY_GITHUB_HOST.equals(uri.getHost())) {
+											/*
+											 * Backwards-compatibility: This value is still in the old format, which was
+											 * a plain string representing the user's token for github.com specifically.
+											 */
+											token = property;
+										}
+									}
 									if (token != null) {
 										((CredentialItem.Username)item).setValue(token);
 										continue;
