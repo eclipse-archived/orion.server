@@ -233,7 +233,5 @@ public class GitConstants {
 
 	public static final String KEY_LOCALNAME = "LocalName"; //$NON-NLS-1$
 
-	public static final String KEY_GITHUB_ACCESS_TOKEN = "GitHubAccessToken"; //$NON-NLS-1$
-
 	public static final String KEY_GITHUB_HOST = "github.com"; //$NON-NLS-1$
 }

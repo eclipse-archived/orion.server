@@ -20,6 +20,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.eclipse.orion.internal.server.core.metastore.SimpleUserPasswordUtil;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.MetadataInfo;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.json.JSONObject;
 
 public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider {
@@ -91,7 +92,7 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 							if (this.remoteUser != null) {
 								try {
 									MetadataInfo info = OrionConfiguration.getMetaStore().readUser(remoteUser);
-									String property = info.getProperty(GitConstants.KEY_GITHUB_ACCESS_TOKEN);
+									String property = info.getProperty(UserConstants.GITHUB_ACCESS_TOKEN);
 									String token = null;
 									try {
 										JSONObject tokens = new JSONObject(SimpleUserPasswordUtil.decryptPassword(property));

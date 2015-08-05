@@ -150,6 +150,7 @@ public class OAuthHelper {
 		try {
 			// try to store the login timestamp in the user profile
 			userInfo.setProperty(UserConstants.LAST_LOGIN_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
+			oauthConsumer.save(userInfo);
 			OrionConfiguration.getMetaStore().updateUser(userInfo);
 		} catch (CoreException e) {
 			// just log that the login timestamp was not stored

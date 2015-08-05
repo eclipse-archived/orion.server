@@ -20,6 +20,7 @@ import org.apache.oltu.oauth2.common.OAuth;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.token.OAuthToken;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 
 /**
  * An abstract class used to hold information about the oauth
@@ -94,5 +95,8 @@ public abstract class OAuthConsumer implements OAuthToken {
 
 	public String getOpenidIdentifier(){
 		return null;
+	}
+	
+	public void save(UserInfo info) {
 	}
 }

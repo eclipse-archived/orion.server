@@ -33,7 +33,7 @@ public class GitHubOAuthParams extends OAuthParams {
 
 	private static final String RESPONSE_TYPE = "code";
 
-	private static final String SCOPE = "user";
+	private static final String SCOPE = "user,repo";
 
 	private static final String CLIENT_KEY = "orion.oauth.github.client";
 

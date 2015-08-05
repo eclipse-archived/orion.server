@@ -106,4 +106,9 @@ public class UserConstants {
 	 * JSON representation key for a user's name, the login or short account name. The value's data type is a String.
 	 */
 	public static final String USER_NAME = "UserName"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for a user's github access token. The value's data type is a JSONObject.
+	 */
+	public static final String GITHUB_ACCESS_TOKEN = "GitHubAccessToken"; //$NON-NLS-1$
 }

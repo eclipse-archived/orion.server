@@ -11,8 +11,11 @@
 package org.eclipse.orion.server.authentication.oauth.github;
 
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
+import org.eclipse.orion.internal.server.core.metastore.SimpleUserPasswordUtil;
 import org.eclipse.orion.server.authentication.oauth.OAuthConsumer;
 import org.eclipse.orion.server.authentication.oauth.OAuthException;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.users.UserConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,6 +37,7 @@ public class GitHubOAuthConsumer extends OAuthConsumer{
 	
 	private static final String PROFILE_URL = "https://api.github.com/user";
 	private static final String EMAIL_URL = "https://api.github.com/user/emails";
+	private static final String GITHUB_HOST = "github.com";
 	
 	private String email;
 	private String username;
@@ -98,6 +102,27 @@ public class GitHubOAuthConsumer extends OAuthConsumer{
 	@Override
 	public boolean isEmailVerifiecd() {
 		return email_verified;
+	}
+	
+	public void save(UserInfo userInfo) {
+		try {
+			String property = userInfo.getProperty(UserConstants.GITHUB_ACCESS_TOKEN);
+			JSONObject tokens = null;
+			try {
+				tokens = new JSONObject(SimpleUserPasswordUtil.decryptPassword(property));
+			} catch (Exception e) {
+				tokens = new JSONObject();
+				if (property != null && property.length() > 0) {
+					/*
+					 * Backwards-compatibility: Convert this value from its old format (a plain string
+					 * representing the user's token for github.com specifically) to the new format.
+					 */
+					tokens.put(GITHUB_HOST, property);
+				}
+			}
+			tokens.put(GITHUB_HOST, getAccessToken());
+			userInfo.setProperty(UserConstants.GITHUB_ACCESS_TOKEN, SimpleUserPasswordUtil.encryptPassword(tokens.toString()));
+		} catch (JSONException e) {}
 	}
 
 }
