@@ -12,6 +12,7 @@ package org.eclipse.orion.server.servlets;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.HashSet;
 import java.util.StringTokenizer;
@@ -88,9 +89,10 @@ public class ExcludedExtensionGzipFilter implements Filter {
 				if (_servletOutputStream != null) {
 					throw new IllegalStateException();
 				}
-				((HttpServletResponse) getResponse()).setHeader("Content-Encoding", "gzip");
-				_servletOutputStream = new ServletOutputStreamWrapper(new GZIPOutputStream(getResponse().getOutputStream()));
-				_printWriter = new PrintWriter(_servletOutputStream);
+				HttpServletResponse response = (HttpServletResponse) getResponse();
+				response.setHeader("Content-Encoding", "gzip");
+				_servletOutputStream = new ServletOutputStreamWrapper(new GZIPOutputStream(response.getOutputStream()));
+				_printWriter = new PrintWriter(new OutputStreamWriter(_servletOutputStream, response.getCharacterEncoding()));
 			}
 			return _printWriter;
 		}

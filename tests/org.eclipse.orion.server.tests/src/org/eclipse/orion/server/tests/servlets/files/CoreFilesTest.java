@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 
@@ -1066,6 +1067,36 @@ public class CoreFilesTest extends FileSystemTest {
 		ByteArrayOutputStream bytes = new ByteArrayOutputStream();
 		IOUtilities.pipe(response.getInputStream(), bytes);
 		assertTrue("Invalid file content", Arrays.equals(fileContent, bytes.toByteArray()));
+	}
+
+	/**
+	 * Test that the gzip filter correctly encodes a UTF-8 response when the JVM's default charset is not UTF-8.
+	 * Regression test for https://bugs.eclipse.org/bugs/show_bug.cgi?id=474366
+	 */
+	@Test
+	public void testGzippedResponseCharset() throws Exception {
+		// This test is only valid when default charset is not UTF-8
+		if ("UTF-8".equals(Charset.defaultCharset().name())) {
+			return;
+		}
+
+		// Create folder
+		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+		createDirectory(directoryPath);
+		final String filename = "\u4f60\u597d\u4e16\u754c.txt";
+
+		// Create empty file in the folder
+		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(filename).toString(), filename);
+		WebResponse response = webConversation.getResponse(request);
+		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+
+		// Check metadata
+		request = getGetFilesRequest(response.getHeaderField(ProtocolConstants.KEY_LOCATION) + "?parts=meta");
+		response = webConversation.getResponse(request);
+		JSONObject metadata = new JSONObject(response.getText());
+		assertEquals("gzip", response.getHeaderField("Content-Encoding"));
+		assertTrue(response.getCharacterSet().contains("UTF-8"));
+		assertEquals("Name was encoded correctly", filename, metadata.optString(ProtocolConstants.KEY_NAME));
 	}
 
 }
