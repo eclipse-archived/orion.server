@@ -113,7 +113,7 @@ public class LogJob extends GitJob {
 		try {
 			File gitDir = GitUtils.getGitDir(filePath);
 			db = FileRepositoryBuilder.create(gitDir);
-			int aheadCount = 0, behindCount = 0;
+			int aheadCount = 0, behindCount = 0, maxCount = -1;
 			if (mergeBaseFilter) {
 				RevWalk walk = new RevWalk(db);
 				try {
@@ -127,8 +127,13 @@ public class LogJob extends GitJob {
 					walk.setRevFilter(RevFilter.ALL);
 					aheadCount = RevWalkUtils.count(walk, toRevCommit, next);
 					behindCount = RevWalkUtils.count(walk, fromRevCommit, next);
-					toObjectId = next.toObjectId();
-					fromObjectId = null;
+					if (next != null) {
+						toObjectId = next.toObjectId();
+						fromObjectId = null;
+					} else {
+						// There is no merge base, return an empty log
+						maxCount = 0;
+					}
 				} finally {
 					walk.dispose();
 				}
@@ -192,6 +197,9 @@ public class LogJob extends GitJob {
 				logCommand.addPath(pattern);
 			}
 			log.setPaging(page, pageSize);
+			if (maxCount != -1) {
+				logCommand.setMaxCount(maxCount);
+			}
 
 			Iterable<RevCommit> commits = logCommand.call();
 			log.setCommits(commits);
