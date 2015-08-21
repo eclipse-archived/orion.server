@@ -47,7 +47,7 @@ public class SimpleMetaStoreUserPropertyCache {
 	public void register(List<String> propertyKeys) throws CoreException {
 		for (String propertyKey : propertyKeys) {
 			if (cacheMap.containsKey(propertyKey)) {
-				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStoreUserPropertyCache.registerUserProperty: property " + propertyKey + "is already registered", null));
+				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStoreUserPropertyCache.registerUserProperty: property " + propertyKey + " is already registered", null));
 			}
 			Map<String, String> cache = new ConcurrentHashMap<String, String>();
 			cacheMap.put(propertyKey, cache);
