@@ -806,6 +806,23 @@ public class SimpleMetaStore implements IMetaStore {
 	public void registerUserProperties(List<String> keys) throws CoreException {
 		// register the user properties with the user cache
 		userPropertyCache.register(keys);
+		try {
+			initializeAllRegisteredPropertiesFromDisk();
+		} catch (JSONException e) {
+			throw new RuntimeException("Error initializing user properties from metafiles:" + e);
+		}
+	}
+
+	private void initializeAllRegisteredPropertiesFromDisk() throws JSONException {
+		for (String user: SimpleMetaStoreUtil.listMetaUserFolders(rootLocation)) {
+			File userMetaFile = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, user);
+			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFile, SimpleMetaStoreUtil.USER);
+			JSONObject properties = jsonObject.getJSONObject("Properties");
+			UserInfo info = new UserInfo();
+			info.setUniqueId(user);
+			// call setProperties for its side effect of writing registered properties to the cache.
+			setProperties(info, properties);
+		}
 	}
 
 	/**
