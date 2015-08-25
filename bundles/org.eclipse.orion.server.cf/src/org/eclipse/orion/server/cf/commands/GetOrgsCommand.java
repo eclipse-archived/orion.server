@@ -89,9 +89,11 @@ public class GetOrgsCommand extends AbstractCFCommand {
 
 			GetMethod getOrgsMethod = new GetMethod(orgsURI.toString());
 			ServerStatus confStatus = HttpUtil.configureHttpMethod(getOrgsMethod, target.getCloud());
-			if (!confStatus.isOK())
+			if (!confStatus.isOK()){
+				orgsCache.remove(key);
 				return confStatus;
-
+			}
+				
 			List<NameValuePair> params = new ArrayList<NameValuePair>();
 			params.add(new NameValuePair("inline-relations-depth", "1"));
 			if (target.getCloud().getRegion() != null) {
@@ -100,13 +102,16 @@ public class GetOrgsCommand extends AbstractCFCommand {
 			getOrgsMethod.setQueryString(params.toArray(new NameValuePair[params.size()]));
 
 			ServerStatus getOrgsStatus = HttpUtil.executeMethod(getOrgsMethod);
-			if (!getOrgsStatus.isOK() && getOrgsStatus.getHttpCode() != HttpServletResponse.SC_PARTIAL_CONTENT)
+			if (!getOrgsStatus.isOK() && getOrgsStatus.getHttpCode() != HttpServletResponse.SC_PARTIAL_CONTENT){
+				orgsCache.remove(key);
 				return getOrgsStatus;
-
+			}
+				
 			/* extract available orgs */
 			JSONObject orgs = getOrgsStatus.getJsonData();
 
 			if (orgs == null || orgs.optInt(CFProtocolConstants.V2_KEY_TOTAL_RESULTS, 0) < 1) {
+				orgsCache.remove(key);
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NO_CONTENT, "Server did not return any organizations.", null);
 			}
 
@@ -118,9 +123,11 @@ public class GetOrgsCommand extends AbstractCFCommand {
 
 				List<Space> spaces = new ArrayList<Space>();
 				ServerStatus getSpacesStatus = getSpaces(spaces, orgJSON);
-				if (!getSpacesStatus.isOK())
+				if (!getSpacesStatus.isOK()){
+					orgsCache.remove(key);
 					return getSpacesStatus;
-
+				}
+					
 				OrgWithSpaces orgWithSpaces = new OrgWithSpaces();
 				orgWithSpaces.setCFJSON(orgJSON);
 				orgWithSpaces.setSpaces(spaces);
