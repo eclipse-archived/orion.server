@@ -1,10 +1,10 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -18,7 +18,6 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.oltu.oauth2.client.request.OAuthClientRequest.AuthenticationRequestBuilder;
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
-import org.apache.oltu.oauth2.common.OAuthProviderType;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
 
 /**
@@ -38,7 +37,11 @@ public abstract class OAuthParams {
 
 	protected static final String REDIRECT_URI_LINK = "/mixlogin/manageoauth/oauth";
 
-	public abstract OAuthProviderType getProviderType();
+	public abstract String getProviderName();
+
+	public abstract String getAuthzEndpoint();
+
+	public abstract String getTokenEndpoint();
 
 	public abstract String getClientKey() throws OAuthException;
 
