@@ -208,7 +208,7 @@ public class GitConfigHandlerV1 extends ServletResourceHandler<String> {
 				JSONArray value = toPut.optJSONArray(GitConstants.KEY_CONFIG_ENTRY_VALUE);
 				if (value == null) {
 					String v = toPut.optString(GitConstants.KEY_CONFIG_ENTRY_VALUE);
-					if (v != null) {
+					if (v != null && v.length() > 0) {
 						value = new JSONArray();
 						value.put(v);
 					}
