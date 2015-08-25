@@ -21,4 +21,5 @@ Require-Bundle: org.eclipse.osgi.services;bundle-version="3.2.100",
  org.eclipse.core.jobs;bundle-version="3.6.0"
 Bundle-ActivationPolicy: lazy
 Export-Package: org.eclipse.orion.server.authentication,
- org.eclipse.orion.server.authentication.formoauth
+ org.eclipse.orion.server.authentication.formoauth,
+ org.eclipse.orion.server.authentication.oauth
