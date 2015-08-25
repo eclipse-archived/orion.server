@@ -1,10 +1,10 @@
 /*******************************************************************************
- * Copyright (c) 2014 IBM Corporation and others 
+ * Copyright (c) 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -22,9 +22,12 @@ import org.eclipse.orion.server.authentication.oauth.OAuthConsumer;
 import org.eclipse.orion.server.authentication.oauth.OAuthException;
 import org.eclipse.orion.server.authentication.oauth.OAuthHelper;
 import org.eclipse.orion.server.authentication.oauth.OAuthParams;
-import org.eclipse.orion.server.authentication.oauth.github.GitHubOAuthParams;
-import org.eclipse.orion.server.authentication.oauth.google.GoogleOAuthParams;
+import org.eclipse.orion.server.authentication.oauth.OAuthParamsFactory;
 import org.eclipse.orion.server.core.resources.Base64;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 
 /**
  * Methods to handles OAuth requests.
@@ -34,7 +37,7 @@ import org.eclipse.orion.server.core.resources.Base64;
 public class ManageOAuthServlet extends HttpServlet {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -3863741024714602634L;
 
@@ -80,7 +83,7 @@ public class ManageOAuthServlet extends HttpServlet {
 		out.println("</body>"); //$NON-NLS-1$
 		out.println("</html>"); //$NON-NLS-1$
 	}
-	
+
 	private void handleGet(HttpServletRequest req, HttpServletResponse resp, Boolean login) throws ServletException, IOException, OAuthException {
 		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
 		if (pathInfo.startsWith("/oauth")) {
@@ -93,18 +96,42 @@ public class ManageOAuthServlet extends HttpServlet {
 					OAuthHelper.handleLogin(req, resp, oauthConsumer);
 				else
 					OAuthHelper.handleReturnAndLinkAccount(req, resp, oauthConsumer);
-			}		
+			}
 		}
 	}
 
-	private OAuthParams getOAuthParams(HttpServletRequest req, String type, boolean login) throws OAuthException{
-		if(type.equals("google")){
-			oauthParams = new GoogleOAuthParams(req, login);
-		}else if(type.equals("github")){
-			oauthParams = new GitHubOAuthParams(req, login);
-		}else{
-			throw new OAuthException("No OAuth provider given");
+	/**
+	 * This method retrieves OSGi context to find a service of class OAuthParamsFactory
+	 * registered with 'provider' property matching providerName.
+	 * @param providerName: string matching the one returned by OAuthParamsFactory.getOAuthProviderName()
+	 * @return Factory to create OAuthParams object
+	 * @throws OAuthException
+	 */
+	private OAuthParamsFactory getParamsFactory(String providerName) throws OAuthException {
+		BundleContext ctx = FrameworkUtil.getBundle(this.getClass()).getBundleContext();
+		if (ctx == null) {
+			throw new OAuthException("Plug-in context non available");
 		}
+
+		String filter = "(" + OAuthParamsFactory.PROVIDER + "=" + providerName + ")";
+		ServiceReference oauthServiceReferences[];
+		try {
+			oauthServiceReferences = ctx.getServiceReferences(OAuthParamsFactory.class.getName(), filter);
+		} catch (InvalidSyntaxException e) {
+			throw new OAuthException(e);
+		}
+		if (oauthServiceReferences == null || oauthServiceReferences.length == 0) {
+			throw new OAuthException("Plug-in for OAuth provider <" + providerName + "> is not running");
+		}
+		else if (oauthServiceReferences.length >= 2) {
+			throw new OAuthException("Multiple services registered for OAuth provider <" + providerName + ">");
+		}
+
+		return (OAuthParamsFactory) ctx.getService(oauthServiceReferences[0]);
+	}
+
+	private OAuthParams getOAuthParams(HttpServletRequest req, String type, boolean login) throws OAuthException {
+		oauthParams = getParamsFactory(type).getOAuthParams(req, login);
 		return getOAuthParams();
 	}
 
@@ -125,7 +152,7 @@ public class ManageOAuthServlet extends HttpServlet {
 	public void handleGetAndLogin(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, OAuthException {
 		handleGet(req, resp, true);
 	}
-	
+
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		String pathInfo = req.getPathInfo() == null ? "" : req.getPathInfo(); //$NON-NLS-1$
