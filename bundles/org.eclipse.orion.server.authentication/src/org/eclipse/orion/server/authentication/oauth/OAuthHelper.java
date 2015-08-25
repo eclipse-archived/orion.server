@@ -1,10 +1,10 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2015 IBM Corporation and others 
+ * Copyright (c) 2014, 2015 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  * IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -56,7 +56,12 @@ public class OAuthHelper {
 	 */
 	public static void redirectToOAuthProvider(HttpServletRequest req, HttpServletResponse resp, OAuthParams oauthParams) throws OAuthException {
 		try {
-			AuthenticationRequestBuilder requestBuilder = OAuthClientRequest.authorizationProvider(oauthParams.getProviderType()).setClientId(oauthParams.getClientKey()).setRedirectURI(oauthParams.getRedirectURI()).setResponseType(oauthParams.getResponseType()).setScope(oauthParams.getScope()).setState(oauthParams.getState());
+			AuthenticationRequestBuilder requestBuilder = OAuthClientRequest.authorizationLocation(oauthParams.getAuthzEndpoint())
+					.setClientId(oauthParams.getClientKey())
+					.setRedirectURI(oauthParams.getRedirectURI())
+					.setResponseType(oauthParams.getResponseType())
+					.setScope(oauthParams.getScope())
+					.setState(oauthParams.getState());
 			oauthParams.addAdditionsParams(requestBuilder);
 			OAuthClientRequest request = requestBuilder.buildQueryMessage();
 			resp.sendRedirect(request.getLocationUri());
@@ -94,7 +99,12 @@ public class OAuthHelper {
 			throw new OAuthException("No code provided");
 
 		try {
-			OAuthClientRequest request = OAuthClientRequest.tokenProvider(oauthParams.getProviderType()).setGrantType(oauthParams.getGrantType()).setClientId(oauthParams.getClientKey()).setClientSecret(oauthParams.getClientSecret()).setRedirectURI(oauthParams.getRedirectURI()).setCode(code).buildBodyMessage();
+			OAuthClientRequest request = OAuthClientRequest.tokenLocation(oauthParams.getTokenEndpoint())
+					.setGrantType(oauthParams.getGrantType())
+					.setClientId(oauthParams.getClientKey())
+					.setClientSecret(oauthParams.getClientSecret())
+					.setRedirectURI(oauthParams.getRedirectURI())
+					.setCode(code).buildBodyMessage();
 
 			OAuthClient oAuthClient = new OAuthClient(new URLConnectionClient());
 
@@ -144,7 +154,7 @@ public class OAuthHelper {
 		req.getSession().setAttribute("user", login); //$NON-NLS-1$
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.login"); //$NON-NLS-1$
 		if (logger.isInfoEnabled()) {
-			logger.info("Login success: " + login + " oauth " + oauthConsumer.getIdentifier()); //$NON-NLS-1$ 
+			logger.info("Login success: " + login + " oauth " + oauthConsumer.getIdentifier()); //$NON-NLS-1$
 		}
 
 		try {
