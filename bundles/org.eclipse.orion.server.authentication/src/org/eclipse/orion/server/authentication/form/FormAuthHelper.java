@@ -111,6 +111,14 @@ public class FormAuthHelper {
 	}
 
 	/**
+	 * Returns the type of OAuth2 authentication provider to redirect to from the
+	 * landing page, or the empty string if none was specified in the config file.
+	 */
+	public static String authRedirect() {
+		return PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_LANDING_REDIRECT_PROVIDER, "");
+	}
+
+	/**
 	 * Returns a URI to use for account registrations or null if none.
 	 * @return String a URI to open when adding user accounts.
 	 */
