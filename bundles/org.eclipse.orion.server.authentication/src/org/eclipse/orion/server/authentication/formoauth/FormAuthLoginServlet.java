@@ -112,6 +112,20 @@ public class FormAuthLoginServlet extends HttpServlet {
 			return;
 		}
 
+		if (pathInfo.startsWith("/redirectinfo")) {
+			JSONObject jsonResp = new JSONObject();
+			try {
+				jsonResp.put("AuthProvider", FormAuthHelper.authRedirect());
+				jsonResp.put("CanAddUsers", FormAuthHelper.canAddUsers());
+				jsonResp.put("ForceEmail", FormAuthHelper.forceEmail());
+				jsonResp.put("RegistrationURI", FormAuthHelper.registrationURI());
+			} catch (JSONException e) {
+			}
+			resp.getWriter().print(jsonResp);
+			resp.setContentType("application/json");
+			return;
+		}
+
 		String user = req.getRemoteUser();
 		if (user == null) {
 			user = authenticationService.getAuthenticatedUser(req, resp);

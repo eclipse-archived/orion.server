@@ -49,6 +49,7 @@ public class XSRFPreventionFilter implements Filter {
 		exceptionList.add("/login");//$NON-NLS-1$
 		exceptionList.add("/login/canaddusers");//$NON-NLS-1$
 		exceptionList.add("/login/form");//$NON-NLS-1$
+		exceptionList.add("/login/redirectinfo");//$NON-NLS-1$
 		exceptionList.add("/useremailconfirmation/cansendemails");//$NON-NLS-1$
 
 		secureRandom = new SecureRandom();
