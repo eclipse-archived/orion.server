@@ -64,7 +64,7 @@
 		<java-version>1.6</java-version>
 		<orion-repository>https://repo.eclipse.org/content/repositories/orion/</orion-repository>
 		<antrun-version>1.7</antrun-version>
-		<build-timestamp>${maven.build.timestamp}</build-timestamp>
+		<build-version>10.0.0.v${maven.build.timestamp}</build-version>
 		<maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
 	</properties>
 
@@ -421,10 +421,10 @@
 									<available file="orion.product" />
 									<then>
 										<echo
-											message="Replacing @qualifier@ token within about.properties with build id 10.0.0-v${build-timestamp}" />
+											message="Replacing @qualifier@ token within about.properties with build id ${build-version}" />
 										<replace file="orion.product">
 											<replacefilter token="@qualifier@"
-												value="10.0.0-v${build-timestamp}" />
+												value="${build-version}" />
 										</replace>
 									</then>
 								</if>
@@ -432,10 +432,10 @@
 									<available file="about.properties" />
 									<then>
 										<echo
-											message="Replacing @qualifier@ token within about.properties with build id 10.0.0-v${build-timestamp}" />
+											message="Replacing @qualifier@ token within about.properties with build id ${build-version}" />
 										<replace file="about.properties">
 											<replacefilter token="@qualifier@"
-												value="10.0.0-v${build-timestamp}" />
+												value="${build-version}" />
 										</replace>
 									</then>
 								</if>
