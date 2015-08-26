@@ -67,6 +67,12 @@ public class ServerConstants {
 	public static final String CONFIG_AUTH_USER_CREATION = "orion.auth.user.creation"; //$NON-NLS-1$
 
 	/**
+	 * The name of a configuration property specifying the type of OAuth2 authentication provider to redirect to from the
+	 * landing page. If unspecified, no redirect will happen.
+	 */
+	public static final String CONFIG_AUTH_LANDING_REDIRECT_PROVIDER = "orion.auth.landing.redirect.provider"; //$NON_NLS-1$
+
+	/**
 	 * The name of a configuration property specifying is user email is mandatory while user creation. If
 	 * <code>true</code> user will be forced to add email while creating account. Account will be blocked until user
 	 * email is confirmed.
