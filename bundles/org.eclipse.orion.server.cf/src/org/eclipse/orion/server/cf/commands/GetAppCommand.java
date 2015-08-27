@@ -102,7 +102,6 @@ public class GetAppCommand extends AbstractCFCommand {
 			JSONObject summaryJSON = getStatus.getJsonData();
 			
 			// instances
-			
 			String instancesUrl = appJSON.getString("url") + "/instances";
 			URI instancesURI = targetURI.resolve(instancesUrl);
 
@@ -112,9 +111,6 @@ public class GetAppCommand extends AbstractCFCommand {
 				return confStatus;
 
 			getStatus = HttpUtil.executeMethod(getInstancesMethod);
-			if (!getStatus.isOK())
-				return getStatus;
-
 			JSONObject instancesJSON = getStatus.getJsonData();
 
 			this.app = new App();
