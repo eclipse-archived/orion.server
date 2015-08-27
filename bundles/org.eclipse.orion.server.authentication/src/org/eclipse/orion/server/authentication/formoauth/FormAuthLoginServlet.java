@@ -119,6 +119,7 @@ public class FormAuthLoginServlet extends HttpServlet {
 				jsonResp.put("CanAddUsers", FormAuthHelper.canAddUsers());
 				jsonResp.put("ForceEmail", FormAuthHelper.forceEmail());
 				jsonResp.put("RegistrationURI", FormAuthHelper.registrationURI());
+				jsonResp.put("SignOutRedirect", FormAuthHelper.signOutRedirect());
 			} catch (JSONException e) {
 			}
 			resp.getWriter().print(jsonResp);

@@ -61,6 +61,12 @@ public class ServerConstants {
 	public static final String CONFIG_AUTH_REGISTRATION_URI = "orion.auth.registration.uri"; //$NON-NLS-1$
 
 	/**
+	 * The name of a configuration property specifying an alternate URI to redirect after signing out.
+	 * If unspecified, users will be redirected to the Orion landing page.
+	 */
+
+	public static final String CONFIG_AUTH_SIGN_OUT_PROVIDER = "orion.auth.sign.out.uri"; //$NON_NLS-1$
+	/**
 	 * The name of a configuration property specifying a comma-separated list of users that are allowed to create
 	 * accounts. If unspecified, then anonymous users can create accounts.
 	 */

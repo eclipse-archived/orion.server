@@ -119,6 +119,16 @@ public class FormAuthHelper {
 	}
 
 	/**
+	 * Returns a URI to redirect after signing out or an empty string
+	 * if none was specified in the config file. In the latter case user
+	 * will be redirected to the landing page.
+	 * @return String a URI to redirect after signing out.
+	 */
+	public static String signOutRedirect() {
+		return PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_SIGN_OUT_PROVIDER, "");
+	}
+
+	/**
 	 * Returns a URI to use for account registrations or null if none.
 	 * @return String a URI to open when adding user accounts.
 	 */
