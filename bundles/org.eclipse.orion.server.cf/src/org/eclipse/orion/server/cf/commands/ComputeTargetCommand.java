@@ -62,11 +62,11 @@ public class ComputeTargetCommand implements ICFCommand {
 		if (target == null)
 			return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
 
-		IStatus result = new SetOrgCommand(target, org, targetJSON.optBoolean("isGuid")).doIt();
+		IStatus result = new SetOrgCommand(target, org, targetJSON != null ? targetJSON.optBoolean("isGuid") : false).doIt();
 		if (!result.isOK())
 			return result;
 
-		result = new SetSpaceCommand(target, space, targetJSON.optBoolean("isGuid")).doIt();
+		result = new SetSpaceCommand(target, space, targetJSON != null ? targetJSON.optBoolean("isGuid") : false).doIt();
 		if (!result.isOK())
 			return result;
 
