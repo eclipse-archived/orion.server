@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2014 IBM Corporation and others.
+ * Copyright (c) 2011, 2015 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -134,8 +134,8 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		}
 	}
 
-	private void addGitLinks(HttpServletRequest request, URI location, JSONObject representation) throws URISyntaxException, JSONException, CoreException,
-			IOException {
+	private void addGitLinks(HttpServletRequest request, URI location, JSONObject representation)
+			throws URISyntaxException, JSONException, CoreException, IOException {
 		Repository db = null;
 		try {
 			db = repositoryForPath(request, new Path(location.getPath()));
@@ -219,8 +219,9 @@ public class GitFileDecorator implements IWebResourceDecorator {
 
 		// add Git Tree URI
 		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
+		int suffixLength = Math.min(targetPath.toPortableString().length(), clonePath.toPortableString().length());
 		path = new Path(GitServlet.GIT_URI + '/' + Tree.RESOURCE).append(clonePath).append(Constants.HEAD)
-				.append(targetPath.toPortableString().substring(clonePath.toPortableString().length()));
+				.append(targetPath.toPortableString().substring(suffixLength));
 		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
 		gitSection.put(GitConstants.KEY_TREE, link);
 
@@ -246,8 +247,8 @@ public class GitFileDecorator implements IWebResourceDecorator {
 	}
 
 	/**
-	 * If this server is configured to use git by default, then each project creation that is not already in a repository needs to have a git -init performed to
-	 * initialize the repository.
+	 * If this server is configured to use git by default, then each project creation that is not already in a
+	 * repository needs to have a git -init performed to initialize the repository.
 	 */
 	private void initGitRepository(HttpServletRequest request, IPath targetPath, JSONObject representation) {
 		// project creation URL is of the form POST /workspace/<id>
