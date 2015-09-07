@@ -19,7 +19,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 @ResourceDescription(type = Cloud.TYPE)
-public class Cloud extends CFObject {
+public abstract class Cloud extends CFObject {
 
 	public static final String RESOURCE = "cloud"; //$NON-NLS-1$
 	public static final String TYPE = "Cloud"; //$NON-NLS-1$
@@ -30,13 +30,6 @@ public class Cloud extends CFObject {
 	private URL uaaUrl;
 	private String userId;
 	private JSONObject accessToken;
-
-	protected Cloud(URL targetUrl, URL manageUrl, String userId) {
-		super();
-		this.targetUrl = targetUrl;
-		this.manageUrl = manageUrl;
-		this.userId = userId;
-	}
 	
 	protected Cloud(String regionId, URL targetUrl, URL manageUrl, String userId) {
 		super();
@@ -50,12 +43,24 @@ public class Cloud extends CFObject {
 		return targetUrl;
 	}
 	
+	protected void setUrl(URL url) {
+		this.targetUrl = url;
+	}
+	
 	public String getRegion(){
 		return regionId;
+	}
+	
+	protected void setRegion(String regionId) {
+		this.regionId = regionId;
 	}
 
 	public URL getManageUrl() {
 		return manageUrl;
+	}
+	
+	protected void setManageUrl(URL manageUrl) {
+		this.manageUrl = manageUrl;
 	}
 
 	public URL getUaaUrl() {

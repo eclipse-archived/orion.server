@@ -13,6 +13,7 @@ package org.eclipse.orion.server.cf.utils;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.eclipse.orion.server.cf.CFExtServiceHelper;
@@ -20,8 +21,12 @@ import org.eclipse.orion.server.cf.objects.Cloud;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TargetRegistry {
+	
+	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
 	private Map<String, UserClouds> cloudMap;
 
@@ -70,6 +75,8 @@ public class TargetRegistry {
 		}
 
 		private Cloud getCloud(URL url) {
+			logger.debug("UserClouds: " + getInfo());
+			
 			url = URLUtil.normalizeURL(url);
 			if (url == null || (defaultTarget != null && url.equals(defaultTarget.getCloud().getUrl()))) {
 				return defaultTarget != null ? defaultTarget.getCloud() : null;
@@ -79,10 +86,10 @@ public class TargetRegistry {
 			if (cloud == null) {
 				CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
 				if (helper != null && helper.getService() != null) {
-					Cloud someCloud = helper.getService().getClouds(userId).get(url);
-					if (someCloud != null) {
-						cloud = new DarkCloud(someCloud, userId);
-					}
+					cloud = helper.getService().getCloud(userId, url);
+				} else {
+					// default cloud creation
+					cloud = new DarkCloud(null, url, null, this.userId);
 				}
 
 				if (cloud == null) {
@@ -90,7 +97,7 @@ public class TargetRegistry {
 					if (someCloud != null && someCloud.getUrl().equals(url)) {
 						cloud = someCloud;
 					} else {
-						cloud = new DarkCloud(url, null, this.userId);
+						cloud = new DarkCloud(null, url, null, this.userId);
 					}
 				}
 
@@ -102,10 +109,11 @@ public class TargetRegistry {
 
 		private Cloud getConfigCloud() {
 			try {
-				String cloudConf = OrionConfiguration.getMetaStore().readUser(userId).getProperties().get("cm/configurations/org.eclipse.orion.client.cf.settings");
+				String cloudConf = OrionConfiguration.getMetaStore().readUser(userId).getProperties()
+						.get("cm/configurations/org.eclipse.orion.client.cf.settings");
 				JSONObject cloudConfJSON = new JSONObject(cloudConf);
 				URL cloudUrl = URLUtil.normalizeURL(new URL(cloudConfJSON.getString("targetUrl")));
-				return new DarkCloud(cloudUrl, URLUtil.normalizeURL(new URL(cloudConfJSON.getString("manageUrl"))), userId);
+				return new DarkCloud(null, cloudUrl, URLUtil.normalizeURL(new URL(cloudConfJSON.getString("manageUrl"))), userId);
 			} catch (Exception e) {
 				return null;
 			}
@@ -139,19 +147,22 @@ public class TargetRegistry {
 				cloud.setAccessToken(helper.getService().getToken(cloud));
 			}
 		}
+
+		private String getInfo() {
+			StringBuffer buf = new StringBuffer();
+			buf.append("userId: " + this.userId + "\n");
+			buf.append("clouds: " + this.userCloudMap.size() + "\n");
+			for (Iterator<Cloud> iterator = this.userCloudMap.values().iterator(); iterator.hasNext();) {
+				Cloud cloud = iterator.next();
+				buf.append(cloud.getRegion() + "(" + cloud.getUrl().toString() + ")" + "\n");
+			}
+			return buf.toString();
+		}
 	}
 
 	private class DarkCloud extends Cloud {
-		protected DarkCloud(URL apiUrl, URL manageUrl, String userId) {
-			super(apiUrl, manageUrl, userId);
-		}
-		
 		protected DarkCloud(String regionId, URL apiUrl, URL manageUrl, String userId) {
 			super(regionId, apiUrl, manageUrl, userId);
-		}
-
-		protected DarkCloud(Cloud cloud, String userId) {
-			super(cloud.getRegion(), cloud.getUrl(), cloud.getManageUrl(), userId);
 		}
 	}
 }
