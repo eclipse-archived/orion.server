@@ -35,6 +35,10 @@ public class ServerStatus extends Status {
 	 * A detailed human readable error message string.
 	 */
 	public static final String PROP_DETAILED_MESSAGE = "DetailedMessage"; //$NON-NLS-1$
+	/**
+	 * A detailed human readable error message string.
+	 */
+	public static final String PROP_CAUSE_MESSAGE = "CauseMessage"; //$NON-NLS-1$
 
 	/**
 	 * The id of the OSGi bundle where the error originated.
@@ -203,6 +207,8 @@ public class ServerStatus extends Status {
 			Throwable exception = getException();
 			if (exception != null)
 				result.put(PROP_DETAILED_MESSAGE, exception.getMessage());
+			if (exception != null && exception.getCause() != null)
+				result.put(PROP_CAUSE_MESSAGE, exception.getCause().getMessage());
 			//Could also include "SeeAlso" and "Cause"
 		} catch (JSONException e) {
 			//can only happen if the key is null
