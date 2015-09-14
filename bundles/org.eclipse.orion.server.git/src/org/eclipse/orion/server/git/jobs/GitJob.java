@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.jobs;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -67,7 +69,7 @@ public abstract class GitJob extends TaskJob {
 		return null;
 	}
 
-	private JSONObject addRepositoryInfo(JSONObject object) {
+	private JSONObject addRepositoryInfo(JSONObject object, Exception ex) {
 		try {
 			if (credentials != null) {
 				object.put(KEY_URL, credentials.getUri().toString());
@@ -91,6 +93,12 @@ public abstract class GitJob extends TaskJob {
 				}
 
 			}
+			if (ex != null) {
+				StringWriter swriter = new StringWriter();
+				PrintWriter writer = new PrintWriter(swriter);
+				ex.printStackTrace(writer);
+				object.put("StackTrace", swriter.toString());
+			}
 		} catch (JSONException e) {
 			// ignore, should always be able to put string
 		}
@@ -101,13 +109,13 @@ public abstract class GitJob extends TaskJob {
 		JSchException jschEx = getJSchException(e);
 		if (jschEx != null && jschEx instanceof HostFingerprintException) {
 			HostFingerprintException cause = (HostFingerprintException) jschEx;
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, cause.getMessage(), addRepositoryInfo(cause.formJson()), cause);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, cause.getMessage(), addRepositoryInfo(cause.formJson(), e), cause);
 		}
 		// JSch handles auth fail by exception message, another one handles only by exception message is "invalid privatekey: ..."
 		if (jschEx != null
 				&& jschEx.getMessage() != null
 				&& (jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail") || jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("invalid privatekey"))) { //$NON-NLS-1$
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, jschEx.getMessage(), addRepositoryInfo(new JSONObject()), jschEx);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, jschEx.getMessage(), addRepositoryInfo(new JSONObject(), e), jschEx);
 		}
 
 		// Log connection problems directly
@@ -115,19 +123,19 @@ public abstract class GitJob extends TaskJob {
 			TransportException cause = (TransportException) e.getCause();
 			if (matchMessage(JGitText.get().serviceNotPermitted, cause.getMessage())) {
 				// HTTP connection problems are distinguished by exception message
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, cause.getMessage(), addRepositoryInfo(new JSONObject(), e), cause);
 			} else if (matchMessage(JGitText.get().notAuthorized, cause.getMessage())) {
 				// HTTP connection problems are distinguished by exception message
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, cause.getMessage(), addRepositoryInfo(new JSONObject(), e), cause);
 			} else if (cause.getMessage().endsWith("username must not be null.") || cause.getMessage().endsWith("host must not be null.")) { //$NON-NLS-1$ //$NON-NLS-2$
 				// see com.jcraft.jsch.JSch#getSession(String, String, int)
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, cause.getMessage(), addRepositoryInfo(new JSONObject(), e), cause);
 			} else if (e instanceof GitAPIException) {
 				// Other HTTP connection problems reported directly
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, addRepositoryInfo(new JSONObject()), e);
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, addRepositoryInfo(new JSONObject(), e), e);
 			} else {
 				// Other HTTP connection problems reported directly
-				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, addRepositoryInfo(new JSONObject()), cause);
+				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, message, addRepositoryInfo(new JSONObject(), e), cause);
 			}
 
 		}
