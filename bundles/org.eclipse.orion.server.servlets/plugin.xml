@@ -47,6 +47,10 @@
             class="org.eclipse.orion.internal.server.servlets.about.AboutServlet">
       </servlet>
       <servlet
+            alias="/version"
+            class="org.eclipse.orion.internal.server.servlets.version.VersionServlet">
+      </servlet>
+      <servlet
             alias="/metrics"
             class="org.eclipse.orion.internal.server.servlets.metrics.GoogleAnalyticsServlet">
       </servlet>
