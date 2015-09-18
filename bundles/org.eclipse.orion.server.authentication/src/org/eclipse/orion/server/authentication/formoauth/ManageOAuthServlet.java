@@ -12,11 +12,15 @@ package org.eclipse.orion.server.authentication.formoauth;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.eclipse.orion.server.authentication.oauth.OAuthConsumer;
 import org.eclipse.orion.server.authentication.oauth.OAuthException;
@@ -41,7 +45,20 @@ public class ManageOAuthServlet extends HttpServlet {
 	 */
 	private static final long serialVersionUID = -3863741024714602634L;
 
-	private OAuthParams oauthParams;
+	private static final int CACHE_CAPACITY = 100;
+
+	/**
+	 *  A synchronized LRU cache of size CACHE_CAPACITY to store OAuthParams by session IDs.
+	 *  It is necessary when multiple users try to authenticate at the same time.
+	 */
+	Map<String, OAuthParams> oauthParamsStore = Collections.synchronizedMap(
+			new LinkedHashMap<String, OAuthParams>(2 * CACHE_CAPACITY, 1.0f, true) {
+				private static final long serialVersionUID = -2737481313941371896L;
+
+				protected boolean removeEldestEntry(Map.Entry<String, OAuthParams> eldest) {
+					return size() > CACHE_CAPACITY;
+				}
+			});
 
 	private static void writeOAuthError(String error, HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (req.getParameter("redirect") == null) {
@@ -91,7 +108,7 @@ public class ManageOAuthServlet extends HttpServlet {
 			if(oauthParam != null){
 				OAuthHelper.redirectToOAuthProvider(req, resp, getOAuthParams(req, oauthParam, login));
 			}else {
-				OAuthConsumer oauthConsumer = OAuthHelper.handleOAuthReturnAndTokenAccess(req, resp, getOAuthParams());
+				OAuthConsumer oauthConsumer = OAuthHelper.handleOAuthReturnAndTokenAccess(req, resp, retrieveOAuthParamsWithSession(req.getSession()));
 				if(login)
 					OAuthHelper.handleLogin(req, resp, oauthConsumer);
 				else
@@ -131,13 +148,15 @@ public class ManageOAuthServlet extends HttpServlet {
 	}
 
 	private OAuthParams getOAuthParams(HttpServletRequest req, String type, boolean login) throws OAuthException {
-		oauthParams = getParamsFactory(type).getOAuthParams(req, login);
-		return getOAuthParams();
+		OAuthParams oauthParams = getParamsFactory(type).getOAuthParams(req, login);
+		oauthParamsStore.put(req.getSession().getId(), oauthParams);
+		return oauthParams;
 	}
 
-	private OAuthParams getOAuthParams() throws OAuthException{
+	private OAuthParams retrieveOAuthParamsWithSession(HttpSession session) throws OAuthException{
+		OAuthParams oauthParams = oauthParamsStore.get(session.getId());
 		if (oauthParams == null)
-			throw new OAuthException("No OAuth provider given");
+			throw new OAuthException("No OAuth provider data associated with your session.");
 		return oauthParams;
 	}
 
