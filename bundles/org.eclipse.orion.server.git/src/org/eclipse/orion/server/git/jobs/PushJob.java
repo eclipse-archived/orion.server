@@ -151,7 +151,7 @@ public class PushJob extends GitJob {
 				// TODO: return results for all updated branches once push is available for remote, see bug 352202
 			}
 			// needs to handle multiple
-			result.put("Severity", error ? "Error" : "Normal");
+			result.put("Severity", error ? "Error" : "Ok");
 		} catch (JSONException e) {
 		} finally {
 			if (db != null) {
