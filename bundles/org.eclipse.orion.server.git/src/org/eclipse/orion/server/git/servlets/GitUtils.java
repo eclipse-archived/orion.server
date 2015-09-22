@@ -172,10 +172,10 @@ public class GitUtils {
 		if (localFile.exists() && localFile.isDirectory()) {
 			if (RepositoryCache.FileKey.isGitRepository(localFile, FS.DETECTED)) {
 				gitDirs.put(path.addTrailingSeparator(), localFile);
-				return;
+				//return;
 			} else if (RepositoryCache.FileKey.isGitRepository(new File(localFile, Constants.DOT_GIT), FS.DETECTED)) {
 				gitDirs.put(path.addTrailingSeparator(), new File(localFile, Constants.DOT_GIT));
-				return;
+				//return;
 			}
 			File[] folders = localFile.listFiles(new FileFilter() {
 				@Override
