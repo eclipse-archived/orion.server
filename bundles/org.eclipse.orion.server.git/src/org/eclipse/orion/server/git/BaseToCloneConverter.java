@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.git;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
@@ -74,7 +75,7 @@ public abstract class BaseToCloneConverter {
 
 	public static final BaseToCloneConverter CONFIG_OPTION = REMOTE_BRANCH;
 
-	public static URI getCloneLocation(URI base, BaseToCloneConverter converter) throws URISyntaxException, CoreException {
+	public static URI getCloneLocation(URI base, BaseToCloneConverter converter) throws URISyntaxException, CoreException, IOException {
 		IPath filePath = converter.getFilePath(base);
 		IPath clonePath = findClonePath(filePath);
 		if (clonePath == null)
@@ -85,7 +86,7 @@ public abstract class BaseToCloneConverter {
 
 	public abstract IPath getFilePath(URI base) throws URISyntaxException;
 
-	private static IPath findClonePath(IPath filePath) throws CoreException {
+	private static IPath findClonePath(IPath filePath) throws CoreException, IOException {
 		Map<IPath, File> dirs = GitUtils.getGitDirs(filePath, GitUtils.Traverse.GO_UP);
 		// going up, there can only be one git repository
 		if (dirs.size() != 1)

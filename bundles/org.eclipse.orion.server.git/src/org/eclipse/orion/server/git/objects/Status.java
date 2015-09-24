@@ -62,7 +62,7 @@ public class Status extends GitObject {
 	private org.eclipse.jgit.api.Status status;
 	private IPath basePath;
 
-	public Status(URI baseLocation, Repository db, org.eclipse.jgit.api.Status status, IPath basePath) throws URISyntaxException, CoreException {
+	public Status(URI baseLocation, Repository db, org.eclipse.jgit.api.Status status, IPath basePath) throws URISyntaxException, CoreException, IOException {
 		super(BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.STATUS), db);
 		this.baseLocation = baseLocation;
 		this.status = status;

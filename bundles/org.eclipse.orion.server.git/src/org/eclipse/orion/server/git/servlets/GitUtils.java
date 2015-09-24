@@ -10,16 +10,22 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -29,6 +35,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
@@ -41,6 +48,7 @@ import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.objects.LinkedFile;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,21 +60,25 @@ public class GitUtils {
 	}
 
 	/*
-	 * White list for URL schemes we can allow since they can't be used to gain access to git repositories in another Orion workspace since they require a
-	 * daemon to serve them. Especially file protocol needs to be prohibited (bug 408270).
+	 * White list for URL schemes we can allow since they can't be used to gain access to git repositories in another
+	 * Orion workspace since they require a daemon to serve them. Especially file protocol needs to be prohibited (bug
+	 * 408270).
 	 */
 	private static Set<String> uriSchemeWhitelist = new HashSet<String>(Arrays.asList("ftp", "git", "http", "https", "sftp", "ssh"));
 
 	/**
-	 * Returns the file representing the Git repository directory for the given file path or any of its parent in the filesystem. If the file doesn't exits, is
-	 * not a Git repository or an error occurred while transforming the given path into a store <code>null</code> is returned.
+	 * Returns the file representing the Git repository directory for the given file path or any of its parent in the
+	 * filesystem. If the file doesn't exits, is not a Git repository or an error occurred while transforming the given
+	 * path into a store <code>null</code> is returned.
 	 *
 	 * @param path
 	 *            expected format /file/{Workspace}/{projectName}[/{path}]
-	 * @return the .git folder if found or <code>null</code> the give path cannot be resolved to a file or it's not under control of a git repository
+	 * @return the .git folder if found or <code>null</code> the give path cannot be resolved to a file or it's not
+	 *         under control of a git repository
 	 * @throws CoreException
+	 * @throws IOException
 	 */
-	public static File getGitDir(IPath path) throws CoreException {
+	public static File getGitDir(IPath path) throws CoreException, IOException {
 		Map<IPath, File> gitDirs = GitUtils.getGitDirs(path, Traverse.GO_UP);
 		if (gitDirs == null)
 			return null;
@@ -95,10 +107,12 @@ public class GitUtils {
 	 *
 	 * @param path
 	 *            expected format /file/{Workspace}/{projectName}[/{path}]
-	 * @return a map of all git repositories found, or <code>null</code> if the provided path format doesn't match the expected format.
+	 * @return a map of all git repositories found, or <code>null</code> if the provided path format doesn't match the
+	 *         expected format.
 	 * @throws CoreException
+	 * @throws IOException
 	 */
-	public static Map<IPath, File> getGitDirs(IPath path, Traverse traverse) throws CoreException {
+	public static Map<IPath, File> getGitDirs(IPath path, Traverse traverse) throws CoreException, IOException {
 		IPath p = path.removeFirstSegments(1);// remove /file
 		IFileStore fileStore = NewFileServlet.getFileStore(null, p);
 		if (fileStore == null)
@@ -123,6 +137,20 @@ public class GitUtils {
 			getGitDirsInChildren(file, p, result);
 			break;
 		}
+		return result;
+	}
+
+	public static Map<IPath, LinkedFile> getGitDirsWithSubmodules(IPath path) throws CoreException, IOException, GitAPIException {
+		IPath p = path.removeFirstSegments(1);// remove /file
+		IFileStore fileStore = NewFileServlet.getFileStore(null, p);
+		if (fileStore == null)
+			return null;
+		Map<IPath, LinkedFile> result = new HashMap<IPath, LinkedFile>();
+		File file = fileStore.toLocalFile(EFS.NONE, null);
+		// jgit can only handle a local file
+		if (file == null)
+			return result;
+		getGitDirsInChildrenSubmodule(file, p, result, null, null);
 		return result;
 	}
 
@@ -167,15 +195,15 @@ public class GitUtils {
 
 	/**
 	 * Recursively walks down a directory tree and collects the paths of all git repositories.
+	 * 
+	 * @throws IOException
 	 */
-	private static void getGitDirsInChildren(File localFile, IPath path, Map<IPath, File> gitDirs) throws CoreException {
+	private static void getGitDirsInChildren(File localFile, IPath path, Map<IPath, File> gitDirs) throws CoreException, IOException {
 		if (localFile.exists() && localFile.isDirectory()) {
 			if (RepositoryCache.FileKey.isGitRepository(localFile, FS.DETECTED)) {
 				gitDirs.put(path.addTrailingSeparator(), localFile);
-				return;
 			} else if (RepositoryCache.FileKey.isGitRepository(new File(localFile, Constants.DOT_GIT), FS.DETECTED)) {
 				gitDirs.put(path.addTrailingSeparator(), new File(localFile, Constants.DOT_GIT));
-				return;
 			}
 			File[] folders = localFile.listFiles(new FileFilter() {
 				@Override
@@ -185,6 +213,83 @@ public class GitUtils {
 			});
 			for (File folder : folders) {
 				getGitDirsInChildren(folder, path.append(folder.getName()), gitDirs);
+			}
+			return;
+		}
+	}
+
+	private static void getGitDirsInChildrenSubmodule(File localFile, IPath path, Map<IPath, LinkedFile> gitDirs, File parent, IPath parentPath)
+			throws CoreException, IOException, GitAPIException {
+		if (localFile.exists() && localFile.isDirectory()) {
+			if (RepositoryCache.FileKey.isGitRepository(localFile, FS.DETECTED)) {
+				Map<IPath, File> submoduleFiles = new HashMap<IPath, File>();
+				IPath localPath = path.addTrailingSeparator();
+				LinkedFile currentLinkedFile;
+				if (parent != null) {
+					Entry<IPath, File> newParent = new AbstractMap.SimpleEntry<IPath, File>(parentPath, parent);
+					currentLinkedFile = new LinkedFile(localFile, newParent);
+				} else {
+					currentLinkedFile = new LinkedFile(localFile);
+				}
+				File gitModule = new File(localFile, ".gitmodules");
+				if (gitModule.exists() && !gitModule.isDirectory()) {
+					FileInputStream fis = new FileInputStream(gitModule);
+					BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+					String subPath = null;
+					while ((subPath = br.readLine()) != null) {
+						if (subPath.startsWith("[") && subPath.endsWith("]")) {
+							subPath = br.readLine().split("=")[1].trim();
+							File submoduleFile = new File(localFile, subPath);
+							getGitDirsInChildrenSubmodule(submoduleFile, path.append(subPath), gitDirs, localFile, localPath);
+							submoduleFiles.put(path.append(subPath), submoduleFile);
+						}
+					}
+				}
+				if (submoduleFiles.size() > 0) {
+					currentLinkedFile.setChildren(submoduleFiles);
+				}
+				gitDirs.put(localPath, currentLinkedFile);
+
+				return;
+			} else if (RepositoryCache.FileKey.isGitRepository(new File(localFile, Constants.DOT_GIT), FS.DETECTED)) {
+				Map<IPath, File> submoduleFiles = new HashMap<IPath, File>();
+				IPath localPath = path.addTrailingSeparator();
+				LinkedFile currentLinkedFile;
+				if (parent != null) {
+					Entry<IPath, File> newParent = new AbstractMap.SimpleEntry<IPath, File>(parentPath, parent);
+					currentLinkedFile = new LinkedFile(new File(localFile, Constants.DOT_GIT), newParent);
+				} else {
+					currentLinkedFile = new LinkedFile(new File(localFile, Constants.DOT_GIT));
+				}
+				File gitModule = new File(localFile, ".gitmodules");
+				if (gitModule.exists() && !gitModule.isDirectory()) {
+					FileInputStream fis = new FileInputStream(gitModule);
+					BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+					String subPath = null;
+					while ((subPath = br.readLine()) != null) {
+						if (subPath.startsWith("[") && subPath.endsWith("]")) {
+							subPath = br.readLine().split("=")[1].trim();
+							File submoduleFile = new File(localFile, subPath);
+							getGitDirsInChildrenSubmodule(submoduleFile, path.append(subPath), gitDirs, localFile, localPath);
+							submoduleFiles.put(path.append(subPath), submoduleFile);
+						}
+					}
+				}
+
+				if (submoduleFiles.size() > 0) {
+					currentLinkedFile.setChildren(submoduleFiles);
+				}
+				gitDirs.put(localPath, currentLinkedFile);
+				return;
+			}
+			File[] folders = localFile.listFiles(new FileFilter() {
+				@Override
+				public boolean accept(File file) {
+					return file.isDirectory() && !file.getName().equals(Constants.DOT_GIT);
+				}
+			});
+			for (File folder : folders) {
+				getGitDirsInChildrenSubmodule(folder, path.append(folder.getName()), gitDirs, parent, parentPath);
 			}
 			return;
 		}
@@ -215,7 +320,6 @@ public class GitUtils {
 		byte[] publicKey = json.optString(GitConstants.KEY_PUBLIC_KEY, "").getBytes(); //$NON-NLS-1$
 		byte[] passphrase = json.optString(GitConstants.KEY_PASSPHRASE, "").getBytes(); //$NON-NLS-1$
 
-
 		GitCredentialsProvider cp = new GitCredentialsProvider(null /* set by caller */, request.getRemoteUser(), username, password, knownHosts);
 		cp.setPrivateKey(privateKey);
 		cp.setPublicKey(publicKey);
@@ -242,7 +346,8 @@ public class GitUtils {
 	}
 
 	/**
-	 * Returns the existing WebProject corresponding to the provided path, or <code>null</code> if no such project exists.
+	 * Returns the existing WebProject corresponding to the provided path, or <code>null</code> if no such project
+	 * exists.
 	 * 
 	 * @param path
 	 *            path in the form /file/{workspaceId}/{projectName}/[filePath]
@@ -270,14 +375,15 @@ public class GitUtils {
 	 * @return the HTTP path of the project content resource
 	 */
 	public static IPath pathFromProject(WorkspaceInfo workspace, ProjectInfo project) {
-		return new Path(org.eclipse.orion.internal.server.servlets.Activator.LOCATION_FILE_SERVLET).append(workspace.getUniqueId()).append(
-				project.getFullName());
+		return new Path(org.eclipse.orion.internal.server.servlets.Activator.LOCATION_FILE_SERVLET).append(workspace.getUniqueId())
+				.append(project.getFullName());
 
 	}
 
 	/**
-	 * Returns whether or not the git repository URI is forbidden. If a scheme of the URI is matched, check if the scheme is a supported protocol. Otherwise,
-	 * match for a scp-like ssh URI: [user@]host.xz:path/to/repo.git/ and ensure the URI does not represent a local file path.
+	 * Returns whether or not the git repository URI is forbidden. If a scheme of the URI is matched, check if the
+	 * scheme is a supported protocol. Otherwise, match for a scp-like ssh URI: [user@]host.xz:path/to/repo.git/ and
+	 * ensure the URI does not represent a local file path.
 	 * 
 	 * @param uri
 	 *            A git repository URI

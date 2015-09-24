@@ -55,7 +55,7 @@ public class Diff extends GitObject {
 
 	private URI baseLocation;
 
-	public Diff(URI baseLocation, Repository db) throws URISyntaxException, CoreException {
+	public Diff(URI baseLocation, Repository db) throws URISyntaxException, CoreException, IOException {
 		super(BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.DIFF), db);
 		this.baseLocation = baseLocation;
 	}
