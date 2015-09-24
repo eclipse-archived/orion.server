@@ -102,7 +102,8 @@ public class CloneJob extends GitJob {
 			cc.setDirectory(cloneFolder);
 			cc.setRemote(Constants.DEFAULT_REMOTE_NAME);
 			cc.setURI(clone.getUrl());
-
+			cc.setCloneSubmodules(true);
+			
 			if (this.cookie != null) {
 				cc.setTransportConfigCallback(new TransportConfigCallback() {
 					@Override
