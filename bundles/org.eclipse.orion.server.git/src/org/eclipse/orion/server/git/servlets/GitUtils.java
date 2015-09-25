@@ -10,16 +10,23 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -41,6 +48,7 @@ import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.objects.LinkedFile;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +74,7 @@ public class GitUtils {
 	 * @return the .git folder if found or <code>null</code> the give path cannot be resolved to a file or it's not under control of a git repository
 	 * @throws CoreException
 	 */
-	public static File getGitDir(IPath path) throws CoreException {
+	public static File getGitDir(IPath path) throws CoreException, IOException {
 		Map<IPath, File> gitDirs = GitUtils.getGitDirs(path, Traverse.GO_UP);
 		if (gitDirs == null)
 			return null;
@@ -123,6 +131,20 @@ public class GitUtils {
 			getGitDirsInChildren(file, p, result);
 			break;
 		}
+		return result;
+	}
+
+	public static Map<IPath, LinkedFile> getGitDirsWithSubmodules(IPath path) throws CoreException, IOException {
+		IPath p = path.removeFirstSegments(1);// remove /file
+		IFileStore fileStore = NewFileServlet.getFileStore(null, p);
+		if (fileStore == null)
+			return null;
+		Map<IPath, LinkedFile> result = new HashMap<IPath, LinkedFile>();
+		File file = fileStore.toLocalFile(EFS.NONE, null);
+		// jgit can only handle a local file
+		if (file == null)
+			return result;
+		getGitDirsInChildrenSubmodule(file, p, result, null, null);
 		return result;
 	}
 
@@ -188,6 +210,67 @@ public class GitUtils {
 			}
 			return;
 		}
+	}
+
+	private static void getGitDirsInChildrenSubmodule(File localFile, IPath path, Map<IPath, LinkedFile> gitDirs, File parent, IPath parentPath)
+			throws CoreException, IOException {
+		if (localFile.exists() && localFile.isDirectory()) {
+			Map<IPath, File> submoduleFiles = new HashMap<IPath, File>();
+			IPath localPath = path.addTrailingSeparator();
+			LinkedFile currentLinkedFile;
+			if (RepositoryCache.FileKey.isGitRepository(localFile, FS.DETECTED)) {
+				if (parent != null) {
+					Entry<IPath, File> newParent = new AbstractMap.SimpleEntry<IPath, File>(parentPath, parent);
+					currentLinkedFile = new LinkedFile(localFile, newParent);
+				} else {
+					currentLinkedFile = new LinkedFile(localFile);
+				}
+				recursiveSubmoduleHelper(localFile, path, gitDirs, submoduleFiles, localPath, currentLinkedFile);
+
+				return;
+			} else if (RepositoryCache.FileKey.isGitRepository(new File(localFile, Constants.DOT_GIT), FS.DETECTED)) {
+				if (parent != null) {
+					Entry<IPath, File> newParent = new AbstractMap.SimpleEntry<IPath, File>(parentPath, parent);
+					currentLinkedFile = new LinkedFile(new File(localFile, Constants.DOT_GIT), newParent);
+				} else {
+					currentLinkedFile = new LinkedFile(new File(localFile, Constants.DOT_GIT));
+				}
+				recursiveSubmoduleHelper(localFile, path, gitDirs, submoduleFiles, localPath, currentLinkedFile);
+				return;
+			}
+			File[] folders = localFile.listFiles(new FileFilter() {
+				@Override
+				public boolean accept(File file) {
+					return file.isDirectory() && !file.getName().equals(Constants.DOT_GIT);
+				}
+			});
+			for (File folder : folders) {
+				getGitDirsInChildrenSubmodule(folder, path.append(folder.getName()), gitDirs, parent, parentPath);
+			}
+			return;
+		}
+	}
+
+	private static void recursiveSubmoduleHelper(File localFile, IPath path, Map<IPath, LinkedFile> gitDirs, Map<IPath, File> submoduleFiles, IPath localPath,
+			LinkedFile currentLinkedFile) throws FileNotFoundException, IOException, CoreException {
+		File gitModule = new File(localFile, ".gitmodules");
+		if (gitModule.exists() && !gitModule.isDirectory()) {
+			FileInputStream fis = new FileInputStream(gitModule);
+			BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+			String subPath = null;
+			while ((subPath = br.readLine()) != null) {
+				if (subPath.startsWith("[") && subPath.endsWith("]")) {
+					subPath = br.readLine().split("=")[1].trim();
+					File submoduleFile = new File(localFile, subPath);
+					getGitDirsInChildrenSubmodule(submoduleFile, path.append(subPath), gitDirs, localFile, localPath);
+					submoduleFiles.put(path.append(subPath), submoduleFile);
+				}
+			}
+		}
+		if (submoduleFiles.size() > 0) {
+			currentLinkedFile.setChildren(submoduleFiles);
+		}
+		gitDirs.put(localPath, currentLinkedFile);
 	}
 
 	public static String getRelativePath(IPath filePath, IPath pathToGitRoot) {

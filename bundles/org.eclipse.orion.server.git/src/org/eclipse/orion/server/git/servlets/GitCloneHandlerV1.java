@@ -17,6 +17,7 @@ import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.servlet.ServletException;
@@ -64,6 +65,7 @@ import org.eclipse.orion.server.git.jobs.CloneJob;
 import org.eclipse.orion.server.git.jobs.InitJob;
 import org.eclipse.orion.server.git.jobs.PullJob;
 import org.eclipse.orion.server.git.objects.Clone;
+import org.eclipse.orion.server.git.objects.LinkedFile;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -317,9 +319,25 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 					// this is the location of the project metadata
 					if (isAccessAllowed(user, project)) {
 						IPath projectPath = GitUtils.pathFromProject(workspace, project);
-						Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
-						for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
-							children.put(new Clone().toJSON(entry.getKey(), baseLocation, getCloneUrl(entry.getValue())));
+						Map<IPath, LinkedFile> gitDirs = GitUtils.getGitDirsWithSubmodules(projectPath);
+						for (Map.Entry<IPath, LinkedFile> entry : gitDirs.entrySet()) {
+							JSONObject mainRepoJSON = new Clone().toJSON(entry.getKey(), baseLocation, getCloneUrl(entry.getValue().getFile()));
+							LinkedFile submoduleFile = entry.getValue();
+							Map<IPath, File> subchildren = submoduleFile.getChildren();
+							if (subchildren != null && subchildren.size() > 0) {
+								JSONArray submoduleArray = new JSONArray();
+								for (Map.Entry<IPath, File> child : subchildren.entrySet()) {
+									JSONObject submoduleJSON = new Clone().toJSON(child.getKey(), baseLocation, getCloneUrl(child.getValue()));
+									submoduleArray.put(submoduleJSON);
+								}
+								mainRepoJSON.put("submodules", submoduleArray);
+							}
+							Entry<IPath,File> parentRepo = submoduleFile.getParent();
+							if(parentRepo != null){
+								JSONObject parentJSON = new Clone().toJSON(parentRepo.getKey(), baseLocation, getCloneUrl(parentRepo.getValue()));
+								mainRepoJSON.put("parentRepo", parentJSON);
+							}
+							children.put(mainRepoJSON);
 						}
 					}
 				}
@@ -335,11 +353,27 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			ProjectInfo webProject = GitUtils.projectFromPath(path);
 			IPath projectRelativePath = path.removeFirstSegments(3);
 			if (webProject != null && isAccessAllowed(user, webProject) && webProject.getProjectStore().getFileStore(projectRelativePath).fetchInfo().exists()) {
-				Map<IPath, File> gitDirs = GitUtils.getGitDirs(path, Traverse.GO_DOWN);
 				JSONObject result = new JSONObject();
 				JSONArray children = new JSONArray();
-				for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
-					children.put(new Clone().toJSON(entry.getKey(), baseLocation, getCloneUrl(entry.getValue())));
+				Map<IPath, LinkedFile> gitDirs = GitUtils.getGitDirsWithSubmodules(path);
+				for (Map.Entry<IPath, LinkedFile> entry : gitDirs.entrySet()) {
+					JSONObject mainRepoJSON = new Clone().toJSON(entry.getKey(), baseLocation, getCloneUrl(entry.getValue().getFile()));
+					LinkedFile submoduleFile = entry.getValue();
+					Map<IPath, File> subchildren = submoduleFile.getChildren();
+					if (subchildren != null && subchildren.size() > 0) {
+						JSONArray submoduleArray = new JSONArray();
+						for (Map.Entry<IPath, File> child : subchildren.entrySet()) {
+							JSONObject submoduleJSON = new Clone().toJSON(child.getKey(), baseLocation, getCloneUrl(child.getValue()));
+							submoduleArray.put(submoduleJSON);
+						}
+						mainRepoJSON.put("submodules", submoduleArray);
+					}
+					Entry<IPath,File> parentRepo = submoduleFile.getParent();
+					if(parentRepo != null){
+						JSONObject parentJSON = new Clone().toJSON(parentRepo.getKey(), baseLocation, getCloneUrl(parentRepo.getValue()));
+						mainRepoJSON.put("parentRepo", parentJSON);
+					}
+					children.put(mainRepoJSON);
 				}
 				result.put(ProtocolConstants.KEY_TYPE, Clone.TYPE);
 				result.put(ProtocolConstants.KEY_CHILDREN, children);
