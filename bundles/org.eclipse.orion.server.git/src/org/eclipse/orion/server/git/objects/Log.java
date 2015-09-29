@@ -251,7 +251,7 @@ public class Log extends GitObject {
 			String remoteBranchName = computeRemoteBranchName(name, remote);
 			result = new RemoteBranch(cloneLocation, db, remote, remoteBranchName).toJSON();
 		}
-		Assert.isNotNull(result, NLS.bind("Unexpected target Ref: {0}", name));
+//		Assert.isNotNull(result, NLS.bind("Unexpected target Ref: {0}", name));
 		return result;
 	}
 

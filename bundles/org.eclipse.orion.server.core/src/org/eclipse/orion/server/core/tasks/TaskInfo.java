@@ -29,6 +29,7 @@ public class TaskInfo {
 	public static final String KEY_LENGTH_COMPUTABLE = "lengthComputable";
 	public static final String KEY_LOADED = "loaded";
 	public static final String KEY_TOTAL = "total";
+	public static final String KEY_MESSAGE = "message";
 	public static final String KEY_EXPIRES = "expires";
 	public static final String KEY_RESULT = "Result";
 	public static final String KEY_CANCELABLE = "cancelable";
@@ -84,6 +85,7 @@ public class TaskInfo {
 	private TaskStatus status = TaskStatus.LOADSTART;
 	private int loaded = 0;
 	private int total = 0;
+	private String msg;
 	private IStatus result;
 	private boolean cancelable = false;
 	private IURIUnqualificationStrategy strategy;
@@ -122,6 +124,8 @@ public class TaskInfo {
 				info.loaded = json.optInt(KEY_LOADED);
 			if (json.has(KEY_TOTAL))
 				info.total = json.getInt(KEY_TOTAL);
+			if (json.has(KEY_MESSAGE))
+				info.msg = json.getString(KEY_MESSAGE);
 
 			if (json.has(KEY_TYPE))
 				info.status = TaskStatus.fromString(json.optString(KEY_TYPE));
@@ -206,6 +210,14 @@ public class TaskInfo {
 		this.loaded = loaded;
 	}
 
+	public String getMessage() {
+		return msg;
+	}
+
+	public void setMessage(String msg) {
+		this.msg = msg;
+	}
+
 	public int getTotal() {
 		return total;
 	}
@@ -274,6 +286,7 @@ public class TaskInfo {
 			if (isLengthComputable()) {
 				resultObject.put(KEY_LOADED, getLoaded());
 				resultObject.put(KEY_TOTAL, getTotal());
+				resultObject.put(KEY_MESSAGE, getMessage());
 			}
 			if(getTimestamp()!=null)
 				resultObject.put(KEY_TIMESTAMP, getTimestamp());
@@ -300,6 +313,7 @@ public class TaskInfo {
 			if (isLengthComputable()) {
 				resultObject.put(KEY_LOADED, getLoaded());
 				resultObject.put(KEY_TOTAL, getTotal());
+				resultObject.put(KEY_MESSAGE, getMessage());
 			}
 			if (result != null)
 				resultObject.put(KEY_RESULT, ServerStatus.convert(result).toJSON());

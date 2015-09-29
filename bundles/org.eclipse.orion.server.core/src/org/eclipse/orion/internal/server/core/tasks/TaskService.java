@@ -10,15 +10,28 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core.tasks;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
-import org.eclipse.orion.server.core.tasks.*;
+import org.eclipse.orion.server.core.tasks.CorruptedTaskException;
+import org.eclipse.orion.server.core.tasks.ITaskCanceller;
+import org.eclipse.orion.server.core.tasks.ITaskService;
+import org.eclipse.orion.server.core.tasks.TaskDoesNotExistException;
+import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.core.tasks.TaskInfo.TaskStatus;
+import org.eclipse.orion.server.core.tasks.TaskOperationException;
 
 /**
  * A concrete implementation of the {@link ITaskService}.

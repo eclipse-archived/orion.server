@@ -41,6 +41,7 @@ import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
@@ -86,9 +87,16 @@ public class CloneJob extends GitJob {
 		this(clone, userRunningTask, credentials, user, cloneLocation, project, gitUserName, gitUserMail, initProject);
 		this.cookie = (Cookie) cookie;
 	}
+	
+	@Override
+	public synchronized TaskInfo startTask() {
+		TaskInfo task = super.startTask();
+		task.setLengthComputable(true);
+		return task;
+	}
 
 	private IStatus doClone(IProgressMonitor monitor) {
-		EclipseGitProgressTransformer gitMonitor = new EclipseGitProgressTransformer(monitor);
+		EclipseGitProgressTransformer gitMonitor = new EclipseGitProgressTransformer(monitor, this);
 		Repository repo = null;
 		try {
 			File cloneFolder = new File(clone.getContentLocation().getPath());
