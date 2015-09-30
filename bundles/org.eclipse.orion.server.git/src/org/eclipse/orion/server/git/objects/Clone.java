@@ -10,15 +10,25 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.lib.RepositoryCache;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.submodule.SubmoduleWalk;
 import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.JSONSerializer;
 import org.eclipse.orion.server.core.resources.Property;
@@ -28,6 +38,8 @@ import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.core.resources.annotations.ResourceDescription;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
+import org.eclipse.orion.server.git.servlets.GitUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -46,6 +58,8 @@ public class Clone {
 	private String name;
 	private URI baseLocation;
 	private String cloneUrl;
+	private IPath path;
+	private JSONArray parents;
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
@@ -63,7 +77,9 @@ public class Clone {
 				new Property(GitConstants.KEY_STASH), //
 				new Property(GitConstants.KEY_STATUS), //
 				new Property(GitConstants.KEY_DIFF), //
-				new Property(GitConstants.KEY_URL) };
+				new Property(GitConstants.KEY_URL), //
+				new Property(ProtocolConstants.KEY_CHILDREN),//
+				new Property(ProtocolConstants.KEY_PARENTS)};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 	protected Serializer<JSONObject> jsonSerializer = new JSONSerializer();
@@ -222,6 +238,47 @@ public class Clone {
 		return createUriWithPath(np);
 	}
 
+	@PropertyDescription(name = ProtocolConstants.KEY_CHILDREN)
+	private JSONArray getChildren() throws URISyntaxException, IOException, CoreException, JSONException {
+		IFileStore fileStore = NewFileServlet.getFileStore(null, path);
+        if (fileStore == null)
+            return null;
+        File localFile = fileStore.toLocalFile(EFS.NONE, null);
+		File gitModule = new File(localFile, ".gitmodules");
+		JSONArray submodules = null;
+        if (gitModule.exists() && !gitModule.isDirectory()) {
+        	submodules = new JSONArray();
+            Repository parentRepository = null;
+            try {
+    			if (RepositoryCache.FileKey.isGitRepository(new File(localFile, Constants.DOT_GIT), FS.DETECTED)) {
+    				localFile = new File(localFile, Constants.DOT_GIT);
+    			}
+    			parentRepository = FileRepositoryBuilder.create(localFile);
+    		} catch (IOException e) {
+    			// ignore and skip Git URL
+    		} finally {
+    			if (parentRepository != null) {
+    				parentRepository.close();
+    			}
+    		}
+            SubmoduleWalk walk = SubmoduleWalk.forIndex(parentRepository);
+            while (walk.next()) {
+                File submoduleFile = walk.getRepository().getWorkTree();
+                JSONArray newParents = (this.parents == null? new JSONArray(): new JSONArray(this.parents.toString()));
+                newParents.put(new Path(getId()));
+                JSONObject submoduleCloneJSON = new Clone().toJSON(path.append(walk.getPath()).addTrailingSeparator(), baseLocation, GitUtils.getCloneUrlHelper(submoduleFile),newParents);
+                submodules.put(submoduleCloneJSON);
+            }
+            walk.release();
+        }
+        return submodules;
+	}
+	
+	@PropertyDescription(name = ProtocolConstants.KEY_PARENTS)
+	private JSONArray getParents() throws URISyntaxException, IOException, CoreException {
+		return this.parents;
+	} 
+	
 	@PropertyDescription(name = GitConstants.KEY_URL)
 	private String getCloneUrl() {
 		return cloneUrl;
@@ -231,12 +288,18 @@ public class Clone {
 		return new URI(baseLocation.getScheme(), baseLocation.getUserInfo(), baseLocation.getHost(), baseLocation.getPort(), path.toString(),
 				baseLocation.getQuery(), baseLocation.getFragment());
 	}
-
+	
 	public JSONObject toJSON(IPath path, URI baseLocation, String cloneUrl) throws IOException, URISyntaxException {
+		return toJSON(path, baseLocation, cloneUrl, null);
+	}
+
+	public JSONObject toJSON(IPath path, URI baseLocation, String cloneUrl, JSONArray parents) throws IOException, URISyntaxException {
 		id = Activator.LOCATION_FILE_SERVLET + '/' + path.toString();
 		name = path.lastSegment();
+		this.path = path;
 		this.cloneUrl = cloneUrl;
 		this.baseLocation = baseLocation;
+		this.parents = parents;
 		return toJSON();
-	}
+	} 
 }

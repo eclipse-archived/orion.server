@@ -12,6 +12,7 @@ package org.eclipse.orion.server.git.servlets;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -32,7 +33,10 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryCache;
+import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
@@ -326,5 +330,24 @@ public class GitUtils {
 		} else {
 			uriSchemeWhitelist.remove("file"); //$NON-NLS-1$
 		}
+	}
+	
+	public static String getCloneUrlHelper(File gitDir) {
+		Repository db = null;
+		try {
+			if (RepositoryCache.FileKey.isGitRepository(new File(gitDir, Constants.DOT_GIT), FS.DETECTED)) {
+				gitDir = new File(gitDir, Constants.DOT_GIT);
+			}
+			db = FileRepositoryBuilder.create(gitDir);
+			StoredConfig config = db.getConfig();
+			return config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL);
+		} catch (IOException e) {
+			// ignore and skip Git URL
+		} finally {
+			if (db != null) {
+				db.close();
+			}
+		}
+		return null;
 	}
 }
