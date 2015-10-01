@@ -69,10 +69,10 @@ public class IOUtilities {
 	}
 
 	/**
-	 * Returns the value of a request parameter as a String, or null if 
+	 * Returns the value of a request parameter as a String, or <tt>null</tt> if
 	 * the parameter does not exist in the query string.
 	 * 
-	 * Method is similar to HttpServletRequest.getParameter(String name) method, but it does not
+	 * <p>Method is similar to HttpServletRequest.getParameter(String name) method, but it does not
 	 * interfere with HttpServletRequest.getInputStream() and HttpServletRequest.getReader().  
 	 * @param request a request object
 	 * @param name a String specifying the name of the parameter
@@ -84,7 +84,7 @@ public class IOUtilities {
 			return null;
 
 		for (String paramString : queryString.split("&")) { //$NON-NLS-1$
-			if (paramString.startsWith(name)) {
+			if (paramString.equals(name) || paramString.startsWith(name + "=")) { //$NON-NLS-1$
 				String[] nameAndValue = paramString.split("=", 2); //$NON-NLS-1$
 				if (nameAndValue.length == 2)
 					return nameAndValue[1];

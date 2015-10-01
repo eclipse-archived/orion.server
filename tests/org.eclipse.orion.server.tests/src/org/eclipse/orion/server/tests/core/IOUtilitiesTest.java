@@ -79,4 +79,33 @@ public class IOUtilitiesTest {
 		assertNull(parts.get("url"));
 		assertEquals(patch.toString(), parts.get("uploadedfile"));
 	}
+
+	@Test
+	public void testGetQueryParameter() throws Exception {
+		QueryHavingRequest req = new QueryHavingRequest("foo=bar");
+		assertEquals("bar", IOUtilities.getQueryParameter(req, "foo"));
+
+		req = new QueryHavingRequest("foo=");
+		assertEquals("Empty value", "", IOUtilities.getQueryParameter(req, "foo"));
+
+		req = new QueryHavingRequest("foo");
+		assertEquals("Empty value #2", IOUtilities.getQueryParameter(req, "foo"));
+
+		req = new QueryHavingRequest("foo&bar=1&baz");
+		assertEquals("1", IOUtilities.getQueryParameter(req, "bar"));
+		assertEquals("", IOUtilities.getQueryParameter(req, "baz"));
+
+		req = new QueryHavingRequest("");
+		assertEquals("Empty query", null, IOUtilities.getQueryParameter(req, "fizz"));
+
+		req = new QueryHavingRequest(null);
+		assertEquals("No query", null, IOUtilities.getQueryParameter(req, "fizz"));
+
+		// https://bugs.eclipse.org/bugs/show_bug.cgi?id=478227
+		req = new QueryHavingRequest("foosball=1&foo=2");
+		assertEquals("Requested param appears as a prefix of an earlier param", "2", IOUtilities.getQueryParameter(req, "foo"));
+
+		req = new QueryHavingRequest("a=1&b=2&a=3&b=4");
+		assertEquals("Should return the first value if param appears multiple times", "2", IOUtilities.getQueryParameter(req, "b"));
+	}
 }
