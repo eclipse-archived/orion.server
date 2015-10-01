@@ -61,6 +61,7 @@ public class Clone {
 	private IPath path;
 	private JSONArray parents;
 
+
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
 		Property[] defaultProperties = new Property[] { //
@@ -78,11 +79,13 @@ public class Clone {
 				new Property(GitConstants.KEY_STATUS), //
 				new Property(GitConstants.KEY_DIFF), //
 				new Property(GitConstants.KEY_URL), //
-				new Property(ProtocolConstants.KEY_CHILDREN),//
-				new Property(ProtocolConstants.KEY_PARENTS)};
+				new Property(ProtocolConstants.KEY_CHILDREN), //
+				new Property(ProtocolConstants.KEY_PARENTS), //
+				new Property(GitConstants.KEY_SUBMODULE)};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 	protected Serializer<JSONObject> jsonSerializer = new JSONSerializer();
+
 
 	/**
 	 * Sets the clone id. The clone id is the HTTP resource URI of the file resource. This id is of the form /file/{workspaceId}/{projectName}[/{folderPath}]
@@ -190,6 +193,14 @@ public class Clone {
 	}
 
 	// TODO: expandable?
+	@PropertyDescription(name = GitConstants.KEY_SUBMODULE)
+	private URI getSubmoduleLocation() throws URISyntaxException {
+		IPath np = new Path(GitServlet.GIT_URI).append(Submodule.RESOURCE).append(getId());
+		return createUriWithPath(np);
+	}
+
+	
+	// TODO: expandable?
 	@PropertyDescription(name = GitConstants.KEY_COMMIT)
 	private URI getCommitLocation() throws URISyntaxException {
 		IPath np = new Path(GitServlet.GIT_URI).append(Commit.RESOURCE).append(getId());
@@ -255,14 +266,23 @@ public class Clone {
     			}
     			parentRepository = FileRepositoryBuilder.create(localFile);
     			SubmoduleWalk walk = SubmoduleWalk.forIndex(parentRepository);
-    			while (walk.next()) {
-                    File submoduleFile = walk.getRepository().getWorkTree();
-                    JSONArray newParents = (this.parents == null? new JSONArray(): new JSONArray(this.parents.toString()));
+                while (walk.next()) {
+                	JSONObject submoduleCloneJSON = null;
+              		Repository subRepo = walk.getRepository();
+              		File submoduleFile=null;
+                	if(subRepo!=null){
+                		submoduleFile = subRepo.getWorkTree();
+                	}else{
+                		if(!walk.getDirectory().exists())walk.getDirectory().mkdir();
+                		submoduleFile= walk.getDirectory();
+                	}
+                	JSONArray newParents = (this.parents == null? new JSONArray(): new JSONArray(this.parents.toString()));
                     newParents.put(new Path(getId()));
-                    JSONObject submoduleCloneJSON = new Clone().toJSON(path.append(walk.getPath()).addTrailingSeparator(), baseLocation, GitUtils.getCloneUrl(submoduleFile),newParents);
+                    submoduleCloneJSON = new Clone().toJSON(path.append(walk.getPath()).addTrailingSeparator(), baseLocation, GitUtils.getCloneUrl(submoduleFile),newParents);
                     submodules.put(submoduleCloneJSON);
                 }
                 walk.release();
+                submodules = submodules.length()>0?submodules:null;
             } catch (IOException e) {
     			// ignore and skip Git URL
     		} finally {
@@ -279,7 +299,7 @@ public class Clone {
 	private JSONArray getParents() throws URISyntaxException, IOException, CoreException {
 		return this.parents;
 	} 
-	
+
 	@PropertyDescription(name = GitConstants.KEY_URL)
 	private String getCloneUrl() {
 		return cloneUrl;
@@ -303,4 +323,5 @@ public class Clone {
 		this.parents = parents;
 		return toJSON();
 	} 
+
 }

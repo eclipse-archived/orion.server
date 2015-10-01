@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.servlets;
 
+import static org.eclipse.jgit.lib.ConfigConstants.CONFIG_SUBMODULE_SECTION;
+import static org.eclipse.jgit.lib.Constants.DOT_GIT_MODULES;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -21,6 +24,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
@@ -30,17 +34,27 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.SubmoduleAddCommand;
+import org.eclipse.jgit.api.SubmoduleStatusCommand;
+import org.eclipse.jgit.api.SubmoduleSyncCommand;
+import org.eclipse.jgit.api.SubmoduleUpdateCommand;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.storage.file.FileBasedConfig;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.submodule.SubmoduleStatus;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
+import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.git.GitConstants;
@@ -70,7 +84,7 @@ public class GitUtils {
 	 * @return the .git folder if found or <code>null</code> the give path cannot be resolved to a file or it's not under control of a git repository
 	 * @throws CoreException
 	 */
-	public static File getGitDir(IPath path) throws CoreException {
+	public static File getGitDir(IPath path) throws CoreException, IOException {
 		Map<IPath, File> gitDirs = GitUtils.getGitDirs(path, Traverse.GO_UP);
 		if (gitDirs == null)
 			return null;
@@ -129,6 +143,7 @@ public class GitUtils {
 		}
 		return result;
 	}
+
 
 	private static void getGitDirsInParents(File file, Map<IPath, File> gitDirs) {
 		int levelUp = 0;
@@ -193,6 +208,7 @@ public class GitUtils {
 			return;
 		}
 	}
+
 
 	public static String getRelativePath(IPath filePath, IPath pathToGitRoot) {
 		StringBuilder sb = new StringBuilder();
@@ -331,6 +347,7 @@ public class GitUtils {
 			uriSchemeWhitelist.remove("file"); //$NON-NLS-1$
 		}
 	}
+
 	
 	public static String getCloneUrl(File gitDir) {
 		Repository db = null;
@@ -349,5 +366,87 @@ public class GitUtils {
 			}
 		}
 		return null;
+	}
+
+	public static boolean updateSubmodules(Repository repo) throws GitAPIException {
+		SubmoduleUpdateCommand update = new SubmoduleUpdateCommand(repo);
+		Collection<String> updated = update.call();
+		SubmoduleStatusCommand status = new SubmoduleStatusCommand(repo);
+		Map<String, SubmoduleStatus> statusResult = status.call();
+		repo.close();
+		return updated.size() == statusResult.size();
+	}
+
+	public static boolean syncSubmodules(Repository repo) throws GitAPIException {
+		SubmoduleSyncCommand sync = new SubmoduleSyncCommand(repo);
+		Map<String, String> synced = sync.call();
+		SubmoduleStatusCommand status = new SubmoduleStatusCommand(repo);
+		Map<String, SubmoduleStatus> statusResult = status.call();
+		repo.close();
+		return synced.size() == statusResult.size();
+	}
+
+	public static void addSubmodules(Repository repo, String targetUrl, String targetPath) throws GitAPIException {
+		SubmoduleAddCommand addCommand = new SubmoduleAddCommand(repo);
+		addCommand.setURI(targetUrl);
+		addCommand.setPath(targetPath);
+		Repository repository = addCommand.call();
+		repository.close();
+	}
+	
+	public static void removeSubmodule(String submodulePath, String[] parents) throws Exception {
+		String parentPath = parents[parents.length-1];
+		String pathToParent = submodulePath.split(parentPath)[1].replaceAll("^/+", "").replaceAll("/+$", "");
+		File localFile = getFile(parentPath);
+		Repository parentRepo = FileRepositoryBuilder.create(localFile);
+		StoredConfig gitSubmodulesConfig = getGitSubmodulesConfig( parentRepo );
+		gitSubmodulesConfig.unsetSection( CONFIG_SUBMODULE_SECTION, pathToParent );
+		gitSubmodulesConfig.save();
+		StoredConfig repositoryConfig = parentRepo.getConfig();
+		repositoryConfig.unsetSection( CONFIG_SUBMODULE_SECTION, pathToParent );
+		repositoryConfig.save();
+		Git git = Git.wrap( parentRepo );
+		git.add().addFilepattern( DOT_GIT_MODULES ).call();
+		git.rm().setCached( true ).addFilepattern( pathToParent ).call();
+		if(gitSubmodulesConfig.getSections().size()==0){
+			git.rm().addFilepattern( DOT_GIT_MODULES ).call();
+		}
+		git.commit().setMessage( "Remove submodule: " + pathToParent).call();
+		FileUtils.delete( new File( parentRepo.getWorkTree(), pathToParent ), FileUtils.RECURSIVE );
+	}
+	
+	private static File getFile(String path) throws CoreException{
+		IPath p = new Path(path);
+		if (p.segment(1).equals("file")) { //$NON-NLS-1$
+			p = p.removeFirstSegments(1);
+		}
+		IPath gitSearchPath = p.hasTrailingSeparator() ? p : p.removeLastSegments(1);
+		Set<Entry<IPath, File>> gitDirsFound = GitUtils.getGitDirs(gitSearchPath, Traverse.GO_UP).entrySet();
+		Entry<IPath, File> firstGitDir = gitDirsFound.iterator().next();
+		File gitDir = firstGitDir.getValue();
+		return gitDir;
+	}
+	
+	private static StoredConfig getGitSubmodulesConfig( Repository repository ) {
+		File gitSubmodulesFile = new File( repository.getWorkTree(), DOT_GIT_MODULES );
+		return new FileBasedConfig( null, gitSubmodulesFile, FS.DETECTED );
+	}
+	
+	/**
+	 * Returns a unique project name that does not exist in the given workspace, for the given clone name.
+	 */
+	public static String getUniqueProjectName(WorkspaceInfo workspace, String cloneName) {
+		int i = 1;
+		String uniqueName = cloneName;
+		IMetaStore store = OrionConfiguration.getMetaStore();
+		try {
+			while (store.readProject(workspace.getUniqueId(), uniqueName) != null) {
+				// add an incrementing counter suffix until we arrive at a unique name
+				uniqueName = cloneName + '-' + ++i;
+			}
+		} catch (CoreException e) {
+			// let it proceed with current name
+		}
+		return uniqueName;
 	}
 }

@@ -187,7 +187,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			WorkspaceInfo workspace = metaStore.readWorkspace(path.segment(1));
 			if (cloneName == null)
 				cloneName = new URIish(url).getHumanishName();
-			cloneName = getUniqueProjectName(workspace, cloneName);
+			cloneName = GitUtils.getUniqueProjectName(workspace, cloneName);
 			webProjectExists = false;
 			project = new ProjectInfo();
 			project.setFullName(cloneName);
@@ -246,24 +246,6 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		CloneJob job = new CloneJob(clone, TaskJobHandler.getUserId(request), cp, request.getRemoteUser(), cloneLocation,
 				webProjectExists ? null : project /* used for cleaning up, so null when not needed */, gitUserName, gitUserMail, initProject, cookie);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
-	}
-
-	/**
-	 * Returns a unique project name that does not exist in the given workspace, for the given clone name.
-	 */
-	private String getUniqueProjectName(WorkspaceInfo workspace, String cloneName) {
-		int i = 1;
-		String uniqueName = cloneName;
-		IMetaStore store = OrionConfiguration.getMetaStore();
-		try {
-			while (store.readProject(workspace.getUniqueId(), uniqueName) != null) {
-				// add an incrementing counter suffix until we arrive at a unique name
-				uniqueName = cloneName + '-' + ++i;
-			}
-		} catch (CoreException e) {
-			// let it proceed with current name
-		}
-		return uniqueName;
 	}
 
 	public static void doConfigureClone(Git git, String user, String gitUserName, String gitUserMail) throws IOException, CoreException, JSONException {
