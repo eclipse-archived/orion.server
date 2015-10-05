@@ -89,7 +89,7 @@ public class IOUtilitiesTest {
 		assertEquals("Empty value", "", IOUtilities.getQueryParameter(req, "foo"));
 
 		req = new QueryHavingRequest("foo");
-		assertEquals("Empty value #2", IOUtilities.getQueryParameter(req, "foo"));
+		assertEquals("Empty value #2", "", IOUtilities.getQueryParameter(req, "foo"));
 
 		req = new QueryHavingRequest("foo&bar=1&baz");
 		assertEquals("1", IOUtilities.getQueryParameter(req, "bar"));
