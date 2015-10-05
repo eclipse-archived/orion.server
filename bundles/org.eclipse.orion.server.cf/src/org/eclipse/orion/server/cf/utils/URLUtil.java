@@ -11,6 +11,8 @@
 package org.eclipse.orion.server.cf.utils;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 public class URLUtil {
@@ -28,5 +30,27 @@ public class URLUtil {
 		} catch (MalformedURLException e) {
 			return null;
 		}
+	}
+	
+	/**
+	 * Normalizes a git repository location so that it never ends with ".git".
+	 */
+	public static URI normalizeGitRepoLocation(URI location) {
+		final String locationString = location.toString();
+		if (locationString.endsWith("/")) { //$NON-NLS-1$
+			try {
+				return new URI(locationString.substring(0, locationString.lastIndexOf("/"))); //$NON-NLS-1$
+			} catch (URISyntaxException e) {
+				//keep original location
+			}
+		}
+		if (locationString.endsWith(".git")) { //$NON-NLS-1$
+			try {
+				return new URI(locationString.substring(0, locationString.lastIndexOf(".git"))); //$NON-NLS-1$
+			} catch (URISyntaxException e) {
+				//keep original location
+			}
+		}
+		return location;
 	}
 }
