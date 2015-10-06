@@ -240,9 +240,10 @@ public class Clone {
 
 	@PropertyDescription(name = ProtocolConstants.KEY_CHILDREN)
 	private JSONArray getChildren() throws URISyntaxException, IOException, CoreException, JSONException {
+		if (path == null) return new JSONArray();
 		IFileStore fileStore = NewFileServlet.getFileStore(null, path);
         if (fileStore == null)
-            return null;
+            return new JSONArray();
         File localFile = fileStore.toLocalFile(EFS.NONE, null);
 		File gitModule = new File(localFile, ".gitmodules");
 		JSONArray submodules = null;

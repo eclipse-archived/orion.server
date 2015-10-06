@@ -119,7 +119,7 @@ public abstract class GitJob extends TaskJob {
 			} else if (matchMessage(JGitText.get().notAuthorized, cause.getMessage())) {
 				// HTTP connection problems are distinguished by exception message
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_UNAUTHORIZED, cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
-			} else if (cause.getMessage().endsWith("username must not be null.") || cause.getMessage().endsWith("host must not be null.")) { //$NON-NLS-1$ //$NON-NLS-2$
+			} else if (cause.getMessage() != null && cause.getMessage().endsWith("username must not be null.") || cause.getMessage().endsWith("host must not be null.")) { //$NON-NLS-1$ //$NON-NLS-2$
 				// see com.jcraft.jsch.JSch#getSession(String, String, int)
 				return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, cause.getMessage(), addRepositoryInfo(new JSONObject()), cause);
 			} else if (e instanceof GitAPIException) {

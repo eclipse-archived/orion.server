@@ -85,16 +85,19 @@ public abstract class TaskJob extends Job implements ITaskCanceller {
 	}
 	
 	public synchronized void setTaskLoaded(int loaded) {
+		if (task == null) return;
 		task.setLoaded(loaded);
 		getTaskService().updateTask(task);
 	}
 	
 	public synchronized void setTaskTotal(int total) {
+		if (task == null) return;
 		task.setTotal(total);
 		getTaskService().updateTask(task);
 	}
 	
 	public synchronized void setTaskMessage(String msg) {
+		if (task == null) return;
 		task.setMessage(msg);
 		getTaskService().updateTask(task);
 	}
