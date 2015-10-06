@@ -117,9 +117,9 @@ public class EclipseGitProgressTransformer implements ProgressMonitor {
 					}
 				}
 			}
+			task.worked(work);
 		}
 		lastWorked = cmp;
-		task.worked(work);
 	}
 
 	@Override
