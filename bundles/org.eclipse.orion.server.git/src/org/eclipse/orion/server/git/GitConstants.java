@@ -42,6 +42,8 @@ public class GitConstants {
 	public static final String KEY_DEFAULT_REMOTE_BRANCH = "DefaultRemoteBranchLocation"; //$NON-NLS-1$
 
 	public static final String KEY_TAG = "TagLocation"; //$NON-NLS-1$
+	
+	public static final String KEY_SUBMODULE = "SubmoduleLocation"; //$NON-NLS-1$
 
 	public static final String KEY_HEAD = "HeadLocation"; //$NON-NLS-1$
 
@@ -204,6 +206,8 @@ public class GitConstants {
 	public static final String KEY_END_RANGE = "End"; //$NON-NLS-1$
 
 	public static final String KEY_INIT_PROJECT = "initProject"; //$NON-NLS-1$
+	
+	public static final String KEY_CLONE_SUBMODULES = "cloneSubmodules"; //$NON-NLS-1$
 
 	public static final String KEY_SSO_TOKEN = "SSOToken"; //$NON-NLS-1$
 

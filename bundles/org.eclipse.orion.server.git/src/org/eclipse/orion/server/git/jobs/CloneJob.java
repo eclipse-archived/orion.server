@@ -33,6 +33,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.submodule.SubmoduleWalk;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.TransportHttp;
@@ -62,9 +63,10 @@ public class CloneJob extends GitJob {
 	private final String gitUserMail;
 	private String cloneLocation;
 	private final boolean initProject;
-
+	private final boolean cloneSubmodules;
+	
 	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project,
-			String gitUserName, String gitUserMail, boolean initProject) {
+			String gitUserName, String gitUserMail, boolean initProject, boolean cloneSubmodules) {
 		super(userRunningTask, true, (GitCredentialsProvider) credentials);
 		this.clone = clone;
 		this.user = user;
@@ -73,18 +75,25 @@ public class CloneJob extends GitJob {
 		this.gitUserMail = gitUserMail;
 		this.cloneLocation = cloneLocation;
 		this.initProject = initProject;
+		this.cloneSubmodules = cloneSubmodules;
 		setFinalMessage("Clone complete.");
 		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
 	}
 
 	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project,
 			String gitUserName, String gitUserMail) {
-		this(clone, userRunningTask, credentials, user, cloneLocation, project, gitUserName, gitUserMail, false);
+		this(clone, userRunningTask, credentials, user, cloneLocation, project, gitUserName, gitUserMail, false, true);
 	}
 
 	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project,
 			String gitUserName, String gitUserMail, boolean initProject, Object cookie) {
-		this(clone, userRunningTask, credentials, user, cloneLocation, project, gitUserName, gitUserMail, initProject);
+		this(clone, userRunningTask, credentials, user, cloneLocation, project, gitUserName, gitUserMail, initProject, true);
+		this.cookie = (Cookie) cookie;
+	}
+	
+	public CloneJob(Clone clone, String userRunningTask, CredentialsProvider credentials, String user, String cloneLocation, ProjectInfo project,
+			String gitUserName, String gitUserMail, boolean initProject, boolean cloneSubmodules, Object cookie) {
+		this(clone, userRunningTask, credentials, user, cloneLocation, project, gitUserName, gitUserMail, initProject, cloneSubmodules);
 		this.cookie = (Cookie) cookie;
 	}
 	
@@ -110,7 +119,10 @@ public class CloneJob extends GitJob {
 			cc.setDirectory(cloneFolder);
 			cc.setRemote(Constants.DEFAULT_REMOTE_NAME);
 			cc.setURI(clone.getUrl());
-			cc.setCloneSubmodules(true);
+			if(this.cloneSubmodules){
+				cc.setCloneSubmodules(true);
+			}
+
 			
 			if (this.cookie != null) {
 				cc.setTransportConfigCallback(new TransportConfigCallback() {
@@ -132,6 +144,19 @@ public class CloneJob extends GitJob {
 			// Configure the clone, see Bug 337820
 			GitCloneHandlerV1.doConfigureClone(git, user, gitUserName, gitUserMail);
 			repo = git.getRepository();
+			if(!this.cloneSubmodules){
+				File gitModule = new File(repo.getWorkTree(), ".gitmodules");
+		        if (gitModule.exists() && !gitModule.isDirectory()) {
+		    		SubmoduleWalk walk = SubmoduleWalk.forIndex(repo);
+		            while (walk.next()) {
+		              	Repository subRepo = walk.getRepository();
+		                if(subRepo==null&&!walk.getDirectory().exists()){
+		                	walk.getDirectory().mkdir();
+		                }
+		            }
+		            walk.release(); 
+		        }
+			}
 			GitJobUtils.packRefs(repo, gitMonitor);
 			if (monitor.isCanceled()) {
 				return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");

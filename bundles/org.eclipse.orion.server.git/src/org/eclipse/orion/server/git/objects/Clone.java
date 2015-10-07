@@ -79,7 +79,8 @@ public class Clone {
 				new Property(GitConstants.KEY_DIFF), //
 				new Property(GitConstants.KEY_URL), //
 				new Property(ProtocolConstants.KEY_CHILDREN),//
-				new Property(ProtocolConstants.KEY_PARENTS)};
+				new Property(ProtocolConstants.KEY_PARENTS),//
+				new Property(GitConstants.KEY_SUBMODULE)};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 	protected Serializer<JSONObject> jsonSerializer = new JSONSerializer();
@@ -188,6 +189,13 @@ public class Clone {
 		IPath np = new Path(GitServlet.GIT_URI).append(Commit.RESOURCE).append(Constants.HEAD).append(getId());
 		return createUriWithPath(np);
 	}
+	
+	// TODO: expandable?
+	@PropertyDescription(name = GitConstants.KEY_SUBMODULE)
+	private URI getSubmoduleLocation() throws URISyntaxException {
+		IPath np = new Path(GitServlet.GIT_URI).append(Submodule.RESOURCE).append(getId());
+		return createUriWithPath(np);
+	}
 
 	// TODO: expandable?
 	@PropertyDescription(name = GitConstants.KEY_COMMIT)
@@ -240,10 +248,9 @@ public class Clone {
 
 	@PropertyDescription(name = ProtocolConstants.KEY_CHILDREN)
 	private JSONArray getChildren() throws URISyntaxException, IOException, CoreException, JSONException {
-		if (path == null) return new JSONArray();
 		IFileStore fileStore = NewFileServlet.getFileStore(null, path);
         if (fileStore == null)
-            return new JSONArray();
+            return null;
         File localFile = fileStore.toLocalFile(EFS.NONE, null);
 		File gitModule = new File(localFile, ".gitmodules");
 		JSONArray submodules = null;
@@ -257,13 +264,19 @@ public class Clone {
     			parentRepository = FileRepositoryBuilder.create(localFile);
     			SubmoduleWalk walk = SubmoduleWalk.forIndex(parentRepository);
     			while (walk.next()) {
-                    File submoduleFile = walk.getRepository().getWorkTree();
+    				File submoduleFile = null;
+    				if(walk.getRepository()!=null){
+                    	submoduleFile = walk.getRepository().getWorkTree();
+    				}else{
+    					submoduleFile = walk.getDirectory();
+    				}
                     JSONArray newParents = (this.parents == null? new JSONArray(): new JSONArray(this.parents.toString()));
                     newParents.put(new Path(getId()));
                     JSONObject submoduleCloneJSON = new Clone().toJSON(path.append(walk.getPath()).addTrailingSeparator(), baseLocation, GitUtils.getCloneUrl(submoduleFile),newParents);
                     submodules.put(submoduleCloneJSON);
                 }
                 walk.release();
+                submodules = submodules.length()>0?submodules:null;
             } catch (IOException e) {
     			// ignore and skip Git URL
     		} finally {
