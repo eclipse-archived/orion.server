@@ -11,16 +11,12 @@
 package org.eclipse.orion.server.git;
 
 import java.util.Locale;
+import java.util.Vector;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.transport.CredentialItem;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-import org.eclipse.orion.internal.server.core.metastore.SimpleUserPasswordUtil;
-import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.metastore.MetadataInfo;
-import org.json.JSONObject;
 
 public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider {
 
@@ -30,6 +26,16 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 	private byte[] privateKey;
 	private byte[] publicKey;
 	private byte[] passphrase;
+
+	private static Vector<GitHubTokenProvider> GithubTokenProviders = new Vector<GitHubTokenProvider>(9);
+
+	public static void addGitHubTokenProvider(GitHubTokenProvider value) {
+		GithubTokenProviders.add(value);
+	}
+
+	public static void removeGitHubTokenProvider(GitHubTokenProvider value) {
+		GithubTokenProviders.remove(value);
+	}
 
 	public GitCredentialsProvider(URIish uri, String remoteUser, String username, char[] password, String knownHosts) {
 		super(username, password);
@@ -77,10 +83,6 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 	@Override
 	public boolean get(URIish uri, CredentialItem... items) throws UnsupportedCredentialItem {
 		for (CredentialItem item : items) {
-			/*
-			 * If there aren't credentials of any kind and the repository is hosted at GitHub
-			 * then check for a pre-set GitHub token and use it if present.
-			 */
 			if (item instanceof CredentialItem.Username) {
 				if ((this.privateKey == null || this.privateKey.length == 0) && (this.publicKey == null || this.publicKey.length == 0) && (this.passphrase == null || this.passphrase.length == 0)) {
 					CredentialItem.Username u = new CredentialItem.Username();
@@ -89,27 +91,16 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 					if ((u.getValue() == null || u.getValue().length() == 0) && (p.getValue() == null || p.getValue().length == 0)) {
 						if (uri != null) {
 							if (this.remoteUser != null) {
-								try {
-									MetadataInfo info = OrionConfiguration.getMetaStore().readUser(remoteUser);
-									String property = info.getProperty(GitConstants.KEY_GITHUB_ACCESS_TOKEN);
-									String token = null;
-									try {
-										JSONObject tokens = new JSONObject(SimpleUserPasswordUtil.decryptPassword(property));
-										token = tokens.optString(uri.getHost());
-									} catch (Exception e) {
-										if (property != null && property.length() > 0 && GitConstants.KEY_GITHUB_HOST.equals(uri.getHost())) {
-											/*
-											 * Backwards-compatibility: This value is still in the old format, which was
-											 * a plain string representing the user's token for github.com specifically.
-											 */
-											token = property;
-										}
-									}
-									if (token != null) {
-										((CredentialItem.Username)item).setValue(token);
-										continue;
-									}
-								} catch (CoreException e) {}
+								/* see if a GitHub token is available (obviously only applicable for repos hosted at a GitHub) */
+								String uriString = uri.toString();
+								String token = null;
+								for (int i = 0; token == null && i < GithubTokenProviders.size(); i++) {
+									token = GithubTokenProviders.get(i).getToken(uriString, remoteUser);
+								}
+								if (token != null) {
+									((CredentialItem.Username)item).setValue(token);
+									continue;
+								}
 							}
 						}
 					}
