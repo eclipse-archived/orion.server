@@ -147,10 +147,6 @@ public class IOUtilities {
 				} else if (line.equals("--" + boundary + "--")) { //$NON-NLS-1$ //$NON-NLS-2$
 					parts.put(name, buf.toString());
 				} else {
-					
-					if ("uploadedfile".equals(name) && "".equals(line)) //$NON-NLS-1$ //$NON-NLS-2$
-						continue; // skip empty lines 
-					
 					if (buf.length() > 0)
 						buf.append(prev);
 					buf.append(line);

@@ -248,7 +248,6 @@ public class GitApplyPatchTest extends GitTest {
 		sb.append("Content-Disposition: form-data; name=\"uploadedfile\"; filename=\"\"" + EOL);
 		sb.append(ProtocolConstants.HEADER_CONTENT_TYPE + ": plain/text" + EOL + EOL); //$NON-NLS-1$
 		sb.append(patch);
-		sb.append(EOL);
 		// see GitDiffHandlerV1.readPatch(ServletInputStream, String)
 		sb.append(EOL + "--" + boundary + "--" + EOL);
 		patch = sb.toString();
