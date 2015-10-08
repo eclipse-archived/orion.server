@@ -41,6 +41,7 @@ import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.git.GitConstants;
@@ -194,6 +195,7 @@ public class GitUtils {
 		}
 	}
 
+
 	public static String getRelativePath(IPath filePath, IPath pathToGitRoot) {
 		StringBuilder sb = new StringBuilder();
 		String file = null;
@@ -331,6 +333,7 @@ public class GitUtils {
 			uriSchemeWhitelist.remove("file"); //$NON-NLS-1$
 		}
 	}
+
 	
 	public static String getCloneUrl(File gitDir) {
 		Repository db = null;
@@ -349,5 +352,23 @@ public class GitUtils {
 			}
 		}
 		return null;
+	}
+	
+	/**
+	 * Returns a unique project name that does not exist in the given workspace, for the given clone name.
+	 */
+	public static String getUniqueProjectName(WorkspaceInfo workspace, String cloneName) {
+		int i = 1;
+		String uniqueName = cloneName;
+		IMetaStore store = OrionConfiguration.getMetaStore();
+		try {
+			while (store.readProject(workspace.getUniqueId(), uniqueName) != null) {
+				// add an incrementing counter suffix until we arrive at a unique name
+				uniqueName = cloneName + '-' + ++i;
+			}
+		} catch (CoreException e) {
+			// let it proceed with current name
+		}
+		return uniqueName;
 	}
 }

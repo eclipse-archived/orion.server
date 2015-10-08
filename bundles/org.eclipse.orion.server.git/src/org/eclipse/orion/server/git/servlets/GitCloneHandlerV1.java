@@ -187,7 +187,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 			WorkspaceInfo workspace = metaStore.readWorkspace(path.segment(1));
 			if (cloneName == null)
 				cloneName = new URIish(url).getHumanishName();
-			cloneName = getUniqueProjectName(workspace, cloneName);
+			cloneName = GitUtils.getUniqueProjectName(workspace, cloneName);
 			webProjectExists = false;
 			project = new ProjectInfo();
 			project.setFullName(cloneName);
@@ -230,6 +230,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		String gitUserName = toAdd.optString(GitConstants.KEY_NAME, null);
 		String gitUserMail = toAdd.optString(GitConstants.KEY_MAIL, null);
 		Boolean initProject = toAdd.optBoolean(GitConstants.KEY_INIT_PROJECT, false);
+		Boolean cloneSubmodules = toAdd.optBoolean(GitConstants.KEY_CLONE_SUBMODULES, true);
 		if (initOnly) {
 			// git init
 			InitJob job = new InitJob(clone, TaskJobHandler.getUserId(request), request.getRemoteUser(), cloneLocation, gitUserName, gitUserMail);
@@ -244,26 +245,8 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 		// check for SSO token
 		Object cookie = request.getAttribute(GitConstants.KEY_SSO_TOKEN);
 		CloneJob job = new CloneJob(clone, TaskJobHandler.getUserId(request), cp, request.getRemoteUser(), cloneLocation,
-				webProjectExists ? null : project /* used for cleaning up, so null when not needed */, gitUserName, gitUserMail, initProject, cookie);
+				webProjectExists ? null : project /* used for cleaning up, so null when not needed */, gitUserName, gitUserMail, initProject, cloneSubmodules, cookie);
 		return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
-	}
-
-	/**
-	 * Returns a unique project name that does not exist in the given workspace, for the given clone name.
-	 */
-	private String getUniqueProjectName(WorkspaceInfo workspace, String cloneName) {
-		int i = 1;
-		String uniqueName = cloneName;
-		IMetaStore store = OrionConfiguration.getMetaStore();
-		try {
-			while (store.readProject(workspace.getUniqueId(), uniqueName) != null) {
-				// add an incrementing counter suffix until we arrive at a unique name
-				uniqueName = cloneName + '-' + ++i;
-			}
-		} catch (CoreException e) {
-			// let it proceed with current name
-		}
-		return uniqueName;
 	}
 
 	public static void doConfigureClone(Git git, String user, String gitUserName, String gitUserMail) throws IOException, CoreException, JSONException {
