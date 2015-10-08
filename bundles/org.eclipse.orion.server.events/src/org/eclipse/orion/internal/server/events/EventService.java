@@ -203,6 +203,11 @@ public class EventService implements IEventService {
 
 	@Override
 	public void publish(String topic, JSONObject message) {
+		try {
+			logger.info("MQTT published event on topic: " + topic + " message:\n" + message.toString(4));
+		} catch (JSONException e) {
+			logger.error(e.getLocalizedMessage(), e);
+		}
 		// nothing to do if we have no MQTT event client configured
 		if (mqttClient == null || !mqttClient.isConnected()) {
 			return;
