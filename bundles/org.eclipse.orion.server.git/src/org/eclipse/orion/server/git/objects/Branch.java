@@ -69,12 +69,14 @@ public class Branch extends GitObject {
 				new Property(ProtocolConstants.KEY_NAME), //
 				new Property(ProtocolConstants.KEY_LOCATION), //
 				new Property(ProtocolConstants.KEY_FULL_NAME), //
+				new Property(GitConstants.KEY_HEAD_SHA), //
 				new Property(GitConstants.KEY_COMMIT), //
 				new Property(GitConstants.KEY_TREE), //
 				new Property(GitConstants.KEY_DIFF), //
 				new Property(GitConstants.KEY_REMOTE), //
 				new Property(GitConstants.KEY_HEAD), //
 				new Property(GitConstants.KEY_BRANCH_CURRENT), //
+				new Property(GitConstants.KEY_BRANCH_DETACHED), //
 				new Property(ProtocolConstants.KEY_LOCAL_TIMESTAMP) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
@@ -96,7 +98,12 @@ public class Branch extends GitObject {
 
 	@PropertyDescription(name = GitConstants.KEY_BRANCH_CURRENT)
 	public boolean isCurrent() throws IOException {
-		return getName(false, false).equals(db.getBranch());
+		return getName(false, false).equals(db.getBranch())||(isDetached()&&this.getHeadSHA().equals(db.getBranch()));
+	}
+	
+	@PropertyDescription(name = GitConstants.KEY_BRANCH_DETACHED)
+	public boolean isDetached() throws IOException {
+		return !ref.getName().startsWith(Constants.R_HEADS);
 	}
 
 	@Override
@@ -156,6 +163,12 @@ public class Branch extends GitObject {
 		return getName(true, false);
 	}
 
+	@PropertyDescription(name = GitConstants.KEY_HEAD_SHA)
+	public String getHeadSHA() {
+		return ref.getObjectId().getName();
+	}
+
+	
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_COMMIT)
 	private URI getCommitLocation() throws IOException, URISyntaxException {
