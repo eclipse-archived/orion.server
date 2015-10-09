@@ -43,6 +43,7 @@ import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.FileUtils;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -144,9 +145,30 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 				return syncSubmodules(db);
 			}else if(operation.equals("delete")){
 				String parent= requestPayload.optString("DirectParent",null);
-				String submodulePath = requestPayload.optString("SubmoduleLocation",null);
+				String[] infoParts = parent.split("\\/", 3); //$NON-NLS-1$
+				if (infoParts.length < 3)
+					return false; // malformed request, we don't know how to handle this
+				String pathString = infoParts[2];
+				if (request.getContextPath().length() != 0) {
+					IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
+					IPath contextPath = new Path(request.getContextPath());
+					if (contextPath.isPrefixOf(path)) {
+						pathString = path.removeFirstSegments(contextPath.segmentCount()).toString();
+					}
+				}
+
+				IPath parentFilePath = new Path(pathString);
+				if (parentFilePath.segment(1).equals("file")) { //$NON-NLS-1$
+					parentFilePath = parentFilePath.removeFirstSegments(1);
+				}
+				if (!AuthorizationService.checkRights(request.getRemoteUser(), "/" + parentFilePath.toString(), request.getMethod())) {
+					response.sendError(HttpServletResponse.SC_FORBIDDEN);
+					return true;
+				}
+
+				String submodulePath = requestInfo.filePath.toString();
 				if(submodulePath!=null && parent !=null ){
-					removeSubmodule(submodulePath, parent);
+					removeSubmodule(submodulePath, parentFilePath.toString());
 					return true;
 				}
 			}
