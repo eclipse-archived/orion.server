@@ -273,7 +273,7 @@ public class Clone {
 						submoduleFile = walk.getDirectory();
 					}
 					JSONArray newParents = (this.parents == null ? new JSONArray() : new JSONArray(this.parents.toString()));
-					newParents.put(getLocation().getPath());
+					newParents.put(new Path(getId()));
 					JSONObject submoduleCloneJSON = new Clone().toJSON(path.append(walk.getPath()).addTrailingSeparator(), baseLocation,
 							GitUtils.getCloneUrl(submoduleFile), newParents);
 					submodules.put(submoduleCloneJSON);
