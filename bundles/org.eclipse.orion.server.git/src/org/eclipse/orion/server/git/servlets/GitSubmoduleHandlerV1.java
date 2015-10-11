@@ -14,16 +14,14 @@ import static org.eclipse.jgit.lib.ConfigConstants.CONFIG_SUBMODULE_SECTION;
 import static org.eclipse.jgit.lib.Constants.DOT_GIT_MODULES;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
@@ -34,6 +32,7 @@ import org.eclipse.jgit.api.SubmoduleStatusCommand;
 import org.eclipse.jgit.api.SubmoduleSyncCommand;
 import org.eclipse.jgit.api.SubmoduleUpdateCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.ConfigInvalidException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
@@ -54,8 +53,6 @@ import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
 
 public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
-
-	private final static int PAGE_SIZE = 50;
 
 	GitSubmoduleHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		super(statusHandler);
@@ -142,13 +139,6 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 				return updateSubmodules(db);
 			}else if(operation.equals("sync")){
 				return syncSubmodules(db);
-			}else if(operation.equals("delete")){
-				String parent= requestPayload.optString("DirectParent",null);
-				String submodulePath = requestPayload.optString("SubmoduleLocation",null);
-				if(submodulePath!=null && parent !=null ){
-					removeSubmodule(submodulePath, parent);
-					return true;
-				}
 			}
 			return false;
 
@@ -157,16 +147,46 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, ex));
 		}
 	}
-
+	
+	@Override
+	protected boolean handleDelete(RequestInfo requestInfo) throws ServletException {
+		HttpServletRequest request = requestInfo.request;
+		HttpServletResponse response = requestInfo.response;
+		Repository db = requestInfo.db;
+		Repository parentRepo = null;
+		try {
+			Map<IPath, File> parents = GitUtils.getGitDirs(requestInfo.filePath.removeLastSegments(1), Traverse.GO_UP);
+			if (parents.size() < 1)
+				return false;
+			File parentRepoDir = parents.entrySet().iterator().next().getValue();
+			parentRepo = FileRepositoryBuilder.create(parentRepoDir);
+			
+			java.nio.file.Path directParent = parentRepoDir.toPath().getParent();
+			java.nio.file.Path submodulePath = db.getWorkTree().toPath();
+			
+			if(submodulePath.startsWith(directParent) && parentRepo != null){
+				String pathToSubmodule=directParent.relativize(submodulePath).toString();
+				removeSubmodule(parentRepo, pathToSubmodule);
+			}
+			return true;
+		} catch (Exception ex) {
+			String msg = "An error occured for delete submodule command.";
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, ex));
+		}finally{
+			if (parentRepo != null) {
+				parentRepo.close();
+			}
+		}
+    
+	}
 
 	public static boolean updateSubmodules(Repository repo) throws GitAPIException {
 		SubmoduleInitCommand init = new SubmoduleInitCommand(repo);
-		Collection<String> inited = init.call();
+		init.call();
 		SubmoduleUpdateCommand update = new SubmoduleUpdateCommand(repo);
 		Collection<String> updated = update.call();
 		SubmoduleStatusCommand status = new SubmoduleStatusCommand(repo);
 		Map<String, SubmoduleStatus> statusResult = status.call();
-		repo.close();
 		return updated.size() == statusResult.size();
 	}
 
@@ -175,7 +195,6 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 		Map<String, String> synced = sync.call();
 		SubmoduleStatusCommand status = new SubmoduleStatusCommand(repo);
 		Map<String, SubmoduleStatus> statusResult = status.call();
-		repo.close();
 		return synced.size() == statusResult.size();
 	}
 
@@ -187,40 +206,26 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 		repository.close();
 	}
 	
-	public static void removeSubmodule(String submodulePath, String parentPath) throws Exception {
-		String pathToParent = submodulePath.split(parentPath)[1].replaceAll("^/+", "").replaceAll("/+$", "");
-		File localFile = getFile(parentPath);
-		Repository parentRepo = FileRepositoryBuilder.create(localFile);
-		StoredConfig gitSubmodulesConfig = getGitSubmodulesConfig( parentRepo );
-		gitSubmodulesConfig.unsetSection( CONFIG_SUBMODULE_SECTION, pathToParent );
+	public static void removeSubmodule(Repository parentRepo, String pathToSubmodule) throws Exception {
+		StoredConfig gitSubmodulesConfig = getGitSubmodulesConfig(parentRepo);
+		gitSubmodulesConfig.unsetSection(CONFIG_SUBMODULE_SECTION, pathToSubmodule);
 		gitSubmodulesConfig.save();
 		StoredConfig repositoryConfig = parentRepo.getConfig();
-		repositoryConfig.unsetSection( CONFIG_SUBMODULE_SECTION, pathToParent );
+		repositoryConfig.unsetSection(CONFIG_SUBMODULE_SECTION, pathToSubmodule);
 		repositoryConfig.save();
-		Git git = Git.wrap( parentRepo );
-		git.add().addFilepattern( DOT_GIT_MODULES ).call();
-		git.rm().setCached( true ).addFilepattern( pathToParent ).call();
-		if(gitSubmodulesConfig.getSections().size()==0){
-			git.rm().addFilepattern( DOT_GIT_MODULES ).call();
+		Git git = Git.wrap(parentRepo);
+		git.add().addFilepattern(DOT_GIT_MODULES).call();
+		git.rm().setCached(true).addFilepattern(pathToSubmodule).call();
+		if (gitSubmodulesConfig.getSections().size() == 0) {
+			git.rm().addFilepattern(DOT_GIT_MODULES).call();
 		}
-		git.commit().setMessage( "Remove submodule: " + pathToParent).call();
-		FileUtils.delete( new File( parentRepo.getWorkTree(), pathToParent ), FileUtils.RECURSIVE );
+		FileUtils.delete(new File(parentRepo.getWorkTree(), pathToSubmodule), FileUtils.RECURSIVE);
 	}
 	
-	private static File getFile(String path) throws CoreException{
-		IPath p = new Path(path);
-		if (p.segment(1).equals("file")) { //$NON-NLS-1$
-			p = p.removeFirstSegments(1);
-		}
-		IPath gitSearchPath = p.hasTrailingSeparator() ? p : p.removeLastSegments(1);
-		Set<Entry<IPath, File>> gitDirsFound = GitUtils.getGitDirs(gitSearchPath, Traverse.GO_UP).entrySet();
-		Entry<IPath, File> firstGitDir = gitDirsFound.iterator().next();
-		File gitDir = firstGitDir.getValue();
-		return gitDir;
-	}
-	
-	private static StoredConfig getGitSubmodulesConfig( Repository repository ) {
+	private static StoredConfig getGitSubmodulesConfig( Repository repository ) throws IOException, ConfigInvalidException {
 		File gitSubmodulesFile = new File( repository.getWorkTree(), DOT_GIT_MODULES );
-		return new FileBasedConfig( null, gitSubmodulesFile, FS.DETECTED );
+		FileBasedConfig gitSubmodulesConfig = new FileBasedConfig( null, gitSubmodulesFile, FS.DETECTED );
+		gitSubmodulesConfig.load();
+		return gitSubmodulesConfig;
 	}
 }
