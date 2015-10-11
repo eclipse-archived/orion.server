@@ -158,16 +158,9 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 			Map<IPath, File> parents = GitUtils.getGitDirs(requestInfo.filePath.removeLastSegments(1), Traverse.GO_UP);
 			if (parents.size() < 1)
 				return false;
-			File parentRepoDir = parents.entrySet().iterator().next().getValue();
-			parentRepo = FileRepositoryBuilder.create(parentRepoDir);
-			
-			java.nio.file.Path directParent = parentRepoDir.toPath().getParent();
-			java.nio.file.Path submodulePath = db.getWorkTree().toPath();
-			
-			if(submodulePath.startsWith(directParent) && parentRepo != null){
-				String pathToSubmodule=directParent.relativize(submodulePath).toString();
-				removeSubmodule(parentRepo, pathToSubmodule);
-			}
+			parentRepo = FileRepositoryBuilder.create(parents.entrySet().iterator().next().getValue());
+			String pathToSubmodule = db.getWorkTree().toString().substring(parentRepo.getWorkTree().toString().length() + 1);
+			removeSubmodule(parentRepo, pathToSubmodule);
 			return true;
 		} catch (Exception ex) {
 			String msg = "An error occured for delete submodule command.";
