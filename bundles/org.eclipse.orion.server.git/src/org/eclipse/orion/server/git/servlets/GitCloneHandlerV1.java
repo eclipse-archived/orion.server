@@ -383,7 +383,11 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				} else if (tag != null && branch != null) {
 					CheckoutCommand co = git.checkout();
 					try {
-						co.setName(branch).setStartPoint(tag).setCreateBranch(true).call();
+						if (branch.isEmpty()) {
+							co.setName(tag).setStartPoint(tag).call();
+						} else {
+							co.setName(branch).setStartPoint(tag).setCreateBranch(true).call();
+						}
 						return true;
 					} catch (RefNotFoundException e) {
 						String msg = NLS.bind("Tag not found: {0}", EncodingUtils.encodeForHTML(tag));
