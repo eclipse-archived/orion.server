@@ -377,7 +377,11 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 					checkout.call();
 					for (String p : toRemove) {
 						File f = new File(git.getRepository().getWorkTree(), p);
-						f.delete();
+						if (f.isDirectory()) {
+							FileUtils.delete(f, FileUtils.RECURSIVE);
+						} else {
+							f.delete();
+						}
 					}
 					return true;
 				} else if (tag != null && branch != null) {
