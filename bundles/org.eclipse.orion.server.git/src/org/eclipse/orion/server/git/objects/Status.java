@@ -13,14 +13,19 @@ package org.eclipse.orion.server.git.objects;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.jgit.api.SubmoduleStatusCommand;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.submodule.SubmoduleStatus;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
@@ -52,6 +57,8 @@ public class Status extends GitObject {
 				new Property(GitConstants.KEY_STATUS_REMOVED), //
 				new Property(GitConstants.KEY_STATUS_UNTRACKED), //
 				new Property(GitConstants.KEY_STATUS_CONFLICTING), //
+				new Property(GitConstants.KEY_STATUS_ADDED_SUBMODULE), //
+				new Property(GitConstants.KEY_STATUS_MISSING_SUBMODULE), //
 				new Property(GitConstants.KEY_REPOSITORY_STATE), //
 				new Property(GitConstants.KEY_INDEX), //
 				new Property(GitConstants.KEY_COMMIT) };
@@ -61,9 +68,12 @@ public class Status extends GitObject {
 	private URI baseLocation;
 	private org.eclipse.jgit.api.Status status;
 	private IPath basePath;
+	private Map<String, SubmoduleStatus> submoduleStatuses;
 
-	public Status(URI baseLocation, Repository db, org.eclipse.jgit.api.Status status, IPath basePath) throws URISyntaxException, CoreException {
+	public Status(URI baseLocation, Repository db, org.eclipse.jgit.api.Status status, IPath basePath) throws URISyntaxException, CoreException, GitAPIException {
 		super(BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.STATUS), db);
+		SubmoduleStatusCommand ssc = new SubmoduleStatusCommand(db);
+		this.submoduleStatuses= ssc.call();
 		this.baseLocation = baseLocation;
 		this.status = status;
 		this.basePath = basePath;
@@ -76,7 +86,10 @@ public class Status extends GitObject {
 
 	@PropertyDescription(name = GitConstants.KEY_STATUS_ADDED)
 	private JSONArray getAdded() throws JSONException, URISyntaxException {
-		return toJSONArray(status.getAdded(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
+		Set<String> added = new HashSet<String>();
+		added.addAll(status.getAdded());
+		added.removeAll(this.submoduleStatuses.keySet());
+		return toJSONArray(added, basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_STATUS_CHANGED)
@@ -86,7 +99,10 @@ public class Status extends GitObject {
 
 	@PropertyDescription(name = GitConstants.KEY_STATUS_MISSING)
 	private JSONArray getMissing() throws JSONException, URISyntaxException {
-		return toJSONArray(status.getMissing(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
+		Set<String> missing = new HashSet<String>();
+		missing.addAll(status.getMissing());
+		missing.removeAll(this.submoduleStatuses.keySet());
+		return toJSONArray(missing, basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_STATUS_MODIFIED)
@@ -102,6 +118,22 @@ public class Status extends GitObject {
 	@PropertyDescription(name = GitConstants.KEY_STATUS_UNTRACKED)
 	private JSONArray getUntracked() throws JSONException, URISyntaxException {
 		return toJSONArray(status.getUntracked(), basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
+	}
+	
+	@PropertyDescription(name = GitConstants.KEY_STATUS_ADDED_SUBMODULE)
+	private JSONArray getAddedSubmodule() throws JSONException, URISyntaxException {
+		Set<String> addedSubmodules = new HashSet<String>();
+		addedSubmodules.addAll(status.getAdded());
+		addedSubmodules.retainAll(this.submoduleStatuses.keySet());
+		return toJSONArray(addedSubmodules, basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
+	}
+	
+	@PropertyDescription(name = GitConstants.KEY_STATUS_MISSING_SUBMODULE)
+	private JSONArray getMissingSubmodule() throws JSONException, URISyntaxException {
+		Set<String> missingSubmodules = new HashSet<String>();
+		missingSubmodules.addAll(status.getMissing());
+		missingSubmodules.retainAll(this.submoduleStatuses.keySet());
+		return toJSONArray(missingSubmodules, basePath, baseLocation, GitConstants.KEY_DIFF_DEFAULT);
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_STATUS_CONFLICTING)

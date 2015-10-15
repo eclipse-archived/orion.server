@@ -200,6 +200,7 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 	}
 	
 	public static void removeSubmodule(Repository parentRepo, String pathToSubmodule) throws Exception {
+		pathToSubmodule = pathToSubmodule.replace("\\", "/");
 		StoredConfig gitSubmodulesConfig = getGitSubmodulesConfig(parentRepo);
 		gitSubmodulesConfig.unsetSection(CONFIG_SUBMODULE_SECTION, pathToSubmodule);
 		gitSubmodulesConfig.save();
@@ -210,7 +211,7 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 		git.add().addFilepattern(DOT_GIT_MODULES).call();
 		git.rm().setCached(true).addFilepattern(pathToSubmodule).call();
 		if (gitSubmodulesConfig.getSections().size() == 0) {
-			git.rm().addFilepattern(DOT_GIT_MODULES).call();
+			git.rm().setCached(true).addFilepattern(DOT_GIT_MODULES).call();
 		}
 		FileUtils.delete(new File(parentRepo.getWorkTree(), pathToSubmodule), FileUtils.RECURSIVE);
 	}

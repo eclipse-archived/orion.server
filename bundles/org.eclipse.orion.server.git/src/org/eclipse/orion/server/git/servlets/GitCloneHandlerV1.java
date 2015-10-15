@@ -355,26 +355,39 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				// make sure required fields are set
 				JSONObject toCheckout = OrionServlet.readJSONRequest(request);
 				JSONArray paths = toCheckout.optJSONArray(ProtocolConstants.KEY_PATH);
+				JSONArray addedSubmodule = toCheckout.optJSONArray(GitConstants.KEY_STATUS_ADDED_SUBMODULE);
 				String branch = toCheckout.optString(GitConstants.KEY_BRANCH_NAME, null);
 				String tag = toCheckout.optString(GitConstants.KEY_TAG_NAME, null);
 				boolean removeUntracked = toCheckout.optBoolean(GitConstants.KEY_REMOVE_UNTRACKED, false);
-				if ((paths == null || paths.length() == 0) && branch == null && tag == null) {
+				if ((paths == null || paths.length() == 0) && ( addedSubmodule == null || addedSubmodule.length() == 0) && branch == null && tag == null) {
 					String msg = NLS.bind("Either '{0}' or '{1}' or '{2}' should be provided, got: {3}", new Object[] { ProtocolConstants.KEY_PATH,
 							GitConstants.KEY_BRANCH_NAME, GitConstants.KEY_TAG_NAME, toCheckout });
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 				}
-
-				Git git = new Git(FileRepositoryBuilder.create(gitDir));
-				if (paths != null) {
+				
+				Repository repo = FileRepositoryBuilder.create(gitDir);
+				Git git = new Git(repo);
+				if (paths != null || addedSubmodule != null) {
 					Set<String> toRemove = new HashSet<String>();
-					CheckoutCommand checkout = git.checkout();
-					for (int i = 0; i < paths.length(); i++) {
-						String p = paths.getString(i);
-						if (removeUntracked && !isInIndex(git.getRepository(), p))
-							toRemove.add(p);
-						checkout.addPath(p);
+					if(paths != null && paths.length()>0){
+						CheckoutCommand checkout = git.checkout();
+						for (int i = 0; i < paths.length(); i++) {
+							String p = paths.getString(i);
+							if(p.equals(Constants.DOT_GIT_MODULES)){
+								
+							}
+							if (removeUntracked && !isInIndex(git.getRepository(), p))
+								toRemove.add(p);
+							checkout.addPath(p);
+						}
+						checkout.call();
 					}
-					checkout.call();
+					if(addedSubmodule != null && addedSubmodule.length()>0){
+						for (int i = 0; i < addedSubmodule.length(); i++) {
+							String p = addedSubmodule.getString(i);
+							FileUtils.delete(new File(repo.getWorkTree(), p), FileUtils.RECURSIVE);
+						}
+					}
 					for (String p : toRemove) {
 						File f = new File(git.getRepository().getWorkTree(), p);
 						f.delete();
