@@ -16,6 +16,7 @@ import java.net.URISyntaxException;
 
 import org.eclipse.jgit.dircache.DirCache;
 import org.eclipse.jgit.dircache.DirCacheEntry;
+import org.eclipse.jgit.errors.MissingObjectException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectStream;
@@ -42,8 +43,12 @@ public class Index extends GitObject {
 		if (entry == null) {
 			return null;
 		}
-		ObjectId blobId = entry.getObjectId();
-		return db.open(blobId, Constants.OBJ_BLOB).openStream();
+		try {
+			ObjectId blobId = entry.getObjectId();
+			return db.open(blobId, Constants.OBJ_BLOB).openStream();
+		} catch (MissingObjectException e) {
+			return null;
+		}
 	}
 
 	@Override
