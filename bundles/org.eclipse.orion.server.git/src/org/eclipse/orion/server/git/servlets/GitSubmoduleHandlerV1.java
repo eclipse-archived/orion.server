@@ -48,6 +48,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
@@ -69,8 +70,8 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 		
 		try {
 			String targetPath = null;
-			String gitUrl = toAdd.optString("GitUrl",null);
-			String name = toAdd.optString("Name",null);
+			String gitUrl = toAdd.optString(GitConstants.KEY_URL,null);
+			String name = toAdd.optString(ProtocolConstants.KEY_NAME,null);
 			if(gitUrl!=null){
 				String workspacePath = ServletResourceHandler.toOrionLocation(request, toAdd.optString(ProtocolConstants.KEY_LOCATION, null));
 				// expected path /file/{workspaceId}/{projectName}[/{path}]
@@ -200,6 +201,7 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 	}
 	
 	public static void removeSubmodule(Repository parentRepo, String pathToSubmodule) throws Exception {
+		pathToSubmodule = pathToSubmodule.replace("\\", "/");
 		StoredConfig gitSubmodulesConfig = getGitSubmodulesConfig(parentRepo);
 		gitSubmodulesConfig.unsetSection(CONFIG_SUBMODULE_SECTION, pathToSubmodule);
 		gitSubmodulesConfig.save();
@@ -210,7 +212,7 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 		git.add().addFilepattern(DOT_GIT_MODULES).call();
 		git.rm().setCached(true).addFilepattern(pathToSubmodule).call();
 		if (gitSubmodulesConfig.getSections().size() == 0) {
-			git.rm().addFilepattern(DOT_GIT_MODULES).call();
+			git.rm().setCached(true).addFilepattern(DOT_GIT_MODULES).call();
 		}
 		FileUtils.delete(new File(parentRepo.getWorkTree(), pathToSubmodule), FileUtils.RECURSIVE);
 	}
