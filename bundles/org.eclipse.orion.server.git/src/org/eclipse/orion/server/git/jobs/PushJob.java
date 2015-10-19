@@ -129,7 +129,7 @@ public class PushJob extends GitJob {
 				}
 				final String rm = rru.getRemoteName();
 				// check status only for branch given in the URL or tags
-				if (branch.equals(Repository.shortenRefName(rm)) || rm.startsWith(Constants.R_TAGS)) {
+				if (branch.equals(Repository.shortenRefName(rm)) || rm.startsWith(Constants.R_TAGS) || rm.startsWith(Constants.R_REFS)) {
 					JSONObject object = new JSONObject();
 					RemoteRefUpdate.Status status = rru.getStatus();
 					if (status != RemoteRefUpdate.Status.UP_TO_DATE || !rm.startsWith(Constants.R_TAGS)) {
