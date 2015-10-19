@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.api.SubmoduleAddCommand;
 import org.eclipse.jgit.api.SubmoduleInitCommand;
 import org.eclipse.jgit.api.SubmoduleStatusCommand;
@@ -210,10 +211,11 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 		repositoryConfig.save();
 		Git git = Git.wrap(parentRepo);
 		git.add().addFilepattern(DOT_GIT_MODULES).call();
-		git.rm().setCached(true).addFilepattern(pathToSubmodule).call();
+		RmCommand rm = git.rm().addFilepattern(pathToSubmodule);
 		if (gitSubmodulesConfig.getSections().size() == 0) {
-			git.rm().setCached(true).addFilepattern(DOT_GIT_MODULES).call();
+			rm.addFilepattern(DOT_GIT_MODULES);
 		}
+		rm.call();
 		FileUtils.delete(new File(parentRepo.getWorkTree(), pathToSubmodule), FileUtils.RECURSIVE);
 	}
 	
