@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git.objects;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Set;
@@ -19,7 +18,10 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.jgit.dircache.DirCache;
+import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
@@ -70,7 +72,7 @@ public class Status extends GitObject {
 	}
 
 	@Override
-	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
+	public JSONObject toJSON() throws JSONException, URISyntaxException, CoreException {
 		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
 	}
 
@@ -131,14 +133,38 @@ public class Status extends GitObject {
 
 	private JSONArray toJSONArray(Set<String> set, IPath basePath, URI baseLocation, String diffType) throws JSONException, URISyntaxException {
 		JSONArray result = new JSONArray();
+		DirCache cache = null;
+		try{
+			cache = db.readDirCache();
+		}catch(Exception ex){
+			
+		}
 		for (String s : set) {
 			JSONObject object = new JSONObject();
+			boolean isSubmodule = false, isDirectory = false;
+			if(cache!=null){
+				DirCacheEntry entry = cache.getEntry(s);
+				int fileMode=-1;
+				if(entry!=null){
+					fileMode = entry.getRawMode();
+				}
+				//isSubmodule = this.submoduleStatuses.keySet().contains(s);
+				isSubmodule = fileMode!=-1 && fileMode== FileMode.TYPE_GITLINK;
+				isDirectory = fileMode!= -1 && (fileMode & FileMode.TYPE_TREE) != 0;
+				
+			}
 
 			object.put(ProtocolConstants.KEY_NAME, s);
 			IPath relative = new Path(s).makeRelativeTo(basePath);
 			object.put(ProtocolConstants.KEY_PATH, relative);
 			URI fileLocation = statusToFileLocation(baseLocation);
 			object.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(fileLocation, relative.toString()));
+			if(isDirectory){
+				object.put(ProtocolConstants.KEY_DIRECTORY, true);
+			}
+			if(isSubmodule){
+				object.put(GitConstants.KEY_IS_SUBMODULE, true);
+			}
 
 			JSONObject gitSection = new JSONObject();
 			URI diffLocation = statusToDiffLocation(baseLocation, diffType);
