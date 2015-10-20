@@ -10,7 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git;
 
-public interface GitHubTokenProvider {
+import javax.servlet.http.Cookie;
+
+public interface IGitHubTokenProvider {
 	
 	/**
 	 * Answers a GitHub token that can be used to authorize interactions with a given
@@ -20,4 +22,12 @@ public interface GitHubTokenProvider {
 	 * @param userId the Orion user id
 	 */
 	public String getToken(String repositoryUrl, String userId);
+	
+	/**
+	 * Answers the URL where a user can request an authorization token for a given GitHub
+	 * repository, or <code>null</code> if this URL cannot be provided.
+	 * 
+	 * @param repositoryUrl the URL of the repository
+	 */
+	public String getAuthUrl(String repositoryUrl, Cookie userCookie);
 }

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git;
 
+import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Vector;
 
@@ -27,14 +28,18 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 	private byte[] publicKey;
 	private byte[] passphrase;
 
-	private static Vector<GitHubTokenProvider> GithubTokenProviders = new Vector<GitHubTokenProvider>(9);
+	private static Vector<IGitHubTokenProvider> GithubTokenProviders = new Vector<IGitHubTokenProvider>(9);
 
-	public static void addGitHubTokenProvider(GitHubTokenProvider value) {
+	public static void AddGitHubTokenProvider(IGitHubTokenProvider value) {
 		GithubTokenProviders.add(value);
 	}
 
-	public static void removeGitHubTokenProvider(GitHubTokenProvider value) {
+	public static void RemoveGitHubTokenProvider(IGitHubTokenProvider value) {
 		GithubTokenProviders.remove(value);
+	}
+	
+	public static Enumeration<IGitHubTokenProvider> GetGitHubTokenProviders() {
+		return GithubTokenProviders.elements();
 	}
 
 	public GitCredentialsProvider(URIish uri, String remoteUser, String username, char[] password, String knownHosts) {

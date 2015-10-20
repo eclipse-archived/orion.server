@@ -12,7 +12,9 @@ package org.eclipse.orion.server.git.jobs;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.Cookie;
@@ -41,11 +43,16 @@ import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.TrackingRefUpdate;
 import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.TransportHttp;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.IGitHubTokenProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
+import org.json.JSONObject;
+
+import com.jcraft.jsch.JSchException;
 
 /**
  * A job to perform a fetch operation in the background
@@ -186,6 +193,33 @@ public class FetchJob extends GitJob {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error fetching git remote", e);
 		} catch (GitAPIException e) {
 			result = getGitAPIExceptionStatus(e, "Error fetching git remote");
+
+			JSchException jschEx = getJSchException(e);
+			/* JSch handles auth fail by exception message */
+			if (jschEx != null
+				&& jschEx.getMessage() != null
+				&& (jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail") || jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("invalid privatekey"))) { //$NON-NLS-1$ //$NON-NLS-2$
+
+				try {
+					Repository db = getRepository();
+					Git git = new Git(db);
+					RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
+					String repositoryUrl = remoteConfig.getURIs().get(0).toString();
+
+					Enumeration<IGitHubTokenProvider> providers = GitCredentialsProvider.GetGitHubTokenProviders();
+					while (providers.hasMoreElements()) {
+						String authUrl = providers.nextElement().getAuthUrl(repositoryUrl, cookie);
+						if (authUrl != null) {
+							ServerStatus status = ServerStatus.convert(result);
+							JSONObject data = status.getJsonData();
+							data.put("GitHubAuth", authUrl); //$NON-NLS-1$
+							break;
+						}
+					}
+				} catch (Exception ex) {
+					/* fail silently, no GitHub auth url will be returned */
+				}
+			}
 		} catch (JGitInternalException e) {
 			result = getJGitInternalExceptionStatus(e, "Error fetching git remote");
 		} catch (Exception e) {

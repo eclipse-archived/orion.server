@@ -57,7 +57,7 @@ public abstract class GitJob extends TaskJob {
 	protected GitCredentialsProvider credentials;
 	protected Cookie cookie;
 
-	private static JSchException getJSchException(Throwable e) {
+	protected static JSchException getJSchException(Throwable e) {
 		if (e instanceof JSchException) {
 			return (JSchException) e;
 		}
