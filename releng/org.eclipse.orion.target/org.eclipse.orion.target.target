@@ -1,109 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?><?pde version="3.8"?><target name="org.eclipse.orion" sequenceNumber="19">
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<?pde version="3.8"?><target name="org.eclipse.orion" sequenceNumber="21">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.jetty.bundles.f.feature.group" version="8.1.15.201404181548"/>
 <repository location="http://download.eclipse.org/jetty/updates/jetty-bundles-8.x"/>
-</location>
-<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
-<unit id="com.google.protobuf" version="2.4.0.v201105131100"/>
-<unit id="ch.qos.logback.core" version="1.0.7.v20121108-1250"/>
-<unit id="ch.qos.logback.core.source" version="1.0.7.v20121108-1250"/>
-<unit id="ch.qos.logback.classic" version="1.0.7.v20121108-1250"/>
-<unit id="ch.qos.logback.classic.source" version="1.0.7.v20121108-1250"/>
-<unit id="ch.qos.logback.slf4j" version="1.0.7.v20121108-1250"/>
-<unit id="ch.qos.logback.slf4j.source" version="1.0.7.v20121108-1250"/>
-<unit id="com.ibm.icu" version="52.1.0.v201404241930"/>
-<unit id="com.ibm.icu.source" version="52.1.0.v201404241930"/>
-<unit id="com.jcraft.jsch" version="0.1.50.v201403120620"/>
-<unit id="com.jcraft.jsch.source" version="0.1.50.v201403120620"/>
-<unit id="javax.activation" version="1.1.0.v201211130549"/>
-<unit id="javax.activation.source" version="1.1.0.v201211130549"/>
-<unit id="javax.el" version="2.2.0.v201303151357"/>
-<unit id="javax.el.source" version="2.2.0.v201303151357"/>
-<unit id="com.sun.el" version="2.2.0.v201303151357"/>
-<unit id="com.sun.el.source" version="2.2.0.v201303151357"/>
-<unit id="javax.inject" version="1.0.0.v20091030"/>
-<unit id="javax.inject.source" version="1.0.0.v20091030"/>
-<unit id="javax.mail.glassfish" version="1.4.1.v201108011116"/>
-<unit id="javax.mail.glassfish.source" version="1.4.1.v201108011116"/>
-<unit id="javax.servlet" version="3.0.0.v201112011016"/>
-<unit id="javax.servlet.source" version="3.0.0.v201112011016"/>
-<unit id="javax.servlet.jsp" version="2.2.0.v201112011158"/>
-<unit id="javax.servlet.jsp.source" version="2.2.0.v201112011158"/>
-<unit id="javax.xml" version="1.3.4.v201005080400"/>
-<unit id="javax.xml.stream" version="1.0.1.v201004272200"/>
-<unit id="javaewah" version="0.7.9.v201401101600"/>
-<unit id="javaewah.source" version="0.7.9.v201401101600"/>
-<unit id="org.antlr.runtime" version="3.2.0.v201101311130"/>
-<unit id="org.antlr.runtime.source" version="3.2.0.v201101311130"/>
-<unit id="org.apache.batik.css" version="1.7.0.v201011041433"/>
-<unit id="org.apache.batik.css.source" version="1.7.0.v201011041433"/>
-<unit id="org.apache.batik.util" version="1.7.0.v201011041433"/>
-<unit id="org.apache.batik.util.source" version="1.7.0.v201011041433"/>
-<unit id="org.apache.batik.util.gui" version="1.7.0.v200903091627"/>
-<unit id="org.apache.batik.util.gui.source" version="1.7.0.v200903091627"/>
-<unit id="org.apache.commons.compress" version="1.6.0.v201310281400"/>
-<unit id="org.apache.commons.compress.source" version="1.6.0.v201310281400"/>
-<unit id="org.apache.commons.logging" version="1.1.1.v201101211721"/>
-<unit id="org.apache.commons.logging.source" version="1.1.1.v201101211721"/>
-<unit id="org.apache.commons.el" version="1.0.0.v201305101705"/>
-<unit id="org.apache.commons.el.source" version="1.0.0.v201305101705"/>
-<unit id="org.apache.commons.codec" version="1.6.0.v201305230611"/>
-<unit id="org.apache.commons.codec.source" version="1.6.0.v201305230611"/>
-<unit id="org.apache.commons.fileupload" version="1.2.2.v20111214-1400"/>
-<unit id="org.apache.commons.fileupload.source" version="1.2.2.v20111214-1400"/>
-<unit id="org.apache.commons.httpclient" version="3.1.0.v201012070820"/>
-<unit id="org.apache.commons.httpclient.source" version="3.1.0.v201012070820"/>
-<unit id="org.apache.commons.io" version="2.2.0.v201405211200"/>
-<unit id="org.apache.commons.io.source" version="2.2.0.v201405211200"/>
-<unit id="org.apache.commons.logging" version="1.1.1.v201101211721"/>
-<unit id="org.apache.commons.logging.source" version="1.1.1.v201101211721"/>
-<unit id="org.apache.felix.gogo.command" version="0.10.0.v201209301215"/>
-<unit id="org.apache.felix.gogo.command.source" version="0.10.0.v201209301215"/>
-<unit id="org.apache.felix.gogo.runtime" version="0.10.0.v201209301036"/>
-<unit id="org.apache.felix.gogo.runtime.source" version="0.10.0.v201209301036"/>
-<unit id="org.apache.felix.gogo.shell" version="0.10.0.v201212101605"/>
-<unit id="org.apache.felix.gogo.shell.source" version="0.10.0.v201212101605"/>
-<unit id="org.apache.jasper.glassfish" version="2.2.2.v201205150955"/>
-<unit id="org.apache.jasper.glassfish.source" version="2.2.2.v201205150955"/>
-<unit id="org.apache.xerces" version="2.9.0.v201101211617"/>
-<unit id="org.apache.xml.resolver" version="1.2.0.v201005080400"/>
-<unit id="org.apache.xml.serializer" version="2.7.1.v201005080400"/>
-<unit id="org.cyberneko.html" version="1.9.14.v201105210654"/>
-<unit id="org.dojotoolkit" version="1.6.1.v201108161253"/>
-<unit id="org.hamcrest" version="1.1.0.v20090501071000"/>
-<unit id="org.hamcrest.text" version="1.1.0.v20090501071000"/>
-<unit id="org.hamcrest.text.source" version="1.1.0.v20090501071000"/>
-<unit id="org.hamcrest.core" version="1.3.0.v201303031735"/>
-<unit id="org.hamcrest.core.source" version="1.3.0.v201303031735"/>
-<unit id="org.hamcrest.library" version="1.3.0.v201305281000"/>
-<unit id="org.hamcrest.library.source" version="1.3.0.v201305281000"/>
-<unit id="org.hamcrest.integration" version="1.1.0.v201303031500"/>
-<unit id="org.hamcrest.integration.source" version="1.1.0.v201303031500"/>
-<unit id="org.json" version="1.0.0.v201011060100"/>
-<unit id="org.junit" version="4.11.0.v201303080030"/>
-<unit id="org.junit.source" version="4.11.0.v201303080030"/>
-<unit id="org.mockito" version="1.9.5.v201311280930"/>
-<unit id="org.mockito.source" version="1.9.5.v201311280930"/>
-<unit id="org.mozilla.javascript" version="1.7.4.v201209142200"/>
-<unit id="org.mozilla.javascript.source" version="1.7.4.v201209142200"/>
-<unit id="org.objenesis" version="1.0.0.v201105211943"/>
-<unit id="org.objenesis.source" version="1.0.0.v201105211943"/>
-<unit id="org.slf4j.api" version="1.7.2.v20121108-1250"/>
-<unit id="org.slf4j.api.source" version="1.7.2.v20121108-1250"/>
-<unit id="org.slf4j.jcl" version="1.7.2.v20130115-1340"/>
-<unit id="org.slf4j.jcl.source" version="1.7.2.v20130115-1340"/>
-<unit id="org.slf4j.jul" version="1.7.2.v20121108-1250"/>
-<unit id="org.slf4j.jul.source" version="1.7.2.v20121108-1250"/>
-<unit id="org.slf4j.log4j" version="1.7.2.v20130115-1340"/>
-<unit id="org.slf4j.log4j.source" version="1.7.2.v20130115-1340"/>
-<unit id="org.w3c.css.sac" version="1.3.1.v200903091627"/>
-<unit id="org.w3c.css.sac.source" version="1.3.1.v200903091627"/>
-<unit id="org.w3c.dom.smil" version="1.0.1.v200903091627"/>
-<unit id="org.w3c.dom.smil.source" version="1.0.1.v200903091627"/>
-<unit id="org.w3c.dom.svg" version="1.1.0.v201011041433"/>
-<unit id="org.w3c.dom.svg.source" version="1.1.0.v201011041433"/>
-<repository location="http://download.eclipse.org/tools/orbit/downloads/drops/R20140525021250/repository/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.emf.base.feature.group" version="2.10.0.v20140514-1158"/>
@@ -179,6 +79,105 @@
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.jgit.feature.group" version="4.1.0.201509280440-r"/>
 <repository location="http://download.eclipse.org/egit/updates-4.1"/>
+</location>
+<location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
+<unit id="org.hamcrest.text" version="1.1.0.v20090501071000"/>
+<unit id="org.apache.felix.gogo.command" version="0.10.0.v201209301215"/>
+<unit id="org.antlr.runtime" version="4.3.0.v201502022030"/>
+<unit id="com.ibm.icu.source" version="54.1.1.v201501272100"/>
+<unit id="org.apache.commons.compress" version="1.6.0.v201310281400"/>
+<unit id="org.apache.batik.util.gui.source" version="1.7.0.v200903091627"/>
+<unit id="ch.qos.logback.classic.source" version="1.0.7.v20121108-1250"/>
+<unit id="org.slf4j.api.source" version="1.7.2.v20121108-1250"/>
+<unit id="org.w3c.dom.smil.source" version="1.0.1.v200903091627"/>
+<unit id="com.sun.el" version="2.2.0.v201303151357"/>
+<unit id="com.jcraft.jsch" version="0.1.53.v201508180515"/>
+<unit id="ch.qos.logback.core.source" version="1.0.7.v20121108-1250"/>
+<unit id="org.mockito" version="1.9.5.v201311280930"/>
+<unit id="org.apache.commons.compress.source" version="1.6.0.v201310281400"/>
+<unit id="org.slf4j.log4j" version="1.7.2.v20130115-1340"/>
+<unit id="org.apache.felix.gogo.runtime" version="0.10.0.v201209301036"/>
+<unit id="org.apache.jasper.glassfish" version="2.2.2.v201501141630"/>
+<unit id="org.slf4j.api" version="1.7.2.v20121108-1250"/>
+<unit id="javax.activation" version="1.1.0.v201211130549"/>
+<unit id="javax.inject" version="1.0.0.v20091030"/>
+<unit id="org.apache.commons.httpclient.source" version="3.1.0.v201012070820"/>
+<unit id="org.objenesis.source" version="1.0.0.v201505121915"/>
+<unit id="org.w3c.dom.svg" version="1.1.0.v201011041433"/>
+<unit id="org.apache.commons.httpclient" version="3.1.0.v201012070820"/>
+<unit id="org.hamcrest" version="1.1.0.v20090501071000"/>
+<unit id="com.google.protobuf" version="2.4.0.v201105131100"/>
+<unit id="org.hamcrest.text.source" version="1.1.0.v20090501071000"/>
+<unit id="org.w3c.dom.svg.source" version="1.1.0.v201011041433"/>
+<unit id="com.jcraft.jsch.source" version="0.1.53.v201508180515"/>
+<unit id="javax.xml" version="1.3.4.v201005080400"/>
+<unit id="org.mockito.source" version="1.9.5.v201311280930"/>
+<unit id="org.junit.source" version="4.12.0.v201504281640"/>
+<unit id="org.apache.felix.gogo.runtime.source" version="0.10.0.v201209301036"/>
+<unit id="org.apache.xml.resolver" version="1.2.0.v201005080400"/>
+<unit id="javax.el" version="2.2.0.v201303151357"/>
+<unit id="org.apache.commons.io.source" version="2.2.0.v201405211200"/>
+<unit id="org.apache.commons.io" version="2.2.0.v201405211200"/>
+<unit id="org.apache.commons.logging" version="1.1.1.v201101211721"/>
+<unit id="javax.inject.source" version="1.0.0.v20091030"/>
+<unit id="ch.qos.logback.core" version="1.0.7.v20121108-1250"/>
+<unit id="javaewah.source" version="0.7.9.v201401101600"/>
+<unit id="org.hamcrest.integration" version="1.3.0.v201305210900"/>
+<unit id="javax.servlet.source" version="3.0.0.v201112011016"/>
+<unit id="org.hamcrest.core" version="1.3.0.v201303031735"/>
+<unit id="ch.qos.logback.slf4j.source" version="1.0.7.v201505121915"/>
+<unit id="org.apache.commons.logging.source" version="1.1.1.v201101211721"/>
+<unit id="javax.servlet.jsp.source" version="2.2.0.v201112011158"/>
+<unit id="javax.activation.source" version="1.1.0.v201211130549"/>
+<unit id="org.apache.batik.css" version="1.7.0.v201011041433"/>
+<unit id="javax.xml.stream" version="1.0.1.v201004272200"/>
+<unit id="org.apache.batik.util" version="1.7.0.v201011041433"/>
+<unit id="org.junit" version="4.12.0.v201504281640"/>
+<unit id="javaewah" version="0.7.9.v201401101600"/>
+<unit id="org.slf4j.jcl" version="1.7.2.v20130115-1340"/>
+<unit id="org.objenesis" version="1.0.0.v201505121915"/>
+<unit id="javax.el.source" version="2.2.0.v201303151357"/>
+<unit id="org.mozilla.javascript" version="1.7.5.v201504281450"/>
+<unit id="org.hamcrest.library" version="1.3.0.v201505072020"/>
+<unit id="org.hamcrest.library.source" version="1.3.0.v201505072020"/>
+<unit id="org.apache.felix.gogo.command.source" version="0.10.0.v201209301215"/>
+<unit id="org.apache.commons.fileupload" version="1.2.2.v20111214-1400"/>
+<unit id="org.apache.batik.css.source" version="1.7.0.v201011041433"/>
+<unit id="org.apache.xerces" version="2.9.0.v201101211617"/>
+<unit id="org.apache.commons.codec.source" version="1.6.0.v201305230611"/>
+<unit id="org.json" version="1.0.0.v201011060100"/>
+<unit id="com.sun.el.source" version="2.2.0.v201303151357"/>
+<unit id="org.mozilla.javascript.source" version="1.7.5.v201504281450"/>
+<unit id="org.apache.xml.serializer" version="2.7.1.v201005080400"/>
+<unit id="org.w3c.css.sac" version="1.3.1.v200903091627"/>
+<unit id="org.apache.commons.el.source" version="1.0.0.v201305101705"/>
+<unit id="org.slf4j.jcl.source" version="1.7.2.v20130115-1340"/>
+<unit id="org.dojotoolkit" version="1.6.1.v201108161253"/>
+<unit id="org.slf4j.jul" version="1.7.2.v20121108-1250"/>
+<unit id="org.slf4j.log4j.source" version="1.7.2.v20130115-1340"/>
+<unit id="org.apache.batik.util.source" version="1.7.0.v201011041433"/>
+<unit id="org.w3c.dom.smil" version="1.0.1.v200903091627"/>
+<unit id="org.apache.commons.fileupload.source" version="1.2.2.v20111214-1400"/>
+<unit id="org.apache.felix.gogo.shell.source" version="0.10.0.v201212101605"/>
+<unit id="org.apache.felix.gogo.shell" version="0.10.0.v201212101605"/>
+<unit id="org.apache.jasper.glassfish.source" version="2.2.2.v201501141630"/>
+<unit id="org.w3c.css.sac.source" version="1.3.1.v200903091627"/>
+<unit id="org.hamcrest.core.source" version="1.3.0.v201303031735"/>
+<unit id="ch.qos.logback.slf4j" version="1.0.7.v201505121915"/>
+<unit id="org.antlr.runtime.source" version="4.3.0.v201502022030"/>
+<unit id="javax.mail.glassfish" version="1.4.1.v201108011116"/>
+<unit id="org.apache.batik.util.gui" version="1.7.0.v200903091627"/>
+<unit id="org.apache.commons.el" version="1.0.0.v201305101705"/>
+<unit id="org.hamcrest.integration.source" version="1.3.0.v201305210900"/>
+<unit id="javax.servlet.jsp" version="2.2.0.v201112011158"/>
+<unit id="javax.mail.glassfish.source" version="1.4.1.v201108011116"/>
+<unit id="org.cyberneko.html" version="1.9.14.v201105210654"/>
+<unit id="org.slf4j.jul.source" version="1.7.2.v20121108-1250"/>
+<unit id="ch.qos.logback.classic" version="1.0.7.v20121108-1250"/>
+<unit id="org.apache.commons.codec" version="1.6.0.v201305230611"/>
+<unit id="javax.servlet" version="3.0.0.v201112011016"/>
+<unit id="com.ibm.icu" version="54.1.1.v201501272100"/>
+<repository location="http://download.eclipse.org/tools/orbit/downloads/drops/R20150821153341/repository/"/>
 </location>
 </locations>
 <targetJRE path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
