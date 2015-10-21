@@ -34,6 +34,7 @@ import org.eclipse.jgit.api.SubmoduleSyncCommand;
 import org.eclipse.jgit.api.SubmoduleUpdateCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.ConfigInvalidException;
+import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
@@ -217,6 +218,7 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 		}
 		rm.call();
 		FileUtils.delete(new File(parentRepo.getWorkTree(), pathToSubmodule), FileUtils.RECURSIVE);
+		FileUtils.delete(new File(parentRepo.getWorkTree(), Constants.DOT_GIT +"/"+Constants.MODULES+"/"+pathToSubmodule), FileUtils.RECURSIVE);
 	}
 	
 	private static StoredConfig getGitSubmodulesConfig( Repository repository ) throws IOException, ConfigInvalidException {
