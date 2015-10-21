@@ -20,6 +20,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.errors.ConfigInvalidException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
@@ -265,7 +266,7 @@ public class Clone {
 					if (walk.getRepository() != null) {
 						cloneUrl = GitUtils.getCloneUrl(walk.getRepository());
 					} else {
-						cloneUrl = GitUtils.getCloneUrl(walk.getDirectory());
+						cloneUrl = walk.getRemoteUrl();
 					}
 					JSONArray newParents = (this.parents == null ? new JSONArray() : new JSONArray(this.parents.toString()));
 					newParents.put(getLocation().getPath());
@@ -274,6 +275,7 @@ public class Clone {
 				}
 				walk.close();
 				submodules = submodules.length() > 0 ? submodules : null;
+			} catch (ConfigInvalidException e) {
 			} catch (IOException e) {
 				// ignore and skip Git URL
 			} finally {
