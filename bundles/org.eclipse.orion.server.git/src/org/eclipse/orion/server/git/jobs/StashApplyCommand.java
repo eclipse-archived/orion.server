@@ -42,7 +42,6 @@
  */
 package org.eclipse.orion.server.git.jobs;
 
-import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
 
@@ -225,7 +224,7 @@ public class StashApplyCommand extends GitCommand<ObjectId> {
 		} catch (IOException e) {
 			throw new JGitInternalException(JGitText.get().stashApplyFailed, e);
 		} finally {
-			reader.release();
+			reader.close();
 		}
 	}
 
@@ -293,7 +292,7 @@ public class StashApplyCommand extends GitCommand<ObjectId> {
 		} finally {
 			dc.unlock();
 			if (walk != null)
-				walk.release();
+				walk.close();
 		}
 	}
 
@@ -329,14 +328,13 @@ public class StashApplyCommand extends GitCommand<ObjectId> {
 			}
 		} finally {
 			if (walk != null)
-				walk.release();
+				walk.close();
 		}
 	}
 
 	private void checkoutPath(DirCacheEntry entry, ObjectReader reader) {
 		try {
-			File file = new File(repo.getWorkTree(), entry.getPathString());
-			DirCacheCheckout.checkoutEntry(repo, file, entry, reader);
+			DirCacheCheckout.checkoutEntry(repo, entry, reader);
 		} catch (IOException e) {
 			throw new JGitInternalException(MessageFormat.format(JGitText.get().checkoutConflictWithFile, entry.getPathString()), e);
 		}

@@ -114,7 +114,7 @@ public class ListBranchesJob extends GitJob {
 		try {
 			return walk.parseCommit(oid);
 		} finally {
-			walk.release();
+			walk.close();
 		}
 	}
 

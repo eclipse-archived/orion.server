@@ -263,8 +263,8 @@ public class Commit extends GitObject {
 						diffFormat.setPathFilter(filter);
 					l = diffFormat.scan(new EmptyTreeIterator(), new CanonicalTreeParser(null, rw.getObjectReader(), revCommit.getTree()));
 				} finally {
-					diffFormat.release();
-					rw.release();
+					diffFormat.close();
+					rw.close();
 				}
 			}
 
@@ -300,7 +300,7 @@ public class Commit extends GitObject {
 				result.put(ProtocolConstants.KEY_NEXT_LOCATION, nextLocation);
 			}
 		} finally {
-			tw.release();
+			tw.close();
 		}
 		return result;
 	}
@@ -401,7 +401,7 @@ public class Commit extends GitObject {
 		} catch (IOException e) {
 			return revCommit;
 		} finally {
-			rw.release();
+			rw.close();
 		}
 	}
 }

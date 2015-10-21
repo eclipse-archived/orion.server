@@ -22,11 +22,9 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.RepositoryCache;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.submodule.SubmoduleWalk;
 import org.eclipse.jgit.transport.URIish;
-import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.ProtocolConstants;
@@ -260,25 +258,21 @@ public class Clone {
 			submodules = new JSONArray();
 			Repository parentRepository = null;
 			try {
-				if (RepositoryCache.FileKey.isGitRepository(new File(localFile, Constants.DOT_GIT), FS.DETECTED)) {
-					localFile = new File(localFile, Constants.DOT_GIT);
-				}
-				parentRepository = FileRepositoryBuilder.create(localFile);
+				parentRepository = FileRepositoryBuilder.create(GitUtils.resolveGitDir(localFile));
 				SubmoduleWalk walk = SubmoduleWalk.forIndex(parentRepository);
 				while (walk.next()) {
-					File submoduleFile = null;
+					String cloneUrl;
 					if (walk.getRepository() != null) {
-						submoduleFile = walk.getRepository().getWorkTree();
+						cloneUrl = GitUtils.getCloneUrl(walk.getRepository());
 					} else {
-						submoduleFile = walk.getDirectory();
+						cloneUrl = GitUtils.getCloneUrl(walk.getDirectory());
 					}
 					JSONArray newParents = (this.parents == null ? new JSONArray() : new JSONArray(this.parents.toString()));
 					newParents.put(getLocation().getPath());
-					JSONObject submoduleCloneJSON = new Clone().toJSON(path.append(walk.getPath()).addTrailingSeparator(), baseLocation,
-							GitUtils.getCloneUrl(submoduleFile), newParents);
+					JSONObject submoduleCloneJSON = new Clone().toJSON(path.append(walk.getPath()).addTrailingSeparator(), baseLocation, cloneUrl, newParents);
 					submodules.put(submoduleCloneJSON);
 				}
-				walk.release();
+				walk.close();
 				submodules = submodules.length() > 0 ? submodules : null;
 			} catch (IOException e) {
 				// ignore and skip Git URL

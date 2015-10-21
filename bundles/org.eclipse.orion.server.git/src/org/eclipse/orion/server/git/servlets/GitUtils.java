@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,6 +31,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.internal.JGitText;
 import org.eclipse.jgit.lib.Config;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
@@ -39,6 +41,8 @@ import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
+import org.eclipse.jgit.util.IO;
+import org.eclipse.jgit.util.RawParseUtils;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
@@ -84,11 +88,8 @@ public class GitUtils {
 	public static File getGitDir(File file) {
 		if (file.exists()) {
 			while (file != null) {
-				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
-					return file;
-				} else if (RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED)) {
-					return new File(file, Constants.DOT_GIT);
-				}
+				File gitDir = resolveGitDir(file);
+				if (gitDir != null) return gitDir;
 				file = file.getParentFile();
 			}
 		}
@@ -115,10 +116,9 @@ public class GitUtils {
 			return result;
 		switch (traverse) {
 		case CURRENT:
-			if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
-				result.put(new Path(""), file); //$NON-NLS-1$
-			} else if (RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED)) {
-				result.put(new Path(""), new File(file, Constants.DOT_GIT)); //$NON-NLS-1$
+			File gitDir = resolveGitDir(file);
+			if (gitDir != null) {
+				result.put(new Path(""), gitDir); //$NON-NLS-1$
 			}
 			break;
 		case GO_UP:
@@ -148,11 +148,9 @@ public class GitUtils {
 		}
 		while (file != null && !file.getAbsolutePath().equals(workspaceRoot.getAbsolutePath())) {
 			if (file.exists()) {
-				if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
-					gitDirs.put(getPathForLevelUp(levelUp), file);
-					return;
-				} else if (RepositoryCache.FileKey.isGitRepository(new File(file, Constants.DOT_GIT), FS.DETECTED)) {
-					gitDirs.put(getPathForLevelUp(levelUp), new File(file, Constants.DOT_GIT));
+				File gitDir = resolveGitDir(file);
+				if (gitDir != null) {
+					gitDirs.put(getPathForLevelUp(levelUp), gitDir);
 					return;
 				}
 			}
@@ -175,11 +173,9 @@ public class GitUtils {
 	 */
 	private static void getGitDirsInChildren(File localFile, IPath path, Map<IPath, File> gitDirs) throws CoreException {
 		if (localFile.exists() && localFile.isDirectory()) {
-			if (RepositoryCache.FileKey.isGitRepository(localFile, FS.DETECTED)) {
-				gitDirs.put(path.addTrailingSeparator(), localFile);
-				return;
-			} else if (RepositoryCache.FileKey.isGitRepository(new File(localFile, Constants.DOT_GIT), FS.DETECTED)) {
-				gitDirs.put(path.addTrailingSeparator(), new File(localFile, Constants.DOT_GIT));
+			File gitDir = resolveGitDir(localFile);
+			if (gitDir != null) {
+				gitDirs.put(path.addTrailingSeparator(), gitDir);
 				return;
 			}
 			File[] folders = localFile.listFiles(new FileFilter() {
@@ -334,16 +330,11 @@ public class GitUtils {
 		}
 	}
 
-	
 	public static String getCloneUrl(File gitDir) {
 		Repository db = null;
 		try {
-			if (RepositoryCache.FileKey.isGitRepository(new File(gitDir, Constants.DOT_GIT), FS.DETECTED)) {
-				gitDir = new File(gitDir, Constants.DOT_GIT);
-			}
-			db = FileRepositoryBuilder.create(gitDir);
-			StoredConfig config = db.getConfig();
-			return config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL);
+			db = FileRepositoryBuilder.create(resolveGitDir(gitDir));
+			return getCloneUrl(db);
 		} catch (IOException e) {
 			// ignore and skip Git URL
 		} finally {
@@ -352,6 +343,16 @@ public class GitUtils {
 			}
 		}
 		return null;
+	}
+	
+	/**
+	 * Returns the Git URL for a given git repository.
+	 * @param db
+	 * @return
+	 */
+	public static String getCloneUrl(Repository db) {
+		StoredConfig config = db.getConfig();
+		return config.getString(ConfigConstants.CONFIG_REMOTE_SECTION, Constants.DEFAULT_REMOTE_NAME, ConfigConstants.CONFIG_KEY_URL);
 	}
 	
 	/**
@@ -370,5 +371,62 @@ public class GitUtils {
 			// let it proceed with current name
 		}
 		return uniqueName;
+	}
+	/**
+	 * Returns the file representing the Git repository directory for the given file path or any of its parent in the filesystem. If the file doesn't exits, is
+	 * not a Git repository or an error occurred while transforming the given path into a store <code>null</code> is returned.
+	 *
+	 * @param file the file to check
+	 * @return the .git folder if found or <code>null</code> the give path cannot be resolved to a file or it's not under control of a git repository
+	 */
+	public static File resolveGitDir(File file) {
+		File dot = new File(file, Constants.DOT_GIT);
+		if (RepositoryCache.FileKey.isGitRepository(dot, FS.DETECTED)) {
+			return dot;
+		} else if (dot.isFile()) {
+			try {
+				return getSymRef(file, dot, FS.DETECTED);
+			} catch (IOException ignored) {
+				// Continue searching if gitdir ref isn't found
+			}
+		} else if (RepositoryCache.FileKey.isGitRepository(file, FS.DETECTED)) {
+			return file;
+		}
+		return null;
+	}
+	//Note: these helpers are taken from JGit. There is no API in JGit <= 4.1 to resolve sym refs.
+	private static boolean isSymRef(byte[] ref) {
+		if (ref.length < 9)
+			return false;
+		return /**/ref[0] == 'g' //
+				&& ref[1] == 'i' //
+				&& ref[2] == 't' //
+				&& ref[3] == 'd' //
+				&& ref[4] == 'i' //
+				&& ref[5] == 'r' //
+				&& ref[6] == ':' //
+				&& ref[7] == ' ';
+	}
+	private static File getSymRef(File workTree, File dotGit, FS fs)
+			throws IOException {
+		byte[] content = IO.readFully(dotGit);
+		if (!isSymRef(content))
+			throw new IOException(MessageFormat.format(
+					JGitText.get().invalidGitdirRef, dotGit.getAbsolutePath()));
+
+		int pathStart = 8;
+		int lineEnd = RawParseUtils.nextLF(content, pathStart);
+		if (content[lineEnd - 1] == '\n')
+			lineEnd--;
+		if (lineEnd == pathStart)
+			throw new IOException(MessageFormat.format(
+					JGitText.get().invalidGitdirRef, dotGit.getAbsolutePath()));
+
+		String gitdirPath = RawParseUtils.decode(content, pathStart, lineEnd);
+		File gitdirFile = fs.resolve(workTree, gitdirPath);
+		if (gitdirFile.isAbsolute())
+			return gitdirFile;
+		else
+			return new File(workTree, gitdirPath).getCanonicalFile();
 	}
 }

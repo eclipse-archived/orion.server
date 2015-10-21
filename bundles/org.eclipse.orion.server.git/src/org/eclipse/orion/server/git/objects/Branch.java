@@ -234,7 +234,7 @@ public class Branch extends GitObject {
 		} catch (IOException e) {
 			// ignore and return null
 		} finally {
-			walk.release();
+			walk.close();
 		}
 		return null;
 	}

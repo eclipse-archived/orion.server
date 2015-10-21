@@ -151,7 +151,7 @@ public class CloneJob extends GitJob {
 							walk.getDirectory().mkdir();
 						}
 					}
-					walk.release();
+					walk.close();
 				}
 			}
 			GitJobUtils.packRefs(repo, gitMonitor);

@@ -278,7 +278,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		try {
 			return walk.parseCommit(oid);
 		} finally {
-			walk.release();
+			walk.close();
 		}
 	}
 
@@ -514,7 +514,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			return statusHandler.handleRequest(request, response,
 					new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occurred when cherry-picking.", e));
 		} finally {
-			revWalk.release();
+			revWalk.close();
 		}
 	}
 
@@ -552,7 +552,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			return statusHandler.handleRequest(request, response,
 					new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occurred when reverting.", e));
 		} finally {
-			revWalk.release();
+			revWalk.close();
 		}
 	}
 

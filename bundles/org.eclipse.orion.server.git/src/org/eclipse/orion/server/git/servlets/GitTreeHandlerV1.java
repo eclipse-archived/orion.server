@@ -264,9 +264,9 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 					"An error occured when requesting commit info.", e));
 		} finally {
 			if (walk != null)
-				walk.release();
+				walk.close();
 			if (treeWalk != null)
-				treeWalk.release();
+				treeWalk.close();
 		}
 	}
 

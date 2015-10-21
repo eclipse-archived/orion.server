@@ -231,7 +231,7 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 			try {
 				p.reset(reader, head);
 			} finally {
-				reader.release();
+				reader.close();
 			}
 			oldTree = p;
 			newTree = new DirCacheIterator(db.readDirCache());
@@ -436,7 +436,7 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 			p.reset(or, new RevWalk(db).parseTree(id));
 			return p;
 		} finally {
-			or.release();
+			or.close();
 		}
 	}
 }
