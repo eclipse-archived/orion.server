@@ -264,7 +264,7 @@ public class GitStatusTest extends GitTest {
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 		// GET /git/status/file/{proj}/
-		assertStatus(new StatusResult().setModifiedNames("folder/folder.txt", "test.txt").setModifiedPaths("folder/folder.txt", "test.txt"), gitStatusUri);
+		assertStatus(new StatusResult().setModifiedNames( "test.txt", "folder/folder.txt").setModifiedPaths("test.txt", "folder/folder.txt"), gitStatusUri);
 
 		// GET /git/status/file/{proj}/test.txt
 		WebRequest request = getGetGitStatusRequest(gitStatusUri + "test.txt");
@@ -275,7 +275,7 @@ public class GitStatusTest extends GitTest {
 		gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
 		// GET /git/status/file/{proj}/folder/
-		assertStatus(new StatusResult().setModifiedNames("folder/folder.txt", "test.txt").setModifiedPaths("folder.txt", "../test.txt"), gitStatusUri);
+		assertStatus(new StatusResult().setModifiedNames("test.txt", "folder/folder.txt").setModifiedPaths("../test.txt", "folder.txt"), gitStatusUri);
 	}
 
 	@Test
@@ -305,7 +305,7 @@ public class GitStatusTest extends GitTest {
 			JSONObject gitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 
-			JSONObject statusResponse = assertStatus(new StatusResult().setModifiedNames("folder/folder.txt", "test.txt").setModifiedContents("folder change", "file change"), gitStatusUri);
+			JSONObject statusResponse = assertStatus(new StatusResult().setModifiedNames("test.txt", "folder/folder.txt").setModifiedContents("file change", "folder change"), gitStatusUri);
 
 			String stageAll = statusResponse.getString(GitConstants.KEY_INDEX);
 			String commitAll = statusResponse.getString(GitConstants.KEY_COMMIT);
@@ -314,7 +314,7 @@ public class GitStatusTest extends GitTest {
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-			assertStatus(new StatusResult().setChangedNames("folder/folder.txt", "test.txt").setChangedContents("folder change", "file change"), gitStatusUri);
+			assertStatus(new StatusResult().setChangedNames("test.txt", "folder/folder.txt").setChangedContents("file change", "folder change"), gitStatusUri);
 
 			request = GitCommitTest.getPostGitCommitRequest(commitAll, "committing all changes", false);
 			response = webConversation.getResponse(request);
