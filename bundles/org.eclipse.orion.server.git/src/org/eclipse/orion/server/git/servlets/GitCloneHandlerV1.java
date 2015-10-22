@@ -37,8 +37,10 @@ import org.eclipse.jgit.api.errors.NoMessageException;
 import org.eclipse.jgit.api.errors.RefNotFoundException;
 import org.eclipse.jgit.api.errors.WrongRepositoryStateException;
 import org.eclipse.jgit.dircache.DirCache;
+import org.eclipse.jgit.dircache.DirCacheEntry;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
@@ -368,11 +370,17 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				if (paths != null) {
 					Set<String> toRemove = new HashSet<String>();
 					CheckoutCommand checkout = git.checkout();
+					Repository db = git.getRepository();
 					for (int i = 0; i < paths.length(); i++) {
 						String p = paths.getString(i);
 						if (removeUntracked && !isInIndex(git.getRepository(), p))
 							toRemove.add(p);
-						checkout.addPath(p);
+						if(getEntry(db,p) == null ||!getEntry(db,p).getFileMode().equals(FileMode.GITLINK)){
+							checkout.addPath(p);
+						}else if(!new File(db.getWorkTree(),p).exists()){
+							// when checkout removed submodule, remake directory if it doesn't exist
+							new File(db.getWorkTree(),p).mkdir();
+						}
 					}
 					checkout.call();
 					for (String p : toRemove) {
@@ -441,8 +449,12 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	private boolean isInIndex(Repository db, String path) throws IOException {
+		return getEntry(db,path) != null;
+	}
+	
+	private DirCacheEntry getEntry(Repository db, String path) throws IOException {
 		DirCache dc = DirCache.read(db.getIndexFile(), db.getFS());
-		return dc.getEntry(path) != null;
+		return dc.getEntry(path);
 	}
 
 	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, String pathString) throws GitAPIException, CoreException,
