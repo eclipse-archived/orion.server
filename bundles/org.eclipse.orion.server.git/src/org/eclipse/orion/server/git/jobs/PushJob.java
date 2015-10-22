@@ -13,6 +13,7 @@ package org.eclipse.orion.server.git.jobs;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -30,6 +31,7 @@ import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.internal.JGitText;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.Repository;
@@ -46,6 +48,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.IGitHubTokenProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONArray;
@@ -55,6 +58,7 @@ import org.json.JSONObject;
 /**
  * A job to perform a push operation in the background
  */
+@SuppressWarnings("restriction")
 public class PushJob extends GitJob {
 
 	private Path path;
@@ -166,16 +170,40 @@ public class PushJob extends GitJob {
 		IStatus result = Status.OK_STATUS;
 		try {
 			result = doPush(monitor);
-		} catch (IOException e) {
-			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e);
 		} catch (CoreException e) {
 			result = e.getStatus();
 		} catch (InvalidRemoteException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e);
 		} catch (GitAPIException e) {
-			result = getGitAPIExceptionStatus(e, "Error pushing git remote");
+			result = getGitAPIExceptionStatus(e, "Error pushing git remote"); //$NON-NLS-1$
+
+			if (matchMessage(JGitText.get().notAuthorized, e.getCause().getMessage())) {
+				// HTTP connection problems are distinguished by exception message
+				try {
+					File gitDir = GitUtils.getGitDir(path.removeFirstSegments(2));
+					Repository db = FileRepositoryBuilder.create(gitDir);
+					Git git = new Git(db);
+					RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
+					String repositoryUrl = remoteConfig.getURIs().get(0).toString();
+
+					Enumeration<IGitHubTokenProvider> providers = GitCredentialsProvider.GetGitHubTokenProviders();
+					while (providers.hasMoreElements()) {
+						String authUrl = providers.nextElement().getAuthUrl(repositoryUrl, cookie);
+						if (authUrl != null) {
+							ServerStatus status = ServerStatus.convert(result);
+							JSONObject data = status.getJsonData();
+							data.put("GitHubAuth", authUrl); //$NON-NLS-1$
+							break;
+						}
+					}
+				} catch (Exception ex) {
+					/* fail silently, no GitHub auth url will be returned */
+				}
+			}
 		} catch (JGitInternalException e) {
 			result = getJGitInternalExceptionStatus(e, "Error pushing git remote");
+		} catch (IOException e) {
+			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e);
 		} catch (Exception e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git repository", e);
 		}

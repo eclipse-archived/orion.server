@@ -166,7 +166,7 @@ public abstract class GitJob extends TaskJob {
 	 * @return <code>true</code> if the messages match, and <code>false</code> otherwise
 	 * @see MessageFormat
 	 */
-	private static boolean matchMessage(String pattern, String message) {
+	protected static boolean matchMessage(String pattern, String message) {
 		if (message == null) {
 			return false;
 		}
