@@ -20,10 +20,13 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.api.SubmoduleStatusCommand;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.ConfigInvalidException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.submodule.SubmoduleStatusType;
 import org.eclipse.jgit.submodule.SubmoduleWalk;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.Activator;
@@ -59,6 +62,7 @@ public class Clone {
 	private String cloneUrl;
 	private IPath path;
 	private JSONArray parents;
+	private boolean uninitialized;
 
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
@@ -79,6 +83,7 @@ public class Clone {
 				new Property(GitConstants.KEY_URL), //
 				new Property(ProtocolConstants.KEY_CHILDREN),//
 				new Property(ProtocolConstants.KEY_PARENTS),//
+				new Property(GitConstants.KEY_UNINITIALIZED),//
 				new Property(GitConstants.KEY_SUBMODULE)};
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
@@ -246,7 +251,7 @@ public class Clone {
 	}
 
 	@PropertyDescription(name = ProtocolConstants.KEY_CHILDREN)
-	private JSONArray getChildren() throws URISyntaxException, IOException, CoreException, JSONException {
+	private JSONArray getChildren() throws URISyntaxException, IOException, CoreException, JSONException, GitAPIException {
 		if (path == null)
 			return null;
 		IFileStore fileStore = NewFileServlet.getFileStore(null, path);
@@ -261,7 +266,9 @@ public class Clone {
 			try {
 				parentRepository = FileRepositoryBuilder.create(GitUtils.resolveGitDir(localFile));
 				SubmoduleWalk walk = SubmoduleWalk.forIndex(parentRepository);
+				
 				while (walk.next()) {
+					boolean uninitialized = new SubmoduleStatusCommand(parentRepository).addPath(walk.getModulesPath()).call().values().iterator().next().getType().equals(SubmoduleStatusType.UNINITIALIZED);
 					String cloneUrl;
 					if (walk.getRepository() != null) {
 						cloneUrl = GitUtils.getCloneUrl(walk.getRepository());
@@ -270,7 +277,7 @@ public class Clone {
 					}
 					JSONArray newParents = (this.parents == null ? new JSONArray() : new JSONArray(this.parents.toString()));
 					newParents.put(getLocation().getPath());
-					JSONObject submoduleCloneJSON = new Clone().toJSON(path.append(walk.getPath()).addTrailingSeparator(), baseLocation, cloneUrl, newParents);
+					JSONObject submoduleCloneJSON = new Clone().toJSON(path.append(walk.getPath()).addTrailingSeparator(), baseLocation, cloneUrl, newParents, uninitialized);
 					submodules.put(submoduleCloneJSON);
 				}
 				walk.close();
@@ -293,6 +300,11 @@ public class Clone {
 		return this.parents;
 	} 
 	
+	@PropertyDescription(name = GitConstants.KEY_UNINITIALIZED)
+	private boolean getUninitialized() throws URISyntaxException, IOException, CoreException {
+		return this.uninitialized;
+	} 
+	
 	@PropertyDescription(name = GitConstants.KEY_URL)
 	private String getCloneUrl() {
 		return cloneUrl;
@@ -304,16 +316,17 @@ public class Clone {
 	}
 	
 	public JSONObject toJSON(IPath path, URI baseLocation, String cloneUrl) throws IOException, URISyntaxException {
-		return toJSON(path, baseLocation, cloneUrl, null);
+		return toJSON(path, baseLocation, cloneUrl, null, false);
 	}
 
-	public JSONObject toJSON(IPath path, URI baseLocation, String cloneUrl, JSONArray parents) throws IOException, URISyntaxException {
+	public JSONObject toJSON(IPath path, URI baseLocation, String cloneUrl, JSONArray parents, boolean uninitialized) throws IOException, URISyntaxException {
 		id = Activator.LOCATION_FILE_SERVLET + '/' + path.toString();
 		name = path.lastSegment();
 		this.path = path;
 		this.cloneUrl = cloneUrl;
 		this.baseLocation = baseLocation;
 		this.parents = parents;
+		this.uninitialized = uninitialized;
 		return toJSON();
 	} 
 }

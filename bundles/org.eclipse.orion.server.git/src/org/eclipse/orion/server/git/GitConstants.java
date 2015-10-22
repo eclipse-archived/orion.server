@@ -46,6 +46,8 @@ public class GitConstants {
 	public static final String KEY_SUBMODULE = "SubmoduleLocation"; //$NON-NLS-1$
 	
 	public static final String KEY_IS_SUBMODULE = "IsSubmodule"; //$NON-NLS-1$
+	
+	public static final String KEY_UNINITIALIZED = "Uninitialized"; //$NON-NLS-1$
 
 	public static final String KEY_HEAD = "HeadLocation"; //$NON-NLS-1$
 
