@@ -16,8 +16,13 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import org.eclipse.core.filesystem.*;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jgit.ignore.IgnoreNode;
 import org.eclipse.orion.server.core.IOUtilities;
@@ -43,6 +48,10 @@ public class Packager {
 	}
 
 	protected boolean isIgnored(IFileStore source, IPath path, boolean isDirectory) throws CoreException {
+		return isIgnored(source, path, isDirectory, false);
+	}
+
+	protected boolean isIgnored(IFileStore source, IPath path, boolean isDirectory, boolean negatePrevious) throws CoreException {
 
 		/* look for inherited rules up to the base node */
 		if (!base.isParentOf(source) && !base.equals(source))
@@ -50,23 +59,24 @@ public class Packager {
 
 		IgnoreNode node = cfIgnore.get(source.toURI());
 
-		if (node == null)
-			return isIgnored(source.getParent(), path, isDirectory);
-
-		IFileStore pathStore = base.getFileStore(path);
-		URI relativeURI = URIUtil.makeRelative(pathStore.toURI(), source.toURI());
-
-		switch (node.isIgnored(relativeURI.toString(), isDirectory)) {
-			case IGNORED :
-				return true;
-			case NOT_IGNORED :
-				return false;
-			case CHECK_PARENT :
-				/* fall over */
-				break;
+		if (node != null) {
+			IFileStore pathStore = base.getFileStore(path);
+			URI relativeURI = URIUtil.makeRelative(pathStore.toURI(), source.toURI());
+	
+			switch (node.isIgnored(relativeURI.toString(), isDirectory, negatePrevious)) {
+				case IGNORED :
+					return true;
+				case NOT_IGNORED :
+					return false;
+				case CHECK_PARENT:
+					negatePrevious = false;
+					break;
+				case CHECK_PARENT_NEGATE_FIRST_MATCH:
+					negatePrevious = true;
+					break;
+			}
 		}
-
-		return isIgnored(source.getParent(), path, isDirectory);
+		return isIgnored(source.getParent(), path, isDirectory, negatePrevious);
 	}
 
 	protected void writeZip(IFileStore source, IPath path, ZipOutputStream zos) throws CoreException, IOException {

@@ -382,7 +382,7 @@ public class GitCheckoutTest extends GitTest {
 			String folder1GitCloneUri = getCloneUri(folder1GitStatusUri);
 
 			request = getGetGitStatusRequest(folder1GitStatusUri);
-			assertStatus(new StatusResult().setModifiedNames("test.txt", "folder/folder.txt").setModifiedPaths("../test.txt", "folder.txt"), folder1GitStatusUri);
+			assertStatus(new StatusResult().setModifiedNames("folder/folder.txt", "test.txt").setModifiedPaths("folder.txt", "../test.txt"), folder1GitStatusUri);
 
 			// use KEY_NAME not KEY_PATH
 			// request = getCheckoutRequest(gitCloneUri, new String[] {testTxt.getString(ProtocolConstants.KEY_PATH)});

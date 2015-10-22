@@ -78,19 +78,20 @@ public class PackagerTest {
 
 	@Test
 	public void testCFIgnoreNegation() throws Exception {
-//		ZipOutputStream mockZos = mock(ZipOutputStream.class);
-//
-//		String LOCATION = "testData/packagerTest/02"; //$NON-NLS-1$
-//		URL entry = ServerTestsActivator.getContext().getBundle().getEntry(LOCATION);
-//		IFileStore source = EFS.getStore(URIUtil.toURI(FileLocator.toFileURL(entry).getPath()));
-//
-//		PackageUtils.writeZip(source, mockZos);
-//
-//		/* what is... */
-//		verify(mockZos).putNextEntry(argThat(new ZipArgumentMatcher(new ZipEntry(".cfignore")))); //$NON-NLS-1$
-//		verify(mockZos).putNextEntry(argThat(new ZipArgumentMatcher(new ZipEntry("A/B/test.in")))); //$NON-NLS-1$
-//
-//		/* ... and what should never be */
-//		verify(mockZos, never()).putNextEntry(argThat(new ZipArgumentMatcher(new ZipEntry("A/B/test2.in")))); //$NON-NLS-1$
+		ZipOutputStream mockZos = mock(ZipOutputStream.class);
+
+		String LOCATION = "testData/packagerTest/02"; //$NON-NLS-1$
+		URL entry = ServerTestsActivator.getContext().getBundle().getEntry(LOCATION);
+		IFileStore source = EFS.getStore(URIUtil.toURI(FileLocator.toFileURL(entry).getPath()));
+
+		PackageUtils.writeZip(source, mockZos);
+
+		/* what is... */
+		verify(mockZos).putNextEntry(argThat(new ZipArgumentMatcher(new ZipEntry(".cfignore")))); //$NON-NLS-1$
+		verify(mockZos).putNextEntry(argThat(new ZipArgumentMatcher(new ZipEntry("A/B/.cfignore")))); //$NON-NLS-1$
+		verify(mockZos).putNextEntry(argThat(new ZipArgumentMatcher(new ZipEntry("A/B/test.in")))); //$NON-NLS-1$
+
+		/* ... and what should never be */
+		verify(mockZos, never()).putNextEntry(argThat(new ZipArgumentMatcher(new ZipEntry("A/B/test2.in")))); //$NON-NLS-1$
 	}
 }
