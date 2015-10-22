@@ -27,6 +27,7 @@ import org.eclipse.jgit.api.AddCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ResetCommand;
 import org.eclipse.jgit.api.ResetCommand.ResetType;
+import org.eclipse.jgit.api.RmCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.NoFilepatternException;
 import org.eclipse.jgit.lib.Constants;
@@ -123,29 +124,29 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 
 		Git git = new Git(db);
 		AddCommand add = git.add();
+		RmCommand rm = git.rm();
+		File dbDir = db.getWorkTree();
+		boolean hasAdd = false, hasRm = false;
 		for (int i = 0; i < paths.length(); i++) {
-			add.addFilepattern(paths.getString(i));
+			String path = paths.getString(i);
+			if(new File(dbDir,path).exists()){
+				add.addFilepattern(path);
+				hasAdd = true;
+			}else{
+				rm.addFilepattern(path);
+				hasRm = true;
+			}
+			
 		}
 		// "git add {pattern}"
 		try {
-			add.call();
+			if(hasAdd) add.call();
+			if(hasRm) rm.call();
 		} catch (GitAPIException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(),
 					e));
 		}
 
-		// TODO: we're calling "add" twice, this is inefficient, see bug 349299
-		// "git add -u {pattern}"
-		add = git.add().setUpdate(true);
-		for (int i = 0; i < paths.length(); i++) {
-			add.addFilepattern(paths.getString(i));
-		}
-		try {
-			add.call();
-		} catch (GitAPIException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(),
-					e));
-		}
 		return true;
 	}
 
