@@ -11,7 +11,6 @@
 package org.eclipse.orion.server.cf.utils;
 
 import java.net.URL;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -28,10 +27,9 @@ public class TargetRegistry {
 	
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.cf"); //$NON-NLS-1$
 
-	private Map<String, UserClouds> cloudMap;
+	private Map<String, UserClouds> cloudMap = new HashMap<String, UserClouds>();
 
 	public TargetRegistry() {
-		this.cloudMap = Collections.synchronizedMap(new HashMap<String, UserClouds>());
 	}
 
 	public Target getDefaultTarget(String userId) {
@@ -54,24 +52,25 @@ public class TargetRegistry {
 	}
 
 	private UserClouds getUserClouds(String userId) {
-		UserClouds userClouds = cloudMap.get(userId);
-		if (userClouds == null) {
-			userClouds = new UserClouds(userId);
-			cloudMap.put(userId, userClouds);
+		synchronized(cloudMap) {
+			UserClouds userClouds = cloudMap.get(userId);
+			if (userClouds == null) {
+				userClouds = new UserClouds(userId);
+				cloudMap.put(userId, userClouds);
+			}
+			return userClouds;
 		}
-		return userClouds;
 	}
 
 	private class UserClouds {
 
 		private String userId;
 
-		private Map<URL, Cloud> userCloudMap;
-		private Target defaultTarget;
+		private Map<URL, Cloud> userCloudMap = new HashMap<URL, Cloud>();
+		private volatile Target defaultTarget;
 
 		private UserClouds(String userId) {
 			this.userId = userId;
-			this.userCloudMap = Collections.synchronizedMap(new HashMap<URL, Cloud>());
 		}
 
 		private Cloud getCloud(URL url) {
@@ -82,26 +81,29 @@ public class TargetRegistry {
 				return defaultTarget != null ? defaultTarget.getCloud() : null;
 			}
 
-			Cloud cloud = userCloudMap.get(url);
-			if (cloud == null) {
-				CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
-				if (helper != null && helper.getService() != null) {
-					cloud = helper.getService().getCloud(userId, url);
-				} else {
-					// default cloud creation
-					cloud = new DarkCloud(null, url, null, this.userId);
-				}
-
+			Cloud cloud;
+			synchronized (userCloudMap) {
+				cloud = userCloudMap.get(url);
 				if (cloud == null) {
-					Cloud someCloud = getConfigCloud();
-					if (someCloud != null && someCloud.getUrl().equals(url)) {
-						cloud = someCloud;
+					CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
+					if (helper != null && helper.getService() != null) {
+						cloud = helper.getService().getCloud(userId, url);
 					} else {
+						// default cloud creation
 						cloud = new DarkCloud(null, url, null, this.userId);
 					}
-				}
-
-				userCloudMap.put(url, cloud);
+					
+					if (cloud == null) {
+						Cloud someCloud = getConfigCloud();
+						if (someCloud != null && someCloud.getUrl().equals(url)) {
+							cloud = someCloud;
+						} else {
+							cloud = new DarkCloud(null, url, null, this.userId);
+						}
+					}
+					
+					userCloudMap.put(url, cloud);
+				}				
 			}
 			setAuthToken(cloud);
 			return cloud;
@@ -150,11 +152,13 @@ public class TargetRegistry {
 
 		private String getInfo() {
 			StringBuffer buf = new StringBuffer();
-			buf.append("userId: " + this.userId + "\n");
-			buf.append("clouds: " + this.userCloudMap.size() + "\n");
-			for (Iterator<Cloud> iterator = this.userCloudMap.values().iterator(); iterator.hasNext();) {
-				Cloud cloud = iterator.next();
-				buf.append(cloud.getRegion() + "(" + cloud.getUrl().toString() + ")" + "\n");
+			buf.append("userId: " + userId + "\n");
+			synchronized(userCloudMap) {
+				buf.append("clouds: " + userCloudMap.size() + "\n");
+				for (Iterator<Cloud> iterator = userCloudMap.values().iterator(); iterator.hasNext();) {
+					Cloud cloud = iterator.next();
+					buf.append(cloud.getRegion() + "(" + cloud.getUrl().toString() + ")" + "\n");
+				}				
 			}
 			return buf.toString();
 		}
