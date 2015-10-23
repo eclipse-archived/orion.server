@@ -366,70 +366,77 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 					return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 				}
 
-				Git git = new Git(FileRepositoryBuilder.create(gitDir));
-				if (paths != null) {
-					Set<String> toRemove = new HashSet<String>();
-					CheckoutCommand checkout = git.checkout();
-					Repository db = git.getRepository();
-					for (int i = 0; i < paths.length(); i++) {
-						String p = paths.getString(i);
-						DirCacheEntry entry = getEntry(db,p);
-						if (removeUntracked && entry ==null)
-							toRemove.add(p);
-						if(entry != null &&entry.getFileMode().equals(FileMode.GITLINK)&&!new File(db.getWorkTree(),p).exists()){
-							// when checkout removed submodule, remake directory if it doesn't exist
-							new File(db.getWorkTree(),p).mkdir();
-						}else {
-							checkout.addPath(p);
+				Repository db = null;
+				try {
+					db = FileRepositoryBuilder.create(gitDir);
+					Git git = Git.wrap(db);
+					if (paths != null) {
+						Set<String> toRemove = new HashSet<String>();
+						CheckoutCommand checkout = git.checkout();
+						for (int i = 0; i < paths.length(); i++) {
+							String p = paths.getString(i);
+							DirCacheEntry entry = getEntry(db, p);
+							if (removeUntracked && entry ==null)
+								toRemove.add(p);
+							if (entry != null && entry.getFileMode().equals(FileMode.GITLINK) && !new File(db.getWorkTree(), p).exists()){
+								// when checkout removed submodule, remake directory if it doesn't exist
+								new File(db.getWorkTree(), p).mkdir();
+							} else {
+								checkout.addPath(p);
+							}
 						}
-					}
-					checkout.call();
-					for (String p : toRemove) {
-						File f = new File(git.getRepository().getWorkTree(), p);
-						if (f.isDirectory()) {
-							FileUtils.delete(f, FileUtils.RECURSIVE);
-						} else {
-							f.delete();
-						}
-					}
-					return true;
-				} else if (tag != null && branch != null) {
-					CheckoutCommand co = git.checkout();
-					try {
-						if (branch.isEmpty()) {
-							co.setName(tag).setStartPoint(tag).call();
-						} else {
-							co.setName(branch).setStartPoint(tag).setCreateBranch(true).call();
+						checkout.call();
+						for (String p : toRemove) {
+							File f = new File(git.getRepository().getWorkTree(), p);
+							if (f.isDirectory()) {
+								FileUtils.delete(f, FileUtils.RECURSIVE);
+							} else {
+								f.delete();
+							}
 						}
 						return true;
-					} catch (RefNotFoundException e) {
-						String msg = NLS.bind("Tag not found: {0}", EncodingUtils.encodeForHTML(tag));
-						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, e));
-					} catch (GitAPIException e) {
-						if (org.eclipse.jgit.api.CheckoutResult.Status.CONFLICTS.equals(co.getResult().getStatus())) {
+					} else if (tag != null && branch != null) {
+						CheckoutCommand co = git.checkout();
+						try {
+							if (branch.isEmpty()) {
+								co.setName(tag).setStartPoint(tag).call();
+							} else {
+								co.setName(branch).setStartPoint(tag).setCreateBranch(true).call();
+							}
+							return true;
+						} catch (RefNotFoundException e) {
+							String msg = NLS.bind("Tag not found: {0}", EncodingUtils.encodeForHTML(tag));
+							return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, e));
+						} catch (GitAPIException e) {
+							if (org.eclipse.jgit.api.CheckoutResult.Status.CONFLICTS.equals(co.getResult().getStatus())) {
+								return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT,
+										"Checkout aborted.", e));
+							}
+							// TODO: handle other exceptions
+						}
+					} else if (branch != null) {
+	
+						if (!isLocalBranch(git, branch)) {
+							String msg = NLS.bind("{0} is not a branch.", EncodingUtils.encodeForHTML(branch));
+							return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
+						}
+	
+						CheckoutCommand co = git.checkout();
+						try {
+							co.setName(Constants.R_HEADS + branch).call();
+							return true;
+						} catch (CheckoutConflictException e) {
 							return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT,
 									"Checkout aborted.", e));
-						}
-						// TODO: handle other exceptions
+						} catch (RefNotFoundException e) {
+							String msg = NLS.bind("Branch name not found: {0}", EncodingUtils.encodeForHTML(branch));
+							return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, e));
+						} // TODO: handle other exceptions
 					}
-				} else if (branch != null) {
-
-					if (!isLocalBranch(git, branch)) {
-						String msg = NLS.bind("{0} is not a branch.", EncodingUtils.encodeForHTML(branch));
-						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
+				} finally {
+					if (db != null) {
+						db.close();
 					}
-
-					CheckoutCommand co = git.checkout();
-					try {
-						co.setName(Constants.R_HEADS + branch).call();
-						return true;
-					} catch (CheckoutConflictException e) {
-						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT,
-								"Checkout aborted.", e));
-					} catch (RefNotFoundException e) {
-						String msg = NLS.bind("Branch name not found: {0}", EncodingUtils.encodeForHTML(branch));
-						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, e));
-					} // TODO: handle other exceptions
 				}
 			} else {
 				String msg = NLS.bind("Nothing found for the given ID: {0}", EncodingUtils.encodeForHTML(path.toString()));
