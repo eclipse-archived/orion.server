@@ -240,4 +240,6 @@ public class GitConstants {
 	public static final String KEY_REMOTENAME = "RemoteName"; //$NON-NLS-1$
 
 	public static final String KEY_LOCALNAME = "LocalName"; //$NON-NLS-1$
+	
+	public static final String KEY_SUBMODULE_STATUS = "SubmoduleStatus"; //$NON-NLS-1$
 }

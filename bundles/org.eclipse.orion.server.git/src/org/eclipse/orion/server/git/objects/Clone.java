@@ -20,10 +20,13 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.api.SubmoduleStatusCommand;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.ConfigInvalidException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.submodule.SubmoduleStatus;
 import org.eclipse.jgit.submodule.SubmoduleWalk;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.Activator;
@@ -246,7 +249,7 @@ public class Clone {
 	}
 
 	@PropertyDescription(name = ProtocolConstants.KEY_CHILDREN)
-	private JSONArray getChildren() throws URISyntaxException, IOException, CoreException, JSONException {
+	private JSONArray getChildren() throws URISyntaxException, IOException, CoreException, JSONException, GitAPIException {
 		if (path == null)
 			return null;
 		IFileStore fileStore = NewFileServlet.getFileStore(null, path);
@@ -271,6 +274,17 @@ public class Clone {
 					JSONArray newParents = (this.parents == null ? new JSONArray() : new JSONArray(this.parents.toString()));
 					newParents.put(getLocation().getPath());
 					JSONObject submoduleCloneJSON = new Clone().toJSON(path.append(walk.getPath()).addTrailingSeparator(), baseLocation, cloneUrl, newParents);
+					
+					SubmoduleStatus ss = new SubmoduleStatusCommand(parentRepository).addPath(walk.getModulesPath()).call().values().iterator().next();
+					if(ss != null){
+						JSONObject submoduleStatus = new JSONObject();
+						submoduleStatus.put(ProtocolConstants.KEY_TYPE, ss.getType().toString());
+						submoduleStatus.put(ProtocolConstants.KEY_PATH, ss.getPath());
+						if(ss.getHeadId()!=null){
+							submoduleStatus.put(GitConstants.KEY_HEAD_SHA, ss.getHeadId().getName());
+						}
+						submoduleCloneJSON.put(GitConstants.KEY_SUBMODULE_STATUS, submoduleStatus);
+					}	
 					submodules.put(submoduleCloneJSON);
 				}
 				walk.close();
