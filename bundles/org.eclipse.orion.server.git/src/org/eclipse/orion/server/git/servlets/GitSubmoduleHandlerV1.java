@@ -162,7 +162,7 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 				return false;
 			parentRepo = FileRepositoryBuilder.create(parents.entrySet().iterator().next().getValue());
 			String pathToSubmodule = db.getWorkTree().toString().substring(parentRepo.getWorkTree().toString().length() + 1);
-			removeSubmodule(parentRepo, pathToSubmodule);
+			removeSubmodule(db, parentRepo, pathToSubmodule);
 			return true;
 		} catch (Exception ex) {
 			String msg = "An error occured for delete submodule command.";
@@ -201,7 +201,7 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 		repository.close();
 	}
 	
-	public static void removeSubmodule(Repository parentRepo, String pathToSubmodule) throws Exception {
+	public static void removeSubmodule(Repository db, Repository parentRepo, String pathToSubmodule) throws Exception {
 		pathToSubmodule = pathToSubmodule.replace("\\", "/");
 		StoredConfig gitSubmodulesConfig = getGitSubmodulesConfig(parentRepo);
 		gitSubmodulesConfig.unsetSection(CONFIG_SUBMODULE_SECTION, pathToSubmodule);
@@ -216,7 +216,8 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 			rm.addFilepattern(DOT_GIT_MODULES);
 		}
 		rm.call();
-		FileUtils.delete(new File(parentRepo.getWorkTree(), pathToSubmodule), FileUtils.RECURSIVE);
+		FileUtils.delete(db.getWorkTree(), FileUtils.RECURSIVE);
+		FileUtils.delete(db.getDirectory(), FileUtils.RECURSIVE);
 	}
 	
 	private static StoredConfig getGitSubmodulesConfig( Repository repository ) throws IOException, ConfigInvalidException {
