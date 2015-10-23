@@ -69,7 +69,7 @@ public class StatusJob extends GitJob {
 			}
 			long t1 = System.currentTimeMillis();
 			db = FileRepositoryBuilder.create(gitDir);
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 			org.eclipse.jgit.api.Status gitStatus = git.status().call();
 			long t2 = System.currentTimeMillis();
 
@@ -86,7 +86,6 @@ public class StatusJob extends GitJob {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, msg, e);
 		} finally {
 			if (db != null) {
-				// close the git repository
 				db.close();
 			}
 		}

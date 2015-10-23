@@ -511,7 +511,7 @@ public class GitStatusTest extends GitTest {
 
 		// this is how EGit checks for conflicts
 		Repository db1 = getRepositoryForContentLocation(contentLocation1);
-		Git git = new Git(db1);
+		Git git = Git.wrap(db1);
 		DirCache cache = db1.readDirCache();
 		DirCacheEntry entry = cache.getEntry("test.txt");
 		assertTrue(entry.getStage() == 0);
@@ -531,7 +531,7 @@ public class GitStatusTest extends GitTest {
 		// clone2: pull
 		// TODO: replace with REST API for git pull once bug 339114 is fixed
 		Repository db2 = getRepositoryForContentLocation(contentLocation2);
-		git = new Git(db2);
+		git = Git.wrap(db2);
 		PullResult pullResult = git.pull().call();
 		assertEquals(pullResult.getMergeResult().getMergeStatus(), MergeStatus.CONFLICTING);
 
@@ -590,7 +590,7 @@ public class GitStatusTest extends GitTest {
 
 			// remove the file
 			Repository repository = getRepositoryForContentLocation(cloneContentLocation);
-			Git git = new Git(repository);
+			Git git = Git.wrap(repository);
 			RmCommand rm = git.rm();
 			rm.addFilepattern(removedFileName);
 			rm.call();

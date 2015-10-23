@@ -125,7 +125,7 @@ public class ListTagsJob extends GitJob {
 			// list all tags
 			File gitDir = GitUtils.getGitDir(path);
 			db = FileRepositoryBuilder.create(gitDir);
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 			List<Ref> refs = git.tagList().call();
 			JSONObject result = new JSONObject();
 			List<Tag> tags = new ArrayList<Tag>();
@@ -193,7 +193,6 @@ public class ListTagsJob extends GitJob {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, msg, e);
 		} finally {
 			if (db != null) {
-				// close the git repository
 				db.close();
 			}
 		}

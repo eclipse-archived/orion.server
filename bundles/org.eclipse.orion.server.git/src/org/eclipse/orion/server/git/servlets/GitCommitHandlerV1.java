@@ -337,7 +337,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 						new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Missing commit message.", null));
 			}
 
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 			CommitCommand cc = git.commit();
 			Config config = git.getRepository().getConfig();
 
@@ -398,12 +398,13 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			throws ServletException, JSONException {
 		try {
 			ObjectId objectId = db.resolve(commitToMerge);
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 			MergeResult mergeResult = git.merge().setSquash(squash).include(objectId).call();
 			JSONObject result = new JSONObject();
 			result.put(GitConstants.KEY_RESULT, mergeResult.getMergeStatus().name());
-			if (mergeResult.getFailingPaths() != null && !mergeResult.getFailingPaths().isEmpty())
+			if (mergeResult.getFailingPaths() != null && !mergeResult.getFailingPaths().isEmpty()) {
 				result.put(GitConstants.KEY_FAILING_PATHS, mergeResult.getFailingPaths());
+			}
 			OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} catch (CheckoutConflictException e) {
@@ -444,7 +445,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			throws ServletException, JSONException, AmbiguousObjectException, IOException {
 		JSONObject result = new JSONObject();
 		try {
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 			RebaseCommand rebase = git.rebase();
 			Operation operation;
 			if (rebaseOperation != null) {
@@ -498,7 +499,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			RevCommit head = revWalk.parseCommit(headRef.getObjectId());
 
 			ObjectId objectId = db.resolve(commitToCherryPick);
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 			CherryPickResult cherryPickResult = git.cherryPick().include(objectId).call();
 			RevCommit newHead = cherryPickResult.getNewHead();
 
@@ -529,7 +530,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 						new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occurred when reverting.", null));
 
 			ObjectId objectId = db.resolve(commitToRevert);
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 
 			RevertCommand revertCommand = git.revert().include(objectId);
 			RevCommit revertedCommit = revertCommand.call();
@@ -614,7 +615,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 
 	private boolean tag(HttpServletRequest request, HttpServletResponse response, Repository db, String commitId, String tagName, boolean isRoot)
 			throws JSONException, URISyntaxException, ServletException {
-		Git git = new Git(db);
+		Git git = Git.wrap(db);
 		RevWalk walk = new RevWalk(db);
 		try {
 			ObjectId objectId = db.resolve(commitId);

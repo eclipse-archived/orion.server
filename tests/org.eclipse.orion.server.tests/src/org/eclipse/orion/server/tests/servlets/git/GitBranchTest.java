@@ -165,7 +165,7 @@ public class GitBranchTest extends GitTest {
 
 			// TODO: replace with RESTful API for git pull when available
 			// try to pull - up to date status is expected
-			Git git = new Git(getRepositoryForContentLocation(cloneContentLocation));
+			Git git = Git.wrap(getRepositoryForContentLocation(cloneContentLocation));
 			PullResult pullResults = git.pull().call();
 			assertEquals(Constants.DEFAULT_REMOTE_NAME, pullResults.getFetchedFrom());
 			assertEquals(MergeStatus.ALREADY_UP_TO_DATE, pullResults.getMergeResult().getMergeStatus());

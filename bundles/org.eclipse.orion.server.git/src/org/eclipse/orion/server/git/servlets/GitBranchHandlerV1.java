@@ -74,7 +74,7 @@ public class GitBranchHandlerV1 extends AbstractGitHandler {
 				return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			}
 			// branch details: expected path /git/branch/{name}/file/{filePath}
-			List<Ref> branches = new Git(db).branchList().call();
+			List<Ref> branches = Git.wrap(db).branchList().call();
 			JSONObject result = null;
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.BRANCH);
 			for (Ref ref : branches) {
@@ -121,7 +121,7 @@ public class GitBranchHandlerV1 extends AbstractGitHandler {
 					}
 				}
 
-				CreateBranchCommand cc = new Git(db).branchCreate();
+				CreateBranchCommand cc = Git.wrap(db).branchCreate();
 				cc.setName(branchName);
 
 				if (startPoint != null && !startPoint.isEmpty()) {

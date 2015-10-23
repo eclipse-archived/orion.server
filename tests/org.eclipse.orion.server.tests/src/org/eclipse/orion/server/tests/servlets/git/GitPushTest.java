@@ -851,7 +851,7 @@ public class GitPushTest extends GitTest {
 			File dummyFile = new File(dotGitDir.getParentFile(), "test.txt");
 			dummyFile.createNewFile();
 			createFile(dummyFile.toURI(), "dummy");
-			Git git2 = new Git(db2);
+			Git git2 = Git.wrap(db2);
 			git2.add().addFilepattern(".").call();
 			git2.commit().setMessage("dummy commit").call();
 

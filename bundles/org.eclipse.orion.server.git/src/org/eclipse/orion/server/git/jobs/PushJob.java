@@ -93,7 +93,7 @@ public class PushJob extends GitJob {
 		JSONObject result = new JSONObject();
 		try {
 			db = FileRepositoryBuilder.create(gitDir);
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 
 			PushCommand pushCommand = git.push();
 			pushCommand.setProgressMonitor(gitMonitor);
@@ -179,10 +179,11 @@ public class PushJob extends GitJob {
 
 			if (matchMessage(JGitText.get().notAuthorized, e.getCause().getMessage())) {
 				// HTTP connection problems are distinguished by exception message
+				Repository db = null;
 				try {
 					File gitDir = GitUtils.getGitDir(path.removeFirstSegments(2));
-					Repository db = FileRepositoryBuilder.create(gitDir);
-					Git git = new Git(db);
+					db = FileRepositoryBuilder.create(gitDir);
+					Git git = Git.wrap(db);
 					RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
 					String repositoryUrl = remoteConfig.getURIs().get(0).toString();
 
@@ -198,6 +199,10 @@ public class PushJob extends GitJob {
 					}
 				} catch (Exception ex) {
 					/* fail silently, no GitHub auth url will be returned */
+				} finally {
+					if (db != null) {
+						db.close();
+					}
 				}
 			}
 		} catch (JGitInternalException e) {

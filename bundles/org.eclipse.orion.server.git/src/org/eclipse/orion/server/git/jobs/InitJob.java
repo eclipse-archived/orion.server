@@ -62,7 +62,7 @@ public class InitJob extends GitJob {
 			File directory = new File(clone.getContentLocation());
 			command.setDirectory(directory);
 			repository = command.call().getRepository();
-			Git git = new Git(repository);
+			Git git = Git.wrap(repository);
 
 			// configure the repo
 			GitCloneHandlerV1.doConfigureClone(git, user, gitUserName, gitUserMail);

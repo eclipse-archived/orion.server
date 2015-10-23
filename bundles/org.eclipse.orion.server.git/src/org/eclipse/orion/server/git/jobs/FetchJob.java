@@ -100,7 +100,7 @@ public class FetchJob extends GitJob {
 		Repository db = null;
 		try {
 			db = getRepository();
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 			FetchCommand fc = git.fetch();
 			fc.setProgressMonitor(gitMonitor);
 
@@ -200,9 +200,10 @@ public class FetchJob extends GitJob {
 				&& jschEx.getMessage() != null
 				&& (jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail") || jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("invalid privatekey"))) { //$NON-NLS-1$ //$NON-NLS-2$
 
+				Repository db = null;
 				try {
-					Repository db = getRepository();
-					Git git = new Git(db);
+					db = getRepository();
+					Git git = Git.wrap(db);
 					RemoteConfig remoteConfig = new RemoteConfig(git.getRepository().getConfig(), remote);
 					String repositoryUrl = remoteConfig.getURIs().get(0).toString();
 
@@ -218,6 +219,10 @@ public class FetchJob extends GitJob {
 					}
 				} catch (Exception ex) {
 					/* fail silently, no GitHub auth url will be returned */
+				} finally {
+					if (db != null) {
+						db.close();
+					}
 				}
 			}
 		} catch (JGitInternalException e) {

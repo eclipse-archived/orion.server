@@ -321,7 +321,7 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 	private boolean applyPatch(HttpServletRequest request, HttpServletResponse response, Repository db, String contentType) throws ServletException {
 		try {
 			String patch = readPatch(request.getInputStream(), contentType);
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 			ApplyCommand applyCommand = git.apply();
 			applyCommand.setPatch(IOUtilities.toInputStream(patch));
 			// TODO: ignore all errors for now, see bug 366008

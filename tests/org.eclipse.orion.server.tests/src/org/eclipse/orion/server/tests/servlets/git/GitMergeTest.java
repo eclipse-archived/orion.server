@@ -78,7 +78,7 @@ public class GitMergeTest extends GitTest {
 
 		// checkout 'a'
 		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
-		Git git = new Git(db1);
+		Git git = Git.wrap(db1);
 		assertBranchExist(git, "a");
 		checkoutBranch(cloneLocation, "a");
 
@@ -209,7 +209,7 @@ public class GitMergeTest extends GitTest {
 
 		// checkout 'a'
 		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
-		Git git = new Git(db1);
+		Git git = Git.wrap(db1);
 		assertBranchExist(git, "a");
 		checkoutBranch(cloneLocation, "a");
 
@@ -568,7 +568,7 @@ public class GitMergeTest extends GitTest {
 			String toCheckout = commit.getString(ProtocolConstants.KEY_NAME);
 
 			Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
-			Git git = new Git(db1);
+			Git git = Git.wrap(db1);
 			git.checkout().setName(toCheckout).call();
 
 			JSONObject merge = merge(gitHeadUri, toMerge);

@@ -240,7 +240,7 @@ public class GitRemoteTest extends GitTest {
 		String gitRemoteUri = gitSection.getString(GitConstants.KEY_REMOTE);
 
 		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
-		Git git = new Git(db1);
+		Git git = Git.wrap(db1);
 		int localBefore = git.branchList().call().size();
 		int remoteBefore = git.branchList().setListMode(ListMode.REMOTE).call().size();
 		int allBefore = git.branchList().setListMode(ListMode.ALL).call().size();

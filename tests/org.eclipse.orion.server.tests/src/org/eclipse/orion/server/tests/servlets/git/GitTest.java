@@ -244,7 +244,7 @@ public abstract class GitTest extends FileSystemTest {
 		folderFile.createNewFile();
 		createFile(folderFile.toURI(), "folder");
 
-		Git git = new Git(db);
+		Git git = Git.wrap(db);
 		git.add().addFilepattern(".").call();
 		git.commit().setMessage("Initial commit").call();
 

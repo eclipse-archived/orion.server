@@ -720,7 +720,7 @@ public class GitCloneTest extends GitTest {
 		cfg.save();
 
 		// TODO: replace with RESTful API when ready, see bug 339114
-		Git git = new Git(r);
+		Git git = Git.wrap(r);
 		PullResult pullResult = git.pull().call();
 		assertEquals(pullResult.getMergeResult().getMergeStatus(), MergeStatus.ALREADY_UP_TO_DATE);
 		assertEquals(RepositoryState.SAFE, git.getRepository().getRepositoryState());

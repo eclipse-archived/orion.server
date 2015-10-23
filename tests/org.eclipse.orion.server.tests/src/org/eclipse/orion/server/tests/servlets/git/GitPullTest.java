@@ -121,7 +121,7 @@ public class GitPullTest extends GitTest {
 
 		// clone1: branch 'a'
 		Repository db1 = getRepositoryForContentLocation(cloneContentLocation1);
-		Git git1 = new Git(db1);
+		Git git1 = Git.wrap(db1);
 		branch(branchesLocation1, "a");
 
 		// clone1: push all

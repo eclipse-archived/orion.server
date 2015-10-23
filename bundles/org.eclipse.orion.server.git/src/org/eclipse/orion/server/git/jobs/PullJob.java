@@ -71,7 +71,7 @@ public class PullJob extends GitJob {
 		Repository db = null;
 		try {
 			db = FileRepositoryBuilder.create(GitUtils.getGitDir(path));
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 			PullCommand pc = git.pull();
 			pc.setProgressMonitor(gitMonitor);
 			pc.setCredentialsProvider(credentials);

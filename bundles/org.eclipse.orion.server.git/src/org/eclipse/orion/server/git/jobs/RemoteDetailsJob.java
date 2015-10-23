@@ -120,7 +120,7 @@ public class RemoteDetailsJob extends GitJob {
 		try {
 			File gitDir = GitUtils.getGitDir(path);
 			db = FileRepositoryBuilder.create(gitDir);
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 			Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
 			for (String configN : configNames) {
 				if (configN.equals(configName)) {
@@ -205,7 +205,6 @@ public class RemoteDetailsJob extends GitJob {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, msg, e);
 		} finally {
 			if (db != null) {
-				// close the git repository
 				db.close();
 			}
 		}

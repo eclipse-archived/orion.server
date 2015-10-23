@@ -104,7 +104,7 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 
 		try {
 
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 			StashCreateCommand stashCreate = git.stashCreate();
 			stashCreate.setPerson(new PersonIdent(db));
 			stashCreate.setIncludeUntracked(includeUntracked);
@@ -140,7 +140,7 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 
 		try {
 
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 
 			/* check for empty stash */
 			if (isStashEmpty(git)) {
@@ -199,7 +199,7 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 			URI baseLocation = getURI(request);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(baseLocation, BaseToCloneConverter.COMMIT);
 
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 			StashListCommand stashList = git.stashList();
 			Collection<RevCommit> stashedRefsCollection = stashList.call();
 
@@ -225,7 +225,7 @@ public class GitStashHandlerV1 extends AbstractGitHandler {
 
 		try {
 
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 
 			/* check for empty stash */
 			if (isStashEmpty(git)) {

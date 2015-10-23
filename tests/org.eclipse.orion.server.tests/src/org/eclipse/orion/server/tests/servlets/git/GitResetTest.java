@@ -268,7 +268,7 @@ public class GitResetTest extends GitTest {
 	public void testResetAutocrlfTrue() throws Exception {
 
 		// "git config core.autocrlf true"
-		Git git = new Git(db);
+		Git git = Git.wrap(db);
 		StoredConfig config = git.getRepository().getConfig();
 		config.setBoolean(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF, Boolean.TRUE);
 		config.save();

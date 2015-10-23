@@ -420,7 +420,7 @@ public class GitCheckoutTest extends GitTest {
 		response = checkoutBranch(cloneLocation, "a");
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		Repository db1 = getRepositoryForContentLocation(cloneContentLocation);
-		Git git = new Git(db1);
+		Git git = Git.wrap(db1);
 		GitRemoteTest.assertOnBranch(git, "a");
 	}
 
@@ -514,7 +514,7 @@ public class GitCheckoutTest extends GitTest {
 
 		// dummy commit to start off a new branch on origin
 		createFile(testFile.toURI(), "origin-test");
-		Git git = new Git(db);
+		Git git = Git.wrap(db);
 		git.add().addFilepattern(".").call();
 		git.commit().setMessage("test commit").call();
 		git.branchCreate().setName("test").setStartPoint(Constants.HEAD).call();
@@ -546,7 +546,7 @@ public class GitCheckoutTest extends GitTest {
 			assertFalse(dotGitDir.exists());
 			db2.create(false /* non bare */);
 
-			Git git2 = new Git(db2);
+			Git git2 = Git.wrap(db2);
 			// dummy commit to start off new branch
 			File branchFile = new File(dotGitDir.getParentFile(), "branch.txt");
 			branchFile.createNewFile();

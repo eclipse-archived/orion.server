@@ -272,7 +272,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 					repo = FileRepositoryBuilder.create(gitDir);
 					repo.create();
 					// we need to perform an initial commit to workaround JGit bug 339610.
-					Git git = new Git(repo);
+					Git git = Git.wrap(repo);
 					git.add().addFilepattern(".").call(); //$NON-NLS-1$
 					git.commit().setMessage("Initial commit").call();
 				} finally {

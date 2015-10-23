@@ -201,7 +201,7 @@ public class GitFetchTest extends GitTest {
 		Repository db1 = getRepositoryForContentLocation(contentLocation1);
 		ObjectId master = db1.resolve(Constants.MASTER);
 		ObjectId originMaster = db1.resolve(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + '/' + Constants.MASTER);
-		Git git = new Git(db1);
+		Git git = Git.wrap(db1);
 		Iterable<RevCommit> commits = git.log().addRange(master, originMaster).call();
 		int c = 0;
 		for (RevCommit commit : commits) {
@@ -294,7 +294,7 @@ public class GitFetchTest extends GitTest {
 		Repository db1 = getRepositoryForContentLocation(cloneContentLocation1);
 		ObjectId master = db1.resolve(Constants.MASTER);
 		ObjectId originMaster = db1.resolve(Constants.R_REMOTES + Constants.DEFAULT_REMOTE_NAME + '/' + Constants.MASTER);
-		Git git = new Git(db1);
+		Git git = Git.wrap(db1);
 		Iterable<RevCommit> commits = git.log().addRange(master, originMaster).call();
 		int c = 0;
 		for (RevCommit commit : commits) {
@@ -331,7 +331,7 @@ public class GitFetchTest extends GitTest {
 
 		// clone1: branch 'a'
 		Repository db1 = getRepositoryForContentLocation(cloneContentLocation1);
-		Git git1 = new Git(db1);
+		Git git1 = Git.wrap(db1);
 		branch(branchesLocation1, "a");
 
 		// clone1: push all
@@ -442,7 +442,7 @@ public class GitFetchTest extends GitTest {
 
 		// clone1: branch 'a'
 		Repository db1 = getRepositoryForContentLocation(cloneContentLocation1);
-		Git git1 = new Git(db1);
+		Git git1 = Git.wrap(db1);
 		branch(branchesLocation1, "a");
 
 		// clone1: push all

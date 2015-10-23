@@ -290,7 +290,7 @@ public class Log extends GitObject {
 
 	static Map<ObjectId, JSONArray> getCommitToBranchMap(URI cloneLocation, Repository db) throws GitAPIException, JSONException {
 		HashMap<ObjectId, JSONArray> commitToBranch = new HashMap<ObjectId, JSONArray>();
-		Git git = new Git(db);
+		Git git = Git.wrap(db);
 		List<Ref> branchRefs = git.branchList().setListMode(ListMode.ALL).call();
 		for (Ref branchRef : branchRefs) {
 			ObjectId commitId = branchRef.getLeaf().getObjectId();

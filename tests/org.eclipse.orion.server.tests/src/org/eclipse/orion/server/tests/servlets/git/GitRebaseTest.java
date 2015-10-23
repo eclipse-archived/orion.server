@@ -94,7 +94,7 @@ public class GitRebaseTest extends GitTest {
 
 			// checkout 'a'
 			Repository db1 = getRepositoryForContentLocation(contentLocation);
-			Git git = new Git(db1);
+			Git git = Git.wrap(db1);
 			assertBranchExist(git, "a");
 			checkoutBranch(cloneLocation, "a");
 
@@ -218,7 +218,7 @@ public class GitRebaseTest extends GitTest {
 
 			// checkout 'a'
 			Repository db1 = getRepositoryForContentLocation(contentLocation);
-			Git git = new Git(db1);
+			Git git = Git.wrap(db1);
 			assertBranchExist(git, "a");
 			checkoutBranch(cloneLocation, "a");
 
@@ -322,7 +322,7 @@ public class GitRebaseTest extends GitTest {
 
 			// checkout 'a'
 			Repository db1 = getRepositoryForContentLocation(contentLocation);
-			Git git = new Git(db1);
+			Git git = Git.wrap(db1);
 			assertBranchExist(git, "a");
 			checkoutBranch(cloneLocation, "a");
 
@@ -433,7 +433,7 @@ public class GitRebaseTest extends GitTest {
 
 			// checkout 'a'
 			Repository db1 = getRepositoryForContentLocation(contentLocation);
-			Git git = new Git(db1);
+			Git git = Git.wrap(db1);
 			assertBranchExist(git, "a");
 			checkoutBranch(cloneLocation, "a");
 

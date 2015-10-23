@@ -124,7 +124,7 @@ public class ListBranchesJob extends GitJob {
 		try {
 			File gitDir = GitUtils.getGitDir(path);
 			db = FileRepositoryBuilder.create(gitDir);
-			Git git = new Git(db);
+			Git git = Git.wrap(db);
 			List<Ref> branchRefs = git.branchList().call();
 			List<Branch> branches = new ArrayList<Branch>(branchRefs.size());
 			for (Ref ref : branchRefs) {
@@ -201,7 +201,6 @@ public class ListBranchesJob extends GitJob {
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, msg, e);
 		} finally {
 			if (db != null) {
-				// close the git repository
 				db.close();
 			}
 		}

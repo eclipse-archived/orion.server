@@ -175,7 +175,7 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 			if (filterPath.segmentCount() == 0) {
 				JSONArray children = new JSONArray();
 				URI baseLocation = getURI(request);
-				List<Ref> call = new Git(repo).branchList().setListMode(ListMode.ALL).call();
+				List<Ref> call = Git.wrap(repo).branchList().setListMode(ListMode.ALL).call();
 				for (Ref ref : call) {
 					String branchName = Repository.shortenRefName(ref.getName());
 					JSONObject branch = listEntry(branchName, 0, true, 0, baseLocation, GitUtils.encode(branchName));
