@@ -82,16 +82,17 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 			return true;
 		}
 		String[] filenamePatternArray = options.getFilenamePattern().split("/");
-		boolean match = false;
 		for(String filenamePattern : filenamePatternArray )
 		{
 			if (options.isFilenamePatternCaseSensitive()) {
-				match = match || FilenameUtils.wildcardMatch(filename, filenamePattern);
+				if(FilenameUtils.wildcardMatch(filename, filenamePattern))
+					return true;
 			} else {
-				match = match || FilenameUtils.wildcardMatch(filename.toLowerCase(), filenamePattern.toLowerCase());
+				if(FilenameUtils.wildcardMatch(filename.toLowerCase(), filenamePattern.toLowerCase()))
+					return true;
 			}
 		}
-		return match;
+		return false;
 	}
 
 	/**
