@@ -75,20 +75,24 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 	/**
 	 * Check if the file path is acceptable.
 	 * @param filename The file path string.
-	 * @return True is the file passes all the filename patterns (with wildcards)
+	 * @return True is the file passes any of the filename patterns (with wildcards)
 	 */
 	private boolean acceptFilename(String filename) {
 		if (options.getFilenamePattern() == null) {
 			return true;
 		}
-		String filenamePattern = options.getFilenamePattern();
-		boolean match = false;
-		if (options.isFilenamePatternCaseSensitive()) {
-			match = FilenameUtils.wildcardMatch(filename, filenamePattern);
-		} else {
-			match = FilenameUtils.wildcardMatch(filename.toLowerCase(), filenamePattern.toLowerCase());
+		String[] filenamePatternArray = options.getFilenamePattern().split("/");
+		for(String filenamePattern : filenamePatternArray )
+		{
+			if (options.isFilenamePatternCaseSensitive()) {
+				if(FilenameUtils.wildcardMatch(filename, filenamePattern))
+					return true;
+			} else {
+				if(FilenameUtils.wildcardMatch(filename.toLowerCase(), filenamePattern.toLowerCase()))
+					return true;
+			}
 		}
-		return match;
+		return false;
 	}
 
 	/**
