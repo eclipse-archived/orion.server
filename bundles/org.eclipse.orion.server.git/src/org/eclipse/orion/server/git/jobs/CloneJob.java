@@ -15,6 +15,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -31,6 +32,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.internal.JGitText;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.submodule.SubmoduleWalk;
@@ -46,6 +48,7 @@ import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.IGitHubTokenProvider;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.servlets.GitCloneHandlerV1;
 import org.json.JSONException;
@@ -54,6 +57,7 @@ import org.json.JSONObject;
 /**
  * A job to perform a clone operation in the background
  */
+@SuppressWarnings("restriction")
 public class CloneJob extends GitJob {
 
 	private final ProjectInfo project;
@@ -194,7 +198,28 @@ public class CloneJob extends GitJob {
 		} catch (CoreException e) {
 			return e.getStatus();
 		} catch (GitAPIException e) {
-			return getGitAPIExceptionStatus(e, "Error cloning git repository");
+			IStatus result = getGitAPIExceptionStatus(e, "Error cloning git repository");
+
+			if (matchMessage(JGitText.get().notAuthorized, e.getCause().getMessage())) {
+				// HTTP connection problems are distinguished by exception message
+				try {
+					String repositoryUrl = clone.getUrl();
+					Enumeration<IGitHubTokenProvider> providers = GitCredentialsProvider.GetGitHubTokenProviders();
+					while (providers.hasMoreElements()) {
+						String authUrl = providers.nextElement().getAuthUrl(repositoryUrl, cookie);
+						if (authUrl != null) {
+							ServerStatus status = ServerStatus.convert(result);
+							JSONObject data = status.getJsonData();
+							data.put("GitHubAuth", authUrl); //$NON-NLS-1$
+							break;
+						}
+					}
+				} catch (JSONException ex) {
+					/* fail silently, no GitHub auth url will be returned */
+				}
+			}
+
+			return result;
 		} catch (JGitInternalException e) {
 			return getJGitInternalExceptionStatus(e, "Error cloning git repository");
 		} catch (Exception e) {
