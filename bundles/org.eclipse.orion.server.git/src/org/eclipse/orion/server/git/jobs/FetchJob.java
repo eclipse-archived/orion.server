@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import javax.servlet.http.Cookie;
@@ -31,6 +30,7 @@ import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.internal.JGitText;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.RefUpdate.Result;
@@ -52,11 +52,10 @@ import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
 
-import com.jcraft.jsch.JSchException;
-
 /**
  * A job to perform a fetch operation in the background
  */
+@SuppressWarnings("restriction")
 public class FetchJob extends GitJob {
 
 	private IPath path;
@@ -194,12 +193,8 @@ public class FetchJob extends GitJob {
 		} catch (GitAPIException e) {
 			result = getGitAPIExceptionStatus(e, "Error fetching git remote");
 
-			JSchException jschEx = getJSchException(e);
-			/* JSch handles auth fail by exception message */
-			if (jschEx != null
-				&& jschEx.getMessage() != null
-				&& (jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("auth fail") || jschEx.getMessage().toLowerCase(Locale.ENGLISH).contains("invalid privatekey"))) { //$NON-NLS-1$ //$NON-NLS-2$
-
+			if (matchMessage(JGitText.get().notAuthorized, e.getCause().getMessage())) {
+				// HTTP connection problems are distinguished by exception message
 				Repository db = null;
 				try {
 					db = getRepository();
