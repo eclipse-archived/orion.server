@@ -20,6 +20,8 @@ import org.apache.oltu.oauth2.client.request.OAuthClientRequest.AuthenticationRe
 import org.apache.oltu.oauth2.client.response.OAuthAccessTokenResponse;
 import org.apache.oltu.oauth2.common.OAuthProviderType;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 
 /**
  * A set of abstract methods used to store information for OAuth token providers
@@ -76,7 +78,8 @@ public abstract class OAuthParams {
 
 	protected URL getCurrentURL() throws OAuthException {
 		try {
-			return new URL(currentURL.getProtocol(), currentURL.getHost(), currentURL.getPort(), "");
+			return new URL(currentURL.getProtocol(), currentURL.getHost(), currentURL.getPort(),
+					PreferenceHelper.getString(ServerConstants.CONFIG_CONTEXT_PATH, ""));
 		} catch (MalformedURLException e) {
 			throw new OAuthException("An error occured while authenticating");
 		}
