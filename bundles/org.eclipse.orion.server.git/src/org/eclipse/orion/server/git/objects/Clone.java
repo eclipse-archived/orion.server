@@ -77,6 +77,7 @@ public class Clone {
 				new Property(GitConstants.KEY_TAG), //
 				new Property(GitConstants.KEY_INDEX), //
 				new Property(GitConstants.KEY_STASH), //
+				new Property(GitConstants.KEY_PULL_REQUEST), //
 				new Property(GitConstants.KEY_STATUS), //
 				new Property(GitConstants.KEY_DIFF), //
 				new Property(GitConstants.KEY_URL), //
@@ -203,6 +204,13 @@ public class Clone {
 	@PropertyDescription(name = GitConstants.KEY_COMMIT)
 	private URI getCommitLocation() throws URISyntaxException {
 		IPath np = new Path(GitServlet.GIT_URI).append(Commit.RESOURCE).append(getId());
+		return createUriWithPath(np);
+	}
+	
+	// TODO: expandable?
+	@PropertyDescription(name = GitConstants.KEY_PULL_REQUEST)
+	private URI getPullRequestLocation() throws URISyntaxException {
+		IPath np = new Path(GitServlet.GIT_URI).append(PullRequest.RESOURCE).append(getId());
 		return createUriWithPath(np);
 	}
 
