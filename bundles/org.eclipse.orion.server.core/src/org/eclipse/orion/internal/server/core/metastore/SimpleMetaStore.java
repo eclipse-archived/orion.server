@@ -586,8 +586,11 @@ public class SimpleMetaStore implements IMetaStore {
 
 	@Override
 	public List<String> readAllUsers() throws CoreException {
+		long start = System.currentTimeMillis();
 		List<String> userIds = SimpleMetaStoreUtil.listMetaUserFolders(getRootLocation());
 		userPropertyCache.addUsers(userIds);
+		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+		logger.info("Finished reading " + userIds.size() + " users, duration: " + (System.currentTimeMillis() - start) + "ms");
 		return userIds;
 	}
 
@@ -810,7 +813,10 @@ public class SimpleMetaStore implements IMetaStore {
 		userPropertyCache.register(keys);
 		if (!(keys.contains(UserConstants.USER_NAME) && keys.size() == 1)) {
 			// initialize the user property cache with values from disk
+			long start = System.currentTimeMillis();
 			initializeAllRegisteredPropertiesFromDisk();
+			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
+			logger.info("registerUserProperties duration: " + (System.currentTimeMillis() - start) + "ms");
 		}
 	}
 
