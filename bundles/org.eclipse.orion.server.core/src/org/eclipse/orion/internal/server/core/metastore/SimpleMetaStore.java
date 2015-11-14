@@ -107,6 +107,8 @@ public class SimpleMetaStore implements IMetaStore {
 	 */
 	private SimpleMetaStoreUserPropertyCache userPropertyCache = new SimpleMetaStoreUserPropertyCache();
 
+	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config");
+
 	/**
 	 * Create an instance of a SimpleMetaStore under the provided folder.
 	 * 
@@ -233,7 +235,6 @@ public class SimpleMetaStore implements IMetaStore {
 			if (userPropertyCache.isRegistered(UserConstants.USER_NAME)) {
 				userPropertyCache.add(UserConstants.USER_NAME, userId, userId);
 			}
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			logger.debug("Created new user " + userId + "."); //$NON-NLS-1$
 		} finally {
 			lock.writeLock().unlock();
@@ -251,7 +252,6 @@ public class SimpleMetaStore implements IMetaStore {
 		}
 		if (!SimpleMetaStore.DEFAULT_WORKSPACE_NAME.equals(workspaceInfo.getFullName())) {
 			// The workspace name you create must be Orion Content. See Bug 439735
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			logger.info("SimpleMetaStore.createWorkspace: workspace name conflict: name will be \"Orion Content\": user " + workspaceInfo.getUserId()
 					+ " provided " + workspaceInfo.getFullName() + " instead.");
 			workspaceInfo.setFullName(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
@@ -270,7 +270,6 @@ public class SimpleMetaStore implements IMetaStore {
 		if (!userInfo.getWorkspaceIds().isEmpty()) {
 			// We have an existing workspace already, you cannot create a second workspace. See Bug 439735
 			String existingWorkspaceIds = userInfo.getWorkspaceIds().get(0);
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			logger.info("SimpleMetaStore.createWorkspace: workspace conflict: cannot create a second workspace for user id: " + userInfo.getUniqueId()
 					+ ", existing workspace is being used: " + existingWorkspaceIds);
 			workspaceInfo.setUniqueId(existingWorkspaceIds);
@@ -306,7 +305,6 @@ public class SimpleMetaStore implements IMetaStore {
 			}
 			if (SimpleMetaStoreUtil.isMetaFile(userMetaFolder, workspaceId)) {
 				File workspaceMetaFile = SimpleMetaStoreUtil.retrieveMetaFile(userMetaFolder, workspaceId);
-				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 				logger.info("SimpleMetaStore.createWorkspace: workspace conflict: while creating a workspace for user id: " + userInfo.getUniqueId()
 						+ ", found existing workspace json, will not overwrite: " + workspaceMetaFile.toString());
 			} else {
@@ -536,7 +534,6 @@ public class SimpleMetaStore implements IMetaStore {
 	 * @throws CoreException
 	 */
 	protected void initializeMetaStore(File rootLocation) throws CoreException {
-		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 		if (!SimpleMetaStoreUtil.isMetaFile(rootLocation, SimpleMetaStore.ROOT)) {
 			// the root metastore.json file does not exist, create a new root metastore.json file
 			JSONObject jsonObject = new JSONObject();
@@ -589,7 +586,6 @@ public class SimpleMetaStore implements IMetaStore {
 		long start = System.currentTimeMillis();
 		List<String> userIds = SimpleMetaStoreUtil.listMetaUserFolders(getRootLocation());
 		userPropertyCache.addUsers(userIds);
-		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 		logger.info("Finished reading " + userIds.size() + " users, duration: " + (System.currentTimeMillis() - start) + "ms");
 		return userIds;
 	}
@@ -598,7 +594,6 @@ public class SimpleMetaStore implements IMetaStore {
 	public ProjectInfo readProject(String workspaceId, String projectName) throws CoreException {
 		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceId);
 		if (userId == null) {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			if (logger.isDebugEnabled()) {
 				logger.debug("SimpleMetaStore.readProject: requested with a bad userId in the workspaceId " + workspaceId); //$NON-NLS-1$
 			}
@@ -606,7 +601,6 @@ public class SimpleMetaStore implements IMetaStore {
 		}
 		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 		if (encodedWorkspaceName == null) {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			if (logger.isDebugEnabled()) {
 				logger.debug("SimpleMetaStore.readProject: requested with a bad workspaceId " + workspaceId); //$NON-NLS-1$
 			}
@@ -615,7 +609,6 @@ public class SimpleMetaStore implements IMetaStore {
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
 		if (workspaceMetaFolder == null) {
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			if (logger.isDebugEnabled()) {
 				logger.debug("SimpleMetaStore.readProject: workspaceMetaFolder does not exist for workspace " + workspaceId); //$NON-NLS-1$
 			}
@@ -628,7 +621,6 @@ public class SimpleMetaStore implements IMetaStore {
 			if (SimpleMetaStoreUtil.isMetaFolder(workspaceMetaFolder, projectId) && !SimpleMetaStoreUtil.isMetaFile(userMetaFolder, projectId)) {
 				// the project folder exists but the project json file does not, so create it
 				File projectMetaFolder = SimpleMetaStoreUtil.readMetaFolder(workspaceMetaFolder, projectId);
-				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 				if (logger.isDebugEnabled()) {
 					logger.info("SimpleMetaStore.readProject: the project folder " + projectMetaFolder.toString() //$NON-NLS-1$
 							+ " exists but the project json file does not, so creating it in " + workspaceId);
@@ -677,7 +669,6 @@ public class SimpleMetaStore implements IMetaStore {
 			if (SimpleMetaStoreUtil.isMetaFile(userMetaFolder, SimpleMetaStore.USER)) {
 				JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
 				if (jsonObject == null) {
-					Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 					logger.info("SimpleMetaStore.readUser: could not read user " + userId); //$NON-NLS-1$
 					return null;
 				}
@@ -685,7 +676,6 @@ public class SimpleMetaStore implements IMetaStore {
 				try {
 					SimpleMetaStoreMigration migration = new SimpleMetaStoreMigration();
 					if (migration.isMigrationRequired(jsonObject)) {
-						Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 						logger.info("Migration: Migration required for user " + userId + " to the latest (version " + SimpleMetaStore.VERSION + ")");
 						// Migration to the latest version is required for this user
 						lock.readLock().unlock();
@@ -721,7 +711,6 @@ public class SimpleMetaStore implements IMetaStore {
 					userInfo.setWorkspaceIds(userWorkspaceIds);
 					if (userInfo.getWorkspaceIds().size() > 1) {
 						// It is currently unexpected that a user has more than one workspace. See Bug 439735
-						Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 						logger.warn("SimpleMetaStore.readUser: user id " + userInfo.getUniqueId() + " has a multiple workspace conflict: workspace: "
 								+ userInfo.getWorkspaceIds().get(0) + " and workspace: " + userInfo.getWorkspaceIds().get(1));
 					}
@@ -815,7 +804,6 @@ public class SimpleMetaStore implements IMetaStore {
 			// initialize the user property cache with values from disk
 			long start = System.currentTimeMillis();
 			initializeAllRegisteredPropertiesFromDisk();
-			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			logger.info("registerUserProperties duration: " + (System.currentTimeMillis() - start) + "ms");
 		}
 	}
@@ -831,7 +819,6 @@ public class SimpleMetaStore implements IMetaStore {
 			try {
 				properties = jsonObject.getJSONObject("Properties");
 			} catch (JSONException e) {
-				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 				logger.error("SimpleMetaStore.initializeAllRegisteredPropertiesFromDisk: failed reading metafile for user " + user, e);
 			}
 
@@ -841,7 +828,6 @@ public class SimpleMetaStore implements IMetaStore {
 			try {
 				setProperties(info, properties);
 			} catch (JSONException e) {
-				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 				logger.error("SimpleMetaStore.initializeAllRegisteredPropertiesFromDisk: failed reading properties for user " + user, e);
 			}
 		}
@@ -1122,7 +1108,6 @@ public class SimpleMetaStore implements IMetaStore {
 					userPropertyCache.add(UserConstants.USER_NAME, newUserId, newUserId);
 				}
 
-				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 				logger.debug("Moved MetaStore for user " + oldUserId + " to user " + newUserId + "."); //$NON-NLS-1$
 
 			} finally {
