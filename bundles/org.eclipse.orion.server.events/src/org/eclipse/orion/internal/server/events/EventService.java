@@ -62,9 +62,9 @@ public class EventService implements IEventService {
 
 		@Override
 		public void messageArrived(String topic, MqttMessage msg) throws Exception {
-//			if (logger.isDebugEnabled()) {
-				logger.info/*debug*/("Message arrived " + (msg == null ? null : msg.toString()) + " topic " + topic);
-//			}
+			if (logger.isDebugEnabled()) {
+				logger.debug("Message arrived " + (msg == null ? null : msg.toString()) + " topic " + topic);
+			}
 			JSONObject message = new JSONObject();
 			message.put("Topic", topic);
 			String messageText = new String(msg.getPayload());
@@ -81,12 +81,12 @@ public class EventService implements IEventService {
 				try {
 					matches = Pattern.matches(scrubbedTopic, topic);
 				} catch (PatternSyntaxException e) {
-					logger.info/*debug*/("Ignoring malformed topic:" + registeredTopic);
+					logger.debug("Ignoring malformed topic:" + registeredTopic);
 				}
 				if (matches) {
-//					if (logger.isDebugEnabled()) {
-						logger.info/*debug*/("Pattern matched. Topic: " + topic + " . Registered topic: " + registeredTopic);
-//					}
+					if (logger.isDebugEnabled()) {
+						logger.debug("Pattern matched. Topic: " + topic + " . Registered topic: " + registeredTopic);
+					}
 					Set<IMessageListener> topicListners = messageListeners.get(registeredTopic);
 					if (topicListners != null && !topicListners.isEmpty()) {
 						for (IMessageListener listner : topicListners) {
@@ -229,9 +229,9 @@ public class EventService implements IEventService {
 
 	@Override
 	public synchronized void receive(String topic, IMessageListener messageListener) {
-//		if (logger.isDebugEnabled()) {
-			logger.info/*debug*/("MQTT Receiving topic " + topic + " " + messageListener);
-//		}
+		if (logger.isDebugEnabled()) {
+			logger.debug("MQTT Receiving topic " + topic + " " + messageListener);
+		}
 		Set<IMessageListener> topicListeners = messageListeners.get(topic);
 		if (topicListeners == null) {
 			topicListeners = new HashSet<IMessageListener>();
@@ -242,7 +242,7 @@ public class EventService implements IEventService {
 				if (mqttClient == null) {
 					logger.warn("MqttClient was unexpectedly null.");
 				} else if (!mqttClient.isConnected()) {
-					logger.info/*debug*/("Could not subscribe to topic " + topic + " since MqttClient is disconnected");
+					logger.debug("Could not subscribe to topic " + topic + " since MqttClient is disconnected");
 				} else {
 					/**
 					 * Quality of Service level of 1 should be the default but just to make it explicit. Why QoS 1? So
@@ -290,9 +290,9 @@ public class EventService implements IEventService {
 
 	@Override
 	public void stopReceiving(String topic, IMessageListener messageListener) {
-//		if (logger.isDebugEnabled()) {
-			logger.info/*debug*/("MQTT Stop Receiving topic " + topic + " " + messageListener);
-//		}
+		if (logger.isDebugEnabled()) {
+			logger.debug("MQTT Stop Receiving topic " + topic + " " + messageListener);
+		}
 		Set<IMessageListener> topicListeners = messageListeners.get(topic);
 		if (topicListeners == null || !mqttClient.isConnected()) {
 			return;
