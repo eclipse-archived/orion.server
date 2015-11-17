@@ -187,9 +187,11 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		gitSection.put(GitConstants.KEY_HEAD, link);
 
 		// add Git Commit URI
-		path = new Path(GitServlet.GIT_URI + '/' + Commit.RESOURCE).append(GitUtils.encode(branchName)).append(targetPath);
-		link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
-		gitSection.put(GitConstants.KEY_COMMIT, link);
+		if (branchName != null) {
+			path = new Path(GitServlet.GIT_URI + '/' + Commit.RESOURCE).append(GitUtils.encode(branchName)).append(targetPath);
+			link = new URI(location.getScheme(), location.getAuthority(), path.toString(), null, null);
+			gitSection.put(GitConstants.KEY_COMMIT, link);
+		}
 
 		// add Git Remote URI
 		path = new Path(GitServlet.GIT_URI + '/' + Remote.RESOURCE).append(targetPath);
@@ -202,7 +204,9 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		gitSection.put(GitConstants.KEY_CONFIG, link);
 
 		// add Git Default Remote Branch URI
-		gitSection.put(GitConstants.KEY_DEFAULT_REMOTE_BRANCH, defaultRemoteBranch.getLocation());
+		if (branchName != null) {
+			gitSection.put(GitConstants.KEY_DEFAULT_REMOTE_BRANCH, defaultRemoteBranch.getLocation());
+		}
 
 		// add Git Tag URI
 		path = new Path(GitServlet.GIT_URI + '/' + Tag.RESOURCE).append(targetPath);
