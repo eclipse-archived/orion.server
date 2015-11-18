@@ -95,7 +95,7 @@ public class GitSubmoduleHandlerV1 extends AbstractGitHandler {
 						return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 					}
 					if (name == null)
-						name = filePath.segmentCount() > 2 ? filePath.lastSegment() : project.getFullName();
+						name = project.getContentLocation().relativize(project.getProjectStore().getFileStore(filePath.removeFirstSegments(3)).toURI()).toString();
 				} else if (workspacePath != null) {
 
 					// TODO: move this to CloneJob
