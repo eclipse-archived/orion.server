@@ -31,6 +31,7 @@ import org.eclipse.jgit.submodule.SubmoduleWalk;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
+import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.JSONSerializer;
 import org.eclipse.orion.server.core.resources.Property;
@@ -53,7 +54,8 @@ public class Clone {
 
 	public static final String RESOURCE = "clone"; //$NON-NLS-1$
 	public static final String TYPE = "Clone"; //$NON-NLS-1$
-
+	public static final String KNOWN_GITHUB_HOSTS = "orion.git.knownGithubHosts";
+	
 	private String id;
 	private URI contentLocation;
 	private URIish uriish;
@@ -77,6 +79,7 @@ public class Clone {
 				new Property(GitConstants.KEY_TAG), //
 				new Property(GitConstants.KEY_INDEX), //
 				new Property(GitConstants.KEY_STASH), //
+				new Property(GitConstants.KEY_PULL_REQUEST), //
 				new Property(GitConstants.KEY_STATUS), //
 				new Property(GitConstants.KEY_DIFF), //
 				new Property(GitConstants.KEY_URL), //
@@ -205,7 +208,37 @@ public class Clone {
 		IPath np = new Path(GitServlet.GIT_URI).append(Commit.RESOURCE).append(getId());
 		return createUriWithPath(np);
 	}
+	
+	// TODO: expandable?
+	@PropertyDescription(name = GitConstants.KEY_PULL_REQUEST)
+	private URI getPullRequestLocation() throws URISyntaxException {
+		String url = this.cloneUrl;
+		if(url!=null && isInGithub(url)){
+			IPath np = new Path(GitServlet.GIT_URI).append(PullRequest.RESOURCE).append(getId());
+			return createUriWithPath(np);
+		}
+		return null;
+	}
 
+	public static boolean isInGithub(String url) throws URISyntaxException {
+		URI uri = new URI(url);
+		String domain = uri.getHost();
+		if(domain.equals("github.com")){
+			return true;
+		}
+		String known = PreferenceHelper.getString(KNOWN_GITHUB_HOSTS);
+		if(known!=null){
+			String[] knownHosts = known.split(",");
+			for(String host : knownHosts){
+				if(domain.equals(host)){
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+		
 	// TODO: expandable
 	@PropertyDescription(name = GitConstants.KEY_BRANCH)
 	private URI getBranchLocation() throws URISyntaxException {
