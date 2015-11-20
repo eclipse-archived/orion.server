@@ -14,6 +14,8 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.text.MessageFormat;
@@ -45,6 +47,7 @@ import org.eclipse.jgit.util.IO;
 import org.eclipse.jgit.util.RawParseUtils;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
@@ -59,6 +62,8 @@ public class GitUtils {
 	public enum Traverse {
 		GO_UP, GO_DOWN, CURRENT
 	}
+
+	public static final String KNOWN_GITHUB_HOSTS = "orion.git.knownGithubHosts";
 
 	/*
 	 * White list for URL schemes we can allow since they can't be used to gain access to git repositories in another Orion workspace since they require a
@@ -319,6 +324,25 @@ public class GitUtils {
 				return true;
 			}
 		}
+		return false;
+	}
+
+	public static boolean isInGithub(String url) throws URISyntaxException {
+		URI uri = new URI(url);
+		String domain = uri.getHost();
+		if(domain.equals("github.com")){
+			return true;
+		}
+		String known = PreferenceHelper.getString(KNOWN_GITHUB_HOSTS);
+		if(known!=null){
+			String[] knownHosts = known.split(",");
+			for(String host : knownHosts){
+				if(domain.equals(host)){
+					return true;
+				}
+			}
+		}
+
 		return false;
 	}
 
