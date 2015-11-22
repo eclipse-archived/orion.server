@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SearchServlet extends OrionServlet {
 
-	private static final String FIELD_NAMES = "Name,NameLower,Length,Directory,LastModified,Location,Path,RegEx,CaseSensitive"; //$NON-NLS-1$
+	private static final String FIELD_NAMES = "Name,NameLower,Length,Directory,LastModified,Location,Path,RegEx,CaseSensitive,WholeWord"; //$NON-NLS-1$
 
 	private static final List<String> FIELD_LIST = Arrays.asList(FIELD_NAMES.split(",")); //$NON-NLS-1$
 
@@ -111,6 +111,8 @@ public class SearchServlet extends OrionServlet {
 						options.setRegEx(true);
 					} else if (term.startsWith("CaseSensitive:")) {
 						options.setIsSearchTermCaseSensitive(true);
+					} else if (term.startsWith("WholeWord:")) {
+						options.setIsSearchWholeWord(true);
 					}
 				} else {
 					//decode the term string now

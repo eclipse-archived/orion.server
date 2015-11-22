@@ -75,6 +75,11 @@ public class SearchOptions {
 	 * The username of the user running the search.
 	 */
 	private String username = null;
+	
+	/**
+	 * The default search is not whole word.
+	 */
+	private boolean searchWholeWord = false;
 
 	public String getDefaultLocation() {
 		return defaultLocation;
@@ -141,6 +146,13 @@ public class SearchOptions {
 		return searchTermCaseSensitive;
 	}
 
+	/**
+	 * Returns if the search should be for whole word.
+	 */
+	public boolean isSearchWholeWord() {
+		return searchWholeWord;
+	}
+	
 	public void setDefaultLocation(String defaultLocation) {
 		this.defaultLocation = defaultLocation;
 	}
@@ -161,6 +173,10 @@ public class SearchOptions {
 		this.searchTermCaseSensitive = searchTermCaseSensitive;
 	}
 
+	public void setIsSearchWholeWord(boolean searchWholeWord) {
+		this.searchWholeWord = searchWholeWord;
+	}
+	
 	public void setLocation(String location) {
 		this.location = location;
 	}
