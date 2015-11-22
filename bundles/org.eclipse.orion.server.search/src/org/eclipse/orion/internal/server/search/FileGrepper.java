@@ -128,6 +128,9 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 		if (!options.isSearchTermCaseSensitive()) {
 			flags |= Pattern.CASE_INSENSITIVE;
 		}
+		if (options.isSearchWholeWord()){
+			searchTerm = "\\b" + searchTerm + "\\b";
+		}
 		/* Possible flags
 		 * UNIX_LINES
 		  CASE_INSENSITIVE
