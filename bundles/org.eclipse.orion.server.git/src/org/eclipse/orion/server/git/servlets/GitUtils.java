@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -328,8 +327,11 @@ public class GitUtils {
 	}
 
 	public static boolean isInGithub(String url) throws URISyntaxException {
-		URI uri = new URI(url);
+		URIish uri = new URIish(url);
 		String domain = uri.getHost();
+		if(domain==null){
+			return false;
+		}
 		if(domain.equals("github.com")){
 			return true;
 		}
