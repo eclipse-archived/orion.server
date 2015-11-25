@@ -30,12 +30,13 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 
 /**
- * Handler for requests for information about the orion server. Some implementation details of this class were extracted from
- * {@link org.eclipse.help.internal.webapp.servlet.AboutServlet}
+ * Handler for requests for information about the orion server. Some implementation details of this class were extracted
+ * from {@link org.eclipse.help.internal.webapp.servlet.AboutServlet}
  * 
  * @author Anthony Hunter
  */
@@ -82,7 +83,23 @@ public class AboutHandler extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleGetRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
+		// ensure the metadata store is loaded, since accessing about page is a common way to test that Orion is ready
+		// to accept requests. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=482169
+		OrionConfiguration.getMetaStore();
+
 		response.setContentType("text/html; charset=UTF-8"); //$NON-NLS-1$
+		StringBuffer buf = computeAboutInfo(request);
+		String output = buf.toString();
+		try {
+			response.getWriter().write(output);
+		} catch (IOException e) {
+			// should not occur
+			throw new RuntimeException(e);
+		}
+		return true;
+	}
+
+	private StringBuffer computeAboutInfo(HttpServletRequest request) {
 		StringBuffer buf = new StringBuffer();
 		buf.append(XHTML_1);
 		String sortParam = request.getParameter("sortColumn"); //$NON-NLS-1$
@@ -131,14 +148,7 @@ public class AboutHandler extends ServletResourceHandler<String> {
 		}
 		buf.append("</table>"); //$NON-NLS-1$
 		buf.append(XHTML_3);
-		String output = buf.toString();
-		try {
-			response.getWriter().write(output);
-		} catch (IOException e) {
-			// should not occur
-			throw new RuntimeException(e);
-		}
-		return true;
+		return buf;
 	}
 
 	private String headerRowFor(PluginDetails details) {
@@ -183,14 +193,24 @@ public class AboutHandler extends ServletResourceHandler<String> {
 		switch (getMethod(request)) {
 		case GET:
 			return handleGetRequest(request, response, path);
+		case HEAD:
+			return handleHeadRequest(request, response, path);
 		default:
 			return false;
 		}
 	}
 
+	private boolean handleHeadRequest(HttpServletRequest request, HttpServletResponse response, String path) {
+		// same as GET except don't send the response body
+		response.setContentType("text/html; charset=UTF-8"); //$NON-NLS-1$
+		StringBuffer buf = computeAboutInfo(request);
+		response.setContentLength(buf.length());
+		return true;
+	}
+
 	/**
-	 * Get the build id for the orion application by using the about.properties from the org.eclipse.orion.server.core plugin. The maven build assigns a
-	 * property with the build timestamp when the build runs.
+	 * Get the build id for the orion application by using the about.properties from the org.eclipse.orion.server.core
+	 * plugin. The maven build assigns a property with the build timestamp when the build runs.
 	 * 
 	 * @return the build id.
 	 */
