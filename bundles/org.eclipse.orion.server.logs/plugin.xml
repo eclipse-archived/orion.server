@@ -17,6 +17,10 @@
             alias="/logapi"
             class="org.eclipse.orion.server.servlets.LoggedInUserFilter">
       </filter>
+      <filter
+            alias="/logapi"
+            class="org.eclipse.orion.server.servlets.MonitoringUserFilter">
+      </filter>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">
       </serviceSelector>
