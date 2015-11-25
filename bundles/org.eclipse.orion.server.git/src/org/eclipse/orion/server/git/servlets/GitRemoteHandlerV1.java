@@ -194,12 +194,14 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 	private boolean handlePost(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException,
 			URISyntaxException, CoreException {
 		Path p = new Path(path);
+		JSONObject requestObject = OrionServlet.readJSONRequest(request);
+		boolean isGerrit = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_IS_GERRIT, null));
 		if (p.segment(0).equals("file")) { //$NON-NLS-1$
 			// handle adding new remote
 			// expected path: /git/remote/file/{path}
-			return addRemote(request, response, path);
+			return addRemote(request, response, path, isGerrit);
 		}
-		JSONObject requestObject = OrionServlet.readJSONRequest(request);
+
 		boolean fetch = Boolean.parseBoolean(requestObject.optString(GitConstants.KEY_FETCH, null));
 		String srcRef = requestObject.optString(GitConstants.KEY_PUSH_SRC_REF, null);
 		boolean tags = requestObject.optBoolean(GitConstants.KEY_PUSH_TAGS, false);
@@ -220,7 +222,7 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 	}
 
 	// add new remote
-	private boolean addRemote(HttpServletRequest request, HttpServletResponse response, String path) throws IOException, JSONException, ServletException,
+	private boolean addRemote(HttpServletRequest request, HttpServletResponse response, String path, Boolean isGerrit) throws IOException, JSONException, ServletException,
 			CoreException, URISyntaxException {
 		// expected path: /git/remote/file/{path}
 		Path p = new Path(path);
@@ -267,12 +269,18 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 
 			RemoteConfig rc = new RemoteConfig(config, remoteName);
 			rc.addURI(new URIish(remoteURI));
-			// FetchRefSpec is required, but default version can be generated
-			// if it isn't provided
-			if (fetchRefSpec == null || fetchRefSpec.isEmpty()) {
-				fetchRefSpec = String.format("+refs/heads/*:refs/remotes/%s/*", remoteName); //$NON-NLS-1$
+
+			if(!isGerrit){
+				// FetchRefSpec is required, but default version can be generated
+				// if it isn't provided
+				if (fetchRefSpec == null || fetchRefSpec.isEmpty()) {
+					fetchRefSpec = String.format("+refs/heads/*:refs/remotes/%s/*", remoteName); //$NON-NLS-1$
+				}
+				rc.addFetchRefSpec(new RefSpec(fetchRefSpec));
+			}else{
+				rc.addFetchRefSpec(new RefSpec(String.format("+refs/heads/*:refs/remotes/%s/for/*", remoteName)));
+				rc.addFetchRefSpec(new RefSpec(String.format("+refs/changes/*:refs/remotes/%s/changes/*", remoteName)));
 			}
-			rc.addFetchRefSpec(new RefSpec(fetchRefSpec));
 			// pushURI is optional
 			if (remotePushURI != null && !remotePushURI.isEmpty())
 				rc.addPushURI(new URIish(remotePushURI));
