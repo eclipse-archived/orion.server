@@ -30,7 +30,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
-import org.eclipse.orion.server.core.OrionConfiguration;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.Constants;
 
@@ -83,10 +82,6 @@ public class AboutHandler extends ServletResourceHandler<String> {
 	}
 
 	private boolean handleGetRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
-		// ensure the metadata store is loaded, since accessing about page is a common way to test that Orion is ready
-		// to accept requests. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=482169
-		OrionConfiguration.getMetaStore();
-
 		response.setContentType("text/html; charset=UTF-8"); //$NON-NLS-1$
 		StringBuffer buf = computeAboutInfo(request);
 		String output = buf.toString();

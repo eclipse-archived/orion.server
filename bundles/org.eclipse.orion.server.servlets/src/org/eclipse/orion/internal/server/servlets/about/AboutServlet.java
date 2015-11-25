@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.servlets.OrionServlet;
 
 /**
@@ -38,6 +39,10 @@ public class AboutServlet extends OrionServlet {
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
+
+		// ensure the metadata store is loaded, since accessing about page is a common way to test that Orion is ready
+		// to accept requests. See https://bugs.eclipse.org/bugs/show_bug.cgi?id=482169
+		OrionConfiguration.getMetaStore();
 
 		// path should be /about/about.html
 		String pathInfo = req.getPathInfo();
