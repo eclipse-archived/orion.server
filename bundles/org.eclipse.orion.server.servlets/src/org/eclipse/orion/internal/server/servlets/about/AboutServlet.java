@@ -36,6 +36,7 @@ public class AboutServlet extends OrionServlet {
 
 	private static final long serialVersionUID = -1426745453574711075L;
 
+	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 
@@ -55,6 +56,12 @@ public class AboutServlet extends OrionServlet {
 		}
 		// finally invoke super to return an error for requests we don't know how to handle
 		super.doGet(req, resp);
+	}
+
+	@Override
+	protected void doHead(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		// accept head requests because they are used by monitoring tools, but there is nothing to do here
+		resp.setStatus(HttpServletResponse.SC_OK);
 	}
 
 }
