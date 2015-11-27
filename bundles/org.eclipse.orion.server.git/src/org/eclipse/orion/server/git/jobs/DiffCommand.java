@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011, Tomasz Zarna <Tomasz.Zarna@pl.ibm.com>
+ * Copyright (C) 2011, 2015, Tomasz Zarna <Tomasz.Zarna@pl.ibm.com>
  * and other copyright owners as documented in the project's IP log.
  *
  * This program and the accompanying materials are made available

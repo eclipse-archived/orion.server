@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012, GitHub Inc.
+ * Copyright (C) 2012, 2015, GitHub Inc.
  * and other copyright owners as documented in the project's IP log.
  *
  * This program and the accompanying materials are made available

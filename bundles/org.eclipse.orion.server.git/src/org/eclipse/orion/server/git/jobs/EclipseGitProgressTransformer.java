@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (C) 2008, 2014 Shawn O. Pearce <spearce@spearce.org> and others
+ * Copyright (C) 2008, 2015 Shawn O. Pearce <spearce@spearce.org> and others
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
