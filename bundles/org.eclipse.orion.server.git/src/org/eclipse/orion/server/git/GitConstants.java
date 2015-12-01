@@ -60,6 +60,8 @@ public class GitConstants {
 	public static final String KEY_TREE = "TreeLocation"; //$NON-NLS-1$
 
 	public static final String KEY_URL = "GitUrl"; //$NON-NLS-1$
+	
+	public static final String KEY_HTML_URL = "HtmlUrl"; //$NON-NLS-1$
 
 	public static final String KEY_PUSH_URL = "PushUrl"; //$NON-NLS-1$
 

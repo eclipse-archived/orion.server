@@ -36,6 +36,7 @@ public class PullRequest extends GitObject {
 
 	private JSONObject base;
 	private JSONObject head;
+	private String htmlUrl;
 	private String gitUrl;
 	
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
@@ -45,16 +46,18 @@ public class PullRequest extends GitObject {
 				new Property(GitConstants.KEY_COMMIT_HEAD), // super
 				new Property(GitConstants.KEY_CLONE), //
 				new Property(GitConstants.KEY_REMOTE), //
+				new Property(GitConstants.KEY_HTML_URL), //
 				new Property(GitConstants.KEY_URL), //
 				new Property(ProtocolConstants.KEY_TYPE) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
 
-	public PullRequest(URI cloneLocation, Repository db, JSONObject base, JSONObject head) throws JSONException {
+	public PullRequest(URI cloneLocation, Repository db, JSONObject base, JSONObject head, String htmlUrl) throws JSONException {
 		super(cloneLocation, db);
 		this.base = base;
 		this.head = head;
+		this.htmlUrl = htmlUrl;
 		this.gitUrl = this.head.getJSONObject("repo").getString("clone_url");
 	}
 
@@ -66,6 +69,11 @@ public class PullRequest extends GitObject {
 	@PropertyDescription(name = GitConstants.KEY_COMMIT_HEAD)
 	public JSONObject getHead() throws URISyntaxException {
 		return this.head;
+	}
+	
+	@PropertyDescription(name = GitConstants.KEY_HTML_URL)
+	public String getHtmlUrl() throws URISyntaxException {
+		return this.htmlUrl;
 	}
 	
 	@PropertyDescription(name = GitConstants.KEY_URL)

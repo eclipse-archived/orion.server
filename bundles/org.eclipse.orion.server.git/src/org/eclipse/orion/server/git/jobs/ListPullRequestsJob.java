@@ -170,7 +170,8 @@ public class ListPullRequestsJob  extends TaskJob {
 		for(JSONObject prJson:list){
 			JSONObject base =prJson.getJSONObject("base");
 			JSONObject head =prJson.getJSONObject("head");
-			PullRequest pr = new PullRequest(cloneLocation,db,base,head);
+			String htmlUrl =prJson.getString("html_url");
+			PullRequest pr = new PullRequest(cloneLocation,db,base,head,htmlUrl);
 			children.put(pr.toJSON());
 		}
 		returnRes.put(ProtocolConstants.KEY_CHILDREN, children);
