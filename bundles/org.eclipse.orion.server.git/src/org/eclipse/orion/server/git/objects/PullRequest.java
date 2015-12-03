@@ -34,43 +34,27 @@ public class PullRequest extends GitObject {
 	public static final String RESOURCE = "pullRequest"; //$NON-NLS-1$
 	public static final String TYPE = "PullRequest"; //$NON-NLS-1$
 
-	private JSONObject base;
-	private JSONObject head;
-	private String gitUrl;
+	private JSONObject pullRequest;
 	
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
 		Property[] defaultProperties = new Property[] { //
-		new Property(GitConstants.KEY_COMMIT_BASE), // super
-				new Property(GitConstants.KEY_COMMIT_HEAD), // super
-				new Property(GitConstants.KEY_CLONE), //
-				new Property(GitConstants.KEY_REMOTE), //
-				new Property(GitConstants.KEY_URL), //
-				new Property(ProtocolConstants.KEY_TYPE) };
+			new Property(GitConstants.KEY_CLONE), //
+			new Property(GitConstants.KEY_REMOTE), //
+			new Property(GitConstants.KEY_PULL_REQUEST), //
+			new Property(ProtocolConstants.KEY_TYPE) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
 
-	public PullRequest(URI cloneLocation, Repository db, JSONObject base, JSONObject head) throws JSONException {
+	public PullRequest(URI cloneLocation, Repository db, JSONObject pullRequest) throws JSONException {
 		super(cloneLocation, db);
-		this.base = base;
-		this.head = head;
-		this.gitUrl = this.head.getJSONObject("repo").getString("clone_url");
+		this.pullRequest = pullRequest;
 	}
 
-	@PropertyDescription(name = GitConstants.KEY_COMMIT_BASE)
-	public JSONObject getBase() throws URISyntaxException {
-		return this.base;
-	}
-
-	@PropertyDescription(name = GitConstants.KEY_COMMIT_HEAD)
-	public JSONObject getHead() throws URISyntaxException {
-		return this.head;
-	}
-	
-	@PropertyDescription(name = GitConstants.KEY_URL)
-	public String getGitUrl() throws URISyntaxException {
-		return this.gitUrl;
+	@PropertyDescription(name = GitConstants.KEY_PULL_REQUEST)
+	public JSONObject getPullRequest() {
+		return this.pullRequest;
 	}
 	
 	@PropertyDescription(name = GitConstants.KEY_CLONE)

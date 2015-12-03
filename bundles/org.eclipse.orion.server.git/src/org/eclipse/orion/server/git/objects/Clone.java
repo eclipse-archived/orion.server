@@ -77,7 +77,7 @@ public class Clone {
 				new Property(GitConstants.KEY_TAG), //
 				new Property(GitConstants.KEY_INDEX), //
 				new Property(GitConstants.KEY_STASH), //
-				new Property(GitConstants.KEY_PULL_REQUEST), //
+				new Property(GitConstants.KEY_PULL_REQUEST_LOCATION), //
 				new Property(GitConstants.KEY_STATUS), //
 				new Property(GitConstants.KEY_DIFF), //
 				new Property(GitConstants.KEY_URL), //
@@ -208,7 +208,7 @@ public class Clone {
 	}
 	
 	// TODO: expandable?
-	@PropertyDescription(name = GitConstants.KEY_PULL_REQUEST)
+	@PropertyDescription(name = GitConstants.KEY_PULL_REQUEST_LOCATION)
 	private URI getPullRequestLocation() throws URISyntaxException {
 		String url = this.cloneUrl;
 		if(url!=null && GitUtils.isInGithub(url)){

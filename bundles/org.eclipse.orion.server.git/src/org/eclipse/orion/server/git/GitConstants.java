@@ -31,7 +31,7 @@ public class GitConstants {
 
 	public static final String KEY_STASH = "StashLocation"; //$NON-NLS-1$
 	
-	public static final String KEY_PULL_REQUEST = "PullRequestLocation"; //$NON-NLS-1$
+	public static final String KEY_PULL_REQUEST_LOCATION = "PullRequestLocation"; //$NON-NLS-1$
 
 	public static final String KEY_COMMIT = "CommitLocation"; //$NON-NLS-1$
 
@@ -248,4 +248,6 @@ public class GitConstants {
 	public static final String KEY_LOCALNAME = "LocalName"; //$NON-NLS-1$
 	
 	public static final String KEY_SUBMODULE_STATUS = "SubmoduleStatus"; //$NON-NLS-1$
+	
+	public static final String KEY_PULL_REQUEST = "PullRequest"; //$NON-NLS-1$
 }

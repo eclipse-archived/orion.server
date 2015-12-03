@@ -168,9 +168,7 @@ public class ListPullRequestsJob  extends TaskJob {
 		}
 		JSONArray children = new JSONArray();
 		for(JSONObject prJson:list){
-			JSONObject base =prJson.getJSONObject("base");
-			JSONObject head =prJson.getJSONObject("head");
-			PullRequest pr = new PullRequest(cloneLocation,db,base,head);
+			PullRequest pr = new PullRequest(cloneLocation, db, prJson);
 			children.put(pr.toJSON());
 		}
 		returnRes.put(ProtocolConstants.KEY_CHILDREN, children);
