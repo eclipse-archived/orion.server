@@ -69,7 +69,7 @@ public class PullRequest extends GitObject {
 	
 	@PropertyDescription(name = ProtocolConstants.KEY_TYPE)
 	public String getType() throws URISyntaxException {
-		return this.TYPE;
+		return TYPE;
 	}
 	
 	private URI createLocation( String resource, URI cloneLocation) throws URISyntaxException {
