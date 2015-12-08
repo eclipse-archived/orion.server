@@ -304,7 +304,12 @@ public class ManifestParseTree {
 		for (int i = 0; i < indentation; ++i)
 			sb.append(" "); //$NON-NLS-1$
 
-		sb.append(getLabel());
+		String label = getLabel();
+		// if a label contains colon, the label need to be quoted
+		if (label != null && label.contains(":")) {
+			label = "\"" + label + "\"";
+		}
+		sb.append(label);
 
 		/* print mapping symbol if required */
 		boolean isItemNode = isItemNode();
