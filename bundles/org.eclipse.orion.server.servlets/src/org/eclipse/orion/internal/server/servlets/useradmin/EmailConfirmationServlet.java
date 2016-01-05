@@ -104,8 +104,8 @@ public class EmailConfirmationServlet extends OrionServlet {
 		}
 
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
-		resp.getWriter()
-				.write("<html><body><p>Your password has been successfully reset. Your new password has been sent to the email address associated with your account.</p></body></html>");
+		resp.getWriter().write(
+				"<html><body><p>Your password has been successfully reset. Your new password has been sent to the email address associated with your account.</p></body></html>");
 		return;
 
 	}
@@ -143,9 +143,8 @@ public class EmailConfirmationServlet extends OrionServlet {
 		host.append(":");
 		int port = req.getServerPort();
 		host.append(port);
-		resp.getWriter().write(
-				"<html><body><p>Your email address has been confirmed. Thank you! <a href=\"" + host
-						+ "\">Click here</a> to continue and login to your Orion account.</p></body></html>");
+		resp.getWriter().write("<html><body><p>Your email address has been confirmed. Thank you! <a href=\"" + host
+				+ "\">Click here</a> to continue and login to your account.</p></body></html>");
 		return;
 	}
 
@@ -259,8 +258,8 @@ public class EmailConfirmationServlet extends OrionServlet {
 
 	private IStatus sendPasswordResetConfirmation(UserInfo userInfo, URI baseUri) {
 		if (userInfo.getProperty(UserConstants.EMAIL) == null || userInfo.getProperty(UserConstants.EMAIL).length() == 0) {
-			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + userInfo.getUniqueId()
-					+ " doesn't have its email set. Contact administrator to reset your password.", null);
+			return new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
+					"User " + userInfo.getUniqueId() + " doesn't have its email set. Contact administrator to reset your password.", null);
 		}
 
 		if (!isEmailConfirmed(userInfo)) {

@@ -162,8 +162,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 					return false;
 				}
 			} catch (JSONException e) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
-						"Syntax error in request", e));
+				return statusHandler.handleRequest(request, response,
+						new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Syntax error in request", e));
 			} catch (Exception e) {
 				throw new ServletException("Error handling users", e);
 			}
@@ -189,15 +189,15 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				return false;
 			}
 		} catch (JSONException e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
-					"Syntax error in request", e));
+			return statusHandler.handleRequest(request, response,
+					new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Syntax error in request", e));
 		} catch (Exception e) {
 			throw new ServletException(NLS.bind("Error handling user: {0}", username), e);
 		}
 	}
 
-	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp, JSONObject json) throws ServletException, IOException, JSONException,
-	CoreException {
+	private boolean handleUserCreate(HttpServletRequest req, HttpServletResponse resp, JSONObject json)
+			throws ServletException, IOException, JSONException, CoreException {
 		String username = json.has(UserConstants.USER_NAME) ? json.getString(UserConstants.USER_NAME) : null;
 		String fullname = json.has(UserConstants.FULL_NAME) ? json.getString(UserConstants.FULL_NAME) : null;
 		String email = json.has(UserConstants.EMAIL) ? json.getString(UserConstants.EMAIL) : null;
@@ -221,8 +221,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		if (isEmailRequired && (email == null || email.length() == 0)) {
-			return statusHandler
-					.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User email is mandatory.", null));
+			return statusHandler.handleRequest(req, resp,
+					new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User email is mandatory.", null));
 		}
 
 		UserInfo userInfo = null;
@@ -234,8 +234,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		if (userInfo != null) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + username
-					+ " already exists.", null));
+			return statusHandler.handleRequest(req, resp,
+					new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + username + " already exists.", null));
 		}
 		if (email != null && email.length() > 0) {
 			if (!email.contains("@")) { //$NON-NLS-1$
@@ -289,8 +289,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			String location = UserConstants.LOCATION_USERS_SERVLET + '/' + userInfo.getUniqueId();
 			AuthorizationService.addUserRight(userInfo.getUniqueId(), location);
 		} catch (CoreException e) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
-					"User rights could not be added.", e));
+			return statusHandler.handleRequest(req, resp,
+					new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User rights could not be added.", e));
 		}
 
 		URI userLocation = URIUtil.append(ServletResourceHandler.getURI(req), userInfo.getUniqueId());
@@ -298,16 +298,12 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		if (isEmailRequired) {
 			try {
 				UserEmailUtil.getUtil().sendEmailConfirmation(req, userInfo);
-				return statusHandler
-						.handleRequest(
-								req,
-								resp,
-								new ServerStatus(
-										IStatus.ERROR,
-										HttpServletResponse.SC_CREATED,
-										NLS.bind(
-												"Your account {0} has been successfully created. You have been sent an email address verification. Follow the instructions in this email to login to your Orion account.",
-												username), null));
+				return statusHandler.handleRequest(req, resp,
+						new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CREATED,
+								NLS.bind(
+										"Your account {0} has been successfully created. You have been sent an email address verification. Follow the instructions in this email to login to your account.",
+										username),
+								null));
 			} catch (URISyntaxException e) {
 				LogHelper.log(e);
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
@@ -334,13 +330,13 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.USER_NAME, username, false, false);
 		} catch (CoreException e) {
 			LogHelper.log(e);
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + username
-					+ " failed.", e));
+			return statusHandler.handleRequest(req, resp,
+					new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + username + " failed.", e));
 		}
 
 		if (userInfo == null) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + username
-					+ " could not be found.", null));
+			return statusHandler.handleRequest(req, resp,
+					new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + username + " could not be found.", null));
 		}
 
 		// Delete user from metadata store
@@ -363,8 +359,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			}
 			metastore.deleteUser(username);
 		} catch (CoreException e) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + username
-					+ " failed.", e));
+			return statusHandler.handleRequest(req, resp,
+					new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Removing " + username + " failed.", e));
 		}
 		Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
 		if (logger.isInfoEnabled()) {
@@ -374,13 +370,13 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handleUserGet(HttpServletRequest req, HttpServletResponse resp, String username) throws IOException, JSONException, ServletException,
-	CoreException {
+	private boolean handleUserGet(HttpServletRequest req, HttpServletResponse resp, String username)
+			throws IOException, JSONException, ServletException, CoreException {
 		UserInfo userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.USER_NAME, username, false, false);
 
 		if (userInfo == null) {
-			return statusHandler
-					.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User not found " + username, null));
+			return statusHandler.handleRequest(req, resp,
+					new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User not found " + username, null));
 		}
 
 		URI location = ServletResourceHandler.getURI(req);
@@ -388,8 +384,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		return true;
 	}
 
-	private boolean handleUserPut(HttpServletRequest req, HttpServletResponse resp, String username) throws ServletException, IOException, CoreException,
-	JSONException {
+	private boolean handleUserPut(HttpServletRequest req, HttpServletResponse resp, String username)
+			throws ServletException, IOException, CoreException, JSONException {
 		JSONObject data = OrionServlet.readJSONRequest(req);
 
 		UserInfo userInfo = null;
@@ -401,19 +397,17 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		if (userInfo == null) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + username
-					+ " could not be found.", null));
+			return statusHandler.handleRequest(req, resp,
+					new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User " + username + " could not be found.", null));
 		}
 		String emailConfirmationid = userInfo.getProperty(UserConstants.EMAIL_CONFIRMATION_ID);
 
 		// users other than admin have to know the old password to set a new one
 		if (!isAdmin(req.getRemoteUser())) {
-			if (data.has(UserConstants.PASSWORD)
-					&& userInfo.getProperty(UserConstants.PASSWORD) != null
-					&& (!data.has(UserConstants.OLD_PASSWORD) || !userInfo.getProperty(UserConstants.PASSWORD).equals(
-							data.getString(UserConstants.OLD_PASSWORD)))) {
-				return statusHandler
-						.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Invalid old password", null));
+			if (data.has(UserConstants.PASSWORD) && userInfo.getProperty(UserConstants.PASSWORD) != null && (!data.has(UserConstants.OLD_PASSWORD)
+					|| !userInfo.getProperty(UserConstants.PASSWORD).equals(data.getString(UserConstants.OLD_PASSWORD)))) {
+				return statusHandler.handleRequest(req, resp,
+						new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Invalid old password", null));
 			}
 		}
 
@@ -456,12 +450,12 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 				&& !userInfo.getProperty(UserConstants.EMAIL_CONFIRMATION_ID).equals(emailConfirmationid)) {
 			try {
 				UserEmailUtil.getUtil().sendEmailConfirmation(req, userInfo);
-				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK, "Confirmation email has been sent to "
-						+ userInfo.getProperty(UserConstants.EMAIL), null));
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.INFO, HttpServletResponse.SC_OK,
+						"Confirmation email has been sent to " + userInfo.getProperty(UserConstants.EMAIL), null));
 			} catch (Exception e) {
-				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, "Error while sending email"
-						+ (e.getMessage() == null ? "" : ": " + e.getMessage())
-						+ ". See http://wiki.eclipse.org/Orion/Server_admin_guide#Email_configuration for email configuration guide."));
+				LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS,
+						"Error while sending email" + (e.getMessage() == null ? "" : ": " + e.getMessage())
+								+ ". See http://wiki.eclipse.org/Orion/Server_admin_guide#Email_configuration for email configuration guide."));
 				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
 						"Could not send confirmation email to " + userInfo.getProperty(UserConstants.EMAIL), null));
 			}
@@ -474,8 +468,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		String password = json.getString(UserConstants.PASSWORD);
 
 		if (username == null || username.length() == 0) {
-			return statusHandler
-					.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User name not specified.", null));
+			return statusHandler.handleRequest(req, resp,
+					new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "User name not specified.", null));
 		}
 
 		UserInfo userInfo = null;
@@ -487,8 +481,8 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 		}
 
 		if (userInfo == null) {
-			return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User " + username
-					+ " could not be found.", null));
+			return statusHandler.handleRequest(req, resp,
+					new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "User " + username + " could not be found.", null));
 		}
 
 		String passwordMsg = validatePassword(password);
