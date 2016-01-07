@@ -37,7 +37,12 @@ public class TaskStore {
 
 	public TaskStore(File root) {
 		this.root = root;
-		this.root.mkdirs();
+		if (!root.exists()) {
+			LogHelper.log(new Status(IStatus.INFO, ServerConstants.PI_SERVER_CORE, "Creating tasks folder " + root.toString())); //$NON-NLS-1$
+			if (!this.root.mkdirs()) {
+				LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Problem creating tasks folder " + root.toString())); //$NON-NLS-1$
+			}
+		}
 	}
 
 	private String getUserDirectory(String userId) {
@@ -208,10 +213,14 @@ public class TaskStore {
 
 	public synchronized List<TaskDescription> readAllTasks() {
 		List<TaskDescription> result = new ArrayList<TaskDescription>();
-		for (File userDirectory : root.listFiles()) {
-			if (userDirectory.isDirectory()) {
-				result.addAll(internalReadAllTasksDescriptions(userDirectory));
+		if (root.exists() && root.isDirectory()) {
+			for (File userDirectory : root.listFiles()) {
+				if (userDirectory.isDirectory()) {
+					result.addAll(internalReadAllTasksDescriptions(userDirectory));
+				}
 			}
+		} else {
+			LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Tasks folder is not a directory " + root.toString())); //$NON-NLS-1$
 		}
 		return result;
 	}
