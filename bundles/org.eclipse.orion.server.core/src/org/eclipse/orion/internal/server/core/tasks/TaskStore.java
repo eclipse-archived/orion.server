@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2015 IBM Corporation and others.
+ * Copyright (c) 2011, 2016 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,19 +10,26 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.core.tasks;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.resources.Base64;
 
 /**
- * A facility for reading/writing information about long running tasks. This store
- * will need to be reimplemented by different server implementations if they do
- * not support bare file access. This class intentionally does not understand
- * representations of tasks, to make it more easily pluggable in the future.
+ * A facility for reading/writing information about long running tasks. This store will need to be reimplemented by
+ * different server implementations if they do not support bare file access. This class intentionally does not
+ * understand representations of tasks, to make it more easily pluggable in the future.
  */
 public class TaskStore {
 	private final File root;
@@ -41,15 +48,15 @@ public class TaskStore {
 		try {
 			return new String(Base64.decode(userDirectoryName.getBytes()));
 		} catch (Exception e) {
-			return null; //if this is not encoded user name than return null
+			return null; // if this is not encoded user name than return null
 		}
 	}
 
 	/**
-	 * Returns a string representation of the task with the given id, or <code>null</code>
-	 * if no such task exists.
+	 * Returns a string representation of the task with the given id, or <code>null</code> if no such task exists.
 	 * 
-	 * @param td description of the task to read
+	 * @param td
+	 *            description of the task to read
 	 */
 	public synchronized String readTask(TaskDescription td) {
 		File directory = new File(root, getUserDirectory(td.getUserId()));
@@ -87,8 +94,10 @@ public class TaskStore {
 	/**
 	 * Writes task representation
 	 * 
-	 * @param td description of the task to write
-	 * @param representation string representation or the task
+	 * @param td
+	 *            description of the task to write
+	 * @param representation
+	 *            string representation or the task
 	 */
 	public synchronized void writeTask(TaskDescription td, String representation) {
 		try {
@@ -111,11 +120,12 @@ public class TaskStore {
 	}
 
 	/**
-	 * Removes given task from the list. This doesn't consider task status, it is caller's
-	 * responsibility to make sure if task tracking can be stopped. This function does not stop the task.
+	 * Removes given task from the list. This doesn't consider task status, it is caller's responsibility to make sure
+	 * if task tracking can be stopped. This function does not stop the task.
 	 * 
-	 * @param td description of the task to remove
-	 * @return <code>true</code> if task was removed, <code>false</code> otherwise. 
+	 * @param td
+	 *            description of the task to remove
+	 * @return <code>true</code> if task was removed, <code>false</code> otherwise.
 	 */
 	public synchronized boolean removeTask(TaskDescription td) {
 		File directory = new File(root, getUserDirectory(td.getUserId()));
@@ -144,7 +154,7 @@ public class TaskStore {
 
 	public synchronized void removeAllTempTasks() {
 		File[] children = root.listFiles();
-		//listFiles returns null in case of IO exception
+		// listFiles returns null in case of IO exception
 		if (children == null)
 			return;
 		for (File userDirectory : children) {
@@ -184,7 +194,8 @@ public class TaskStore {
 	/**
 	 * Returns all tasks owned by a given user.
 	 * 
-	 * @param userId id of a user that is an owner of tasks
+	 * @param userId
+	 *            id of a user that is an owner of tasks
 	 * @return a list of tasks tracked for this user
 	 */
 	public synchronized List<TaskDescription> readAllTasks(String userId) {

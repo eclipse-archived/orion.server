@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2015 IBM Corporation and others.
+ * Copyright (c) 2011, 2016 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -40,7 +40,7 @@ public class TaskService implements ITaskService {
 
 	private TaskStore store;
 	private Timer timer;
-	private static long TEMP_TASK_LIFE = 15 * 60 * 1000; //15 minutes in milliseconds
+	private static long TEMP_TASK_LIFE = 15 * 60 * 1000; // 15 minutes in milliseconds
 	private Map<TaskDescription, ITaskCanceller> taskCancellers = new HashMap<TaskDescription, ITaskCanceller>();
 
 	private class RemoveTask extends TimerTask {
@@ -59,7 +59,7 @@ public class TaskService implements ITaskService {
 			try {
 				taskService.removeTask(taskDescription.getUserId(), taskDescription.getTaskId(), taskDescription.isKeep());
 			} catch (TaskDoesNotExistException e) {
-				//ignore, task was already removed
+				// ignore, task was already removed
 			} catch (TaskOperationException e) {
 				LogHelper.log(e);
 			}
@@ -83,8 +83,9 @@ public class TaskService implements ITaskService {
 				if (task == null) {
 					continue;
 				}
-				if (task.isRunning()) {//mark all running tasks as failed due to server restart
-					task.done(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Task could not be completed due to server restart", null));
+				if (task.isRunning()) {// mark all running tasks as failed due to server restart
+					task.done(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Task could not be completed due to server restart",
+							null));
 					updateTask(task);
 				} else if (task.getExpires() != null) {
 					timer.schedule(new RemoveTask(taskDescription, this), new Date(task.getExpires()));
@@ -172,7 +173,7 @@ public class TaskService implements ITaskService {
 			try {
 				String taskString = store.readTask(taskDescr);
 				if (taskString == null) {
-					continue; //Task removed in between
+					continue; // Task removed in between
 				}
 				info = TaskInfo.fromJSON(taskDescr, taskString);
 				if (taskCancellers.containsKey(taskDescr)) {

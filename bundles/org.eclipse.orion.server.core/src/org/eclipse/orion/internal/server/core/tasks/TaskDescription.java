@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2013 IBM Corporation and others.
+ * Copyright (c) 2012, 2016 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -49,17 +49,16 @@ public class TaskDescription {
 
 	@Override
 	public boolean equals(Object o) {
-		if(!(o instanceof TaskDescription)){
+		if (!(o instanceof TaskDescription)) {
 			return false;
 		}
 		TaskDescription td = (TaskDescription) o;
-		return (this.getUserId().equals(td.getUserId()) && (this.getTaskId().equals(td.getTaskId()) && this.isKeep()==td.isKeep()));
+		return (this.getUserId().equals(td.getUserId()) && (this.getTaskId().equals(td.getTaskId()) && this.isKeep() == td.isKeep()));
 	}
 
 	@Override
 	public int hashCode() {
-		return (this.getUserId().hashCode() + this.getTaskId().hashCode() + (this.isKeep() ? 1: 0))/2;
+		return (this.getUserId().hashCode() + this.getTaskId().hashCode() + (this.isKeep() ? 1 : 0)) / 2;
 	}
-	
-	
+
 }
