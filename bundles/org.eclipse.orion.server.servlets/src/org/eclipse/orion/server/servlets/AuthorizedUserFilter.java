@@ -50,7 +50,18 @@ public class AuthorizedUserFilter implements Filter {
 			// the singleton for the activator will return null if the bundle
 			// is not yet active. We can wait for it in this filter.
 			String msg = "Authentication service is not active. AuthorizedUserFilter is waiting."; //$NON-NLS-1$
-			LogHelper.log(new Status(IStatus.INFO, Activator.PI_SERVER_SERVLETS, msg, null));
+			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, msg, null));
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				break;
+			}
+		}
+		while (Activator.getDefault().getAuthService() == null) {
+			// the authentication service will be null if the bundle
+			// is not yet active. We can wait for it in this filter.
+			String msg = "Authentication service is not active. AuthorizedUserFilter is waiting. The server configuration must specify an authentication scheme, or use \"None\" to indicate no authentication"; //$NON-NLS-1$
+			LogHelper.log(new Status(IStatus.WARNING, Activator.PI_SERVER_SERVLETS, msg, null));
 			try {
 				Thread.sleep(500);
 			} catch (InterruptedException e) {
@@ -58,13 +69,6 @@ public class AuthorizedUserFilter implements Filter {
 			}
 		}
 		authenticationService = Activator.getDefault().getAuthService();
-		// treat lack of authentication as an error. Administrator should use
-		// "None" to disable authentication entirely
-		if (authenticationService == null) {
-			String msg = "Authentication service is missing. The server configuration must specify an authentication scheme, or use \"None\" to indicate no authentication"; //$NON-NLS-1$
-			LogHelper.log(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, msg, null));
-			throw new ServletException(msg);
-		}
 	}
 
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
