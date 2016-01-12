@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2014 IBM Corporation and others
+ * Copyright (c) 2011, 2016 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -46,6 +46,17 @@ public class AuthorizedUserFilter implements Filter {
 	private IAuthenticationService authenticationService;
 
 	public void init(FilterConfig filterConfig) throws ServletException {
+		while (Activator.getDefault() == null) {
+			// the singleton for the activator will return null if the bundle
+			// is not yet active. We can wait for it in this filter.
+			String msg = "Authentication service is not active. AuthorizedUserFilter is waiting."; //$NON-NLS-1$
+			LogHelper.log(new Status(IStatus.INFO, Activator.PI_SERVER_SERVLETS, msg, null));
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+				break;
+			}
+		}
 		authenticationService = Activator.getDefault().getAuthService();
 		// treat lack of authentication as an error. Administrator should use
 		// "None" to disable authentication entirely
