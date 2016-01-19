@@ -86,6 +86,15 @@ public class AuthorizedUserFilter implements Filter {
 
 		try {
 			String requestPath = httpRequest.getServletPath() + (httpRequest.getPathInfo() == null ? "" : httpRequest.getPathInfo());
+			if(httpRequest.getHeader("checkExistence") != null){
+				//Automatically add sourceLoc and username-OrionContent to the request path;
+				String[] requestPathSplits = requestPath.split("/");
+				String sourceLoc = requestPathSplits[1];
+				requestPathSplits[1] = userName + "-OrionContent";
+				requestPath = requestPath.join("/", requestPathSplits);
+				requestPath =  "/" + sourceLoc + requestPath;
+				httpRequest.setAttribute("checkExistence-userName", userName);
+			}
 			if (!AuthorizationService.checkRights(userName, requestPath, httpRequest.getMethod())) {
 				if (IAuthenticationService.ANONYMOUS_LOGIN_VALUE.equals(userName)) {
 					userName = authenticationService.authenticateUser(httpRequest, httpResponse);

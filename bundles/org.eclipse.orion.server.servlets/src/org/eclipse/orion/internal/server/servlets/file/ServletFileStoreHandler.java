@@ -173,10 +173,28 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 			((FileInfo) fileInfo).setExists(false);
 		}
 		if (!request.getMethod().equals("PUT") && !fileInfo.exists()) //$NON-NLS-1$
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", EncodingUtils.encodeForHTML(request.getPathInfo())), null));
-		if (fileInfo.isDirectory())
-			return handleDirectory(request, response, file);
-		return handleFile(request, response, file);
+			if(request.getHeader("checkExistence") == null){
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", EncodingUtils.encodeForHTML(request.getPathInfo())), null));
+			} else {
+				response.setHeader("checkExistence", "404");
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.OK, 200, NLS.bind("File not found: {0}", EncodingUtils.encodeForHTML(request.getPathInfo())), null));
+			}
+		if (fileInfo.isDirectory()){
+			if(request.getHeader("checkExistence") == null){
+				return handleDirectory(request, response, file);
+			} else {
+				response.setHeader("checkExistence", "200");
+				return true;
+			}
+		}
+			
+		if(request.getHeader("checkExistence") == null){
+			return handleFile(request, response, file);
+		} else {
+			response.setHeader("checkExistence", "200");
+			return true;
+		}
+		
 	}
 
 }
