@@ -4,7 +4,7 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
@@ -46,7 +46,7 @@ import org.eclipse.osgi.util.NLS;
 public class NewFileServlet extends OrionServlet {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1L;
 
@@ -99,6 +99,7 @@ public class NewFileServlet extends OrionServlet {
 		}
 		if (fileSerializer.handleRequest(req, resp, file))
 			return;
+		
 		// finally invoke super to return an error for requests we don't know how to handle
 		super.doGet(req, resp);
 	}
@@ -118,6 +119,44 @@ public class NewFileServlet extends OrionServlet {
 		doGet(req, resp);
 	}
 
+	@Override
+	protected void doHead(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException{
+		if(req.getHeader("checkExistence") != null){
+			traceRequest(req);
+			String pathInfo = req.getPathInfo();
+			IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
+			// prevent path canonicalization hacks
+			if (pathInfo != null && !pathInfo.equals(path.toString())) {
+				resp.setHeader("checkExistence", "403");
+				return;
+			}
+			//don't allow anyone to mess with metadata
+			if (path.segmentCount() > 0 && ".metadata".equals(path.segment(0))) { //$NON-NLS-1$
+				resp.setHeader("checkExistence", "403");
+				return;
+			}
+			IFileStore file = getFileStore(req, path);
+			IFileStore testLink = file;
+			while (testLink != null) {
+				IFileInfo info = testLink.fetchInfo();
+				if (info.getAttribute(EFS.ATTRIBUTE_SYMLINK)) {
+					if (file == testLink) {
+						resp.setHeader("checkExistence", "403");
+					} else {
+						resp.setHeader("checkExistence", "404");					}
+					return;
+				}
+				testLink = testLink.getParent();
+			}
+
+			if (file == null) {
+				resp.setHeader("checkExistence", "404");
+				return;
+			}
+			if (fileSerializer.handleRequest(req, resp, file))
+				return;
+		}
+	}
 	/**
 	 * Returns the store representing the file to be retrieved for the given
 	 * request or <code>null</code> if an error occurred.
@@ -137,7 +176,7 @@ public class NewFileServlet extends OrionServlet {
 			if (path.segmentCount() == 0) {
 				return null;
 			} else if (path.segmentCount() == 1) {
-				// Bug 415700: handle path format /workspaceId 
+				// Bug 415700: handle path format /workspaceId
 				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
 				if (workspace != null) {
 					IFileStore store = getLocalFileStore(request, workspace);
@@ -151,7 +190,7 @@ public class NewFileServlet extends OrionServlet {
 				IFileStore store = getLocalFileStore(request, project).getFileStore(path.removeFirstSegments(2));
 				return local ? store : wrap(project, store);
 			}
-			// Bug 415700: handle path format /workspaceId/[file] 
+			// Bug 415700: handle path format /workspaceId/[file]
 			if (path.segmentCount() == 2) {
 				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
 				if (workspace != null) {
