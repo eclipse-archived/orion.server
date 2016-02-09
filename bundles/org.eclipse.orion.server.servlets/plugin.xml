@@ -177,6 +177,10 @@
                bundle="org.eclipse.orion.client.help"
                path="/web">
          </resource-mapping>
+         <mime-mapping
+               extension="pref"
+               mime-type="application/json">
+         </mime-mapping>
       </httpcontext>
       <httpcontext
             id="org.eclipse.orion.server.httpcontext.editor.components">
