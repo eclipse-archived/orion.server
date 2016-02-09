@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2016 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,17 +14,9 @@ import java.io.IOException;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.eclipse.orion.server.core.ProtocolConstants;
 
 /**
  * A filter that adds cache-control information.
@@ -77,10 +69,6 @@ public class CacheFilter implements Filter {
 				httpResponse.setDateHeader("Expires", System.currentTimeMillis() + maxAge * 1000);
 			}
 			httpResponse.setHeader("Cache-Control", directives);
-		}
-		if (requestPath.equals("/defaults.pref")) {
-			// TODO: add missing header, see Bugzilla 
-			httpResponse.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
 		}
 		chain.doFilter(request, response);
 	}
