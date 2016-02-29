@@ -67,7 +67,7 @@ public class SearchServlet extends OrionServlet {
 		}
 	}
 
-	private SearchOptions buildSearchOptions(HttpServletRequest req, HttpServletResponse resp) throws SearchException {
+	private SearchOptions buildSearchOptions(HttpServletRequest req, HttpServletResponse resp) throws SearchException, ServletException {
 		SearchOptions options = new SearchOptions();
 
 		String queryString = getEncodedParameter(req, "q");
@@ -91,7 +91,12 @@ public class SearchServlet extends OrionServlet {
 						options.setIsFilenamePatternCaseSensitive(false);
 						options.setFilenamePattern(term.substring(10));
 					} else if (term.startsWith("Location:")) { //$NON-NLS-1${
-						String location = term.substring(9 + req.getContextPath().length());
+						int ctxLength = req.getContextPath().length();
+						if((ctxLength + 9) > term.length()){
+							handleException(resp, "Invalid search term: " + term, null, HttpServletResponse.SC_BAD_REQUEST);
+							return null;
+						}
+						String location = term.substring(9 + ctxLength);
 						try {
 							location = URLDecoder.decode(location, "UTF-8"); //$NON-NLS-1$
 						} catch (UnsupportedEncodingException e) {
@@ -198,6 +203,9 @@ public class SearchServlet extends OrionServlet {
 				return;
 			}
 			SearchOptions options = buildSearchOptions(req, resp);
+			if(options == null) {
+				return;
+			}
 			SearchJob searchJob = new SearchJob(options);
 			searchJob.schedule();
 			searchJob.join();
