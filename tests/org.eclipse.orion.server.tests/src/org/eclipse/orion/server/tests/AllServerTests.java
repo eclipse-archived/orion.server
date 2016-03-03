@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2015 IBM Corporation and others.
+ * Copyright (c) 2010, 2016 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,6 +16,7 @@ import org.eclipse.orion.server.tests.metastore.ProjectInfoTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreConcurrencyTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreLiveMigrationConcurrencyTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreLiveMigrationTests;
+import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreWorkspaceProjectListConcurrencyTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreUserPropertyCacheTests;
 import org.eclipse.orion.server.tests.metastore.SimpleMetaStoreUtilTest;
@@ -65,6 +66,7 @@ import org.junit.runners.Suite.SuiteClasses;
 		UserInfoTests.class, //
 		WorkspaceInfoTests.class, //
 		WorkspaceServiceTest.class, //
+		SimpleMetaStoreWorkspaceProjectListConcurrencyTests.class, //
 		AllGitTests.class, //
 })
 public class AllServerTests {
