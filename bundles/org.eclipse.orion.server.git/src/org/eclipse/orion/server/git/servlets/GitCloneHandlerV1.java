@@ -300,7 +300,7 @@ public class GitCloneHandlerV1 extends ServletResourceHandler<String> {
 				for (String projectName : workspace.getProjectNames()) {
 					ProjectInfo project = OrionConfiguration.getMetaStore().readProject(workspace.getUniqueId(), projectName);
 					// this is the location of the project metadata
-					if (isAccessAllowed(user, project)) {
+					if (project != null && isAccessAllowed(user, project)) {
 						IPath projectPath = GitUtils.pathFromProject(workspace, project);
 						Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 						for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
