@@ -62,9 +62,9 @@ public class EventService implements IEventService {
 
 		@Override
 		public void messageArrived(String topic, MqttMessage msg) throws Exception {
-			if (logger.isDebugEnabled()) {
-				logger.debug("Message arrived " + (msg == null ? null : msg.toString()) + " topic " + topic);
-			}
+//			if (logger.isDebugEnabled()) {
+				logger.warn("***** Message arrived " + (msg == null ? null : msg.toString()) + " topic " + topic);
+//			}
 			JSONObject message = new JSONObject();
 			message.put("Topic", topic);
 			String messageText = new String(msg.getPayload());
