@@ -129,7 +129,11 @@ public class MessagingSubscriber {
 	    		delivery = consumer.nextDelivery();
 	    		message = new String(delivery.getBody(), UTF8);
 	    		logger.debug("Received message: " + message); //$NON-NLS-1$
-				handleMessage(delivery.getEnvelope().getRoutingKey(), message);
+	    		String topic = delivery.getEnvelope().getRoutingKey();
+logger.warn("ASDF raw topic: " + topic);
+				topic = topic.replaceAll("\\.", "/"); //$NON-NLS-1$ //$NON-NLS-2$
+logger.warn("ASDF fixed topic: " + topic);
+				handleMessage(topic, message);
 	    	} catch (ShutdownSignalException e) {
 	    		logger.error("Messaging subscriber connection was shutdown", e); //$NON-NLS-1$
 	    		/* this is handled by the shutdown listener in connectClient() */
