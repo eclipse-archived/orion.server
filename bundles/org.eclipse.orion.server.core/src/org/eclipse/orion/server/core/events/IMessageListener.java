@@ -13,15 +13,14 @@ package org.eclipse.orion.server.core.events;
 import org.json.JSONObject;
 
 /**
- * Listener to be notified when MQTT message arrives. Should be registered with {@link IEventService#receive(String, IMessageListener)}
+ * Listener to be notified when a message arrives. Register with {@link IMessagingService#receive(String, IMessageListener)}
  *
  */
 public interface IMessageListener {
 	
 	/**
-	 * Method called when MQTT message arrives for registered topic
+	 * Method called when a message arrives for the registered topic
 	 * @param message json representation of the message
 	 */
 	public void receiveMessage(JSONObject message);
-
 }

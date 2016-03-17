@@ -13,27 +13,27 @@ package org.eclipse.orion.server.core.events;
 import org.json.JSONObject;
 
 /**
- * Interface for the Orion event service. It has capabilities the publishing of MQTT events for changes within the Orion server.
+ * Interface for the Orion messaging service, which publishes/receives messages to/from a remote message broker.
  * 
  * @author Anthony Hunter, Malgorzata Janczarska
  */
-public interface IEventService {
+public interface IMessagingService {
 
 	/**
-	 * Publish an event to the MQTT message broker.
+	 * Publish a message to the remote message broker.
 	 * 
 	 * @param topic
-	 *            The topic for the event.
+	 *            The topic for the message.
 	 * @param message
-	 *            JSON describing the event.
+	 *            JSON describing the message.
 	 */
 	public void publish(String topic, JSONObject message);
 
 	/**
-	 * Register a listener that will receive messages from given topic
+	 * Register a listener that will receive messages for the given topic
 	 * 
 	 * @param topic
-	 *            topic The topic for the event.
+	 *            topic The topic for the message.
 	 * @param messageListener
 	 */
 	public void receive(String topic, IMessageListener messageListener);
@@ -46,8 +46,7 @@ public interface IEventService {
 	 */
 	public void stopReceiving(String topic, IMessageListener messageListener);
 
-	void reconnectMQTTClient();
+	void reconnectMessagingClient();
 
 	boolean clientConnected();
-
 }

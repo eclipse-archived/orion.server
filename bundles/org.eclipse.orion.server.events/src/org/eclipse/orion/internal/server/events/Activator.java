@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.events;
 
-import org.eclipse.orion.server.core.events.IEventService;
+import org.eclipse.orion.server.core.events.IMessagingService;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
@@ -25,7 +25,7 @@ public class Activator implements BundleActivator {
 	public static volatile BundleContext bundleContext;
 
 	static Activator singleton;
-	private EventService eventService;
+	private MessagingService messagingService;
 
 	public static Activator getDefault() {
 		return singleton;
@@ -38,20 +38,20 @@ public class Activator implements BundleActivator {
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
 		bundleContext = context;
-		registerEventService();
+		registerMessagingService();
 	}
 
-	private void registerEventService() {
-		eventService = new EventService();
-		if (eventService != null) {
+	private void registerMessagingService() {
+		messagingService = new MessagingService();
+		if (messagingService != null) {
 			@SuppressWarnings("unused")
-			ServiceRegistration<IEventService> eventServiceRegistration = bundleContext.registerService(IEventService.class, eventService, null);
+			ServiceRegistration<IMessagingService> messagingServiceRegistration = bundleContext.registerService(IMessagingService.class, messagingService, null);
 		}
 	}
 
 	public void stop(BundleContext context) throws Exception {
-		eventService.destroy();
-		eventService = null;
+		messagingService.destroy();
+		messagingService = null;
 		bundleContext = null;
 	}
 }

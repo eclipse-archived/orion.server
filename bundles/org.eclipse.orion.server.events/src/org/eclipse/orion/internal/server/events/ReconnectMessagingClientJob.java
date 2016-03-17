@@ -14,43 +14,38 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.orion.server.core.events.IEventService;
+import org.eclipse.orion.server.core.events.IMessagingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
-* A Job to reconnect to the MQTT Broker every 5 mins while disconnected.
+* A Job to reconnect to the message Broker every 30s while disconnected.
 *
 * @author Herman Badwal
 */ 
-public class ReconnectMQTTClientJob extends Job {
+public class ReconnectMessagingClientJob extends Job {
 
-	private IEventService eventService;
-
-	private static final int SECS_BETWEEN_RECONNECTION_ATTEMPTS = 300; //5 mins
-	private static final int MILLISECS_IN_A_SEC = 1000;
-
+	private IMessagingService messagingService;
+	private static final int MS_BETWEEN_RECONNECTION_ATTEMPTS = 30 * 1000;
 	private static final Logger logger = LoggerFactory.getLogger("com.ibm.team.scm.orion.server"); //$NON-NLS-1$
 
-	public ReconnectMQTTClientJob(IEventService eventService) {
-		super("Reconnect MQTT Client Job"); //$NON-NLS-1$
-		this.eventService = eventService;
+	public ReconnectMessagingClientJob(IMessagingService messagingService) {
+		super("Reconnect Messaging Client Job"); //$NON-NLS-1$
+		this.messagingService = messagingService;
 	}
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
 		if (logger.isDebugEnabled()) {
-			logger.debug("Start reconnect MQTT Client Job."); //$NON-NLS-1$
+			logger.debug("Start Reconnect Messaging Client Job."); //$NON-NLS-1$
 		}
 
-		eventService.reconnectMQTTClient();
-
-		if (!eventService.clientConnected()) {
-			// reconnection attempt failed, try again later.
-			this.schedule(SECS_BETWEEN_RECONNECTION_ATTEMPTS * MILLISECS_IN_A_SEC);
+		messagingService.reconnectMessagingClient();
+		if (!messagingService.clientConnected()) {
+			/* reconnection attempt failed, try again later */
+			this.schedule(MS_BETWEEN_RECONNECTION_ATTEMPTS);
 		}
 
 		return Status.OK_STATUS;
 	}
-
 }
