@@ -130,9 +130,7 @@ public class MessagingSubscriber {
 	    		message = new String(delivery.getBody(), UTF8);
 	    		logger.debug("Received message: " + message); //$NON-NLS-1$
 	    		String topic = delivery.getEnvelope().getRoutingKey();
-logger.warn("ASDF raw topic: " + topic);
 				topic = topic.replaceAll("\\.", "/"); //$NON-NLS-1$ //$NON-NLS-2$
-logger.warn("ASDF fixed topic: " + topic);
 				handleMessage(topic, message);
 	    	} catch (ShutdownSignalException e) {
 	    		logger.error("Messaging subscriber connection was shutdown", e); //$NON-NLS-1$
@@ -150,7 +148,6 @@ logger.warn("ASDF fixed topic: " + topic);
 	}
 
 	private void handleMessage(String topic, String payload) {
-logger.warn("ASDF received: " + topic + "..." + payload);
 		JSONObject message = new JSONObject();
 		try {
 			message.put("Topic", topic); //$NON-NLS-1$
@@ -166,31 +163,24 @@ logger.warn("ASDF received: " + topic + "..." + payload);
 		}
 
 		Set<String> topics = messageListeners.keySet();
-logger.warn("ASDF topics set size: " + topics.size());
 		for (String registeredTopic : topics) {
-logger.warn("ASDF registeredTopic: " + registeredTopic);
 			String scrubbedTopic = registeredTopic.replaceAll("/#", ".*").replaceAll("#", ".*").replaceAll("\\\\+", ".+"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
-logger.warn("ASDF scrubbedTopic: " + scrubbedTopic);
 			boolean matches = false;
 			try {
 				matches = Pattern.matches(scrubbedTopic, topic);
 			} catch (PatternSyntaxException e) {
 				logger.warn("Ignoring malformed topic on received message:" + registeredTopic);
 			}
-logger.warn("ASDF match? " + matches);
 			if (matches) {
 				if (logger.isDebugEnabled()) {
 					logger.debug("Pattern matched. Topic: " + topic + " . Registered topic: " + registeredTopic); //$NON-NLS-1$ //$NON-NLS-2$
 				}
 				Set<IMessageListener> topicListeners = messageListeners.get(registeredTopic);
 				if (topicListeners != null && !topicListeners.isEmpty()) {
-logger.warn("ASDF topicListeners set size: " + topicListeners.size());
 					for (IMessageListener listener : topicListeners) {
-logger.warn("ASDF listener notified");
 						listener.receiveMessage(message);
 					}
 				} else {
-logger.warn("ASDF topicListeners set size is 0 or null, topicListeners=" + topicListeners);
 					logger.info("Topic listener could not be found to topic we were subscribed to. Topic: " + registeredTopic); //$NON-NLS-1$
 				}
 			}
@@ -198,10 +188,9 @@ logger.warn("ASDF topicListeners set size is 0 or null, topicListeners=" + topic
 	}
 
 	public synchronized void receive(String topic, IMessageListener messageListener) {
-//		if (logger.isDebugEnabled()) {
-//			logger.debug("Added listener for messaging topic " + topic + " " + messageListener); //$NON-NLS-1$ //$NON-NLS-2$
-logger.warn("Added listener for messaging topic " + topic + " " + messageListener); //$NON-NLS-1$ //$NON-NLS-2$
-//		}
+		if (logger.isDebugEnabled()) {
+			logger.debug("Added listener for messaging topic " + topic + " " + messageListener); //$NON-NLS-1$ //$NON-NLS-2$
+		}
 		Set<IMessageListener> topicListeners = messageListeners.get(topic);
 		if (topicListeners == null) {
 			topicListeners = new HashSet<IMessageListener>();
@@ -211,10 +200,9 @@ logger.warn("Added listener for messaging topic " + topic + " " + messageListene
 	}
 
 	public void stopReceiving(String topic, IMessageListener messageListener) {
-//		if (logger.isDebugEnabled()) {
-//			logger.debug("Removed listener for messaging topic " + topic + " " + messageListener); //$NON-NLS-1$ //$NON-NLS-2$
-logger.warn("Removed listener for messaging topic " + topic + " " + messageListener); //$NON-NLS-1$ //$NON-NLS-2$
-//		}
+		if (logger.isDebugEnabled()) {
+			logger.debug("Removed listener for messaging topic " + topic + " " + messageListener); //$NON-NLS-1$ //$NON-NLS-2$
+		}
 		Set<IMessageListener> topicListeners = messageListeners.get(topic);
 		if (topicListeners != null) {
 			topicListeners.remove(messageListener);
