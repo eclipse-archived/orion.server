@@ -209,13 +209,6 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.orion.server.events"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.jetty9.websocket"
          download-size="0"
          install-size="0"
