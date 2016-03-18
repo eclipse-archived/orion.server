@@ -14,7 +14,6 @@ Bundle-Activator: org.eclipse.orion.internal.server.core.Activator
 Export-Package: org.eclipse.orion.internal.server.core.metastore,
  org.eclipse.orion.internal.server.core.tasks;x-friends:="org.eclipse.orion.server.tests",
  org.eclipse.orion.server.core,
- org.eclipse.orion.server.core.events,
  org.eclipse.orion.server.core.metastore,
  org.eclipse.orion.server.core.resources,
  org.eclipse.orion.server.core.resources.annotations,
