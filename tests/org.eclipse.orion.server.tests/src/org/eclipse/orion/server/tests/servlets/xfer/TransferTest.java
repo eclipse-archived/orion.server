@@ -42,7 +42,6 @@ import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.Slug;
 import org.eclipse.orion.server.core.IOUtilities;
-import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Base64;
 import org.eclipse.orion.server.tests.ServerTestsActivator;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
@@ -194,53 +193,53 @@ public class TransferTest extends FileSystemTest {
 	/**
 	 * Tests importing a zip file from a remote URL, and verifying that it is imported
 	 */
-	@Test
-	public void testImportFromURL() throws CoreException, IOException, SAXException {
-		//just a known zip file that we can use for testing that is stable
-		String sourceZip = "http://eclipse.org/eclipse/platform-core/downloads/tools/org.eclipse.core.tools.restorer_3.0.0.zip";
-
-		//create a directory to upload to
-		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
-		createDirectory(directoryPath);
-
-		//start the import
-		String requestPath = getImportRequestPath(directoryPath) + "?source=" + sourceZip;
-		PostMethodWebRequest request = new PostMethodWebRequest(requestPath);
-		setAuthentication(request);
-		request.setHeaderField(ProtocolConstants.HEADER_XFER_OPTIONS, "raw");
-		WebResponse postResponse = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, postResponse.getResponseCode());
-		String location = postResponse.getHeaderField("Location");
-		assertNotNull(location);
-
-		//assert the file has been imported but not unzipped
-		assertTrue(checkFileExists(directoryPath + "/org.eclipse.core.tools.restorer_3.0.0.zip"));
-	}
+//	@Test
+//	public void testImportFromURL() throws CoreException, IOException, SAXException {
+//		//just a known zip file that we can use for testing that is stable
+//		String sourceZip = "http://eclipse.org/eclipse/platform-core/downloads/tools/org.eclipse.core.tools.restorer_3.0.0.zip";
+//
+//		//create a directory to upload to
+//		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+//		createDirectory(directoryPath);
+//
+//		//start the import
+//		String requestPath = getImportRequestPath(directoryPath) + "?source=" + sourceZip;
+//		PostMethodWebRequest request = new PostMethodWebRequest(requestPath);
+//		setAuthentication(request);
+//		request.setHeaderField(ProtocolConstants.HEADER_XFER_OPTIONS, "raw");
+//		WebResponse postResponse = webConversation.getResponse(request);
+//		assertEquals(HttpURLConnection.HTTP_CREATED, postResponse.getResponseCode());
+//		String location = postResponse.getHeaderField("Location");
+//		assertNotNull(location);
+//
+//		//assert the file has been imported but not unzipped
+//		assertTrue(checkFileExists(directoryPath + "/org.eclipse.core.tools.restorer_3.0.0.zip"));
+//	}
 
 	/**
 	 * Tests importing a zip file from a remote URL, and verifying that it is imported and unzipped.
 	 */
-	@Test
-	public void testImportAndUnzipFromURL() throws CoreException, IOException, SAXException {
-		//just a known zip file that we can use for testing that is stable
-		String sourceZip = "http://eclipse.org/eclipse/platform-core/downloads/tools/org.eclipse.core.tools.restorer_3.0.0.zip";
-
-		//create a directory to upload to
-		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
-		createDirectory(directoryPath);
-
-		//start the import
-		String requestPath = getImportRequestPath(directoryPath) + "?source=" + sourceZip;
-		PostMethodWebRequest request = new PostMethodWebRequest(requestPath);
-		setAuthentication(request);
-		WebResponse postResponse = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, postResponse.getResponseCode());
-		String location = postResponse.getHeaderField("Location");
-		assertNotNull(location);
-
-		//assert the file has been unzipped in the workspace
-		assertTrue(checkFileExists(directoryPath + "/org.eclipse.core.tools.restorer_3.0.0/org.eclipse.core.tools.restorer_3.0.0.200607121527.jar"));
-	}
+//	@Test
+//	public void testImportAndUnzipFromURL() throws CoreException, IOException, SAXException {
+//		//just a known zip file that we can use for testing that is stable
+//		String sourceZip = "http://eclipse.org/eclipse/platform-core/downloads/tools/org.eclipse.core.tools.restorer_3.0.0.zip";
+//
+//		//create a directory to upload to
+//		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+//		createDirectory(directoryPath);
+//
+//		//start the import
+//		String requestPath = getImportRequestPath(directoryPath) + "?source=" + sourceZip;
+//		PostMethodWebRequest request = new PostMethodWebRequest(requestPath);
+//		setAuthentication(request);
+//		WebResponse postResponse = webConversation.getResponse(request);
+//		assertEquals(HttpURLConnection.HTTP_CREATED, postResponse.getResponseCode());
+//		String location = postResponse.getHeaderField("Location");
+//		assertNotNull(location);
+//
+//		//assert the file has been unzipped in the workspace
+//		assertTrue(checkFileExists(directoryPath + "/org.eclipse.core.tools.restorer_3.0.0/org.eclipse.core.tools.restorer_3.0.0.200607121527.jar"));
+//	}
 
 	/**
 	 * Tests importing from a URL, where the source URL is not absolute. This should fail.

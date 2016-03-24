@@ -995,53 +995,53 @@ public class CoreFilesTest extends FileSystemTest {
 		modListener.assertListenerNotified(dir.getChild(fileName), ChangeType.WRITE);
 	}
 
-	@Test
-	public void testWriteFileFromURL() throws CoreException, IOException, SAXException, JSONException {
-		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
-		createDirectory(directoryPath);
-		String fileName = "testfile.txt";
+//	@Test
+//	public void testWriteFileFromURL() throws CoreException, IOException, SAXException, JSONException {
+//		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+//		createDirectory(directoryPath);
+//		String fileName = "testfile.txt";
+//
+//		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
+//		WebResponse response = webConversation.getResponse(request);
+//		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+//
+//		//put to file location should succeed
+//		String location = response.getHeaderField("Location");
+//		//just need some stable file here
+//		request = getPutFileRequest(location + "?source=http://eclipse.org/eclipse/project-info/home-page-one-liner.html", "");
+//		response = webConversation.getResponse(request);
+//		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+//
+//		//get should return new contents
+//		request = getGetRequest(location);
+//		response = webConversation.getResponse(request);
+//		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+//		assertEquals("Invalid file content", "<a href=\"/eclipse/\">Eclipse Project</a>", response.getText());
+//	}
 
-		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-
-		//put to file location should succeed
-		String location = response.getHeaderField("Location");
-		//just need some stable file here
-		request = getPutFileRequest(location + "?source=http://eclipse.org/eclipse/project-info/home-page-one-liner.html", "");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		//get should return new contents
-		request = getGetRequest(location);
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		assertEquals("Invalid file content", "<a href=\"/eclipse/\">Eclipse Project</a>", response.getText());
-	}
-
-	@Test
-	public void testWriteImageFromURL() throws CoreException, IOException, SAXException, JSONException {
-		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
-		createDirectory(directoryPath);
-		String fileName = "testfile.gif";
-
-		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-
-		//put to file location should succeed
-		String location = response.getHeaderField("Location");
-		//just need some stable file here
-		request = getPutFileRequest(location + "?source=http://eclipse.org/eclipse/development/images/Adarrow.gif", "");
-		response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-
-		//get should return new contents
-		request = getGetRequest(location);
-		response = webConversation.getResponse(request);
-		assertEquals("image/gif", response.getHeaderField("CONTENT-TYPE"));
-		assertEquals("857", response.getHeaderField("CONTENT-LENGTH"));
-	}
+//	@Test
+//	public void testWriteImageFromURL() throws CoreException, IOException, SAXException, JSONException {
+//		String directoryPath = "sample/directory/path" + System.currentTimeMillis();
+//		createDirectory(directoryPath);
+//		String fileName = "testfile.gif";
+//
+//		WebRequest request = getPostFilesRequest(directoryPath, getNewFileJSON(fileName).toString(), fileName);
+//		WebResponse response = webConversation.getResponse(request);
+//		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+//
+//		//put to file location should succeed
+//		String location = response.getHeaderField("Location");
+//		//just need some stable file here
+//		request = getPutFileRequest(location + "?source=http://eclipse.org/eclipse/development/images/Adarrow.gif", "");
+//		response = webConversation.getResponse(request);
+//		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+//
+//		//get should return new contents
+//		request = getGetRequest(location);
+//		response = webConversation.getResponse(request);
+//		assertEquals("image/gif", response.getHeaderField("CONTENT-TYPE"));
+//		assertEquals("857", response.getHeaderField("CONTENT-LENGTH"));
+//	}
 
 	@Test
 	public void testWriteFileInvalidUTF8() throws Exception {
