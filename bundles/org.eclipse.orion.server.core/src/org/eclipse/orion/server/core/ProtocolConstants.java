@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2014 IBM Corporation and others.
+ * Copyright (c) 2010, 2016 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,6 +17,30 @@ public class ProtocolConstants {
 
 	/**
 	 * Standard HTTP request or response value for the Content-Type header,
+	 * indicating that the request or response body consists of css content.
+	 */
+	public static final String CONTENT_TYPE_CSS = "application/css";//$NON-NLS-1$
+
+	/**
+	 * Standard HTTP request or response value for the Content-Type header,
+	 * indicating that the request or response body consists of a font.
+	 */
+	public static final String CONTENT_TYPE_FONT = "application/font-woff";//$NON-NLS-1$
+
+	/**
+	 * Standard HTTP request or response value for the Content-Type header,
+	 * indicating that the request or response body consists of HTML.
+	 */
+	public static final String CONTENT_TYPE_HTML = "text/html;charset=UTF-8";//$NON-NLS-1$
+
+	/**
+	 * Standard HTTP request or response value for the Content-Type header,
+	 * indicating that the request or response body consists of javascript.
+	 */
+	public static final String CONTENT_TYPE_JAVASCRIPT = "application/x-javascript; charset=UTF-8";//$NON-NLS-1$
+
+	/**
+	 * Standard HTTP request or response value for the Content-Type header,
 	 * indicating that the request or response body consists of a generic JSON object.
 	 */
 	public static final String CONTENT_TYPE_JSON = "application/json; charset=UTF-8";//$NON-NLS-1$
@@ -29,9 +53,9 @@ public class ProtocolConstants {
 
 	/**
 	 * Standard HTTP request or response value for the Content-Type header,
-	 * indicating that the request or response body consists of HTML.
+	 * indicating that the request or response body consists of plain text.
 	 */
-	public static final String CONTENT_TYPE_HTML = "text/html;charset=UTF-8";//$NON-NLS-1$
+	public static final String CONTENT_TYPE_PLAIN_TEXT = "text/plain;charset=UTF-8";//$NON-NLS-1$
 
 	/**
 	 * Standard HTTP request or response header indicating what kind of patch a server
