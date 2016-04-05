@@ -114,6 +114,10 @@
          </init-param>
       </filter>
       <filter
+            alias="/"
+            class="org.eclipse.orion.server.servlets.ContentTypeFilter">
+      </filter>
+      <filter
             alias="/prefs"
             class="org.eclipse.orion.server.servlets.LoggedInUserFilter">
       </filter>
@@ -177,10 +181,6 @@
                bundle="org.eclipse.orion.client.help"
                path="/web">
          </resource-mapping>
-         <mime-mapping
-               extension="pref"
-               mime-type="application/json">
-         </mime-mapping>
       </httpcontext>
       <httpcontext
             id="org.eclipse.orion.server.httpcontext.editor.components">
