@@ -21,6 +21,9 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ProtocolConstants;
 
 /**
@@ -40,6 +43,9 @@ public class ContentTypeFilter implements Filter {
 		HttpServletRequest httpRequest = (HttpServletRequest) request;
 		HttpServletResponse httpResponse = (HttpServletResponse) response;
 
+		String message = "ContentTypeFilter: calling next filter " + httpRequest.getRequestURI();
+		LogHelper.log(new Status(IStatus.INFO, org.eclipse.orion.internal.server.servlets.Activator.PI_SERVER_SERVLETS, HttpServletResponse.SC_OK, message, null));
+		
 		chain.doFilter(request, response);
 
 		// Defect 491041: post check to ensure every response includes a Content-Type header.
