@@ -25,7 +25,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
-import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
@@ -132,8 +131,6 @@ public class WorkspaceServlet extends OrionServlet {
 	 */
 	private boolean doGetWorkspaces(HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		String userId = getUserId(req);
-		String message = "WorkspaceServlet: doGetWorkspaces " + userId;
-		LogHelper.log(new Status(IStatus.INFO, org.eclipse.orion.internal.server.servlets.Activator.PI_SERVER_SERVLETS, HttpServletResponse.SC_OK, message, null));
 		if (!checkUser(userId, resp))
 			return true;
 		try {
