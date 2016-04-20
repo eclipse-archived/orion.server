@@ -44,6 +44,7 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.TrackingRefUpdate;
 import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.TransportHttp;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
@@ -118,7 +119,9 @@ public class PushJob extends GitJob {
 			if (tags)
 				pushCommand.setPushTags();
 			pushCommand.setForce(force);
+			LogHelper.log(new Status(IStatus.INFO, GitActivator.PI_GIT, 1, "Calling push " + credentials.getUri(), null));
 			Iterable<PushResult> resultIterable = pushCommand.call();
+			LogHelper.log(new Status(IStatus.INFO, GitActivator.PI_GIT, 1, "Finish push " + credentials.getUri(), null));
 			if (monitor.isCanceled()) {
 				return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
 			}
@@ -171,10 +174,13 @@ public class PushJob extends GitJob {
 		try {
 			result = doPush(monitor);
 		} catch (CoreException e) {
+			LogHelper.log(new Status(IStatus.ERROR, GitActivator.PI_GIT, 1, e.getLocalizedMessage(), e));
 			result = e.getStatus();
 		} catch (InvalidRemoteException e) {
+			LogHelper.log(new Status(IStatus.ERROR, GitActivator.PI_GIT, 1, e.getLocalizedMessage(), e));
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e);
 		} catch (GitAPIException e) {
+			LogHelper.log(new Status(IStatus.ERROR, GitActivator.PI_GIT, 1, e.getLocalizedMessage(), e));
 			result = getGitAPIExceptionStatus(e, "Error pushing git remote"); //$NON-NLS-1$
 
 			if (matchMessage(JGitText.get().notAuthorized, e.getCause().getMessage())) {
@@ -206,10 +212,13 @@ public class PushJob extends GitJob {
 				}
 			}
 		} catch (JGitInternalException e) {
+			LogHelper.log(new Status(IStatus.ERROR, GitActivator.PI_GIT, 1, e.getLocalizedMessage(), e));
 			result = getJGitInternalExceptionStatus(e, "Error pushing git remote");
 		} catch (IOException e) {
+			LogHelper.log(new Status(IStatus.ERROR, GitActivator.PI_GIT, 1, e.getLocalizedMessage(), e));
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e);
 		} catch (Exception e) {
+			LogHelper.log(new Status(IStatus.ERROR, GitActivator.PI_GIT, 1, e.getLocalizedMessage(), e));
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git repository", e);
 		}
 		return result;
