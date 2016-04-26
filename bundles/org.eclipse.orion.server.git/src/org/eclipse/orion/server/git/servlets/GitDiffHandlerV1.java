@@ -193,6 +193,7 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 
 	private boolean handleGetDiff(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern, OutputStream out)
 			throws Exception {
+		response.setContentType(ProtocolConstants.CONTENT_TYPE_PLAIN_TEXT);
 		DiffCommand command = getDiff(request, response, db, scope, pattern, new BufferedOutputStream(out));
 		if (command != null)
 			command.call();
