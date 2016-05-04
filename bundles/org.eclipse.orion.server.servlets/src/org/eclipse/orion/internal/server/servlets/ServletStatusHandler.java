@@ -37,9 +37,13 @@ public class ServletStatusHandler extends ServletResourceHandler<IStatus> {
 			serverStatus = new ServerStatus(error, httpCode);
 		}
 		response.setCharacterEncoding("UTF-8");
+		//TODO change check for a generic property
 		if ("TIAM".equals(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_NAME, null))) {
 			if (httpCode == HttpServletResponse.SC_INTERNAL_SERVER_ERROR) {
 				httpCode = 599;
+			}
+			if (httpCode == HttpServletResponse.SC_NOT_FOUND) {
+				httpCode = HttpServletResponse.SC_GONE;
 			}
 		}
 		response.setStatus(httpCode);
