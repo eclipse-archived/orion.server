@@ -17,7 +17,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 
 /**
@@ -35,6 +37,11 @@ public class ServletStatusHandler extends ServletResourceHandler<IStatus> {
 			serverStatus = new ServerStatus(error, httpCode);
 		}
 		response.setCharacterEncoding("UTF-8");
+		if ("TIAM".equals(PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_NAME, null))) {
+			if (httpCode == HttpServletResponse.SC_INTERNAL_SERVER_ERROR) {
+				httpCode = 599;
+			}
+		}
 		response.setStatus(httpCode);
 		response.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
 		try {
