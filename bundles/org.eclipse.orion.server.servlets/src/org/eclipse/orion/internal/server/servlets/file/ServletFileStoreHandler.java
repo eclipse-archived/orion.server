@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2015 IBM Corporation and others.
+ * Copyright (c) 2010, 2016 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -172,8 +172,12 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 			fileInfo = new FileInfo(file.getName());
 			((FileInfo) fileInfo).setExists(false);
 		}
-		if (!request.getMethod().equals("PUT") && !fileInfo.exists()) //$NON-NLS-1$
+		if (!request.getMethod().equals("PUT") && !fileInfo.exists()) { //$NON-NLS-1$
+			if("true".equals(request.getHeader("read-if-exists"))) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.WARNING, 204, NLS.bind("No file content: {0}", EncodingUtils.encodeForHTML(request.getPathInfo())), null)); 
+			}
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", EncodingUtils.encodeForHTML(request.getPathInfo())), null));
+		}
 		if (fileInfo.isDirectory())
 			return handleDirectory(request, response, file);
 		return handleFile(request, response, file);
