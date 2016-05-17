@@ -106,10 +106,11 @@ public class GitTagHandlerV1 extends AbstractGitHandler {
 		try {
 			String tagName = toPut.getString(ProtocolConstants.KEY_NAME);
 			String commitId = toPut.getString(GitConstants.KEY_TAG_COMMIT);
+			boolean tagIsAnnotated = toPut.getBoolean(ProtocolConstants.KEY_TYPE);
 			ObjectId objectId = db.resolve(commitId);
 			RevCommit revCommit = walk.lookupCommit(objectId);
 
-			Ref ref = tag(git, revCommit, tagName);
+			Ref ref = tag(git, revCommit, tagName, tagIsAnnotated);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST);
 			Tag tag = new Tag(cloneLocation, db, ref);
 			OrionServlet.writeJSONResponse(request, response, tag.toJSON(), JsonURIUnqualificationStrategy.ALL_NO_GIT);
@@ -122,9 +123,9 @@ public class GitTagHandlerV1 extends AbstractGitHandler {
 		}
 	}
 
-	static Ref tag(Git git, RevCommit revCommit, String tagName) throws GitAPIException {
+	static Ref tag(Git git, RevCommit revCommit, String tagName, boolean tagIsAnnotated) throws GitAPIException {
 		TagCommand tag = git.tag();
-		return tag.setObjectId(revCommit).setName(tagName).call();
+		return tag.setObjectId(revCommit).setName(tagName).setAnnotated(tagIsAnnotated).call();
 	}
 
 	@Override
