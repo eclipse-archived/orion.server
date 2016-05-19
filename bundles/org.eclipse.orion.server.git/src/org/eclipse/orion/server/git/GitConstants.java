@@ -250,4 +250,8 @@ public class GitConstants {
 	public static final String KEY_SUBMODULE_STATUS = "SubmoduleStatus"; //$NON-NLS-1$
 	
 	public static final String KEY_PULL_REQUEST = "PullRequest"; //$NON-NLS-1$
+	
+	public static final String KEY_ANNOTATED_TAG = "Annotated"; //$NON-NLS-1$
+	
+	public static final String KEY_ANNOTATED_TAG_MESSAGE = "Message"; //$NON-NLS-1$
 }

@@ -603,8 +603,10 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		try {
 			boolean isRoot = "".equals(filePath); //$NON-NLS-1$
 			String tagName = toPut.getString(ProtocolConstants.KEY_NAME);
+			boolean isTagAnnotated = toPut.getBoolean(GitConstants.KEY_ANNOTATED_TAG);
+			String annotatedTagMessage = toPut.getString(GitConstants.KEY_ANNOTATED_TAG_MESSAGE);
 			if (tagName != null) {
-				return tag(request, response, db, gitSegment, tagName, isRoot);
+				return tag(request, response, db, gitSegment, tagName, isRoot, isTagAnnotated, annotatedTagMessage);
 			}
 			return false;
 		} catch (Exception e) {
@@ -613,7 +615,8 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		}
 	}
 
-	private boolean tag(HttpServletRequest request, HttpServletResponse response, Repository db, String commitId, String tagName, boolean isRoot)
+	private boolean tag(HttpServletRequest request, HttpServletResponse response, Repository db, String commitId,
+		String tagName, boolean isRoot, boolean isTagAnnotated, String annotatedTagMessage)
 			throws JSONException, URISyntaxException, ServletException {
 		Git git = Git.wrap(db);
 		RevWalk walk = new RevWalk(db);
@@ -622,7 +625,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			RevCommit revCommit = walk.lookupCommit(objectId);
 			walk.parseBody(revCommit);
 
-			GitTagHandlerV1.tag(git, revCommit, tagName);
+			GitTagHandlerV1.tag(git, revCommit, tagName, isTagAnnotated, annotatedTagMessage);
 
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.COMMIT_REFRANGE);
 			Commit commit = new Commit(cloneLocation, db, revCommit, null);
