@@ -603,7 +603,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 		try {
 			boolean isRoot = "".equals(filePath); //$NON-NLS-1$
 			String tagName = toPut.getString(ProtocolConstants.KEY_NAME);
-			boolean isTagAnnotated = toPut.optBoolean(GitConstants.KEY_ANNOTATED_TAG);
+			boolean isTagAnnotated = toPut.has(GitConstants.KEY_ANNOTATED_TAG) ? toPut.getBoolean(GitConstants.KEY_ANNOTATED_TAG) : true;//true by default
 			String annotatedTagMessage = toPut.optString(GitConstants.KEY_ANNOTATED_TAG_MESSAGE);
 			if (tagName != null) {
 				return tag(request, response, db, gitSegment, tagName, isRoot, isTagAnnotated, annotatedTagMessage);

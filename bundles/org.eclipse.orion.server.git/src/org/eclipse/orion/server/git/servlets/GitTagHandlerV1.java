@@ -106,7 +106,7 @@ public class GitTagHandlerV1 extends AbstractGitHandler {
 		try {
 			String tagName = toPut.getString(ProtocolConstants.KEY_NAME);
 			String commitId = toPut.getString(GitConstants.KEY_TAG_COMMIT);
-			boolean isTagAnnotated = toPut.optBoolean(GitConstants.KEY_ANNOTATED_TAG);
+			boolean isTagAnnotated = toPut.has(GitConstants.KEY_ANNOTATED_TAG) ? toPut.getBoolean(GitConstants.KEY_ANNOTATED_TAG) : true;//true by default
 			String annotatedTagMessage = toPut.optString(GitConstants.KEY_ANNOTATED_TAG_MESSAGE);
 			ObjectId objectId = db.resolve(commitId);
 			RevCommit revCommit = walk.lookupCommit(objectId);
