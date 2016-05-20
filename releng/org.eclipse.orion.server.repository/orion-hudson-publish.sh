@@ -84,7 +84,7 @@ echo "Working in `pwd`"
 
 # Download and prepare Eclipse SDK, which is needed to process the update site
 echo "Downloading eclipse to $PWD"
-cp /home/data/httpd/download.eclipse.org/eclipse/downloads/drops4/R-4.4.2-201502041700/eclipse-SDK-4.4.2-linux-gtk-x86_64.tar.gz .
+cp /home/data/httpd/download.eclipse.org/eclipse/downloads/drops4/R-4.5.2-201602121500/eclipse-SDK-4.5.2-linux-gtk-x86_64.tar.gz .
 tar -xzf eclipse-SDK-4.4.2-linux-gtk-x86_64.tar.gz
 cd eclipse
 chmod 700 eclipse
