@@ -85,7 +85,7 @@ echo "Working in `pwd`"
 # Download and prepare Eclipse SDK, which is needed to process the update site
 echo "Downloading eclipse to $PWD"
 cp /home/data/httpd/download.eclipse.org/eclipse/downloads/drops4/R-4.5.2-201602121500/eclipse-SDK-4.5.2-linux-gtk-x86_64.tar.gz .
-tar -xzf eclipse-SDK-4.4.2-linux-gtk-x86_64.tar.gz
+tar -xzf eclipse-SDK-4.5.2-linux-gtk-x86_64.tar.gz
 cd eclipse
 chmod 700 eclipse
 cd ..
@@ -98,7 +98,7 @@ echo "Installing WTP Releng tools"
 ./eclipse/eclipse -nosplash --launcher.suppressErrors -clean -debug -application org.eclipse.equinox.p2.director -repository http://download.eclipse.org/webtools/releng/repository/ -installIUs org.eclipse.wtp.releng.tools.feature.feature.group
 # Clean up
 echo "Cleaning up"
-rm eclipse-SDK-4.4.2-linux-gtk-x86_64.tar.gz
+rm eclipse-SDK-4.5.2-linux-gtk-x86_64.tar.gz
 
 # Generate drop files
 qualifiedVersion=$(egrep Build ${WORKSPACE}/bundles/org.eclipse.orion.server.core/about.properties | awk -F'[: \\\\]' '{print $4}')
