@@ -38,5 +38,5 @@ Export-Package: org.eclipse.orion.server.cf,
  org.eclipse.orion.server.cf.objects,
  org.eclipse.orion.server.cf.servlets,
  org.eclipse.orion.server.cf.utils
-Service-Component: OSGI-INF/auth-component.xml,OSGI-INF/generic-dp-component.xml,OSGI-INF/nodejs-dp-component.xml,OSGI-INF/ds-component.xml,OSGI-INF/generic-dpck-component.xml,OSGI-INF/cf-launcher-dpck-component.xml,OSGI-INF/cf-dext-component.xml
+Service-Component: OSGI-INF/auth-component.xml,OSGI-INF/generic-dp-component.xml,OSGI-INF/nodejs-dp-component.xml,OSGI-INF/ds-component.xml,OSGI-INF/generic-dpck-component.xml,OSGI-INF/cf-dext-component.xml
 Bundle-ClassPath: .
