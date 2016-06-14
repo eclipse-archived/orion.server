@@ -44,6 +44,7 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.eclipse.jgit.transport.TrackingRefUpdate;
 import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.TransportHttp;
+import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
@@ -174,6 +175,7 @@ public class PushJob extends GitJob {
 			result = e.getStatus();
 		} catch (InvalidRemoteException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e);
+			LogHelper.log(result);
 		} catch (GitAPIException e) {
 			result = getGitAPIExceptionStatus(e, "Error pushing git remote"); //$NON-NLS-1$
 
@@ -205,12 +207,16 @@ public class PushJob extends GitJob {
 					}
 				}
 			}
+			LogHelper.log(result);
 		} catch (JGitInternalException e) {
 			result = getJGitInternalExceptionStatus(e, "Error pushing git remote");
+			LogHelper.log(result);
 		} catch (IOException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git remote", e);
+			LogHelper.log(result);
 		} catch (Exception e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Error pushing git repository", e);
+			LogHelper.log(result);
 		}
 		return result;
 	}
