@@ -1,15 +1,15 @@
 requires.1.namespace = org.eclipse.equinox.p2.iu
 requires.1.name = org.eclipse.orion.client.feature.feature.group
-requires.1.range = [12.0.0, 13.0.0)
+requires.1.range = [13.0.0, 14.0.0)
 
 requires.1.namespace = org.eclipse.equinox.p2.iu
 requires.1.name = org.eclipse.orion.server.feature.feature.group
-requires.1.range = [12.0.0, 13.0.0)
+requires.1.range = [13.0.0, 14.0.0)
 
 requires.1.namespace = org.eclipse.equinox.p2.iu
 requires.1.name = org.eclipse.orion.server.authentication.feature.feature.group
-requires.1.range = [12.0.0, 13.0.0)
+requires.1.range = [13.0.0, 14.0.0)
 
 requires.1.namespace = org.eclipse.equinox.p2.iu
 requires.1.name = org.eclipse.orion.server.search.feature.feature.group
-requires.1.range = [12.0.0, 13.0.0)
+requires.1.range = [13.0.0, 14.0.0)

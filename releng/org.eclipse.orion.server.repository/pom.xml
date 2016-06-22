@@ -16,7 +16,7 @@
 
 	<groupId>org.eclipse.orion</groupId>
 	<artifactId>org.eclipse.orion.server.repository</artifactId>
-	<version>12.0.0-SNAPSHOT</version>
+	<version>13.0.0-SNAPSHOT</version>
 	<packaging>eclipse-repository</packaging>
 
 	<parent>

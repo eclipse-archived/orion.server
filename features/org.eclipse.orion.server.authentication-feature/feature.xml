@@ -2,7 +2,7 @@
 <feature
       id="org.eclipse.orion.server.authentication.feature"
       label="%featureName"
-      version="12.0.0.qualifier"
+      version="13.0.0.qualifier"
       provider-name="%providerName"
       plugin="org.eclipse.orion.server.authentication"
       license-feature="org.eclipse.license"
@@ -21,7 +21,7 @@
    </license>
 
    <requires>
-      <import feature="org.eclipse.orion.server.feature" version="12.0.0.qualifier"/>
+      <import feature="org.eclipse.orion.server.feature" version="13.0.0.qualifier"/>
    </requires>
 
    <plugin
