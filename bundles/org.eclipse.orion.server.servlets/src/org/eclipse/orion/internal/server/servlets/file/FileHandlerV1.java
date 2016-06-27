@@ -144,7 +144,13 @@ class FileHandlerV1 extends GenericFileHandler {
 		StringWriter oldFile = new StringWriter();
 		IOUtilities.pipe(fileReader, oldFile, true, false);
 		StringBuffer oldContents = oldFile.getBuffer();
-
+		// Remove the BOM character if it exists
+		if (oldContents.length() > 0) {
+			char firstChar = oldContents.charAt(0);
+			if (firstChar == '\uFEFF' || firstChar == '\uFFFE') {
+				oldContents.replace(0, 1, "");
+			}
+		}
 		JSONArray changeList = changes.getJSONArray("diff");
 		for (int i = 0; i < changeList.length(); i++) {
 			JSONObject change = changeList.getJSONObject(i);
