@@ -50,6 +50,10 @@ public class ContentTypeFilter implements Filter {
 
 				if (requestURI != null) {
 					String[] pathInfoParts = requestURI.split("\\/");
+					if (pathInfoParts.length == 0) {
+						return;
+					}
+
 					String filename = pathInfoParts[pathInfoParts.length - 1];
 					if (filename.equals("defaults.pref") || filename.endsWith(".json") || filename.endsWith(".launch")) {
 						httpResponse.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
@@ -68,7 +72,7 @@ public class ContentTypeFilter implements Filter {
 							String newContentType = mimeType + "; charset=UTF-8";
 							httpResponse.setContentType(newContentType);
 						} else {
-							// fall back to using plan text content type
+							// fall back to using plain text content type
 							httpResponse.setContentType(ProtocolConstants.CONTENT_TYPE_PLAIN_TEXT);
 						}
 					}
