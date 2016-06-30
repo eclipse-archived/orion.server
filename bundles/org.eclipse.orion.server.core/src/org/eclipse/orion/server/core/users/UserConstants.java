@@ -23,6 +23,11 @@ public class UserConstants {
 	public static final String BLOCKED = "Blocked"; //$NON-NLS-1$
 
 	/**
+	 * JSON representation key for a user's account creation timestamp. The value's data type is a String.
+	 */
+	public static final String CREATION_TIMESTAMP = "AccountCreationTimestamp";
+
+	/**
 	 * JSON representation key for a user's disk usage. The value's data type is a String.
 	 */
 	public static final String DISK_USAGE = "DiskUsage"; //$NON-NLS-1$

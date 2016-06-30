@@ -202,6 +202,7 @@ public class SimpleMetaStore implements IMetaStore {
 		ReadWriteLock lock = getLockForUser(userId);
 		lock.writeLock().lock();
 		try {
+			userInfo.setProperty(UserConstants.CREATION_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
 			userInfo.setUniqueId(userId);
 			File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
 			if (SimpleMetaStoreUtil.isMetaFolder(getRootLocation(), userId)) {
