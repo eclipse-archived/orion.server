@@ -68,7 +68,7 @@ public class WorkspacePrunerJob extends Job {
 		} catch (NumberFormatException e) {
 			/* error for this is logged below */
 		}
-		if (notificationThresholdDays <= 0) {
+		if (notificationThresholdDays < 0) {
 			logger.warn("Workspace pruner will not run because a valid value was not found for config option: " + ServerConstants.CONFIG_WORKSPACEPRUNER_DAYCOUNT_INITIALNOTIFICATION); //$NON-NLS-1$
 			return;
 		}
@@ -91,7 +91,7 @@ public class WorkspacePrunerJob extends Job {
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
-		if (notificationThresholdDays > 0 && gracePeriodDays > 0) {
+		if (notificationThresholdDays >= 0 && gracePeriodDays > 0) {
 			if (!traverseWorkspaces()) {
 				if (logger.isInfoEnabled()) {
 					logger.info("Orion workspace pruner job waiting for user metadata service"); //$NON-NLS-1$
@@ -161,6 +161,10 @@ public class WorkspacePrunerJob extends Job {
 		String deletionDateString = dateFormatter.format(calendar.getTime());
 
 		for (String userId : userids) {
+			if (userId.indexOf("gayed") == -1) {
+				continue;
+			}
+			logger.info("proceding for user: " + userId);
 			try {
 				UserInfo userInfo = metaStore.readUser(userId);
 				String lastLoginProperty = userInfo.getProperty(UserConstants.LAST_LOGIN_TIMESTAMP);
