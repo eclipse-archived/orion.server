@@ -2,6 +2,6 @@
 As was previously indicated, it is planned to delete your Orion workspace at <URL> on <DELETIONDATE> due to inactivity.  Note that this will delete only the contents of the online work area, with no impact on anything that is committed to your repositories. If you wish to retain your workspace then log on to Orion at <URL> before <DELETIONDATE>, and this will be taken to mean that you still want to keep the contents around.
 
 Thanks
-The Eclipse Orion Team.
+The Eclipse Orion Team
 
-NOTE: This is a machine generated email. Please do not reply to this message.
+NOTE: This is a machine-generated email. Please do not reply to this message.

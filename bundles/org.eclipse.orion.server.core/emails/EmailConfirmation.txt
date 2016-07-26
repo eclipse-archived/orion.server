@@ -10,6 +10,6 @@ If you wish to continue, please follow the link below:
 If you're not this user or didn't request an Orion account, you may ignore this email.
 
 Thanks
-The Eclipse Orion Team.
+The Eclipse Orion Team
 
-NOTE: This is a machine generated email. Please do not reply to this message.
+NOTE: This is a machine-generated email. Please do not reply to this message.
