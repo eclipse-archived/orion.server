@@ -111,4 +111,13 @@ public class UserConstants {
 	 * JSON representation key for a user's name, the login or short account name. The value's data type is a String.
 	 */
 	public static final String USER_NAME = "UserName"; //$NON-NLS-1$
+
+	/**
+	 * JSON representation key for when a warning e-mail was sent to a user regarding the intention
+	 * to delete their workspaces due to inactivity. The value's data type is a String.
+	 */
+	public static final String WORKSPACEPRUNER_STARTDATE = "PrunerStartTimestamp"; //$NON-NLS-1$
+	public static final String WORKSPACEPRUNER_REMINDERSENT = "PrunerReminderSent"; //$NON-NLS-1$
+	public static final String WORKSPACEPRUNER_FINALWARNINGSENT = "PrunerFinalWarningSent"; //$NON-NLS-1$
+	public static final String WORKSPACEPRUNER_ENDDATE = "PrunerEndTimestamp"; //$NON-NLS-1$
 }

@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.orion.internal.server.servlets.useradmin;
+package org.eclipse.orion.server.core;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,9 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.server.core.PreferenceHelper;
-import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.users.UserConstants;
 
@@ -50,14 +48,23 @@ public class UserEmailUtil {
 
 	private static final String EMAIL_CONFIRMATION_FILE = "/emails/EmailConfirmation.txt"; //$NON-NLS-1$
 	private static final String EMAIL_CONFIRMATION_RESET_PASS_FILE = "/emails/EmailConfirmationPasswordReset.txt"; //$NON-NLS-1$
+	private static final String EMAIL_INACTIVEWORKSPACE_NOTIFICATION_FILE = "/emails/InactiveWorkspaceNotification.txt"; //$NON-NLS-1$
+	private static final String EMAIL_INACTIVEWORKSPACE_FINALWARNING_FILE = "/emails/InactiveWorkspaceFinalWarning.txt"; //$NON-NLS-1$
 	private static final String EMAIL_PASSWORD_RESET = "/emails/PasswordReset.txt"; //$NON-NLS-1$
+	private static final String EMAIL_LAST_DATE_LINK = "<LASTDATE>"; //$NON-NLS-1$
+	private static final String EMAIL_DELETION_DATE_LINK = "<DELETIONDATE>"; //$NON-NLS-1$
 	private static final String EMAIL_URL_LINK = "<URL>"; //$NON-NLS-1$
 	private static final String EMAIL_USER_LINK = "<USER>"; //$NON-NLS-1$
 	private static final String EMAIL_PASSWORD_LINK = "<PASSWORD>"; //$NON-NLS-1$
 	private static final String EMAIL_ADDRESS_LINK = "<EMAIL>"; //$NON-NLS-1$
+
+	private static final String REMINDER = "** Reminder: "; //$NON-NLS-1$
+
 	private Properties properties;
 	private EmailContent confirmationEmail;
 	private EmailContent confirmationResetPassEmail;
+	private EmailContent inactiveWorkspaceNotificationEmail;
+	private EmailContent inactiveWorkspaceFinalWarningEmail;
 	private EmailContent passwordResetEmail;
 
 	private class EmailContent {
@@ -146,9 +153,9 @@ public class UserEmailUtil {
 			transport.sendMessage(message, message.getAllRecipients());
 			transport.close();
 		} catch (AddressException e) {
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, e.getMessage(), e));
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_CORE, e.getMessage(), e));
 		} catch (MessagingException e) {
-			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, e.getMessage(), e));
+			throw new CoreException(new Status(IStatus.ERROR, Activator.PI_SERVER_CORE, e.getMessage(), e));
 		}
 	}
 
@@ -164,6 +171,24 @@ public class UserEmailUtil {
 				confirmationEmail.getTitle(),
 				confirmationEmail.getContent().replaceAll(EMAIL_USER_LINK, userInfo.getUniqueId()).replaceAll(EMAIL_URL_LINK, confirmURL)
 						.replaceAll(EMAIL_ADDRESS_LINK, userInfo.getProperty(UserConstants.EMAIL)), userInfo.getProperty(UserConstants.EMAIL));
+	}
+
+	public void sendInactiveWorkspaceNotification(UserInfo userInfo, String lastDate, String deletionDate, boolean isReminder) throws URISyntaxException, IOException, CoreException {
+		if (inactiveWorkspaceNotificationEmail == null) {
+			inactiveWorkspaceNotificationEmail = new EmailContent(EMAIL_INACTIVEWORKSPACE_NOTIFICATION_FILE);
+		}
+		sendEmail((isReminder ? REMINDER : "") + inactiveWorkspaceNotificationEmail.getTitle(),
+				inactiveWorkspaceNotificationEmail.getContent().replaceAll(EMAIL_LAST_DATE_LINK, lastDate).replaceAll(EMAIL_DELETION_DATE_LINK, deletionDate),
+				userInfo.getProperty(UserConstants.EMAIL));
+	}
+
+	public void sendInactiveWorkspaceFinalWarning(UserInfo userInfo, String deletionDate) throws URISyntaxException, IOException, CoreException {
+		if (inactiveWorkspaceFinalWarningEmail == null) {
+			inactiveWorkspaceFinalWarningEmail = new EmailContent(EMAIL_INACTIVEWORKSPACE_FINALWARNING_FILE);
+		}
+		sendEmail(inactiveWorkspaceFinalWarningEmail.getTitle(),
+				inactiveWorkspaceFinalWarningEmail.getContent().replaceAll(EMAIL_DELETION_DATE_LINK, deletionDate),
+				userInfo.getProperty(UserConstants.EMAIL));
 	}
 
 	public void sendResetPasswordConfirmation(URI baseURI, UserInfo userInfo) throws URISyntaxException, IOException, CoreException {

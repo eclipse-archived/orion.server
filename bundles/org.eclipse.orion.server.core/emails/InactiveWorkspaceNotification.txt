@@ -1,0 +1,9 @@
+Cleaning up the files you had in Orion
+When you work with Orion, the files in your project repositories are checked out into an online work area called the *workspace*. Normally, you edit files in this workspace and then use the built-in Git support to commit them again, but the workspace is kept around to speed things up while you are actively developing.
+
+Our records indicate that you have not accessed Orion at <URL> since <LASTDATE>, so it is planned to delete your workspace. Note that this deletes only the contents of the online work area, and has no impact on anything that is committed to your repositories. If you wish to retain your workspace then all you have to do is log on to Orion at <URL> before <DELETIONDATE>, and this will be taken to mean that you still want to keep the contents around.
+
+Thanks
+The Eclipse Orion Team.
+
+NOTE: This is a machine generated email. Please do not reply to this message.

@@ -25,9 +25,9 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.IPreferencesService;
-import org.eclipse.orion.internal.server.core.diskusage.DiskUsageJob;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.core.tasks.TaskService;
+import org.eclipse.orion.internal.server.core.workspacepruner.WorkspacePrunerJob;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.PreferenceHelper;
@@ -61,11 +61,13 @@ public class Activator implements BundleActivator {
 	private ITaskService taskService;
 	private IMetaStore metastore;
 	private URI rootStoreURI;
-	private DiskUsageJob diskUsageJob;
+	private WorkspacePrunerJob workspacePrunerJob;
 
 	private static final Logger logger = LoggerFactory.getLogger(LogHelper.LOGGER_ID);
 
 	private ServiceTracker<Location, Location> instanceLocationTracker;
+	
+	public static final String PI_SERVER_CORE = "org.eclipse.orion.server.core"; //$NON-NLS-1$
 
 	public static Activator getDefault() {
 		return singleton;
@@ -166,15 +168,15 @@ public class Activator implements BundleActivator {
 		registerServices();
 		initializeFileSystem();
 		initializeMetaStore();
-		startDiskUsageJob();
+		startWorkspacePrunerJob();
 	}
 
-	private void startDiskUsageJob() {
-		String diskUsageEnabled = PreferenceHelper.getString(ServerConstants.CONFIG_DISK_USAGE_ENABLED, "false").toLowerCase(); //$NON-NLS-1$
-		if ("true".equals(diskUsageEnabled)) {
-			diskUsageJob = new DiskUsageJob();
-			// Collect the disk usage data in ten seconds.
-			diskUsageJob.schedule(10000);
+	private void startWorkspacePrunerJob() {
+		String workspacePruningEnabled = PreferenceHelper.getString(ServerConstants.CONFIG_WORKSPACEPRUNER_ENABLED, "false").toLowerCase(); //$NON-NLS-1$
+		if ("true".equals(workspacePruningEnabled)) { //$NON-NLS-1$
+			workspacePrunerJob = new WorkspacePrunerJob();
+			/* start the pruning job in 10 seconds */
+			workspacePrunerJob.schedule(10000);
 		}
 	}
 

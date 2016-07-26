@@ -83,11 +83,6 @@ public class ServerConstants {
 	 */
 	public static final String CONFIG_CONTEXT_PATH = "orion.context.path";
 
-	/**
-	 * name of configuration property for the disk usage calculation support. When this property is set to true, the
-	 * disk usage calculation support is enabled.
-	 */
-	public static final String CONFIG_DISK_USAGE_ENABLED = "orion.file.diskUsageEnabled"; //$NON-NLS-1$
 	public static final String CONFIG_EVENT_CLIENT_ID = "orion.events.clientId"; //$NON-NLS-1$
 
 	/**
@@ -148,6 +143,15 @@ public class ServerConstants {
 	 * The property value is a comma-separated list of host names.
 	 */
 	public static final String CONFIG_SITE_VIRTUAL_HOSTS = "orion.site.virtualHosts"; //$NON-NLS-1$
+
+	/**
+	 * The names of configuration properties for the workspace pruning support. When the CONFIG_WORKSPACEPRUNER_ENABLED
+	 * property is set to true the workspacePrunerJob will run periodically.
+	 */
+	public static final String CONFIG_WORKSPACEPRUNER_ENABLED = "orion.workspacePruner.enabled"; //$NON-NLS-1$
+	public static final String CONFIG_WORKSPACEPRUNER_DAYCOUNT_INITIALNOTIFICATION = "orion.workspacePruner.daycount.initialNotification"; //$NON-NLS-1$
+	public static final String CONFIG_WORKSPACEPRUNER_DAYCOUNT_DELETIONAFTERNOTIFICATION = "orion.workspacePruner.daycount.deletionAfterNotification"; //$NON-NLS-1$
+
 	/**
 	 * The name of a configuration property to enable cross-site request forgery protection (XSRF - default is false).
 	 */
