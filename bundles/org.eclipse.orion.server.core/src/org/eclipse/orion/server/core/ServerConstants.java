@@ -151,6 +151,7 @@ public class ServerConstants {
 	public static final String CONFIG_WORKSPACEPRUNER_ENABLED = "orion.workspacePruner.enabled"; //$NON-NLS-1$
 	public static final String CONFIG_WORKSPACEPRUNER_DAYCOUNT_INITIALNOTIFICATION = "orion.workspacePruner.daycount.initialNotification"; //$NON-NLS-1$
 	public static final String CONFIG_WORKSPACEPRUNER_DAYCOUNT_DELETIONAFTERNOTIFICATION = "orion.workspacePruner.daycount.deletionAfterNotification"; //$NON-NLS-1$
+	public static final String CONFIG_WORKSPACEPRUNER_INSTALLATION_URL = "orion.workspacePruner.installUrl"; //$NON-NLS-1$
 
 	/**
 	 * The name of a configuration property to enable cross-site request forgery protection (XSRF - default is false).

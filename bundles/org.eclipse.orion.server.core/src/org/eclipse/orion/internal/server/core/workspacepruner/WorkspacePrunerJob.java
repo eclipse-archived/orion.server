@@ -34,6 +34,8 @@ import org.eclipse.orion.server.core.UserEmailUtil;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.users.UserConstants;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,10 +51,13 @@ public class WorkspacePrunerJob extends Job {
 	private Logger logger;
 	private int notificationThresholdDays;
 	private int gracePeriodDays;
+	private String installationUrl;
 
 	private static final int MINIMUM_DELETE_THRESHOLD_DAYS = 5;
 	private static final int FINAL_WARNING_THRESHOLD_DAYS = 2;
 	private static final int MS_IN_DAY = 1000 * 60 * 60 * 24;
+	private static final String PROPERTY_GIT_MAIL = "GitMail"; //$NON-NLS-1$
+	private static final String PROPERTY_GIT_USERINFO = "git/config/userInfo"; //$NON-NLS-1$
 	private static final String TRUE = "true"; //$NON-NLS-1$
 	private static final String UNKNOWN = "unknown"; //$NON-NLS-1$
 	private static final Pattern conversionPattern = Pattern.compile("([0123456789.]+)\\s*(.)"); //$NON-NLS-1$
@@ -89,6 +94,8 @@ public class WorkspacePrunerJob extends Job {
 			logger.warn("Workspace pruner will not run because the minimum number of days between initial e-mail warning notification and workspace deletion is : " + MINIMUM_DELETE_THRESHOLD_DAYS); //$NON-NLS-1$
 			return;
 		}
+		
+		installationUrl = PreferenceHelper.getString(ServerConstants.CONFIG_WORKSPACEPRUNER_INSTALLATION_URL, "");
 	}
 
 	@Override
@@ -132,6 +139,28 @@ public class WorkspacePrunerJob extends Job {
 		return (long)quantity;
 	}
 
+	private String getEmailAddress(UserInfo userInfo) {
+		String result = userInfo.getProperty(UserConstants.EMAIL);
+		if (result != null) {
+			return result;
+		}
+		
+		String gitUserInfo = userInfo.getProperty(PROPERTY_GIT_USERINFO);
+		if (gitUserInfo != null) {
+			try {
+				JSONObject object = new JSONObject(gitUserInfo);
+				result = object.getString(PROPERTY_GIT_MAIL);
+				if (result.length() > 0) {
+					return result;
+				}
+			} catch (JSONException e) {
+				logger.warn("Orion workspace pruner did not find " + PROPERTY_GIT_MAIL + " within " + PROPERTY_GIT_USERINFO + " for " + userInfo.getUniqueId()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			}
+		}
+		
+		return null;
+	}
+
 	private boolean traverseWorkspaces() {
 		if (logger.isInfoEnabled()) {
 			logger.info("Orion workspace pruner job started"); //$NON-NLS-1$
@@ -169,6 +198,12 @@ public class WorkspacePrunerJob extends Job {
 			logger.info("proceding for user: " + userId);
 			try {
 				UserInfo userInfo = metaStore.readUser(userId);
+				String emailAddress = getEmailAddress(userInfo);
+				if (emailAddress == null) {
+					logger.info("Workspace pruner will not process a user because it cannot determine the e-mail address for: " + userInfo.getUniqueId());
+					continue;
+				}
+
 				String lastLoginProperty = userInfo.getProperty(UserConstants.LAST_LOGIN_TIMESTAMP);
 				/* lastLoginProperty will be null for a user that has never activated their account */
 				if (lastLoginProperty != null) {
@@ -190,14 +225,14 @@ public class WorkspacePrunerJob extends Job {
 							/* the inactivity threshold has just been passed */
 							try {
 								String lastLoginDateString = dateFormatter.format(new Date(lastLoginTimestamp));
-								emailUtil.sendInactiveWorkspaceNotification(userInfo, lastLoginDateString, deletionDateString, false);
+								emailUtil.sendInactiveWorkspaceNotification(userInfo, lastLoginDateString, deletionDateString, installationUrl, false, emailAddress);
 								userInfo.setProperty(UserConstants.WORKSPACEPRUNER_STARTDATE, String.valueOf(now));
 								userInfo.setProperty(UserConstants.WORKSPACEPRUNER_ENDDATE, String.valueOf(deletionTimestamp));
 								userUpdated = true;
-								logger.info("Initial inactive user notification sent to " + userInfo.getProperty(UserConstants.EMAIL) + ", last login was: " + lastLoginDateString); //$NON-NLS-1 //$NON-NLS-2
+								logger.info("Initial inactive user notification sent to " + emailAddress + ", last login was: " + lastLoginDateString); //$NON-NLS-1 //$NON-NLS-2
 							} catch (Exception e) {
 								/* since the userInfo properties were not set as a result of this exception, this will be attempted again the next time the job runs */ 
-								logger.warn("Orion workspace pruner failed its attempt to send an initial notification to inactive user: " + userInfo.getProperty(UserConstants.EMAIL), e); //$NON-NLS-1
+								logger.warn("Orion workspace pruner failed its attempt to send an initial notification to inactive user: " + emailAddress, e); //$NON-NLS-1
 							}
 						} else {
 							/* the first notification e-mail has already been sent, which established the target deletion date */
@@ -222,21 +257,21 @@ public class WorkspacePrunerJob extends Job {
 									prunedUserCount++;
 									long reclaimedK = initialSize - convertToK(getFolderSize(userRoot));
 									totalReclaimedK += reclaimedK;
-									logger.info("Deleted workspaces for user " + userInfo.getProperty(UserConstants.EMAIL) + ", space reclaimed: " + toConsumableString(reclaimedK)); //$NON-NLS-1 //$NON-NLS-2
+									logger.info("Deleted workspaces for user " + emailAddress + ", space reclaimed: " + toConsumableString(reclaimedK)); //$NON-NLS-1 //$NON-NLS-2
 								} else {
 									/* not enough e-mails have been successfully sent, so attempt to push the deletion date out by the final warning threshold and re-send a final warning */
 
 									calendar.setTimeInMillis(now);
 									calendar.add(Calendar.DAY_OF_MONTH, FINAL_WARNING_THRESHOLD_DAYS);
 									try {
-										emailUtil.sendInactiveWorkspaceFinalWarning(userInfo, dateFormatter.format(new Date(calendar.getTimeInMillis())));
+										emailUtil.sendInactiveWorkspaceFinalWarning(userInfo, dateFormatter.format(new Date(calendar.getTimeInMillis())), installationUrl, emailAddress);
 										userInfo.setProperty(UserConstants.WORKSPACEPRUNER_FINALWARNINGSENT, TRUE);
 										userInfo.setProperty(UserConstants.WORKSPACEPRUNER_ENDDATE, String.valueOf(calendar.getTimeInMillis()));
 										userUpdated = true;
-										logger.info("Final inactive user warning sent to " + userInfo.getProperty(UserConstants.EMAIL) + " (bumped), last login was: " + dateFormatter.format(new Date(lastLoginTimestamp))); //$NON-NLS-1 //$NON-NLS-2
+										logger.info("Final inactive user warning sent to " + emailAddress + " (bumped), last login was: " + dateFormatter.format(new Date(lastLoginTimestamp))); //$NON-NLS-1 //$NON-NLS-2
 									} catch (Exception e) {
 										/* since the userInfo properties were not set as a result of this exception, this will be attempted again the next time the job runs */ 
-										logger.warn("Orion workspace pruner failed its attempt to send a (bumped) final warning to inactive user: " + userInfo.getProperty(UserConstants.EMAIL), e); //$NON-NLS-1
+										logger.warn("Orion workspace pruner failed its attempt to send a (bumped) final warning to inactive user: " + emailAddress, e); //$NON-NLS-1
 									}
 								}
 							} else {
@@ -246,13 +281,13 @@ public class WorkspacePrunerJob extends Job {
 									if (endDate < nowPlusThreshold) {
 										/* due to send the final warning */
 										try {
-											emailUtil.sendInactiveWorkspaceFinalWarning(userInfo, dateFormatter.format(new Date(endDate)));
+											emailUtil.sendInactiveWorkspaceFinalWarning(userInfo, dateFormatter.format(new Date(endDate)), installationUrl, emailAddress);
 											userInfo.setProperty(UserConstants.WORKSPACEPRUNER_FINALWARNINGSENT, TRUE);
 											userUpdated = true;
-											logger.info("Final inactive user warning sent to " + userInfo.getProperty(UserConstants.EMAIL) + ", last login was: " + dateFormatter.format(new Date(lastLoginTimestamp))); //$NON-NLS-1 //$NON-NLS-2
+											logger.info("Final inactive user warning sent to " + emailAddress + ", last login was: " + dateFormatter.format(new Date(lastLoginTimestamp))); //$NON-NLS-1 //$NON-NLS-2
 										} catch (Exception e) {
 											/* since the userInfo properties were not set as a result of this exception, this will be attempted again the next time the job runs */ 
-											logger.warn("Orion workspace pruner failed its attempt to send a final warning to inactive user: " + userInfo.getProperty(UserConstants.EMAIL), e); //$NON-NLS-1
+											logger.warn("Orion workspace pruner failed its attempt to send a final warning to inactive user: " + emailAddress, e); //$NON-NLS-1
 										}
 									} else {
 										String reminderSent = userInfo.getProperty(UserConstants.WORKSPACEPRUNER_REMINDERSENT);
@@ -263,13 +298,13 @@ public class WorkspacePrunerJob extends Job {
 												/* due to send the reminder */
 												try {
 													String lastLoginDateString = dateFormatter.format(new Date(lastLoginTimestamp));
-													emailUtil.sendInactiveWorkspaceNotification(userInfo, lastLoginDateString, dateFormatter.format(new Date(endDate)), true);
+													emailUtil.sendInactiveWorkspaceNotification(userInfo, lastLoginDateString, dateFormatter.format(new Date(endDate)), installationUrl, true, emailAddress);
 													userInfo.setProperty(UserConstants.WORKSPACEPRUNER_REMINDERSENT, TRUE);
 													userUpdated = true;
-													logger.info("Reminder inactive user e-mail sent to " + userInfo.getProperty(UserConstants.EMAIL) + ", last login was: " + dateFormatter.format(new Date(lastLoginTimestamp))); //$NON-NLS-1 //$NON-NLS-2
+													logger.info("Reminder inactive user e-mail sent to " + emailAddress + ", last login was: " + dateFormatter.format(new Date(lastLoginTimestamp))); //$NON-NLS-1 //$NON-NLS-2
 												} catch (Exception e) {
 													/* since the userInfo properties were not set as a result of this exception, this will be attempted again the next time the job runs */ 
-													logger.warn("Orion workspace pruner failed its attempt to send a reminder e-mail to inactive user: " + userInfo.getProperty(UserConstants.EMAIL), e); //$NON-NLS-1
+													logger.warn("Orion workspace pruner failed its attempt to send a reminder e-mail to inactive user: " + emailAddress, e); //$NON-NLS-1
 												}
 											}
 										}

@@ -173,22 +173,22 @@ public class UserEmailUtil {
 						.replaceAll(EMAIL_ADDRESS_LINK, userInfo.getProperty(UserConstants.EMAIL)), userInfo.getProperty(UserConstants.EMAIL));
 	}
 
-	public void sendInactiveWorkspaceNotification(UserInfo userInfo, String lastDate, String deletionDate, boolean isReminder) throws URISyntaxException, IOException, CoreException {
+	public void sendInactiveWorkspaceNotification(UserInfo userInfo, String lastDate, String deletionDate, String installUrl, boolean isReminder, String emailAddress) throws URISyntaxException, IOException, CoreException {
 		if (inactiveWorkspaceNotificationEmail == null) {
 			inactiveWorkspaceNotificationEmail = new EmailContent(EMAIL_INACTIVEWORKSPACE_NOTIFICATION_FILE);
 		}
 		sendEmail((isReminder ? REMINDER : "") + inactiveWorkspaceNotificationEmail.getTitle(),
-				inactiveWorkspaceNotificationEmail.getContent().replaceAll(EMAIL_LAST_DATE_LINK, lastDate).replaceAll(EMAIL_DELETION_DATE_LINK, deletionDate),
-				userInfo.getProperty(UserConstants.EMAIL));
+				inactiveWorkspaceNotificationEmail.getContent().replaceAll(EMAIL_LAST_DATE_LINK, lastDate).replaceAll(EMAIL_DELETION_DATE_LINK, deletionDate).replaceAll(EMAIL_URL_LINK, installUrl),
+				emailAddress != null ? emailAddress : userInfo.getProperty(UserConstants.EMAIL));
 	}
 
-	public void sendInactiveWorkspaceFinalWarning(UserInfo userInfo, String deletionDate) throws URISyntaxException, IOException, CoreException {
+	public void sendInactiveWorkspaceFinalWarning(UserInfo userInfo, String deletionDate, String installUrl, String emailAddress) throws URISyntaxException, IOException, CoreException {
 		if (inactiveWorkspaceFinalWarningEmail == null) {
 			inactiveWorkspaceFinalWarningEmail = new EmailContent(EMAIL_INACTIVEWORKSPACE_FINALWARNING_FILE);
 		}
 		sendEmail(inactiveWorkspaceFinalWarningEmail.getTitle(),
-				inactiveWorkspaceFinalWarningEmail.getContent().replaceAll(EMAIL_DELETION_DATE_LINK, deletionDate),
-				userInfo.getProperty(UserConstants.EMAIL));
+				inactiveWorkspaceFinalWarningEmail.getContent().replaceAll(EMAIL_DELETION_DATE_LINK, deletionDate).replaceAll(EMAIL_URL_LINK, installUrl),
+				emailAddress != null ? emailAddress : userInfo.getProperty(UserConstants.EMAIL));
 	}
 
 	public void sendResetPasswordConfirmation(URI baseURI, UserInfo userInfo) throws URISyntaxException, IOException, CoreException {
