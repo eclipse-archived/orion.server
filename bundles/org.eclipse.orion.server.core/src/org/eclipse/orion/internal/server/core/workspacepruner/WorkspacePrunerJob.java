@@ -205,12 +205,15 @@ public class WorkspacePrunerJob extends Job {
 				String lastLoginProperty = userInfo.getProperty(UserConstants.LAST_LOGIN_TIMESTAMP);
 				/* lastLoginProperty will be null for a user that has never activated their account */
 				if (lastLoginProperty != null) {
+logger.info("has lastLoginProperty");
 					boolean userUpdated = false;
 					long lastLoginTimestamp = Long.valueOf(lastLoginProperty).longValue();
 					long diff = now - lastLoginTimestamp;
 					if (diff < warningThresholdMS) {
+logger.info("there has been recent activity");
 						/* there has been recent activity, so ensure that properties related to pruning are all clear */
 						if (userInfo.getProperty(UserConstants.WORKSPACEPRUNER_STARTDATE) != null) {
+logger.info("clearing");
 							userInfo.setProperty(UserConstants.WORKSPACEPRUNER_STARTDATE, null);
 							userInfo.setProperty(UserConstants.WORKSPACEPRUNER_REMINDERSENT, null);
 							userInfo.setProperty(UserConstants.WORKSPACEPRUNER_FINALWARNINGSENT, null);
@@ -218,8 +221,10 @@ public class WorkspacePrunerJob extends Job {
 							userUpdated = true;
 						}
 					} else {
+logger.info("else");
 						String startDateProperty = userInfo.getProperty(UserConstants.WORKSPACEPRUNER_STARTDATE);
 						if (startDateProperty == null) {
+logger.info("startDateProperty == null");
 							/* the inactivity threshold has just been passed */
 							try {
 								String lastLoginDateString = dateFormatter.format(new Date(lastLoginTimestamp));
@@ -233,16 +238,19 @@ public class WorkspacePrunerJob extends Job {
 								logger.warn("Orion workspace pruner failed its attempt to send an initial notification to inactive user: " + emailAddress, e); //$NON-NLS-1
 							}
 						} else {
+logger.info("second else");
 							/* the first notification e-mail has already been sent, which established the target deletion date */
-							
+
 							String endDateProperty = userInfo.getProperty(UserConstants.WORKSPACEPRUNER_ENDDATE);
 							long endDate = Long.valueOf(endDateProperty).longValue();
 							String finalWarningSent = userInfo.getProperty(UserConstants.WORKSPACEPRUNER_FINALWARNINGSENT);
 							if (endDate < now) {
+logger.info("endDate < now");
 								/* the target deletion date has been passed */
 
 								String reminderSent = userInfo.getProperty(UserConstants.WORKSPACEPRUNER_REMINDERSENT);
 								if (reminderSent != null || finalWarningSent != null) {
+logger.info("delete!!");
 									/* enough e-mails have been successfully sent, so delete the workspace(s) */
 
 									File userRoot = metaStore.getUserHome(userId).toLocalFile(EFS.NONE, null);
@@ -257,6 +265,7 @@ public class WorkspacePrunerJob extends Job {
 									totalReclaimedK += reclaimedK;
 									logger.info("Deleted workspaces for user " + emailAddress + ", space reclaimed: " + toConsumableString(reclaimedK)); //$NON-NLS-1 //$NON-NLS-2
 								} else {
+logger.info("push it out");
 									/* not enough e-mails have been successfully sent, so attempt to push the deletion date out by the final warning threshold and re-send a final warning */
 
 									calendar.setTimeInMillis(now);
@@ -273,10 +282,13 @@ public class WorkspacePrunerJob extends Job {
 									}
 								}
 							} else {
+logger.info("else3");
 								/* currently within the grace period, determine whether a reminder or final warning e-mail is due to be sent */
 								if (finalWarningSent == null) {
+logger.info("finalWarningSent == null");
 									long nowPlusThreshold = now + MS_IN_DAY * FINAL_WARNING_THRESHOLD_DAYS;
 									if (endDate < nowPlusThreshold) {
+logger.info("endDate < nowPlusThreshold");
 										/* due to send the final warning */
 										try {
 											emailUtil.sendInactiveWorkspaceFinalWarning(userInfo, dateFormatter.format(new Date(endDate)), installationUrl, emailAddress);
@@ -288,11 +300,14 @@ public class WorkspacePrunerJob extends Job {
 											logger.warn("Orion workspace pruner failed its attempt to send a final warning to inactive user: " + emailAddress, e); //$NON-NLS-1
 										}
 									} else {
+logger.info("else4");
 										String reminderSent = userInfo.getProperty(UserConstants.WORKSPACEPRUNER_REMINDERSENT);
 										if (reminderSent == null) {
+logger.info("reminderSent == null");
 											long startDate = Long.valueOf(startDateProperty).longValue();
 											long middle = startDate + (endDate - startDate) / 2;
 											if (middle < now) {
+logger.info("middle < now");
 												/* due to send the reminder */
 												try {
 													String lastLoginDateString = dateFormatter.format(new Date(lastLoginTimestamp));
@@ -312,6 +327,7 @@ public class WorkspacePrunerJob extends Job {
 						}
 					}
 					if (userUpdated) {
+logger.info("metaStore.updateUser");
 						metaStore.updateUser(userInfo);
 					}
 				}
