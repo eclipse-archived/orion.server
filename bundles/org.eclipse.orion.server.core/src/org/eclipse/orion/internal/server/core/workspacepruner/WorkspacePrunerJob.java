@@ -12,7 +12,9 @@ package org.eclipse.orion.internal.server.core.workspacepruner;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -330,6 +332,18 @@ logger.info("middle < now");
 logger.info("metaStore.updateUser");
 						metaStore.updateUser(userInfo);
 					}
+String lastLoginDateString = dateFormatter.format(new Date(lastLoginTimestamp));
+try {
+	logger.info("just sending the e-mail");
+	emailUtil.sendInactiveWorkspaceNotification(userInfo, lastLoginDateString, deletionDateString, installationUrl, false, emailAddress);
+} catch (URISyntaxException e) {
+	// TODO Auto-generated catch block
+	e.printStackTrace();
+} catch (IOException e) {
+	// TODO Auto-generated catch block
+	e.printStackTrace();
+}
+
 				}
 			} catch (CoreException e) {
 				logger.error("Orion workspace pruner error while processing user: " + userId, e); //$NON-NLS-1$
