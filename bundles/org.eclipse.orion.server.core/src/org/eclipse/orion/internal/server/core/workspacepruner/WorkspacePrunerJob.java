@@ -68,7 +68,6 @@ public class WorkspacePrunerJob extends Job {
 		logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
 
 		String prefString = PreferenceHelper.getString(ServerConstants.CONFIG_WORKSPACEPRUNER_DAYCOUNT_INITIALNOTIFICATION, null);
-		logger.info("FYI: orion.workspacePruner.daycount.initialNotification=" + prefString);
 		try {
 			notificationThresholdDays = prefString == null ? 0 : Integer.valueOf(prefString).intValue();
 		} catch (NumberFormatException e) {
@@ -80,7 +79,6 @@ public class WorkspacePrunerJob extends Job {
 		}
 
 		prefString = PreferenceHelper.getString(ServerConstants.CONFIG_WORKSPACEPRUNER_DAYCOUNT_DELETIONAFTERNOTIFICATION, null);
-		logger.info("FYI: orion.workspacePruner.daycount.deletionAfterNotification=" + prefString);
 		try {
 			gracePeriodDays = prefString == null ? 0 : Integer.valueOf(prefString).intValue();
 		} catch (NumberFormatException e) {

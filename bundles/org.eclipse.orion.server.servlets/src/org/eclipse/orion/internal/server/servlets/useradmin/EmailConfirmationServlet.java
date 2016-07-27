@@ -87,7 +87,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 		userInfo.setProperty(UserConstants.PASSWORD_RESET_ID, null);
 
 		try {
-			UserEmailUtil.getUtil().setPasswordResetEmail(userInfo);
+			UserEmailUtil.getUtil().sendPasswordResetEmail(userInfo);
 		} catch (Exception e) {
 			LogHelper.log(e);
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,

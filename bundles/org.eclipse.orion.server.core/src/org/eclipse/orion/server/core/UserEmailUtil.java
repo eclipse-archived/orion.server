@@ -13,10 +13,13 @@ package org.eclipse.orion.server.core;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -59,6 +62,10 @@ public class UserEmailUtil {
 	private static final String EMAIL_ADDRESS_LINK = "<EMAIL>"; //$NON-NLS-1$
 
 	private static final String REMINDER = "** Reminder: "; //$NON-NLS-1$
+	private static final Pattern FromPattern = Pattern.compile("^([^<]*)<([^>]*)>\\s*$"); //$NON-NLS-1$
+
+	private String customInactiveWorkspaceFinalWarningContent;
+	private String customInactiveWorkspaceNotificationContent;
 
 	private Properties properties;
 	private EmailContent confirmationEmail;
@@ -79,11 +86,19 @@ public class UserEmailUtil {
 			return content;
 		}
 
+		public EmailContent() {
+			super();
+		}
+
 		public EmailContent(String fileName) throws URISyntaxException, IOException {
 			URL entry = Activator.getDefault().getContext().getBundle().getEntry(fileName);
-			if (entry == null)
+			if (entry == null) {
 				throw new IOException("File not found: " + fileName);
-			BufferedReader reader = new BufferedReader(new InputStreamReader(entry.openStream()));
+			}
+			init(new BufferedReader(new InputStreamReader(entry.openStream())));
+		}
+
+		public EmailContent init(BufferedReader reader) throws IOException {
 			String line = null;
 			try {
 				title = reader.readLine();
@@ -97,6 +112,7 @@ public class UserEmailUtil {
 			} finally {
 				reader.close();
 			}
+			return this;
 		}
 	};
 
@@ -136,7 +152,13 @@ public class UserEmailUtil {
 		Session session = Session.getInstance(properties, null);
 		InternetAddress from;
 		try {
-			from = new InternetAddress(PreferenceHelper.getString("mail.from", "OrionAdmin"));
+			String fromPreference = PreferenceHelper.getString("mail.from", "OrionAdmin");
+			Matcher matcher = FromPattern.matcher(fromPreference);
+			if (matcher.find()) {
+				from = new InternetAddress(matcher.group(2).trim(), matcher.group(1).trim());
+			} else {
+				from = new InternetAddress(fromPreference);
+			}
 
 			InternetAddress to = new InternetAddress(emailAddress);
 
@@ -148,8 +170,10 @@ public class UserEmailUtil {
 			message.setText(messageText);
 
 			Transport transport = session.getTransport("smtp");
-			transport.connect(properties.getProperty("mail.smtp.host", null), properties.getProperty("mail.smtp.user", null),
-					properties.getProperty("mail.smtp.password", null));
+			transport.connect(
+				properties.getProperty("mail.smtp.host", null),
+				properties.getProperty("mail.smtp.user", null),
+				properties.getProperty("mail.smtp.password", null));
 			transport.sendMessage(message, message.getAllRecipients());
 			transport.close();
 		} catch (AddressException e) {
@@ -175,7 +199,11 @@ public class UserEmailUtil {
 
 	public void sendInactiveWorkspaceNotification(UserInfo userInfo, String lastDate, String deletionDate, String installUrl, boolean isReminder, String emailAddress) throws URISyntaxException, IOException, CoreException {
 		if (inactiveWorkspaceNotificationEmail == null) {
-			inactiveWorkspaceNotificationEmail = new EmailContent(EMAIL_INACTIVEWORKSPACE_NOTIFICATION_FILE);
+			if (customInactiveWorkspaceNotificationContent == null) {
+				inactiveWorkspaceNotificationEmail = new EmailContent(EMAIL_INACTIVEWORKSPACE_NOTIFICATION_FILE);
+			} else {
+				inactiveWorkspaceNotificationEmail = new EmailContent().init(new BufferedReader(new StringReader(customInactiveWorkspaceNotificationContent)));
+			}
 		}
 		sendEmail((isReminder ? REMINDER : "") + inactiveWorkspaceNotificationEmail.getTitle(),
 				inactiveWorkspaceNotificationEmail.getContent().replaceAll(EMAIL_LAST_DATE_LINK, lastDate).replaceAll(EMAIL_DELETION_DATE_LINK, deletionDate).replaceAll(EMAIL_URL_LINK, installUrl),
@@ -184,7 +212,11 @@ public class UserEmailUtil {
 
 	public void sendInactiveWorkspaceFinalWarning(UserInfo userInfo, String deletionDate, String installUrl, String emailAddress) throws URISyntaxException, IOException, CoreException {
 		if (inactiveWorkspaceFinalWarningEmail == null) {
-			inactiveWorkspaceFinalWarningEmail = new EmailContent(EMAIL_INACTIVEWORKSPACE_FINALWARNING_FILE);
+			if (customInactiveWorkspaceFinalWarningContent == null) {
+				inactiveWorkspaceFinalWarningEmail = new EmailContent(EMAIL_INACTIVEWORKSPACE_FINALWARNING_FILE);
+			} else {
+				inactiveWorkspaceFinalWarningEmail = new EmailContent().init(new BufferedReader(new StringReader(customInactiveWorkspaceFinalWarningContent)));
+			}
 		}
 		sendEmail(inactiveWorkspaceFinalWarningEmail.getTitle(),
 				inactiveWorkspaceFinalWarningEmail.getContent().replaceAll(EMAIL_DELETION_DATE_LINK, deletionDate).replaceAll(EMAIL_URL_LINK, installUrl),
@@ -203,7 +235,7 @@ public class UserEmailUtil {
 				userInfo.getProperty(UserConstants.EMAIL));
 	}
 
-	public void setPasswordResetEmail(UserInfo userInfo) throws URISyntaxException, IOException, CoreException {
+	public void sendPasswordResetEmail(UserInfo userInfo) throws URISyntaxException, IOException, CoreException {
 		if (passwordResetEmail == null) {
 			passwordResetEmail = new EmailContent(EMAIL_PASSWORD_RESET);
 		}
@@ -211,5 +243,13 @@ public class UserEmailUtil {
 				passwordResetEmail.getTitle(),
 				passwordResetEmail.getContent().replaceAll(EMAIL_USER_LINK, userInfo.getUniqueId())
 						.replaceAll(EMAIL_PASSWORD_LINK, userInfo.getProperty(UserConstants.PASSWORD)), userInfo.getProperty(UserConstants.EMAIL));
+	}
+
+	public void setInactivateWorkspaceFinalWarningContent(String value) {
+		customInactiveWorkspaceFinalWarningContent = value;
+	}
+
+	public void setInactivateWorkspaceNotificationContent(String value) {
+		customInactiveWorkspaceNotificationContent = value;
 	}
 }
