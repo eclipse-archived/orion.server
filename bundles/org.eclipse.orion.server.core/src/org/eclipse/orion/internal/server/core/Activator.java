@@ -175,8 +175,8 @@ public class Activator implements BundleActivator {
 		String workspacePruningEnabled = PreferenceHelper.getString(ServerConstants.CONFIG_WORKSPACEPRUNER_ENABLED, "false").toLowerCase(); //$NON-NLS-1$
 		if ("true".equals(workspacePruningEnabled)) { //$NON-NLS-1$
 			workspacePrunerJob = new WorkspacePrunerJob();
-			/* start the pruning job in 10 seconds */
-			workspacePrunerJob.schedule(10000);
+			/* start the pruning job in one minute */
+			workspacePrunerJob.schedule(60000);
 		}
 	}
 
