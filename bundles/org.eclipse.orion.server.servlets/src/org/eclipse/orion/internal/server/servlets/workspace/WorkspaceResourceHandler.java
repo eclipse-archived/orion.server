@@ -260,7 +260,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		try {
 			if (sourceLocation != null) {
 				//could be either a workspace or file location
-				if (sourceLocation.startsWith(Activator.LOCATION_WORKSPACE_SERVLET)) {
+				if (sourceLocation.startsWith(request.getContextPath() + Activator.LOCATION_WORKSPACE_SERVLET)) {
 					sourceProject = projectForMetadataLocation(getMetaStore(), toOrionLocation(request, sourceLocation));
 					if (sourceProject != null)
 						source = sourceProject.getProjectStore();
