@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2015 IBM Corporation and others.
+ * Copyright (c) 2014, 2016 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,6 +11,7 @@
 package org.eclipse.orion.server.tests.performance;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -33,7 +34,7 @@ import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
 /**
- * Measure the performance of the user storage.
+ * Measure the performance of the user storage. Also can be used to create a large number of users in the metastore.
  * 
  * @author Anthony Hunter
  */
@@ -93,7 +94,11 @@ public class SimpleServerUserStressTest extends UsersTest {
 
 			WebRequest request = getPostUsersRequest("", json, true);
 			WebResponse response = webConversation.getResponse(request);
-			assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+			if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
+				assertTrue(response.getText(), response.getText().contains("already exists."));
+			} else {
+				assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+			}
 
 			if (i % 1000 == 0) {
 				long end = System.currentTimeMillis();

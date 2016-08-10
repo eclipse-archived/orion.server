@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2015 IBM Corporation and others.
+ * Copyright (c) 2014, 2016 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,12 +16,10 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUserPropertyCache;
-import org.eclipse.orion.server.core.users.UserConstants;
 import org.junit.Test;
 
 /**
@@ -30,27 +28,6 @@ import org.junit.Test;
  * @author Anthony Hunter
  */
 public class SimpleMetaStoreUserPropertyCacheTests {
-
-	@Test
-	public void testAddAllUsers() throws CoreException {
-		// create a user property cache for a property
-		SimpleMetaStoreUserPropertyCache userPropertyCache = new SimpleMetaStoreUserPropertyCache();
-		List<String> propertyKeys = new ArrayList<String>();
-		propertyKeys.add(UserConstants.USER_NAME);
-		userPropertyCache.register(propertyKeys);
-		assertTrue(userPropertyCache.isRegistered(UserConstants.USER_NAME));
-
-		// add some users to the cache
-		String users[] = {"anthony", "ahunter", "anthonyh"};
-		List<String> userList = new ArrayList<String>(Arrays.asList(users));
-		userPropertyCache.addUsers(userList);
-
-		// ensure the users are in the cache
-		assertEquals("anthony", userPropertyCache.readUserByProperty(UserConstants.USER_NAME, "anthony", false, false));
-		assertEquals("ahunter", userPropertyCache.readUserByProperty(UserConstants.USER_NAME, "ahunter", false, false));
-		assertEquals("anthonyh", userPropertyCache.readUserByProperty(UserConstants.USER_NAME, "anthonyh", false, false));
-		assertNull(userPropertyCache.readUserByProperty(UserConstants.USER_NAME, "fred", false, false));
-	}
 
 	@Test
 	public void testAddUserProperty() throws CoreException {

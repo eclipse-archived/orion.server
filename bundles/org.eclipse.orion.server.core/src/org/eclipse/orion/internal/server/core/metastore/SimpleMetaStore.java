@@ -604,7 +604,6 @@ public class SimpleMetaStore implements IMetaStore {
 	public List<String> readAllUsers() throws CoreException {
 		long start = System.currentTimeMillis();
 		List<String> userIds = SimpleMetaStoreUtil.listMetaUserFolders(getRootLocation());
-		userPropertyCache.addUsers(userIds);
 		logger.info("Finished reading " + userIds.size() + " users, duration: " + (System.currentTimeMillis() - start) + "ms");
 		return userIds;
 	}
@@ -764,7 +763,14 @@ public class SimpleMetaStore implements IMetaStore {
 
 	@Override
 	public UserInfo readUserByProperty(String key, String value, boolean regExp, boolean ignoreCase) throws CoreException {
-		String userId = userPropertyCache.readUserByProperty(key, value, regExp, ignoreCase);
+		String userId = null;
+		if (UserConstants.USER_NAME.equals(key)) {
+			if (SimpleMetaStoreUtil.isMetaUserFolder(getRootLocation(), value)) {
+				userId = value;
+			}
+		} else {
+			userId = userPropertyCache.readUserByProperty(key, value, regExp, ignoreCase);
+		}
 		if (userId != null) {
 			return readUser(userId);
 		}
@@ -830,16 +836,17 @@ public class SimpleMetaStore implements IMetaStore {
 		if (!(keys.contains(UserConstants.USER_NAME) && keys.size() == 1)) {
 			// initialize the user property cache with values from disk
 			long start = System.currentTimeMillis();
-			initializeAllRegisteredPropertiesFromDisk();
-			logger.info("registerUserProperties duration: " + (System.currentTimeMillis() - start) + "ms");
+			int usersCount = initializeAllRegisteredPropertiesFromDisk();
+			logger.info("Finished processing " + usersCount + " users for registerUserProperties, duration: " + (System.currentTimeMillis() - start) + "ms");
 		}
 	}
 
 	/**
 	 * Initialize the user properties cache for properties other than user name.
 	 */
-	private void initializeAllRegisteredPropertiesFromDisk() {
-		for (String user : SimpleMetaStoreUtil.listMetaUserFolders(rootLocation)) {
+	private int initializeAllRegisteredPropertiesFromDisk() {
+		List<String> allUsers = SimpleMetaStoreUtil.listMetaUserFolders(rootLocation);
+		for (String user : allUsers) {
 			File userMetaFile = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, user);
 			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFile, SimpleMetaStoreUtil.USER);
 			JSONObject properties = null;
@@ -858,6 +865,7 @@ public class SimpleMetaStore implements IMetaStore {
 				logger.error("SimpleMetaStore.initializeAllRegisteredPropertiesFromDisk: failed reading properties for user " + user, e);
 			}
 		}
+		return allUsers.size();
 	}
 
 	/**

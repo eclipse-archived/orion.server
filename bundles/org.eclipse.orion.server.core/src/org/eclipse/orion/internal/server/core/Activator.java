@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2015 IBM Corporation and others 
+ * Copyright (c) 2009, 2016 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,9 +13,7 @@ package org.eclipse.orion.internal.server.core;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -34,7 +32,6 @@ import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.tasks.ITaskService;
-import org.eclipse.orion.server.core.users.UserConstants;
 import org.eclipse.osgi.service.datalocation.Location;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleActivator;
@@ -148,11 +145,6 @@ public class Activator implements BundleActivator {
 	private void initializeMetaStore() {
 		try {
 			metastore = new SimpleMetaStore(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null));
-			List<String> keys = new ArrayList<String>();
-			keys.add(UserConstants.USER_NAME);
-			metastore.registerUserProperties(keys);
-			// reading all users will automatically add all user names to the username cache
-			metastore.readAllUsers();
 		} catch (CoreException e) {
 			String msg = "Cannot initialize MetaStore";
 			logger.error(msg, e);
