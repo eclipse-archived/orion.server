@@ -14,27 +14,33 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.UserEmailUtil;
 import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.core.users.UserConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -57,7 +63,7 @@ public class WorkspacePrunerJob extends Job {
 
 	private static final int MINIMUM_DELETE_THRESHOLD_DAYS = 5;
 	private static final int FINAL_WARNING_THRESHOLD_DAYS = 2;
-	private static final int MS_IN_DAY = 1000 * 60 * 60 * 24;
+	private static final long MS_IN_DAY = 1000 * 60 * 60 * 24;
 	private static final String PROPERTY_GIT_MAIL = "GitMail"; //$NON-NLS-1$
 	private static final String PROPERTY_GIT_USERINFO = "git/config/userInfo"; //$NON-NLS-1$
 	private static final String TRUE = "true"; //$NON-NLS-1$
@@ -204,6 +210,11 @@ public class WorkspacePrunerJob extends Job {
 					continue;
 				}
 
+				if (!hasProject(userInfo)) {
+					/* user has no projects to delete, so leave them alone */
+					continue;
+				}
+
 				String lastLoginProperty = userInfo.getProperty(UserConstants.LAST_LOGIN_TIMESTAMP);
 				/* lastLoginProperty will be null for a user that has never activated their account */
 				if (lastLoginProperty != null) {
@@ -253,13 +264,22 @@ public class WorkspacePrunerJob extends Job {
 									long initialSize = convertToK(getFolderSize(userRoot));
 									List<String> workspaceIds = userInfo.getWorkspaceIds();
 									ListIterator<String> iterator = workspaceIds.listIterator();
+									boolean allSuccessful = true;
 									while (iterator.hasNext()) {
-										metaStore.deleteWorkspace(userId, iterator.next());
+										allSuccessful &= deleteAllProjects(userId, iterator.next());
 									}
 									prunedUserCount++;
 									long reclaimedK = initialSize - convertToK(getFolderSize(userRoot));
 									totalReclaimedK += reclaimedK;
-									logger.info("Deleted workspaces for user " + emailAddress + ", space reclaimed: " + toConsumableString(reclaimedK)); //$NON-NLS-1 //$NON-NLS-2
+									logger.info("Deleted projects for user " + emailAddress + ", space reclaimed: " + toConsumableString(reclaimedK)); //$NON-NLS-1 //$NON-NLS-2
+
+									if (allSuccessful) {
+										userInfo.setProperty(UserConstants.WORKSPACEPRUNER_STARTDATE, null);
+										userInfo.setProperty(UserConstants.WORKSPACEPRUNER_REMINDERSENT, null);
+										userInfo.setProperty(UserConstants.WORKSPACEPRUNER_FINALWARNINGSENT, null);
+										userInfo.setProperty(UserConstants.WORKSPACEPRUNER_ENDDATE, null);
+										userUpdated = true;
+									}
 								} else {
 									/* not enough e-mails have been successfully sent, so attempt to push the deletion date out by the final warning threshold and re-send a final warning */
 
@@ -343,6 +363,61 @@ try {
 		}
 
 		return true;
+	}
+
+	private boolean deleteAllProjects(String userId, String workspaceId) {
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
+		WorkspaceInfo workspace = null;
+		try {
+			workspace = metaStore.readWorkspace(workspaceId);
+		} catch (CoreException e) {
+			logger.error("Orion workspace pruner failed to read the workspace metadata: " + workspaceId, e); //$NON-NLS-1$
+			return false;
+		}
+
+		boolean allSuccessful = true;
+		List<String> projectNames = workspace.getProjectNames();
+		Iterator<String> namesIterator = projectNames.iterator();
+		while (namesIterator.hasNext()) {
+			ProjectInfo project = null;
+			String projectName = namesIterator.next();
+			try {
+				project = metaStore.readProject(workspaceId, projectName);
+				if (project != null) {
+					URI contentURI = project.getContentLocation();
+					/* only delete project contents if they are in default location */
+					IFileStore projectStore = metaStore.getDefaultContentLocation(project);
+					URI defaultLocation = projectStore.toURI();
+					if (URIUtil.sameURI(defaultLocation, contentURI)) {
+						projectStore.delete(EFS.NONE, null);
+					}
+					metaStore.deleteProject(workspaceId, projectName);
+				}
+			} catch (CoreException e) {
+				logger.error("Orion workspace pruner failed to delete project: " + projectName + ", workspace: " + workspaceId, e); //$NON-NLS-1$ //$NON-NLS-2$
+				allSuccessful = false;
+			}
+		}
+
+		return allSuccessful;
+	}
+
+	private boolean hasProject(UserInfo userInfo) {
+		IMetaStore metaStore = OrionConfiguration.getMetaStore();
+		List<String> workspaceIds = userInfo.getWorkspaceIds();
+		ListIterator<String> iterator = workspaceIds.listIterator();
+		while (iterator.hasNext()) {
+			String workspaceId = iterator.next();
+			try {
+				WorkspaceInfo workspace = metaStore.readWorkspace(workspaceId);
+				if (workspace.getProjectNames().size() > 0) {
+					return true;
+				}
+			} catch (CoreException e) {
+				logger.error("Orion workspace pruner failed to read the workspace metadata: " + workspaceId, e); //$NON-NLS-1$
+			}
+		}
+		return false;
 	}
 
 	private String toConsumableString(long quantity) {
