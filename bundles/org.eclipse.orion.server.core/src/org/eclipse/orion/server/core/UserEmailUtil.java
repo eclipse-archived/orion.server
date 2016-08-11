@@ -36,8 +36,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.users.UserConstants;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Handles sending emails to users
@@ -75,7 +73,7 @@ public class UserEmailUtil {
 	private EmailContent inactiveWorkspaceNotificationEmail;
 	private EmailContent inactiveWorkspaceFinalWarningEmail;
 	private EmailContent passwordResetEmail;
-private Logger logger;
+
 	private class EmailContent {
 		private String title;
 		private String content;
@@ -119,7 +117,6 @@ private Logger logger;
 	};
 
 	public UserEmailUtil() {
-logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
 		properties = System.getProperties();
 		properties.put("mail.smtp.starttls.enable", PreferenceHelper.getString(ServerConstants.CONFIG_MAIL_SMTP_STARTTLS, "true"));
 
@@ -250,11 +247,9 @@ logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS
 
 	public void setInactivateWorkspaceFinalWarningContent(String value) {
 		customInactiveWorkspaceFinalWarningContent = value;
-		logger.info("using customInactiveWorkspaceFinalWarningContent: " + customInactiveWorkspaceFinalWarningContent);
 	}
 
 	public void setInactivateWorkspaceNotificationContent(String value) {
 		customInactiveWorkspaceNotificationContent = value;
-		logger.info("using customInactiveWorkspaceNotificationContent: " + customInactiveWorkspaceNotificationContent);
 	}
 }
