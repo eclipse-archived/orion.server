@@ -40,6 +40,7 @@ public class HttpUtil {
 		//set default socket timeout for connection
 		HttpMethodParams params = method.getParams();
 		params.setSoTimeout(DEFAULT_SOCKET_TIMEOUT);
+		params.setContentCharset("UTF-8");
 		method.setParams(params);
 		if (cloud.getAccessToken() != null){
 			method.addRequestHeader(new Header("Authorization", "bearer " + cloud.getAccessToken().getString("access_token")));
