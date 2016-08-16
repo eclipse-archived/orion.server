@@ -27,7 +27,9 @@ import javax.mail.Session;
 import javax.mail.Transport;
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
 import javax.servlet.http.HttpServletRequest;
 
 import org.eclipse.core.runtime.CoreException;
@@ -48,6 +50,7 @@ public class UserEmailUtil {
 	 * The name of the servlet handling email configuration.
 	 */
 	private static final String PATH_EMAIL_CONFIRMATION = "useremailconfirmation"; //$NON-NLS-1$
+	private static final String CONTENTTYPE_HTML_UTF8 = "text/html; charset=UTF-8"; //$NON-NLS-1$
 
 	private static final String EMAIL_CONFIRMATION_FILE = "/emails/EmailConfirmation.txt"; //$NON-NLS-1$
 	private static final String EMAIL_CONFIRMATION_RESET_PASS_FILE = "/emails/EmailConfirmationPasswordReset.txt"; //$NON-NLS-1$
@@ -149,6 +152,10 @@ public class UserEmailUtil {
 	}
 
 	public void sendEmail(String subject, String messageText, String emailAddress) throws URISyntaxException, IOException, CoreException {
+		sendEmail(subject, messageText, emailAddress, false);
+	}
+
+	public void sendEmail(String subject, String messageText, String emailAddress, boolean isMultipart) throws URISyntaxException, IOException, CoreException {
 		Session session = Session.getInstance(properties, null);
 		InternetAddress from;
 		try {
@@ -165,9 +172,17 @@ public class UserEmailUtil {
 			MimeMessage message = new MimeMessage(session);
 			message.setFrom(from);
 			message.addRecipient(Message.RecipientType.TO, to);
-
 			message.setSubject(subject);
-			message.setText(messageText);
+
+			if (isMultipart) {
+				MimeBodyPart mbp = new MimeBodyPart();
+				mbp.setContent(messageText, CONTENTTYPE_HTML_UTF8);
+				MimeMultipart mmp = new MimeMultipart();
+				mmp.addBodyPart(mbp);
+				message.setContent(mmp);
+			} else {
+				message.setText(messageText);
+			}
 
 			Transport transport = session.getTransport("smtp");
 			transport.connect(
@@ -207,7 +222,8 @@ public class UserEmailUtil {
 		}
 		sendEmail((isReminder ? REMINDER : "") + inactiveWorkspaceNotificationEmail.getTitle(),
 				inactiveWorkspaceNotificationEmail.getContent().replaceAll(EMAIL_LAST_DATE_LINK, lastDate).replaceAll(EMAIL_DELETION_DATE_LINK, deletionDate).replaceAll(EMAIL_URL_LINK, installUrl),
-				emailAddress != null ? emailAddress : userInfo.getProperty(UserConstants.EMAIL));
+				emailAddress != null ? emailAddress : userInfo.getProperty(UserConstants.EMAIL),
+				true);
 	}
 
 	public void sendInactiveWorkspaceFinalWarning(UserInfo userInfo, String deletionDate, String installUrl, String emailAddress) throws URISyntaxException, IOException, CoreException {
