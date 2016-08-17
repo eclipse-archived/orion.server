@@ -236,7 +236,8 @@ public class UserEmailUtil {
 		}
 		sendEmail(inactiveWorkspaceFinalWarningEmail.getTitle(),
 				inactiveWorkspaceFinalWarningEmail.getContent().replaceAll(EMAIL_DELETION_DATE_LINK, deletionDate).replaceAll(EMAIL_URL_LINK, installUrl),
-				emailAddress != null ? emailAddress : userInfo.getProperty(UserConstants.EMAIL));
+				emailAddress != null ? emailAddress : userInfo.getProperty(UserConstants.EMAIL),
+				true);
 	}
 
 	public void sendResetPasswordConfirmation(URI baseURI, UserInfo userInfo) throws URISyntaxException, IOException, CoreException {
