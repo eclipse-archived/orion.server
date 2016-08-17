@@ -340,7 +340,7 @@ public class WorkspacePrunerJob extends Job {
 String lastLoginDateString = dateFormatter.format(new Date(lastLoginTimestamp));
 try {
 	logger.info("just sending the e-mail");
-	emailUtil.sendInactiveWorkspaceNotification(userInfo, lastLoginDateString, deletionDateString, installationUrl, false, emailAddress);
+	emailUtil.sendInactiveWorkspaceFinalWarning(userInfo, deletionDateString, installationUrl, emailAddress);
 } catch (URISyntaxException e) {
 	// TODO Auto-generated catch block
 	e.printStackTrace();
