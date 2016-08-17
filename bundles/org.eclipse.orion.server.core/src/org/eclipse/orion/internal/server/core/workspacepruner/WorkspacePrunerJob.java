@@ -12,10 +12,8 @@ package org.eclipse.orion.internal.server.core.workspacepruner;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -198,10 +196,6 @@ public class WorkspacePrunerJob extends Job {
 		String deletionDateString = dateFormatter.format(calendar.getTime());
 
 		for (String userId : userids) {
-			if (userId.indexOf("gayed") == -1) {
-				continue;
-			}
-			logger.info("proceding for user: " + userId);
 			try {
 				UserInfo userInfo = metaStore.readUser(userId);
 				String emailAddress = getEmailAddress(userInfo);
@@ -337,17 +331,6 @@ public class WorkspacePrunerJob extends Job {
 					if (userUpdated) {
 						metaStore.updateUser(userInfo);
 					}
-String lastLoginDateString = dateFormatter.format(new Date(lastLoginTimestamp));
-try {
-	logger.info("just sending the e-mail");
-	emailUtil.sendInactiveWorkspaceFinalWarning(userInfo, deletionDateString, installationUrl, emailAddress);
-} catch (URISyntaxException e) {
-	// TODO Auto-generated catch block
-	e.printStackTrace();
-} catch (IOException e) {
-	// TODO Auto-generated catch block
-	e.printStackTrace();
-}
 				}
 			} catch (CoreException e) {
 				logger.error("Orion workspace pruner error while processing user: " + userId, e); //$NON-NLS-1$
