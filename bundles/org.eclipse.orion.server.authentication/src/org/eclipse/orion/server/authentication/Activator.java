@@ -53,6 +53,7 @@ public class Activator implements BundleActivator {
 
 		AuthenticationMetaStoreJob job = new AuthenticationMetaStoreJob();
 		job.schedule();
+		logger.info("Started Orion server authentication successfully."); //$NON-NLS-1$
 	}
 
 	public void stop(BundleContext context) throws Exception {
@@ -84,7 +85,6 @@ public class Activator implements BundleActivator {
 				keys.add(UserConstants.OAUTH);
 				keys.add(UserConstants.OPENID);
 				metastore.registerUserProperties(keys);
-				logger.info("Started Orion server authentication successfully."); //$NON-NLS-1$
 				return Status.OK_STATUS;
 			} catch (CoreException e) {
 				String msg = "Error starting Orion server authentication service.";

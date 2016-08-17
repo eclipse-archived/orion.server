@@ -161,6 +161,7 @@ public class Activator implements BundleActivator {
 		initializeFileSystem();
 		initializeMetaStore();
 		startWorkspacePrunerJob();
+		logger.info("Started Orion server core successfully."); //$NON-NLS-1$
 	}
 
 	private void startWorkspacePrunerJob() {
