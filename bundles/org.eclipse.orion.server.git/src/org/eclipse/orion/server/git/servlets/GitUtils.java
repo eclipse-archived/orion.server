@@ -153,7 +153,7 @@ public class GitUtils {
 		while (file != null && !file.getAbsolutePath().equals(workspaceRoot.getAbsolutePath())) {
 			if (file.exists()) {
 				File gitDir = resolveGitDir(file);
-				if (gitDir != null) {
+				if (gitDir != null && !gitDir.equals(file)) {
 					gitDirs.put(getPathForLevelUp(levelUp), gitDir);
 					return;
 				}
