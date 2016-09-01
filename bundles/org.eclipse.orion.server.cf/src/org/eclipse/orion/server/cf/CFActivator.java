@@ -14,8 +14,12 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.params.HttpClientParams;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
-import org.eclipse.orion.server.cf.ds.*;
-import org.eclipse.orion.server.cf.ext.*;
+import org.eclipse.orion.server.cf.ds.DeploymentService;
+import org.eclipse.orion.server.cf.ds.DeploymentServiceTracker;
+import org.eclipse.orion.server.cf.ds.IDeploymentService;
+import org.eclipse.orion.server.cf.ext.CFDeploymentExtService;
+import org.eclipse.orion.server.cf.ext.CFDeploymentExtServiceTracker;
+import org.eclipse.orion.server.cf.ext.ICFDeploymentExtService;
 import org.eclipse.orion.server.cf.utils.TargetRegistry;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
@@ -31,6 +35,8 @@ public class CFActivator implements BundleActivator {
 
 	// The shared instance
 	private static CFActivator instance;
+	
+	private HttpClient httpClient;
 
 	private BundleContext bundleContext;
 
@@ -95,13 +101,8 @@ public class CFActivator implements BundleActivator {
 	public ICFDeploymentExtService getCFDeploymentExtDeploymentService() {
 		return cfDeploymentExtServiceTracker.getService();
 	}
-
-	/**
-	 * Returns an HTTPClient instance that is configured to support multiple connections
-	 * in different threads. Callers must explicitly release any connections made using this
-	 * client.
-	 */
-	public synchronized HttpClient getHttpClient() {
+	
+	private HttpClient createHttpClient() {
 		//see http://hc.apache.org/httpclient-3.x/threading.html
 		MultiThreadedHttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
 		HttpConnectionManagerParams connectionManagerParams = connectionManager.getParams();
@@ -112,5 +113,18 @@ public class CFActivator implements BundleActivator {
 		clientParams.setConnectionManagerTimeout(300000); // 5 minutes
 
 		return new HttpClient(clientParams, connectionManager);
+	}
+
+	/**
+	 * Returns an HTTPClient instance that is configured to support multiple connections
+	 * in different threads. Callers must explicitly release any connections made using this
+	 * client.
+	 */
+	public synchronized HttpClient getHttpClient() {
+		if (httpClient == null) {
+			httpClient = createHttpClient();
+		}
+
+		return httpClient;
 	}
 }
