@@ -100,7 +100,7 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 				for (int i = 0; i < cookies.length; i++) {
 					Cookie currentCookie = cookies[i];
 					if (tokenName.equals(currentCookie.getName())) {
-						Cookie loginCookie = new Cookie(currentCookie.getName(), currentCookie.getValue().replaceAll("(\\r|\\n)", ""));
+						Cookie loginCookie = new Cookie(currentCookie.getName(), GitUtils.sanitizeCookie(currentCookie.getValue()));
 						request.setAttribute(GitConstants.KEY_SSO_TOKEN, loginCookie);
 					}
 				}

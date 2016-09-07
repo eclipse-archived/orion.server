@@ -420,6 +420,10 @@ public class GitUtils {
 		}
 		return null;
 	}
+	public static String sanitizeCookie(String cookieString) {
+		return cookieString.replaceAll("(\\r|\\n|%0[AaDd])", ""); //$NON-NLS-1$
+	}
+
 	//Note: these helpers are taken from JGit. There is no API in JGit <= 4.1 to resolve sym refs.
 	private static boolean isSymRef(byte[] ref) {
 		if (ref.length < 9)
