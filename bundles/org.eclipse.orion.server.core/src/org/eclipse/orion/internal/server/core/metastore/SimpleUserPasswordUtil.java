@@ -26,6 +26,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.PBEParameterSpec;
+
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.resources.Base64;
 
@@ -182,5 +183,9 @@ public class SimpleUserPasswordUtil {
 	private static char[] getPassword() {
 		String password = System.getProperty(ORION_STORAGE_PASSWORD, "unspecified"); //$NON-NLS-1$
 		return password.toCharArray();
+	}
+	
+	public static void main(String[] args) {
+		System.out.println(encryptPassword(args[0]));
 	}
 }
