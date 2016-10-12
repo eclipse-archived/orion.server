@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2015 IBM Corporation and others.
+ * Copyright (c) 2014, 2016 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -46,7 +46,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SearchServlet extends OrionServlet {
 
-	private static final String FIELD_NAMES = "Name,NameLower,Length,Directory,LastModified,Location,Path,RegEx,CaseSensitive,WholeWord"; //$NON-NLS-1$
+	private static final String FIELD_NAMES = "Name,NameLower,Length,Directory,LastModified,Location,Path,RegEx,CaseSensitive,WholeWord,Exclude"; //$NON-NLS-1$
 
 	private static final List<String> FIELD_LIST = Arrays.asList(FIELD_NAMES.split(",")); //$NON-NLS-1$
 
@@ -118,6 +118,17 @@ public class SearchServlet extends OrionServlet {
 						options.setIsSearchTermCaseSensitive(true);
 					} else if (term.startsWith("WholeWord:")) {
 						options.setIsSearchWholeWord(true);
+					} else if(term.startsWith("Exclude:")) {
+						String exclude = term.substring("Exclude:".length());
+						String[] items = exclude.split(",");
+						for(String item : items) {
+							try {
+								options.setExcluded(URLDecoder.decode(item, "UTF-8"));
+							}
+							catch(UnsupportedEncodingException usee) {
+								//ignore, bad term
+							}
+						}
 					}
 				} else {
 					//decode the term string now

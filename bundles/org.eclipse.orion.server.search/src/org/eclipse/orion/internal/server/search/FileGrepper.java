@@ -149,6 +149,9 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 
 	@Override
 	protected boolean handleDirectory(File directory, int depth, Collection<SearchResult> results) {
+		if(options.isExcluded(directory.getName())) {
+			return false;
+		}
 		if (results.size() >= options.getRows()) {
 			// stop if we already have the max number of results to return
 			return false;
@@ -162,6 +165,9 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 
 	@Override
 	protected void handleFile(File file, int depth, Collection<SearchResult> results) {
+		if(options.isExcluded(file.getName())) {
+			return;
+		}
 		if (results.size() >= options.getRows()) {
 			// stop if we already have the max number of results to return
 			return;
