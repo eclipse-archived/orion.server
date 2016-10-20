@@ -2,7 +2,7 @@
 <?pde version="3.8"?><target name="org.eclipse.orion" sequenceNumber="22">
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
-<unit id="org.eclipse.jetty.bundles.f.feature.group" version="8.1.15.v20140411"/>
+<unit id="org.eclipse.jetty.bundles.f.feature.group" version="8.1.15.201404181548"/>
 <repository location="http://download.eclipse.org/jetty/updates/jetty-bundles-8.x"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
