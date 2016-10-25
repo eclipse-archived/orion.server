@@ -130,9 +130,6 @@ public class SearchServlet extends OrionServlet {
 							}
 						}
 					}
-				} else if(term.indexOf(":") > -1) {
-					//unknown search term, ignore
-					continue;
 				} else {
 					//decode the term string now
 					try {
