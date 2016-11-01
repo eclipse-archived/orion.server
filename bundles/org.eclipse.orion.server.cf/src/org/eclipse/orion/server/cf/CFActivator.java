@@ -10,6 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.cf;
 
+import org.apache.commons.httpclient.HostConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.MultiThreadedHttpConnectionManager;
 import org.apache.commons.httpclient.params.HttpClientParams;
@@ -21,6 +22,8 @@ import org.eclipse.orion.server.cf.ext.CFDeploymentExtService;
 import org.eclipse.orion.server.cf.ext.CFDeploymentExtServiceTracker;
 import org.eclipse.orion.server.cf.ext.ICFDeploymentExtService;
 import org.eclipse.orion.server.cf.utils.TargetRegistry;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
@@ -105,12 +108,15 @@ public class CFActivator implements BundleActivator {
 	private HttpClient createHttpClient() {
 		//see http://hc.apache.org/httpclient-3.x/threading.html
 		MultiThreadedHttpConnectionManager connectionManager = new MultiThreadedHttpConnectionManager();
-		HttpConnectionManagerParams connectionManagerParams = connectionManager.getParams();
-		connectionManagerParams.setConnectionTimeout(30000);
-		connectionManager.setParams(connectionManagerParams);
+		HttpConnectionManagerParams params = connectionManager.getParams();
+		params.setMaxConnectionsPerHost(HostConfiguration.ANY_HOST_CONFIGURATION, PreferenceHelper.getInt(ServerConstants.HTTP_MAX_CONN_HOST_CONF_KEY, 50));
+		params.setMaxTotalConnections(PreferenceHelper.getInt(ServerConstants.HTTP_MAX_CONN_TOTAL_CONF_KEY, 150));
+		params.setConnectionTimeout(PreferenceHelper.getInt(ServerConstants.HTTP_CONN_TIMEOUT_CONF_KEY, 15000)); //15s
+		params.setSoTimeout(PreferenceHelper.getInt(ServerConstants.HTTP_SO_TIMEOUT_CONF_KEY, 30000)); //30s
+		connectionManager.setParams(params);
 
 		HttpClientParams clientParams = new HttpClientParams();
-		clientParams.setConnectionManagerTimeout(300000); // 5 minutes
+		clientParams.setConnectionManagerTimeout(PreferenceHelper.getInt(ServerConstants.HTTP_CONN_MGR_TIMEOUT_CONF_KEY, 300000)); // 5 minutes
 
 		return new HttpClient(clientParams, connectionManager);
 	}
