@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2015 IBM Corporation and others.
+ * Copyright (c) 2012, 2016 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -35,6 +35,7 @@ import org.eclipse.orion.server.tests.servlets.xfer.TransferTest;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -154,6 +155,48 @@ public class SearchTest extends FileSystemTest {
 		createTestData();
 	}
 
+	/**
+	 * @see https://bugs.eclipse.org/bugs/show_bug.cgi?id=505737
+	 * @throws Exception
+	 */
+	@Test
+	public void testUnknownTerm() throws Exception {
+		try {
+			JSONObject result = doSearch("Unknown:'hello'");
+			assertNoMatch(result);
+		} catch(NullPointerException npe) {
+			Assert.fail("No NPE should have been thrown");
+		}
+	}
+	
+	/**
+	 * @see https://bugs.eclipse.org/bugs/show_bug.cgi?id=505737
+	 * @throws Exception
+	 */
+	@Test
+	public void testUnknownTermMixedTail() throws Exception {
+		try {
+			JSONObject result = doSearch("Name:'Foo'+NameLower:'foo'+Unknown:'hello'");
+			assertNoMatch(result);
+		} catch(NullPointerException npe) {
+			Assert.fail("No NPE should have been thrown");
+		}
+	}
+	
+	/**
+	 * @see https://bugs.eclipse.org/bugs/show_bug.cgi?id=505737
+	 * @throws Exception
+	 */
+	@Test
+	public void testUnknownTermMixedMid() throws Exception {
+		try {
+			JSONObject result = doSearch("Name:'Foo'+Unknown:'hello'+NameLower:'foo'");
+			assertNoMatch(result);
+		} catch(NullPointerException npe) {
+			Assert.fail("No NPE should have been thrown");
+		}
+	}
+	
 	/**
 	 * Tests finding search results on a part of a word.
 	 */

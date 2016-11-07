@@ -130,6 +130,9 @@ public class SearchServlet extends OrionServlet {
 							}
 						}
 					}
+				} else if(term.indexOf(":") > -1) {
+					//unknown search term, ignore
+					continue;
 				} else {
 					//decode the term string now
 					try {
@@ -162,13 +165,16 @@ public class SearchServlet extends OrionServlet {
 		JSONObject resultsJSON = new JSONObject();
 		JSONObject responseJSON = new JSONObject();
 		try {
-			resultsJSON.put("numFound", files.size());
 			resultsJSON.put("start", 0);
-
 			JSONArray docs = new JSONArray();
-			for (SearchResult file : files) {
-				docs.put(file.toJSON(contextPath));
+			int found = 0;
+			if(files != null) {
+				found = files.size();
+				for (SearchResult file : files) {
+					docs.put(file.toJSON(contextPath));
+				}
 			}
+			resultsJSON.put("numFound", found);
 			resultsJSON.put("docs", docs);
 			// Add to parent JSON
 			JSONObject responseHeader = new JSONObject();

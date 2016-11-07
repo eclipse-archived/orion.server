@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2015 IBM Corporation and others.
+ * Copyright (c) 2014, 2016 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -195,6 +195,9 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 	 */
 	public List<SearchResult> search(SearchOptions options) throws SearchException {
 		List<SearchResult> files = new LinkedList<SearchResult>();
+		if(!options.isFileContentsSearch() && options.getFilenamePattern() == null) {
+			return files;
+		}
 		try {
 			for (SearchScope scope : options.getScopes()) {
 				currentWorkspace = scope.getWorkspace();
@@ -252,11 +255,13 @@ public class FileGrepper extends DirectoryWalker<SearchResult> {
 	 * @return the correct search term.
 	 */
 	private String undoLuceneEscape(String searchTerm) {
-		String specialChars = "+-&|!(){}[]^\"~:\\";
-		for (int i = 0; i < specialChars.length(); i++) {
-			String character = specialChars.substring(i, i + 1);
-			String escaped = "\\" + character;
-			searchTerm = searchTerm.replaceAll(Pattern.quote(escaped), character);
+		if(searchTerm != null) {
+			String specialChars = "+-&|!(){}[]^\"~:\\";
+			for (int i = 0; i < specialChars.length(); i++) {
+				String character = specialChars.substring(i, i + 1);
+				String escaped = "\\" + character;
+				searchTerm = searchTerm.replaceAll(Pattern.quote(escaped), character);
+			}
 		}
 		return searchTerm;
 	}
