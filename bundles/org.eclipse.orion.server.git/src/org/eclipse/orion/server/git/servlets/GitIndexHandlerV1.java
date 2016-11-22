@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2015 IBM Corporation and others.
+ * Copyright (c) 2011, 2016 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -107,6 +107,9 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 		ObjectStream stream = index.toObjectStream();
 		if (stream == null) {
 			String msg = NLS.bind("{0} not found in index", pattern); //$NON-NLS-1$
+			if ("true".equals(request.getHeader("read-if-exists"))) {
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.WARNING, 204, msg, null)); 
+			}
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.OK, HttpServletResponse.SC_NOT_FOUND, msg, null));
 		}
 		IOUtilities.pipe(stream, response.getOutputStream(), true, false);
