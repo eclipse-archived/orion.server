@@ -85,8 +85,9 @@ public class StatusResult {
 	}
 
 	public int getChanged() {
-		if (changedNames != null)
+		if (changedNames != null) {
 			return changedNames.length;
+		}
 		return changed;
 	}
 
@@ -99,9 +100,20 @@ public class StatusResult {
 		return changedNames;
 	}
 
+	/**
+	 * Ask if a given name is found in the changed name list
+	 * @param name The string name
+	 * @return A boolean if the given name is in the list or not
+	 * @since 14.0
+	 */
+	public boolean containsChangedName(String name) {
+		return arrayContains(this.changedNames, name);
+	}
+	
 	public StatusResult setChangedContents(String... changedContents) {
-		if (changedNames == null || changedNames.length != changedContents.length)
+		if (changedNames == null || changedNames.length != changedContents.length) {
 			throw new IllegalStateException("changedNames has to be set first");
+		}
 		this.changedContents = changedContents;
 		return this;
 	}
@@ -110,6 +122,16 @@ public class StatusResult {
 		return changedContents;
 	}
 
+	/**
+	 * Ask if the given contents are found in the changed contents list
+	 * @param name The string contents
+	 * @return A boolean if the given contents are in the list or not
+	 * @since 14.0
+	 */
+	public boolean containsChangedContent(String contents) {
+		return arrayContains(this.changedContents, contents);
+	}
+	
 	public StatusResult setChangedDiffs(String... changedDiffs) {
 		if (changedNames == null || changedNames.length != changedDiffs.length)
 			throw new IllegalStateException("changedNames has to be set first");
@@ -216,6 +238,16 @@ public class StatusResult {
 		return this;
 	}
 
+	/**
+	 * Ask if a given name is found in the modified name list
+	 * @param name The string name
+	 * @return A boolean if the given name is in the list or not
+	 * @since 14.0
+	 */
+	public boolean containsModifiedName(String name) {
+		return arrayContains(this.modifiedNames, name);
+	}
+	
 	public String[] getModifiedNames() {
 		return modifiedNames;
 	}
@@ -229,6 +261,16 @@ public class StatusResult {
 		return modifiedPaths;
 	}
 
+	/**
+	 * Ask if a given path is found in the modified path list
+	 * @param name The string path
+	 * @return A boolean if the given path is in the list or not
+	 * @since 14.0
+	 */
+	public boolean containsModifiedPath(String path) {
+		return arrayContains(this.modifiedPaths, path);
+	}
+	
 	public StatusResult setModifiedContents(String... modifiedContents) {
 		if (modifiedNames == null || modifiedNames.length != modifiedContents.length)
 			throw new IllegalStateException("modifiedNames has to be set first");
@@ -240,6 +282,35 @@ public class StatusResult {
 		return modifiedContents;
 	}
 
+	/**
+	 * Ask if the given contents are found in the modified contents list
+	 * @param name The string contents
+	 * @return A boolean if the given contents are in the list or not
+	 * @since 14.0
+	 */
+	public boolean containsModifiedContent(String contents) {
+		return arrayContains(this.modifiedContents, contents);
+	}
+	
+	/**
+	 * Delegate method to walk an array looking for a certain value
+	 * @param arr The array to check
+	 * @param value
+	 * @return A boolean if the array contains the given value
+	 * @since 14.0
+	 */
+	private <T> boolean arrayContains(T[] arr, T value) {
+		if(arr == null) {
+			return false;
+		}
+		for(T val: arr) {
+			if(val.equals(value)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	public StatusResult setModifiedDiffs(String... modifiedDiffs) {
 		if (modifiedNames == null || modifiedNames.length != modifiedDiffs.length)
 			throw new IllegalStateException("modifiedNames has to be set first");

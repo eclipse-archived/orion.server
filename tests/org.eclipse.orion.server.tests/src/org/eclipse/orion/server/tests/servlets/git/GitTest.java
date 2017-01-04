@@ -1382,11 +1382,13 @@ public abstract class GitTest extends FileSystemTest {
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_CHANGED);
 		assertEquals(expected.getChanged(), statusArray.length());
 		if (expected.getChangedNames() != null) {
-			for (int i = 0; i < expected.getChangedNames().length; i++) {
+			for(int i = 0; i < statusArray.length(); i++) {
 				JSONObject child = statusArray.getJSONObject(i);
-				assertEquals(expected.getChangedNames()[i], child.getString(ProtocolConstants.KEY_NAME));
+				String name = child.getString(ProtocolConstants.KEY_NAME);
+				assertTrue("Name: "+name+" was not found in the expected changed names list.", expected.containsChangedName(name));
 				if (expected.getChangedContents() != null) {
-					assertEquals("Invalid file content", expected.getChangedContents()[i], getFileContent(child));
+					String contents = getFileContent(child);
+					assertTrue("Invalid file content", expected.containsChangedContent(contents));
 				}
 				if (expected.getChangedDiffs() != null) {
 					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
@@ -1447,11 +1449,13 @@ public abstract class GitTest extends FileSystemTest {
 		statusArray = statusResponse.getJSONArray(GitConstants.KEY_STATUS_MODIFIED);
 		assertEquals(expected.getModified(), statusArray.length());
 		if (expected.getModifiedNames() != null) {
-			for (int i = 0; i < expected.getModifiedNames().length; i++) {
+			for (int i = 0; i < statusArray.length(); i++) {
 				JSONObject child = statusArray.getJSONObject(i);
-				assertEquals(expected.getModifiedNames()[i], child.getString(ProtocolConstants.KEY_NAME));
+				String name = child.getString(ProtocolConstants.KEY_NAME);
+				assertTrue("The name: "+name+" was not found in the expected modified names list", expected.containsModifiedName(name));
 				if (expected.getModifiedContents() != null) {
-					assertEquals("Invalid file content", expected.getModifiedContents()[i], getFileContent(child));
+					String contents = getFileContent(child);
+					assertTrue("Invalid file content", expected.containsModifiedContent(contents));
 				}
 				if (expected.getModifiedDiffs() != null) {
 					JSONObject gitSection = child.getJSONObject(GitConstants.KEY_GIT);
@@ -1469,8 +1473,9 @@ public abstract class GitTest extends FileSystemTest {
 			}
 		}
 		if (expected.getModifiedPaths() != null) {
-			for (int i = 0; i < expected.getModifiedPaths().length; i++) {
-				assertEquals(expected.getModifiedPaths()[i], statusArray.getJSONObject(i).getString(ProtocolConstants.KEY_PATH));
+			for (int i = 0; i < statusArray.length(); i++) {
+				String path = statusArray.getJSONObject(i).getString(ProtocolConstants.KEY_PATH);
+				assertTrue("Path: "+path+" was not in the expected modified paths list", expected.containsModifiedPath(path));
 			}
 		}
 
@@ -1508,7 +1513,7 @@ public abstract class GitTest extends FileSystemTest {
 
 		return statusResponse;
 	}
-
+	
 	protected JSONArray listClones(String workspaceId, IPath path) throws JSONException, IOException, SAXException {
 		WebRequest request = GitCloneTest.listGitClonesRequest(workspaceId, null);
 		WebResponse response = webConversation.getResponse(request);
