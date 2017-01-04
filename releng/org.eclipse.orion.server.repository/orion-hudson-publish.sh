@@ -255,8 +255,8 @@ if [ "${SKIP_DEPLOY}" != "true" ]; then
 	if [ "${ServerTestFailure}" -eq 0 ]; then
 		if [[ "${JOB_NAME}" == *-dev ]]; then
 			echo "Deploying successful build to orion.eclipse.org."
-			echo "ssh ahunter@build.eclipse.org ./deploy.sh -archive ${remoteDropDir}/eclipse-orion-${version}-linux.gtk.x86_64.zip"
-			ssh ahunter@build.eclipse.org ./deploy.sh -archive ${remoteDropDir}/eclipse-orion-${version}-linux.gtk.x86_64.zip
+			echo "ssh squarti@build.eclipse.org ./deploy.sh -archive ${remoteDropDir}/eclipse-orion-${version}-linux.gtk.x86_64.zip"
+			ssh squarti@build.eclipse.org ./deploy.sh -archive ${remoteDropDir}/eclipse-orion-${version}-linux.gtk.x86_64.zip
 		else
 			echo "Not deploying this successful build."
 		fi
