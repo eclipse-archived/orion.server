@@ -268,10 +268,10 @@ public class SimpleMetaStoreUtil {
 	 * @return The user id.
 	 */
 	public static String decodeUserIdFromWorkspaceId(String workspaceId) {
-		if (workspaceId.indexOf(SEPARATOR) == -1) {
+		if (workspaceId.lastIndexOf(SEPARATOR) == -1) {
 			return null;
 		}
-		return workspaceId.substring(0, workspaceId.indexOf(SEPARATOR));
+		return workspaceId.substring(0, workspaceId.lastIndexOf(SEPARATOR));
 	}
 
 	/**
@@ -284,10 +284,10 @@ public class SimpleMetaStoreUtil {
 	 * @return The workspace name.
 	 */
 	public static String decodeWorkspaceNameFromWorkspaceId(String workspaceId) {
-		if (workspaceId.indexOf(SEPARATOR) == -1) {
+		if (workspaceId.lastIndexOf(SEPARATOR) == -1) {
 			return null;
 		}
-		return workspaceId.substring(workspaceId.indexOf(SEPARATOR) + 1);
+		return workspaceId.substring(workspaceId.lastIndexOf(SEPARATOR) + 1);
 	}
 
 	/**
