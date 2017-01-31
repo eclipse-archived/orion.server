@@ -32,10 +32,16 @@ public abstract class TaskJob extends Job implements ITaskCanceller {
 	private IStatus realResult;
 	private Long taskExpirationTime = null;
 
+	private static int ActiveInstanceCount = 0;
+
 	public TaskJob(String userRunningTask, boolean keep) {
 		super("Long running task job");
 		this.userRunningTask = userRunningTask;
 		this.keep = keep;
+	}
+
+	public static int GetActiveCount() {
+		return ActiveInstanceCount;
 	}
 
 	protected void setFinalMessage(String message) {
@@ -132,6 +138,7 @@ public abstract class TaskJob extends Job implements ITaskCanceller {
 
 	@Override
 	protected IStatus run(IProgressMonitor progressMonitor) {
+		ActiveInstanceCount++;
 		try {
 			realResult = performJob(progressMonitor);
 			if (task == null) {
@@ -141,6 +148,7 @@ public abstract class TaskJob extends Job implements ITaskCanceller {
 			//return the actual result so errors are logged, see bug 353190
 			return Status.OK_STATUS; // see bug 353190;
 		} finally {
+			ActiveInstanceCount--;
 			cleanUp();
 		}
 	}

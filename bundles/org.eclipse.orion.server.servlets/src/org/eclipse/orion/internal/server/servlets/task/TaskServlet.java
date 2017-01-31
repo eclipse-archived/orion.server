@@ -195,6 +195,18 @@ public class TaskServlet extends OrionServlet {
 			return;
 		}
 
+		if (path.segmentCount() == 1 && "count".equals(path.segment(0))) { //$NON-NLS-1$
+			JSONObject result = new JSONObject();
+			try {
+				result.put("count", taskService.getActiveCount()); //$NON-NLS-1$
+			} catch (JSONException e) {
+				handleException(resp, e.getMessage(), e);
+				return;
+			}
+			writeJSONResponse(req, resp, result);
+			return;
+		}
+
 		if (path.segmentCount() != 2 || (!"id".equals(path.segment(0)) && !"temp".equals(path.segment(0)))) {//$NON-NLS-1$
 			handleException(resp, "Invalid request path: " + EncodingUtils.encodeForHTML(path.toString()), null, HttpServletResponse.SC_BAD_REQUEST);
 			return;

@@ -129,6 +129,12 @@ public class ServerConstants {
 	public static final String CONFIG_FILE_USER_CONTENT = "orion.file.content.location"; //$NON-NLS-1$
 
 	/**
+	 * The name of the configuration property specifying the root location to use for storing task info.
+	 * Must be an absolute path on the server file system.
+	 */
+	public static final String CONFIG_FILE_TASKS = "orion.file.tasks.location"; //$NON-NLS-1$
+
+	/**
 	 * The name of configuration property specifying the SMTP host for sending mail
 	 */
 	public static final String CONFIG_MAIL_SMTP_HOST = "mail.smtp.host"; //$NON-NLS-1$

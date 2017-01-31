@@ -40,6 +40,12 @@ public interface ITaskService {
 	TaskInfo createTask(String userId, boolean keep, ITaskCanceller taskCanceller);
 
 	/**
+	 * Returns the current count of active tasks.
+	 * @return the current count of active tasks
+	 */
+	int getActiveCount();
+
+	/**
 	 * Returns the task with the given task id, or <code>null</code> if no such task exists.
 	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
 	 * @param id The task id

@@ -119,27 +119,15 @@ public class Activator implements BundleActivator {
 	 * @throws IOException
 	 */
 	private IPath getTaskLocation() throws IOException {
-		BundleContext context = Activator.getDefault().getContext();
-		Collection<ServiceReference<Location>> refs;
-		try {
-			refs = context.getServiceReferences(Location.class, Location.INSTANCE_FILTER);
-		} catch (InvalidSyntaxException e) {
-			// we know the instance location filter syntax is valid
-			throw new RuntimeException(e);
+		// Make sure the registry is started so the preferences work correctly.
+		// Lots of bundles access the file system location, and some of them start early
+		// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=439716#c10
+		ensureBundleStarted("org.eclipse.equinox.registry"); // $NON-NLS-1$
+		String locationPref = PreferenceHelper.getString(ServerConstants.CONFIG_FILE_TASKS);
+		if (locationPref != null) {
+			return new Path(locationPref);
 		}
-		if (refs.isEmpty())
-			throw new IOException("Framework instance location is undefined"); //$NON-NLS-1$
-		ServiceReference<Location> ref = refs.iterator().next();
-		Location location = context.getService(ref);
-		try {
-			if (location == null)
-				throw new IOException("Framework instance location is undefined"); //$NON-NLS-1$
-			URL root = location.getDataArea(ServerConstants.PI_SERVER_CORE);
-			// strip off file: prefix from URL
-			return new Path(root.toExternalForm().substring(5)).append("tasks"); //$NON-NLS-1$
-		} finally {
-			context.ungetService(ref);
-		}
+		return getPlatformLocation().append(".metadata/.tasks"); // $NON-NLS-1$
 	}
 
 	private void initializeMetaStore() {

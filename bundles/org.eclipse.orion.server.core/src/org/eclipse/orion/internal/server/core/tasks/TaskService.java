@@ -18,12 +18,8 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import javax.servlet.http.HttpServletResponse;
-
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.core.tasks.CorruptedTaskException;
 import org.eclipse.orion.server.core.tasks.ITaskCanceller;
@@ -31,6 +27,7 @@ import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskDoesNotExistException;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.core.tasks.TaskInfo.TaskStatus;
+import org.eclipse.orion.server.core.tasks.TaskJob;
 import org.eclipse.orion.server.core.tasks.TaskOperationException;
 
 /**
@@ -42,6 +39,7 @@ public class TaskService implements ITaskService {
 	private Timer timer;
 	private static long TEMP_TASK_LIFE = 15 * 60 * 1000; // 15 minutes in milliseconds
 	private Map<TaskDescription, ITaskCanceller> taskCancellers = new HashMap<TaskDescription, ITaskCanceller>();
+	private TaskCleanupJob taskCleanupJob;
 
 	private class RemoveTask extends TimerTask {
 
@@ -70,31 +68,7 @@ public class TaskService implements ITaskService {
 	public TaskService(IPath baseLocation) {
 		store = new TaskStore(baseLocation.toFile());
 		timer = new Timer();
-		cleanUpTasks();
-	}
-
-	private void cleanUpTasks() {
-		store.removeAllTempTasks();
-		List<TaskDescription> allTasks = store.readAllTasks();
-		for (TaskDescription taskDescription : allTasks) {
-			TaskInfo task;
-			try {
-				task = TaskInfo.fromJSON(taskDescription, store.readTask(taskDescription));
-				if (task == null) {
-					continue;
-				}
-				if (task.isRunning()) {// mark all running tasks as failed due to server restart
-					task.done(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Task could not be completed due to server restart",
-							null));
-					updateTask(task);
-				} else if (task.getExpires() != null) {
-					timer.schedule(new RemoveTask(taskDescription, this), new Date(task.getExpires()));
-				}
-			} catch (CorruptedTaskException e) {
-				LogHelper.log(e);
-				store.removeTask(taskDescription);
-			}
-		}
+		initTaskCleanupJob(store);
 	}
 
 	private TaskInfo internalRemoveTask(String userId, String id, boolean keep, Date dateRemoved) throws TaskOperationException {
@@ -130,6 +104,10 @@ public class TaskService implements ITaskService {
 		TaskInfo task = new TaskInfo(userId, new UniversalUniqueIdentifier().toBase64String(), keep);
 		store.writeTask(new TaskDescription(userId, task.getId(), keep), task.toJSON().toString());
 		return task;
+	}
+
+	public int getActiveCount() {
+		return TaskJob.GetActiveCount();
 	}
 
 	public TaskInfo getTask(String userId, String id, boolean keep) {
@@ -213,5 +191,15 @@ public class TaskService implements ITaskService {
 		task.setStatus(TaskStatus.ABORT);
 		updateTask(task);
 		taskCancellers.remove(taskDescription);
+	}
+
+	private void initTaskCleanupJob(TaskStore store) {
+		taskCleanupJob = new TaskCleanupJob(store);
+		/* 
+		 * Schedule the job to start after a random delay of up to 24 hours,
+		 * in an attempt to stagger runs of the job on concurrently-deployed
+		 * servers.
+		 */
+		taskCleanupJob.schedule((int)(Math.random() * 86400000));
 	}
 }
