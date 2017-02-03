@@ -23,7 +23,7 @@ public class FileLocker {
 	private File lockFile;
 	private RandomAccessFile raFile = null;
 	private FileLock lock = null;
-	private static final boolean locking = Boolean.parseBoolean(PreferenceHelper.getString(ServerConstants.CONFIG_FILE_CONTENT_LOCKING));
+	private static final boolean locking = Boolean.parseBoolean(PreferenceHelper.getString(ServerConstants.CONFIG_FILE_CONTENT_LOCKING, "true")); //$NON-NLS-1$
 
 	/**
 	 * Create the locker.
