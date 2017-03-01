@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2016 IBM Corporation and others.
+ * Copyright (c) 2010, 2017 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,9 +10,13 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.file;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.util.HashMap;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -28,6 +32,8 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.EncodingUtils;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -36,6 +42,8 @@ import org.eclipse.osgi.util.NLS;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.osgi.framework.Version;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * General responder for IFileStore. This class provides general support for serializing
@@ -178,9 +186,117 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 			}
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, 404, NLS.bind("File not found: {0}", EncodingUtils.encodeForHTML(request.getPathInfo())), null));
 		}
-		if (fileInfo.isDirectory())
+		if("true".equals(IOUtilities.getQueryParameter(request, "project"))) {
+			return getProject(request, response, file, fileInfo);
+		}
+		if (fileInfo.isDirectory()) {
 			return handleDirectory(request, response, file);
+		}
 		return handleFile(request, response, file);
 	}
 
+	/**
+	 * Tries to find the enclosing project context for the given file information
+	 * @param request The original request
+	 * @param fileInfo The file information to start looking from
+	 * @param names The map of file names that are considered "project-like" files
+	 * @return The name of the project containing the given file information
+	 * @throws ServletException 
+	 * @since 14.0
+	 */
+	private boolean getProject(HttpServletRequest request, HttpServletResponse response, IFileStore file, IFileInfo fileInfo) throws ServletException {
+		String n = IOUtilities.getQueryParameter(request, "names");
+		HashMap<String, Boolean> names = new HashMap<String, Boolean>();
+		names.put(".git", true);
+		names.put("project.json", false);
+		if(n != null) {
+			try {
+				String[] clientNames = URLDecoder.decode(n, "UTF-8").split(",");
+				for (String _n : clientNames) {
+					names.put(_n, false);
+				}
+			} catch(UnsupportedEncodingException use) {
+				Logger logger = LoggerFactory.getLogger(ServletFileStoreHandler.class);
+				logger.error("Failed to decode client project names: " + n);
+			}
+		}
+		IFileStore project = findProject(request, file, fileInfo, names);
+		if(project == null) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.WARNING, 204, NLS.bind("No project context for: {0}", EncodingUtils.encodeForHTML(fileInfo.getName())), null));
+		}
+		try {
+			JSONObject result = toJSON(project, project.fetchInfo(), project.toURI());
+			DirectoryHandlerV1.encodeChildren(project, project.toURI(), result, 0);
+			OrionServlet.writeJSONResponse(request, response, result);
+		} catch(CoreException ce) {
+			Logger logger = LoggerFactory.getLogger(ServletFileStoreHandler.class);
+			logger.error("Failed to encode children for project: " + project.getName());
+		} catch (IOException ioe) {
+			Logger logger = LoggerFactory.getLogger(ServletFileStoreHandler.class);
+			logger.error("Failed to write response for project: " + project.getName());
+		}
+		return true;
+	}
+	
+	/**
+	 * @param fileInfo The originating fileInfo 
+	 * @param file The originating file store
+	 * @param request The original request
+	 * @param names The map of names to consider project-like
+	 * @return The {@link IFileStore} for the project or <code>null</code>
+	 * @since 14.0
+	 */
+	private IFileStore findProject(HttpServletRequest request, IFileStore file, IFileInfo fileInfo, HashMap<String, Boolean> names) {
+		IFileStore parent = file;
+		try {
+			String wsPath = getWorkspacePath();
+			File parentFile = parent.toLocalFile(EFS.NONE, null);
+			if (parentFile == null) {
+				Logger logger = LoggerFactory.getLogger(ServletFileStoreHandler.class);
+				logger.error("Unable to get the parent local file from: " + parent);
+				return null;
+			}
+			while(parent != null && parentFile != null && parentFile.getAbsolutePath().startsWith(wsPath)) {
+				IFileInfo[] children = parent.childInfos(EFS.NONE, null);
+				for (IFileInfo childInfo : children) {
+					if(childInfo.exists() && names.containsKey(childInfo.getName())) {
+						if(childInfo.isDirectory() && names.get(childInfo.getName())) {
+							return parent;
+						} else if(!names.get(childInfo.getName())) {
+							return parent;
+						}
+					}
+				}
+				parent = parent.getParent();
+				parentFile = parent.toLocalFile(EFS.NONE, null);
+			}
+		} catch (CoreException ce) {
+			Logger logger = LoggerFactory.getLogger(ServletFileStoreHandler.class);
+			logger.error("Exception computing parent folder from: " + parent);
+			return null;
+		}
+		return null;
+	}
+	
+	/**
+	 * Returns the workspace absolute path or <code>null</code>
+	 * @return The absolute workspace path
+	 * @since 14.0
+	 */
+	private String getWorkspacePath() {
+		File workspaceRoot = null;
+		try {
+			workspaceRoot = OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null);
+			if (workspaceRoot == null) {
+				Logger logger = LoggerFactory.getLogger(ServletFileStoreHandler.class);
+				logger.error("Unable to get the root location from: " + OrionConfiguration.getRootLocation());
+				return null;
+			}
+		} catch (CoreException e) {
+			Logger logger = LoggerFactory.getLogger(ServletFileStoreHandler.class);
+			logger.error("Unable to get the root location", e);
+			return null;
+		}
+		return workspaceRoot.getAbsolutePath();
+	}
 }
