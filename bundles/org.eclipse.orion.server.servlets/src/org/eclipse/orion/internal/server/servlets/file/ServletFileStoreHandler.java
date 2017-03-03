@@ -249,8 +249,9 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.WARNING, 204, NLS.bind("No project context for: {0}", EncodingUtils.encodeForHTML(fileInfo.getName())), null));
 		}
 		try {
-			JSONObject result = toJSON(project, project.fetchInfo(), getProjectURI(project.toURI(), workspacePath, workspaceId));
-			DirectoryHandlerV1.encodeChildren(project, project.toURI(), result, 0);
+			URI location = getProjectURI(project.toURI(), workspacePath, workspaceId);
+			JSONObject result = toJSON(project, project.fetchInfo(), location);
+			DirectoryHandlerV1.encodeChildren(project, location, result, 0);
 			OrionServlet.writeJSONResponse(request, response, result);
 		} catch(CoreException ce) {
 			Logger logger = LoggerFactory.getLogger(ServletFileStoreHandler.class);
