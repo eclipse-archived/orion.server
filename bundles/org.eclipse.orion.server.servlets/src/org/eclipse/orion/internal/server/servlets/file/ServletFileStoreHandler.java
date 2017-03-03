@@ -28,7 +28,9 @@ import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.provider.FileInfo;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.EncodingUtils;
@@ -36,6 +38,7 @@ import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.service.resolver.VersionRange;
 import org.eclipse.osgi.util.NLS;
@@ -220,12 +223,33 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 				logger.error("Failed to decode client project names: " + n);
 			}
 		}
-		IFileStore project = findProject(request, file, fileInfo, names);
+		String pathString = request.getPathInfo();
+        IPath path = new Path(pathString);
+        String workspacePath = null;
+        String workspaceId = null;
+        try {
+            WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(0));
+            workspaceId = workspace.getUniqueId();
+            IFileStore userHome = OrionConfiguration.getMetaStore().getUserHome(workspace.getUserId());
+            IFileStore workspaceHome = userHome.getChild(workspaceId.substring(workspaceId.indexOf('-') + 1));
+            File workspaceRoot = workspaceHome.toLocalFile(EFS.NONE, null);
+            workspacePath = workspaceRoot.getAbsolutePath();
+        } catch (CoreException e) {
+        	Logger logger = LoggerFactory.getLogger(ServletFileStoreHandler.class);
+			logger.error("Exception computing workspace path");
+        }
+		if(workspacePath == null) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.WARNING, 204, NLS.bind("No workspace path for: {0}", EncodingUtils.encodeForHTML(fileInfo.getName())), null));
+		}
+		if(workspaceId == null) {
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.WARNING, 204, NLS.bind("No workspace ID for: {0}", EncodingUtils.encodeForHTML(fileInfo.getName())), null));
+		}
+		IFileStore project = findProject(request, file, fileInfo, names, workspacePath);
 		if(project == null) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.WARNING, 204, NLS.bind("No project context for: {0}", EncodingUtils.encodeForHTML(fileInfo.getName())), null));
 		}
 		try {
-			JSONObject result = toJSON(project, project.fetchInfo(), project.toURI());
+			JSONObject result = toJSON(project, project.fetchInfo(), getProjectURI(project.toURI(), workspacePath, workspaceId));
 			DirectoryHandlerV1.encodeChildren(project, project.toURI(), result, 0);
 			OrionServlet.writeJSONResponse(request, response, result);
 		} catch(CoreException ce) {
@@ -239,6 +263,23 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 	}
 	
 	/**
+	 * Resolve the correct project URI using the <code>orion</code> scheme
+	 * @param projectUri The computed project URI
+	 * @return The {@link URI} to pass back in the response
+	 * @since 14.0
+	 */
+	private URI getProjectURI(URI projectUri, String workspacePath, String workspaceId) {
+		String pathInfo = projectUri.getPath().substring(workspacePath.length());
+		try {
+			// Note: no query string!
+			return new URI("orion", null, "/file/"+workspaceId+pathInfo, null, null);
+		} catch (URISyntaxException e) {
+			//location not properly encoded
+			return null;
+		}
+	}
+	
+	/**
 	 * @param fileInfo The originating fileInfo 
 	 * @param file The originating file store
 	 * @param request The original request
@@ -246,17 +287,16 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 	 * @return The {@link IFileStore} for the project or <code>null</code>
 	 * @since 14.0
 	 */
-	private IFileStore findProject(HttpServletRequest request, IFileStore file, IFileInfo fileInfo, HashMap<String, Boolean> names) {
+	private IFileStore findProject(HttpServletRequest request, IFileStore file, IFileInfo fileInfo, HashMap<String, Boolean> names, String workspacePath) {
 		IFileStore parent = file;
 		try {
-			String wsPath = getWorkspacePath();
 			File parentFile = parent.toLocalFile(EFS.NONE, null);
 			if (parentFile == null) {
 				Logger logger = LoggerFactory.getLogger(ServletFileStoreHandler.class);
 				logger.error("Unable to get the parent local file from: " + parent);
 				return null;
 			}
-			while(parent != null && parentFile != null && parentFile.getAbsolutePath().startsWith(wsPath)) {
+			while(parent != null && parentFile != null && parentFile.getAbsolutePath().startsWith(workspacePath)) {
 				IFileInfo[] children = parent.childInfos(EFS.NONE, null);
 				for (IFileInfo childInfo : children) {
 					if(childInfo.exists() && names.containsKey(childInfo.getName())) {
@@ -276,27 +316,5 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 			return null;
 		}
 		return null;
-	}
-	
-	/**
-	 * Returns the workspace absolute path or <code>null</code>
-	 * @return The absolute workspace path
-	 * @since 14.0
-	 */
-	private String getWorkspacePath() {
-		File workspaceRoot = null;
-		try {
-			workspaceRoot = OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null);
-			if (workspaceRoot == null) {
-				Logger logger = LoggerFactory.getLogger(ServletFileStoreHandler.class);
-				logger.error("Unable to get the root location from: " + OrionConfiguration.getRootLocation());
-				return null;
-			}
-		} catch (CoreException e) {
-			Logger logger = LoggerFactory.getLogger(ServletFileStoreHandler.class);
-			logger.error("Unable to get the root location", e);
-			return null;
-		}
-		return workspaceRoot.getAbsolutePath();
 	}
 }
