@@ -71,7 +71,7 @@ public class GoogleOAuthConsumer extends OAuthConsumer {
 			jsonClaim = new JSONObject(decodedClaim);
 			userId = jsonClaim.getString(ID_PARAMETER);
 			provider = jsonClaim.getString(PROVIDER_PARAMETER);
-			openid_id = jsonClaim.optString(OPEN_ID_PARAMETER);
+			openid_id = jsonClaim.optString(OPEN_ID_PARAMETER, null);
 		} catch (JSONException e) {
 			throw new OAuthException(e);
 		}

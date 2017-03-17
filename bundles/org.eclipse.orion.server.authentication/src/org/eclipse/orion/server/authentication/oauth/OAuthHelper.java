@@ -175,7 +175,7 @@ public class OAuthHelper {
 			}
 			// Might need migration, try openid property
 			String openidIdentifier = oauthConsumer.getOpenidIdentifier();
-			if (openidIdentifier == null)
+			if (openidIdentifier == null || openidIdentifier.length() == 0)
 				return null;
 			userInfo = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.OPENID, ".*\\Q" + openidIdentifier + "\\E.*", true, false);
 			if (userInfo != null) {
