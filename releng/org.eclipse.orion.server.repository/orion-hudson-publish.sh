@@ -203,8 +203,9 @@ fi
 remoteDropDir=/home/data/httpd/download.eclipse.org/orion/drops/$dropDir
 echo "copy build ${dropDir} to ${remoteDropDir}"
 mkdir -p $remoteDropDir
-chmod g+ws $remoteDropDir
+chmod g+w $remoteDropDir
 cp -R $localDropDir/* $remoteDropDir/
+chmod g+w $remoteDropDir/*
 
 # Ensure p2.mirrorURLs property is used in update site
 echo "Setting p2.mirrorsURL to http://www.eclipse.org/downloads/download.php?format=xml&file=/$remoteUpdateSiteBase"
