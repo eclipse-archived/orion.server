@@ -209,6 +209,7 @@ public class GitCommitHandlerV1 extends AbstractGitHandler {
 			String msg = NLS.bind("Commit body for ref {0} not found", ref);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, msg, null));
 		}
+		response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$
 		IOUtilities.pipe(stream, response.getOutputStream(), true, false);
 
 		return true;
