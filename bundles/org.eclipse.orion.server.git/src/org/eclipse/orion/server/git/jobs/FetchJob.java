@@ -67,7 +67,7 @@ public class FetchJob extends GitJob {
 		super(userRunningTask, true, (GitCredentialsProvider) credentials);
 		// path: {remote}[/{branch}]/file/{...}
 		this.path = path;
-		this.remote = path.segment(0);
+		this.remote = GitUtils.decode(path.segment(0));
 		this.force = force;
 		this.branch = path.segment(1).equals("file") ? null : GitUtils.decode(path.segment(1)); //$NON-NLS-1$
 		builtMessages();

@@ -146,7 +146,7 @@ public class Remote extends GitObject {
 			o.put(ProtocolConstants.KEY_TYPE, RemoteBranch.TYPE);
 			o.put(GitConstants.KEY_URL, getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, remoteName, "url" /* RemoteConfig.KEY_URL */)); //$NON-NLS-1$
 			o.put(ProtocolConstants.KEY_LOCATION, BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(cloneLocation,
-					"", /* short name is {remote}/{branch} */remoteName + "/" + GitUtils.encode(gerrit ? fullName : newBranch))); //$NON-NLS-1$
+					"", /* short name is {remote}/{branch} */GitUtils.encode(remoteName) + "/" + GitUtils.encode(gerrit ? fullName : newBranch))); //$NON-NLS-1$
 			children.put(o);
 		}
 		return children;
@@ -154,7 +154,7 @@ public class Remote extends GitObject {
 
 	@Override
 	public URI getLocation() throws URISyntaxException {
-		return BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(cloneLocation, name, "" /* no branch name */); //$NON-NLS-1$
+		return BaseToRemoteConverter.REMOVE_FIRST_2.baseToRemoteLocation(cloneLocation, GitUtils.encode(name), "" /* no branch name */); //$NON-NLS-1$
 	}
 
 	@PropertyDescription(name = ProtocolConstants.KEY_NAME)

@@ -130,10 +130,10 @@ public class GitRemoteHandlerV1 extends ServletResourceHandler<String> {
 			if (page != null) {
 				int pageNo = Integer.parseInt(page);
 				int pageSize = request.getParameter("pageSize") == null ? PAGE_SIZE : Integer.parseInt(request.getParameter("pageSize"));
-				job = new RemoteDetailsJob(TaskJobHandler.getUserId(request), p.segment(0), p.removeFirstSegments(1), BaseToCloneConverter.getCloneLocation(
+				job = new RemoteDetailsJob(TaskJobHandler.getUserId(request), GitUtils.decode(p.segment(0)), p.removeFirstSegments(1), BaseToCloneConverter.getCloneLocation(
 						getURI(request), BaseToCloneConverter.REMOTE), commitsNumber, pageNo, pageSize, request.getRequestURI(), nameFilter);
 			} else {
-				job = new RemoteDetailsJob(TaskJobHandler.getUserId(request), p.segment(0), p.removeFirstSegments(1), BaseToCloneConverter.getCloneLocation(
+				job = new RemoteDetailsJob(TaskJobHandler.getUserId(request), GitUtils.decode(p.segment(0)), p.removeFirstSegments(1), BaseToCloneConverter.getCloneLocation(
 						getURI(request), BaseToCloneConverter.REMOTE), commitsNumber, nameFilter);
 			}
 			return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
