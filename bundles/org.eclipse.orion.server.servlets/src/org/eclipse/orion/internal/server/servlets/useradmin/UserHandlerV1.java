@@ -434,6 +434,10 @@ public class UserHandlerV1 extends ServletResourceHandler<String> {
 			userInfo.setProperty(UserConstants.EMAIL, data.getString(UserConstants.EMAIL));
 		}
 		if (data.has(UserConstants.OAUTH)) {
+			UserInfo existing = OrionConfiguration.getMetaStore().readUserByProperty(UserConstants.OAUTH, ".*\\Q" + data.getString(UserConstants.OAUTH) + "\\E.*", true, false);
+			if (existing != null) {
+				return statusHandler.handleRequest(req, resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_CONFLICT, "This account is already linked to another user", null));
+			}
 			userInfo.setProperty(UserConstants.OAUTH, data.getString(UserConstants.OAUTH));
 		}
 		if (data.has(UserConstants.OPENID)) {
