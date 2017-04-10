@@ -8,16 +8,12 @@ The idea is to exploit internet design principles throughout, instead of trying 
 existing desktop IDE concepts to the browser. See the [Orion wiki](http://wiki.eclipse.org/Orion) for more
 information about Orion.
 
-####*IMPORTANT: Orion Development happens at Eclipse.org, not GitHub.com.  Please Contribute using Eclipse.org tooling.*
-
 Contributing
 ------------
 
-Orion source code is available in an Eclipse Git repository, and there is also a mirror
-on GitHub. For complete details on getting the source and getting setup to develop Orion,
-see the [Orion wiki](http://wiki.eclipse.org/Orion/Getting_the_source).
+Orion source code is available in a GitHub repository. For complete details on getting the source and getting setup to develop Orion, see the [Orion wiki](http://wiki.eclipse.org/Orion/Getting_the_source).
 
-Bug reports and patches are welcome in [bugzilla](https://bugs.eclipse.org/bugs/enter_bug.cgi?product=Orion).
+Bug reports and patches are welcome in [bugzilla](https://bugs.eclipse.org/bugs/enter_bug.cgi?product=Orion), you can also open pull requests directly against the [repository on GitHub](https://github.com/eclipse/orion.server).
 
 License
 -------
@@ -27,27 +23,27 @@ This repository contains the Orion Java server, which is available under the [Ec
 How to build Orion using Maven
 ------------------------------
 
-###Install Maven:
+### Install Maven:
 
 Install latest Maven 3.0 from http://maven.apache.org
 
-###Clone Git repositories:
+### Clone Git repositories:
 
-Clone `org.eclipse.orion.client` and `org.eclipse.orion.server` under the same local folder
+Clone `orion.client` and `orion.server` under the same local folder
 
 ```
 % cd /my/git/repos
-% git clone http://git.eclipse.org/gitroot/orion/org.eclipse.orion.client.git
-% git clone http://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git
+% git clone https://github.com/eclipse/orion.client.git
+% git clone https://github.com/eclipse/orion.server.git
 ```
 
-###Run Maven build:
+### Run Maven build:
 ```
-% cd org.eclipse.orion.server
+% cd rion.server
 % mvn clean install -P platform-kepler,local-build -Dorion.client.build.skip -DskipTests
 ```
 
-###Run the Orion server
+### Run the Orion server
 ```
 % cd releng/org.eclipse.orion.server.repository/target/products/org.eclipse.orion/linux/gtk/x86_64/eclipse/
 % ./orion
