@@ -251,11 +251,7 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 		try {
 			URI location = getProjectURI(project.toURI(), workspacePath, workspaceId);
 			JSONObject result = toJSON(project, project.fetchInfo(), location);
-			DirectoryHandlerV1.encodeChildren(project, location, result, 0);
 			OrionServlet.writeJSONResponse(request, response, result);
-		} catch(CoreException ce) {
-			Logger logger = LoggerFactory.getLogger(ServletFileStoreHandler.class);
-			logger.error("Failed to encode children for project: " + project.getName());
 		} catch (IOException ioe) {
 			Logger logger = LoggerFactory.getLogger(ServletFileStoreHandler.class);
 			logger.error("Failed to write response for project: " + project.getName());
