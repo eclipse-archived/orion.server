@@ -72,7 +72,7 @@ public class GitFileDecorator implements IWebResourceDecorator {
 		boolean isWorkspace = ("/workspace".equals(servlet)); //$NON-NLS-1$
 
 		try {
-			if (isWorkspace && Method.POST.equals(Method.fromString(request.getMethod()))) {
+			if (isWorkspace && Method.POST.equals(Method.fromString(request.getMethod())) && representation.has(ProtocolConstants.KEY_CONTENT_LOCATION)) {
 				String contentLocation = representation.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 				// initialize a new git repository on project creation if specified by configuration

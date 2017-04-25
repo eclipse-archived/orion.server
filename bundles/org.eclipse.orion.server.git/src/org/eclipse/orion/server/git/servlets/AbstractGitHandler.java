@@ -102,6 +102,10 @@ public abstract class AbstractGitHandler extends ServletResourceHandler<String> 
 			}
 			IPath gitSearchPath = filePath.hasTrailingSeparator() ? filePath : filePath.removeLastSegments(1);
 			Set<Entry<IPath, File>> gitDirsFound = GitUtils.getGitDirs(gitSearchPath, Traverse.GO_UP).entrySet();
+			if (gitDirsFound.size() == 0) {
+				String msg = NLS.bind("Could not find repository for {0}", filePath);
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
+			}
 			Entry<IPath, File> firstGitDir = gitDirsFound.iterator().next();
 			File gitDir = firstGitDir.getValue();
 			if (gitDir == null) {

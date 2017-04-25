@@ -16,10 +16,15 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.metastore.UserInfo;
-import org.json.*;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Handles requests against a single user resource.
@@ -44,12 +49,15 @@ public class UserInfoResourceHandler extends MetadataInfoResourceHandler<UserInf
 			result.put(ProtocolConstants.KEY_USER_NAME, user.getUserName());
 			JSONArray workspacesJSON = new JSONArray();
 			for (String workspaceId : user.getWorkspaceIds()) {
+				WorkspaceInfo workspaceInfo = OrionConfiguration.getMetaStore().readWorkspace(workspaceId);
 				JSONObject workspace = new JSONObject();
+				workspace.put(ProtocolConstants.KEY_NAME, workspaceInfo.getFullName());
 				workspace.put(ProtocolConstants.KEY_ID, workspaceId);
 				workspace.put(ProtocolConstants.KEY_LOCATION, URIUtil.append(baseLocation, workspaceId));
 				workspacesJSON.put(workspace);
 			}
 			result.put(ProtocolConstants.KEY_WORKSPACES, workspacesJSON);
+		} catch (CoreException e) {
 		} catch (JSONException e) {
 			//should always be valid because we wrote it
 			throw new RuntimeException(e);

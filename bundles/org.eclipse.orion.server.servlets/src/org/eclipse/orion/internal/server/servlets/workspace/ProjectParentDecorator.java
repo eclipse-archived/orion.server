@@ -29,6 +29,7 @@ import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -67,6 +68,12 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 				}
 			}
 			IPath path = resourcePath.makeRelativeTo(basePath);
+			if (path.segmentCount() == 1) {
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace((path.segment(0)));
+				String workspaceName = workspace.getFullName();
+				if (workspaceName != null)
+					representation.put(ProtocolConstants.KEY_NAME, workspaceName);
+			}
 			//nothing to do if request is not a folder or file
 			if (path.segmentCount() < 2)
 				return;

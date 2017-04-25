@@ -40,6 +40,7 @@ import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.eclipse.jgit.treewalk.filter.PathFilter;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.workspace.UserInfoResourceHandler;
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
@@ -48,6 +49,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.git.objects.Tree;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -118,9 +120,15 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 	}
 
 	@Override
-	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String path) throws ServletException {
-		String userId = request.getRemoteUser();
-		if (path.length() == 0) {
+	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String pathString) throws ServletException {
+		IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
+		int segmentCount = path.segmentCount();
+		if (getMethod(request) == Method.GET && (
+				segmentCount == 0 || 
+				("workspace".equals(path.segment(0)) && path.segmentCount() == 2) || //$NON-NLS-1$
+				("file".equals(path.segment(0)) && path.segmentCount() == 2) //$NON-NLS-1$
+		)) {
+			String userId = request.getRemoteUser();
 			if (userId == null) {
 				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, "User name not specified",
 						null));
@@ -128,10 +136,14 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 			}
 			try {
 				UserInfo user = OrionConfiguration.getMetaStore().readUser(userId);
-				List<String> workspaces = user.getWorkspaceIds();
-				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(workspaces.get(0));
-				URI baseLocation = getURI(request);
-				URI baseLocationFile = URIUtil.append(baseLocation, "file"); //$NON-NLS-N$
+				URI baseLocation = new URI("orion", null, request.getServletPath(), null, null);
+				baseLocation = URIUtil.append(baseLocation, Tree.RESOURCE);
+				baseLocation = URIUtil.append(baseLocation, "file"); //$NON-NLS-N$
+				if (segmentCount == 0) {
+					OrionServlet.writeJSONResponse(request, response, UserInfoResourceHandler.toJSON(user, baseLocation), JsonURIUnqualificationStrategy.ALL_NO_GIT);
+					return true;
+				}
+				WorkspaceInfo workspace = OrionConfiguration.getMetaStore().readWorkspace(path.segment(1));
 				if (workspace != null) {
 					JSONArray children = new JSONArray();
 					for (String projectName : workspace.getProjectNames()) {
@@ -140,12 +152,13 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 							IPath projectPath = GitUtils.pathFromProject(workspace, project);
 							Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 							for (Map.Entry<IPath, File> entry : gitDirs.entrySet()) {
-								JSONObject repo = listEntry(entry.getKey().lastSegment(), 0, true, 0, baseLocationFile, entry.getKey().toPortableString());
+								JSONObject repo = listEntry(entry.getKey().lastSegment(), 0, true, 0, baseLocation, entry.getKey().toPortableString());
 								children.put(repo);
 							}
 						}
 					}
-					JSONObject result = listEntry("/", 0, true, 0, baseLocation, null); //$NON-NLS-1$
+					JSONObject result = listEntry(workspace.getFullName(), 0, true, 0, baseLocation, workspace.getUniqueId()); //$NON-NLS-1$
+					result.put(ProtocolConstants.KEY_ID, workspace.getUniqueId());
 					result.put(ProtocolConstants.KEY_CHILDREN, children);
 					OrionServlet.writeJSONResponse(request, response, result, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 					return true;
@@ -156,7 +169,7 @@ public class GitTreeHandlerV1 extends AbstractGitHandler {
 			}
 			return true;
 		}
-		return super.handleRequest(request, response, path);
+		return super.handleRequest(request, response, pathString);
 	}
 
 	@Override

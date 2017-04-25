@@ -130,21 +130,15 @@ public class SimpleMetaStore implements IMetaStore {
 		if (projectInfo.getFullName() == null) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: project name is null.", null));
 		}
-		WorkspaceInfo workspaceInfo;
-		try {
-			workspaceInfo = readWorkspace(projectInfo.getWorkspaceId());
-		} catch (CoreException exception) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
-					"SimpleMetaStore.createProject: could not find workspace with id:" + projectInfo.getWorkspaceId() + ", workspace does not exist.", null));
-		}
-		if (workspaceInfo == null) {
-			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
-					"SimpleMetaStore.createProject: could not find workspace with id:" + projectInfo.getWorkspaceId() + ", workspace does not exist.", null));
-		}
 		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(projectInfo.getWorkspaceId());
 		ReadWriteLock lock = getLockForUser(userId);
 		lock.writeLock().lock();
 		try {
+			WorkspaceInfo workspaceInfo = readWorkspace(projectInfo.getWorkspaceId());
+			if (workspaceInfo == null) {
+				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+						"SimpleMetaStore.createProject: could not find workspace with id:" + projectInfo.getWorkspaceId() + ", workspace does not exist.", null));
+			}
 			String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(projectInfo.getWorkspaceId());
 			String projectId = SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectInfo.getFullName());
 			projectInfo.setUniqueId(projectId);
@@ -176,7 +170,11 @@ public class SimpleMetaStore implements IMetaStore {
 							"SimpleMetaStore.createProject: could not create project: " + projectInfo.getFullName() + " for user " + userId, null));
 				}
 			}
-			if (!SimpleMetaStoreUtil.createMetaFile(userMetaFolder, projectId, jsonObject)) {
+			String metafileId = projectId;
+			if (!DEFAULT_WORKSPACE_NAME.equals(workspaceInfo.getFullName())) {
+				metafileId = workspaceInfo.getUniqueId() + SimpleMetaStoreUtil.SEPARATOR + projectId;
+			}
+			if (!SimpleMetaStoreUtil.createMetaFile(userMetaFolder, metafileId, jsonObject)) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
 						"SimpleMetaStore.createProject: could not create project: " + projectInfo.getFullName() + " for user " + userId, null));
 			}
@@ -187,6 +185,9 @@ public class SimpleMetaStore implements IMetaStore {
 			newProjectNames.add(projectInfo.getFullName());
 			workspaceInfo.setProjectNames(newProjectNames);
 			updateWorkspace(workspaceInfo);
+		} catch (CoreException exception) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+					"SimpleMetaStore.createProject: could not find workspace with id:" + projectInfo.getWorkspaceId() + ", workspace does not exist.", null));
 		} finally {
 			lock.writeLock().unlock();
 		}
@@ -257,12 +258,6 @@ public class SimpleMetaStore implements IMetaStore {
 			throw new CoreException(
 					new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createWorkspace: workspace name is null.", null));
 		}
-		if (!SimpleMetaStore.DEFAULT_WORKSPACE_NAME.equals(workspaceInfo.getFullName())) {
-			// The workspace name you create must be Orion Content. See Bug 439735
-			logger.info("SimpleMetaStore.createWorkspace: workspace name conflict: name will be \"Orion Content\": user " + workspaceInfo.getUserId()
-					+ " provided " + workspaceInfo.getFullName() + " instead.");
-			workspaceInfo.setFullName(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
-		}
 		UserInfo userInfo;
 		try {
 			userInfo = readUser(workspaceInfo.getUserId());
@@ -274,20 +269,12 @@ public class SimpleMetaStore implements IMetaStore {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
 					"SimpleMetaStore.createWorkspace: could not find user with id: " + workspaceInfo.getUserId() + ", user does not exist.", null));
 		}
-		if (!userInfo.getWorkspaceIds().isEmpty()) {
-			// We have an existing workspace already, you cannot create a second workspace. See Bug 439735
-			String existingWorkspaceIds = userInfo.getWorkspaceIds().get(0);
-			logger.info("SimpleMetaStore.createWorkspace: workspace conflict: cannot create a second workspace for user id: " + userInfo.getUniqueId()
-					+ ", existing workspace is being used: " + existingWorkspaceIds);
-			workspaceInfo.setUniqueId(existingWorkspaceIds);
-			return;
-		}
 		// lock the user when creating the workspace and updating the user.
 		ReadWriteLock lock = getLockForUser(userInfo.getUniqueId());
 		lock.writeLock().lock();
 		try {
 			// We create a meta folder for the workspace using the encoded workspace name
-			String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(workspaceInfo.getUserId(), workspaceInfo.getFullName());
+			String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(workspaceInfo.getUserId(), workspaceInfo.getUniqueId() != null ?  workspaceInfo.getUniqueId() : workspaceInfo.getFullName());
 			String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 			// It is possible to have two workspaces with the same name, so append an integer if this is a duplicate
 			// name.
@@ -358,7 +345,11 @@ public class SimpleMetaStore implements IMetaStore {
 			updateWorkspace(workspaceInfo);
 
 			String projectId = SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectName);
-			if (!SimpleMetaStoreUtil.deleteMetaFile(userMetaFolder, projectId)) {
+			String metafileId = projectId;
+			if (!SimpleMetaStoreUtil.encodeWorkspaceId(userId, DEFAULT_WORKSPACE_NAME).equals(workspaceId)) {
+				metafileId = workspaceId + SimpleMetaStoreUtil.SEPARATOR + metafileId;
+			}
+			if (!SimpleMetaStoreUtil.deleteMetaFile(userMetaFolder, metafileId)) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
 						"SimpleMetaStore.deleteProject: could not delete project: " + projectName + " for user " + userId, null));
 			}
@@ -441,9 +432,11 @@ public class SimpleMetaStore implements IMetaStore {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
 						"SimpleMetaStore.deleteWorkspace: could not delete workspace: " + encodedWorkspaceName, null));
 			}
-			if (!SimpleMetaStoreUtil.deleteMetaFolder(userMetaFolder, encodedWorkspaceName, true)) {
-				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
-						"SimpleMetaStore.deleteWorkspace: could not delete workspace: " + encodedWorkspaceName, null));
+			if (SimpleMetaStoreUtil.isMetaFolder(userMetaFolder, encodedWorkspaceName)) {
+				if (!SimpleMetaStoreUtil.deleteMetaFolder(userMetaFolder, encodedWorkspaceName, true)) {
+					throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+							"SimpleMetaStore.deleteWorkspace: could not delete workspace: " + encodedWorkspaceName, null));
+				}
 			}
 		} finally {
 			lock.writeLock().unlock();
@@ -636,10 +629,14 @@ public class SimpleMetaStore implements IMetaStore {
 				return null;
 			}
 			String projectId = SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectName);
-			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, projectId);
+			String metafileId = projectId;
+			if (!SimpleMetaStoreUtil.encodeWorkspaceId(userId, DEFAULT_WORKSPACE_NAME).equals(workspaceId)) {
+				metafileId = workspaceId + SimpleMetaStoreUtil.SEPARATOR + metafileId;
+			}
+			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, metafileId);
 			ProjectInfo projectInfo = new ProjectInfo();
 			if (jsonObject == null) {
-				if (SimpleMetaStoreUtil.isMetaFolder(workspaceMetaFolder, projectId) && !SimpleMetaStoreUtil.isMetaFile(userMetaFolder, projectId)) {
+				if (SimpleMetaStoreUtil.isMetaFolder(workspaceMetaFolder, projectId) && !SimpleMetaStoreUtil.isMetaFile(userMetaFolder, metafileId)) {
 					// the project folder exists but the project json file does not, so create it
 					File projectMetaFolder = SimpleMetaStoreUtil.readMetaFolder(workspaceMetaFolder, projectId);
 					if (logger.isDebugEnabled()) {
@@ -653,7 +650,7 @@ public class SimpleMetaStore implements IMetaStore {
 					lock.readLock().unlock();
 					createProject(projectInfo);
 					lock.readLock().lock();
-					jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, projectId);
+					jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, metafileId);
 				} else {
 					// both the project folder and project json do not exist, no project
 					// OR both the project folder and project json exist, but bad project JSON file == no project
@@ -792,9 +789,6 @@ public class SimpleMetaStore implements IMetaStore {
 			return null;
 		}
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
-		if (!SimpleMetaStoreUtil.isMetaFolder(userMetaFolder, encodedWorkspaceName)) {
-			return null;
-		}
 		JSONObject jsonObject = null;
 		// add a read lock when reading the the.
 		ReadWriteLock lock = getLockForUser(userId);
@@ -910,18 +904,26 @@ public class SimpleMetaStore implements IMetaStore {
 			String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(projectInfo.getWorkspaceId());
 			File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
 			File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
-			if (!SimpleMetaStoreUtil.isMetaFile(userMetaFolder, projectInfo.getUniqueId())) {
+			String metafileId = projectInfo.getUniqueId();
+			if (!SimpleMetaStoreUtil.encodeWorkspaceId(userId, DEFAULT_WORKSPACE_NAME).equals(projectInfo.getWorkspaceId())) {
+				metafileId = projectInfo.getWorkspaceId() + SimpleMetaStoreUtil.SEPARATOR + metafileId;
+			}
+			if (!SimpleMetaStoreUtil.isMetaFile(userMetaFolder, metafileId)) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
 						"SimpleMetaStore.updateProject: could not update project: " + projectInfo.getFullName() + " for workspace " + encodedWorkspaceName,
 						null));
 			}
-			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, projectInfo.getUniqueId());
+			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, metafileId);
 			if (!projectInfo.getUniqueId().equals(SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectInfo.getFullName()))) {
 				IFileStore projectStore = projectInfo.getProjectStore();
 				IFileStore defaultProjectStore = getDefaultContentLocation(readProject(projectInfo.getWorkspaceId(), projectInfo.getUniqueId()));
 				// full name has changed, this is a project move
 				String newProjectId = SimpleMetaStoreUtil.encodeProjectIdFromProjectName(projectInfo.getFullName());
-				if (!SimpleMetaStoreUtil.moveMetaFile(userMetaFolder, projectInfo.getUniqueId(), newProjectId)) {
+				String newMetafileId = newProjectId;
+				if (!SimpleMetaStoreUtil.encodeWorkspaceId(userId, DEFAULT_WORKSPACE_NAME).equals(projectInfo.getWorkspaceId())) {
+					newMetafileId = projectInfo.getWorkspaceId() + SimpleMetaStoreUtil.SEPARATOR + newMetafileId;
+				}
+				if (!SimpleMetaStoreUtil.moveMetaFile(userMetaFolder, metafileId, newMetafileId)) {
 					throw new CoreException(
 							new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateProject: could not move project: "
 									+ projectInfo.getUniqueId() + " to " + projectInfo.getFullName() + " for workspace " + encodedWorkspaceName, null));
@@ -1002,7 +1004,11 @@ public class SimpleMetaStore implements IMetaStore {
 						"SimpleMetaStore.updateProject: could not update project: " + projectInfo.getFullName() + " for workspace " + encodedWorkspaceName,
 						null));
 			}
-			if (!SimpleMetaStoreUtil.updateMetaFile(userMetaFolder, projectInfo.getUniqueId(), jsonObject)) {
+			metafileId = projectInfo.getUniqueId();
+			if (!SimpleMetaStoreUtil.encodeWorkspaceId(userId, DEFAULT_WORKSPACE_NAME).equals(projectInfo.getWorkspaceId())) {
+				metafileId = projectInfo.getWorkspaceId() + SimpleMetaStoreUtil.SEPARATOR + metafileId;
+			}
+			if (!SimpleMetaStoreUtil.updateMetaFile(userMetaFolder, metafileId, jsonObject)) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
 						"SimpleMetaStore.updateProject: could not update project: " + projectInfo.getFullName() + " for workspace " + encodedWorkspaceName,
 						null));

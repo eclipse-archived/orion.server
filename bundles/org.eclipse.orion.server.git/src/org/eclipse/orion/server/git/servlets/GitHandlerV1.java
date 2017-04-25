@@ -80,10 +80,10 @@ public class GitHandlerV1 extends ServletResourceHandler<String> {
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, String gitPathInfo) throws ServletException {
 
 		String[] infoParts = gitPathInfo.split("\\/", 3); //$NON-NLS-1$
-		if (infoParts.length < 3)
+		if (infoParts.length < 2)
 			return false; // malformed request, we don't know how to handle this
 
-		String pathString = infoParts[2];
+		String pathString = infoParts.length > 2 ? infoParts[2] : "";
 		if (request.getContextPath().length() != 0) {
 			IPath path = pathString == null ? Path.EMPTY : new Path(pathString);
 			IPath contextPath = new Path(request.getContextPath());

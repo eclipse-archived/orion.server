@@ -424,7 +424,7 @@ public class SimpleMetaStoreUtil {
 	 * @return The workspace id.
 	 */
 	public static String encodeWorkspaceId(String userName, String workspaceName) {
-		String workspaceId = workspaceName.replace(" ", "").replace("#", "");
+		String workspaceId = workspaceName.replace(" ", "").replace("#", "").replaceAll("-", "");
 		return userName + SEPARATOR + workspaceId;
 	}
 

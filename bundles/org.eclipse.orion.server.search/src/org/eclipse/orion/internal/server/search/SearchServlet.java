@@ -26,6 +26,7 @@ import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
@@ -288,9 +289,13 @@ public class SearchServlet extends OrionServlet {
 	private boolean setScopeFromRequest(HttpServletRequest req, HttpServletResponse resp, SearchOptions options) {
 		try {
 			String pathInfo = options.getLocation();
-			// Remove the file servlet prefix
-			if (pathInfo != null) {
-				pathInfo = pathInfo.replaceFirst("/file", "");
+			if (pathInfo != null && (pathInfo.startsWith(Activator.LOCATION_FILE_SERVLET))) {
+				pathInfo = pathInfo.substring(Activator.LOCATION_FILE_SERVLET.length());
+			} else if (pathInfo != null && (pathInfo.startsWith(Activator.LOCATION_WORKSPACE_SERVLET))) {
+				pathInfo = pathInfo.substring(Activator.LOCATION_WORKSPACE_SERVLET.length());
+			}
+			if (pathInfo != null && pathInfo.endsWith("*")) {
+				pathInfo = pathInfo.substring(0, pathInfo.length() - 1);
 			}
 			IPath path = pathInfo == null ? Path.ROOT : new Path(pathInfo);
 			// prevent path canonicalization hacks

@@ -184,8 +184,14 @@ public class SimpleUserPasswordUtil {
 		String password = System.getProperty(ORION_STORAGE_PASSWORD, "unspecified"); //$NON-NLS-1$
 		return password.toCharArray();
 	}
-	
+
 	public static void main(String[] args) {
-		System.out.println(encryptPassword(args[0]));
+		if (args.length > 2 && "-encode".equals(args[0])) {
+			System.out.println(encryptPassword(args[1]));
+		} else if (args.length > 2 && "-decode".equals(args[0])) {
+			System.out.println(decryptPassword(args[1]));
+		} else {
+			System.out.println("Usage: java SimpleUserPasswordUtil <-encode || -decode>  value");
+		}
 	}
 }

@@ -27,10 +27,12 @@ import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -170,15 +172,21 @@ public class WorkspaceServlet extends OrionServlet {
 		String userId = getUserId(req);
 		if (!checkUser(userId, resp))
 			return;
-		String workspaceName = req.getHeader(ProtocolConstants.HEADER_SLUG);
-		if (workspaceName == null) {
-			handleException(resp, "Workspace name not specified", null, HttpServletResponse.SC_BAD_REQUEST);
-			return;
-		}
 		try {
+			JSONObject data = OrionServlet.readJSONRequest(req);
+			String id = data.optString(ProtocolConstants.KEY_ID, null);
+			String workspaceName = data.optString(ProtocolConstants.KEY_NAME, null);
+			if (workspaceName == null) {
+				workspaceName = req.getHeader(ProtocolConstants.HEADER_SLUG);
+			}
+			if (workspaceName == null) {
+				handleException(resp, "Workspace name not specified", null, HttpServletResponse.SC_BAD_REQUEST);
+				return;
+			}
 			WorkspaceInfo workspace = new WorkspaceInfo();
 			workspace.setFullName(workspaceName);
 			workspace.setUserId(userId);
+			workspace.setUniqueId(id);
 			OrionConfiguration.getMetaStore().createWorkspace(workspace);
 			if (logger != null && logger.isInfoEnabled()) {
 				logger.info("Workspace created for " + userId); //$NON-NLS-1$
@@ -197,6 +205,9 @@ public class WorkspaceServlet extends OrionServlet {
 			String filePath = Activator.LOCATION_FILE_SERVLET + '/' + workspace.getUniqueId();
 			AuthorizationService.addUserRight(req.getRemoteUser(), filePath);
 			AuthorizationService.addUserRight(req.getRemoteUser(), filePath + "/*"); //$NON-NLS-1$
+		} catch (JSONException e) {
+			handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Syntax error in request", e));
+			return;
 		} catch (CoreException e) {
 			handleException(resp, e.getStatus());
 			return;

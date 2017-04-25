@@ -32,6 +32,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
+import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.EncodingUtils;
 import org.eclipse.orion.server.core.IOUtilities;
@@ -111,12 +112,15 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 					location = URIUtil.append(location, "");
 				}
 				result.put(ProtocolConstants.KEY_LOCATION, location);
-				if (info.isDirectory())
-					try {
+				try {
+					URI workspaceLocation = new URI(location.getScheme(), location.getAuthority(), Activator.LOCATION_WORKSPACE_SERVLET, null, location.getFragment());
+					workspaceLocation = URIUtil.append(workspaceLocation, new Path(location.getPath()).segment(1));
+					result.put(ProtocolConstants.KEY_WORKSPACE_LOCATION, workspaceLocation);
+					if (info.isDirectory())
 						result.put(ProtocolConstants.KEY_CHILDREN_LOCATION, new URI(location.getScheme(), location.getAuthority(), location.getPath(), "depth=1", location.getFragment())); //$NON-NLS-1$
-					} catch (URISyntaxException e) {
-						throw new RuntimeException(e);
-					}
+				} catch (URISyntaxException e) {
+					throw new RuntimeException(e);
+				}
 			}
 			JSONObject attributes = getAttributes(store, info, location == null);
 			if (attributes.keys().hasNext()) {

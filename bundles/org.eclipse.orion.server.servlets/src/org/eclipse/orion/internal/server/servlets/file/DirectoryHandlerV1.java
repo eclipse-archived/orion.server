@@ -265,7 +265,16 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 	}
 
 	private boolean handleDelete(HttpServletRequest request, HttpServletResponse response, IFileStore dir) throws JSONException, CoreException, ServletException, IOException {
+		Path path = new Path(request.getPathInfo());
 		dir.delete(EFS.NONE, null);
+		if (path.segmentCount() == 2) {
+			// The folder is a project, remove the metadata
+			OrionConfiguration.getMetaStore().deleteProject(path.segment(0), path.segment(1));
+		} else if (path.segmentCount() == 1) {
+			// The folder is a workspace, remove the metadata
+			String workspaceId = path.segment(0);
+			OrionConfiguration.getMetaStore().deleteWorkspace(request.getRemoteUser(), workspaceId);
+		}
 		return true;
 	}
 

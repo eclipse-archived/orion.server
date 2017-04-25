@@ -253,6 +253,12 @@ public class ProtocolConstants {
 	public static final String KEY_LOCATION = "Location"; //$NON-NLS-1$
 
 	/**
+	 * JSON representation key for the workspace location of an object.
+	 * The value's data type is a String.
+	 */
+	public static final String KEY_WORKSPACE_LOCATION = "WorkspaceLocation"; //$NON-NLS-1$
+
+	/**
 	 * JSON representation key for an object's name. The value's data type is a String.
 	 */
 	public static final String KEY_NAME = "Name"; //$NON-NLS-1$

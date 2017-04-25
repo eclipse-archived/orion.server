@@ -31,6 +31,7 @@ import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.orion.internal.server.servlets.Activator;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
+import org.eclipse.orion.internal.server.servlets.file.ServletFileStoreHandler;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.OrionConfiguration;
 import org.eclipse.orion.server.core.PreferenceHelper;
@@ -120,6 +121,12 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		if (pathString == null)
 			return null;
 		IPath path = new Path(pathString);
+		if (path.segmentCount() == 3 && path.segment(0).equals("file")) {
+			//path format is /file/<workspaceId>/<projectName>
+			String workspaceId = path.segment(1);
+			String projectName = path.segment(2);
+			return store.readProject(workspaceId, projectName);
+		}
 		//path format is /workspace/<workspaceId>/project/<projectName>
 		if (path.segmentCount() < 4)
 			return null;
@@ -140,6 +147,13 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		}
 
 		OrionConfiguration.getMetaStore().deleteProject(workspace.getUniqueId(), project.getFullName());
+	}
+	
+	public static void removeWorkspace(String user, WorkspaceInfo workspace) throws CoreException {
+		String workspaceId = workspace.getUniqueId();
+		IFileStore workspaceStore = OrionConfiguration.getMetaStore().getWorkspaceContentLocation(workspaceId);
+		workspaceStore.delete(EFS.NONE, null);
+		OrionConfiguration.getMetaStore().deleteWorkspace(user, workspaceId);
 	}
 
 	/**
@@ -200,12 +214,14 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		try {
 			//add basic fields to workspace result
 			result.put(ProtocolConstants.KEY_LOCATION, workspaceLocation);
+			URI contentLocation = new URI(workspaceLocation.getScheme(), workspaceLocation.getUserInfo(), workspaceLocation.getHost(), workspaceLocation.getPort(), Activator.LOCATION_FILE_SERVLET + "/" + workspace.getUniqueId() + "/", null, workspaceLocation.getFragment());
+			result.put(ProtocolConstants.KEY_CONTENT_LOCATION, contentLocation);
 			result.put(ProtocolConstants.KEY_CHILDREN_LOCATION, workspaceLocation);
 			result.put(ProtocolConstants.KEY_PROJECTS, projects);
 			result.put(ProtocolConstants.KEY_DIRECTORY, "true"); //$NON-NLS-1$
 			//add children to match file API
 			result.put(ProtocolConstants.KEY_CHILDREN, children);
-		} catch (JSONException e) {
+		} catch (Exception e) {
 			//cannot happen
 		}
 
@@ -257,6 +273,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 		String sourceLocation = data.optString(ProtocolConstants.HEADER_LOCATION);
 		IFileStore source = null;
 		ProjectInfo sourceProject = null;
+		boolean isFile = false;
 		try {
 			if (sourceLocation != null) {
 				//could be either a workspace or file location
@@ -265,8 +282,10 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 					if (sourceProject != null)
 						source = sourceProject.getProjectStore();
 				} else {
+					isFile = true;
 					//file location - remove servlet name prefix
-					source = resolveSourceLocation(request, sourceLocation);
+					sourceProject = projectForMetadataLocation(getMetaStore(), toOrionLocation(request, sourceLocation));
+					source = resolveSourceLocation(request, sourceLocation); 
 				}
 			}
 		} catch (Exception e) {
@@ -297,7 +316,7 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			return true;
 
 		if ((options1 & CREATE_MOVE) != 0) {
-			return handleMoveProject(request, response, workspace, source, sourceProject, sourceLocation, destinationName);
+			return handleMoveProject(request, response, workspace, source, sourceProject, sourceLocation, destinationName, isFile);
 		} else if ((options1 & CREATE_COPY) != 0) {
 			//first create the destination project
 			JSONObject projectObject = new JSONObject();
@@ -317,11 +336,24 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 				handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, NLS.bind("Error copying project {0} to {1}", sourceName, destinationName));
 				return true;
 			}
-			URI baseLocation = getURI(request);
-			JSONObject result = ProjectInfoResourceHandler.toJSON(workspace, destinationProject, baseLocation);
-			OrionServlet.writeJSONResponse(request, response, result);
-			response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION, "")); //$NON-NLS-1$
-			response.setStatus(HttpServletResponse.SC_CREATED);
+			try {
+				JSONObject result;
+				if (isFile) {
+					URI baseLocation = new URI("orion", null, Activator.LOCATION_FILE_SERVLET, null, null);
+					baseLocation = URIUtil.append(baseLocation, destinationProject.getWorkspaceId());
+					baseLocation = URIUtil.append(baseLocation, destinationProject.getFullName());
+					result = ServletFileStoreHandler.toJSON(destinationProject.getProjectStore(), destinationProject.getProjectStore().fetchInfo(), baseLocation);
+				} else {
+					URI baseLocation = getURI(request);
+					result = ProjectInfoResourceHandler.toJSON(workspace, destinationProject, baseLocation);
+				}
+				OrionServlet.writeJSONResponse(request, response, result);
+				response.setHeader(ProtocolConstants.HEADER_LOCATION, result.optString(ProtocolConstants.KEY_LOCATION, "")); //$NON-NLS-1$
+				response.setStatus(HttpServletResponse.SC_CREATED);
+			} catch (Exception e) {
+				String msg = NLS.bind("Error persisting project state: {0}", source.getName());
+				return handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
+			}
 			return true;
 		}
 		//if we got here, it isn't a copy or a move, so we don't know how to handle the request
@@ -454,12 +486,12 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 	 * Implementation of project move. Returns whether the move requested was handled.
 	 * Returns <code>false</code> if this method doesn't know how to interpret the request.
 	 */
-	private boolean handleMoveProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, IFileStore source, ProjectInfo projectInfo, String sourceLocation, String destinationName) throws ServletException, IOException {
+	private boolean handleMoveProject(HttpServletRequest request, HttpServletResponse response, WorkspaceInfo workspace, IFileStore source, ProjectInfo projectInfo, String sourceLocation, String destinationName, boolean isFile) throws ServletException, IOException {
 		try {
 			final IMetaStore metaStore = getMetaStore();
 
 			boolean created = false;
-			if (projectInfo == null) {
+			if (projectInfo == null || !workspace.getUniqueId().equals(projectInfo.getWorkspaceId())) {
 				//moving a folder to become a project
 				JSONObject data = new JSONObject();
 				try {
@@ -467,11 +499,15 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 				} catch (JSONException e) {
 					//cannot happen
 				}
-				projectInfo = createProject(request, response, workspace, data);
-				if (projectInfo == null)
+				ProjectInfo newProjectInfo = createProject(request, response, workspace, data);
+				if (newProjectInfo == null)
 					return true;
 				//move the contents
-				source.move(projectInfo.getProjectStore(), EFS.OVERWRITE, null);
+				source.move(newProjectInfo.getProjectStore(), EFS.OVERWRITE, null);
+				if (projectInfo != null) {
+					OrionConfiguration.getMetaStore().deleteProject(projectInfo.getWorkspaceId(), projectInfo.getFullName());
+				}
+				projectInfo = newProjectInfo;
 				created = true;
 			} else {
 				//a project move is simply a rename
@@ -480,12 +516,20 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 			}
 
 			//location doesn't change on move project
-			URI baseLocation = getURI(request);
-			JSONObject result = ProjectInfoResourceHandler.toJSON(workspace, projectInfo, baseLocation);
+			JSONObject result;
+			if (isFile) {
+				URI baseLocation = new URI("orion", null, Activator.LOCATION_FILE_SERVLET, null, null);
+				baseLocation = URIUtil.append(baseLocation, projectInfo.getWorkspaceId());
+				baseLocation = URIUtil.append(baseLocation, projectInfo.getFullName());
+				result = ServletFileStoreHandler.toJSON(projectInfo.getProjectStore(), projectInfo.getProjectStore().fetchInfo(), baseLocation);
+			} else {
+				URI baseLocation = getURI(request);
+				result = ProjectInfoResourceHandler.toJSON(workspace, projectInfo, baseLocation);
+			}
 			OrionServlet.writeJSONResponse(request, response, result);
 			response.setHeader(ProtocolConstants.HEADER_LOCATION, sourceLocation);
 			response.setStatus(created ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_OK);
-		} catch (CoreException e) {
+		} catch (Exception e) {
 			String msg = NLS.bind("Error persisting project state: {0}", source.getName());
 			return handleError(request, response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e);
 		}
@@ -542,7 +586,16 @@ public class WorkspaceResourceHandler extends MetadataInfoResourceHandler<Worksp
 				case POST :
 					return handleAddOrRemoveProject(request, response, workspace);
 				case DELETE :
-					//TBD could also handle deleting the workspace itself
+					IPath path = new Path(request.getPathInfo());
+					if (path.segmentCount() == 1) {
+						try {
+							removeWorkspace(request.getRemoteUser(), workspace);
+						} catch (CoreException e) {
+							String msg = NLS.bind("Error handling deletet workspace request {0}", workspace.getUniqueId());
+							return statusHandler.handleRequest(request, response, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, msg, e));
+						}
+						return true;
+					}
 					return handleRemoveProject(request, response, workspace);
 				default :
 					//fall through
