@@ -89,6 +89,7 @@ public class LogUtils {
 			in = new DataInputStream(new FileInputStream(logFile));
 			output = response.getOutputStream();
 
+			response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$
 			response.setContentType(LogUtils.getContentType(logFile));
 			response.setContentLength((int) logFile.length());
 			response.setHeader(
