@@ -44,7 +44,7 @@ Clone `orion.client` and `orion.server` under the same local folder
 
 ### Run Maven build:
 ```
-% cd rion.server
+% cd orion.server
 % mvn clean install -P platform-kepler,local-build -Dorion.client.build.skip -DskipTests
 ```
 
