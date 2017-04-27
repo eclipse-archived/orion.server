@@ -275,6 +275,7 @@ public class GitDiffHandlerV1 extends AbstractGitHandler {
 
 	private boolean handleMultiPartGet(HttpServletRequest request, HttpServletResponse response, Repository db, String scope, String pattern) throws Exception {
 		String boundary = createBoundaryString();
+		response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$
 		response.setHeader(ProtocolConstants.HEADER_CONTENT_TYPE, "multipart/related; boundary=\"" + boundary + '"'); //$NON-NLS-1$
 		OutputStream outputStream = response.getOutputStream();
 		Writer out = new OutputStreamWriter(outputStream);

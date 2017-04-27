@@ -112,6 +112,7 @@ public class GitIndexHandlerV1 extends ServletResourceHandler<String> {
 			}
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.OK, HttpServletResponse.SC_NOT_FOUND, msg, null));
 		}
+		response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$
 		IOUtilities.pipe(stream, response.getOutputStream(), true, false);
 		return true;
 	}
