@@ -214,7 +214,6 @@ class FileHandlerV1 extends GenericFileHandler {
 
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
-		long time = System.currentTimeMillis();
 		try {
 			String fileETag = generateFileETag(file);
 			if (handleIfMatchHeader(request, response, fileETag)) {
@@ -274,8 +273,6 @@ class FileHandlerV1 extends GenericFileHandler {
 		} catch (Exception e) {
 			if (!handleAuthFailure(request, response, e))
 				throw new ServletException(NLS.bind("Error retrieving file: {0}", file), e);
-		} finally {
-			response.addHeader("ServerTime", "" + (System.currentTimeMillis() - time));
 		}
 		return false;
 	}
