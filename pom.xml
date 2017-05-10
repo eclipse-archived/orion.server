@@ -272,7 +272,7 @@
 		<repository>
 			<id>eclipse-license</id>
 			<layout>p2</layout>
-			<url>http://download.eclipse.org/cbi/updates/license</url>
+			<url>http://mirror.csclub.uwaterloo.ca/eclipse/cbi/updates/license</url>
 		</repository>
 	</repositories>
 
