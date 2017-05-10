@@ -986,6 +986,7 @@ public class SimpleMetaStore implements IMetaStore {
 				// remove the temporary properties
 				projectInfo.setProperty("newUserId", null);
 				projectInfo.setProperty("newWorkspaceId", null);
+				userId = newUserId;
 			}
 			try {
 				jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
