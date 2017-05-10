@@ -219,7 +219,8 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String destinationLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		responseObject = new JSONObject(response.getText());
-		String destinationContentLocation = responseObject.optString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		String destinationContentLocation = responseObject.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
+		if (destinationContentLocation == null) destinationContentLocation = responseObject.optString(ProtocolConstants.KEY_LOCATION, null);
 
 		//assert the move took effect
 		assertFalse(sourceLocation.equals(destinationLocation));
@@ -422,7 +423,8 @@ public class WorkspaceServiceTest extends FileSystemTest {
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		String destinationLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 		responseObject = new JSONObject(response.getText());
-		String destinationContentLocation = responseObject.optString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		String destinationContentLocation = responseObject.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
+		if (destinationContentLocation == null) destinationContentLocation = responseObject.optString(ProtocolConstants.KEY_LOCATION, null);
 
 		//assert the copy took effect
 		assertFalse(sourceLocation.equals(destinationLocation));
