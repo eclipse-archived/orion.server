@@ -3,15 +3,15 @@
 <locations>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.jetty.bundles.f.feature.group" version="8.1.15.201404181548"/>
-<repository location="http://download.eclipse.org/jetty/updates/jetty-bundles-8.x"/>
+<repository location="http://mirror.csclub.uwaterloo.ca/eclipse/jetty/updates/jetty-bundles-8.x"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.emf.base.feature.group" version="2.10.0.v20140514-1158"/>
-<repository location="http://download.eclipse.org/modeling/emf/emf/updates/2.10/base"/>
+<repository location="http://mirror.csclub.uwaterloo.ca/eclipse/modeling/emf/emf/updates/2.10/base"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.license.feature.group" version="1.0.1.v20140414-1359"/>
-<repository location="http://download.eclipse.org/cbi/updates/license"/>
+<repository location="http://mirror.csclub.uwaterloo.ca/eclipse/cbi/updates/license"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.compare.core" version="0.0.0"/>
@@ -74,11 +74,11 @@
 <unit id="org.eclipse.ui.workbench.texteditor" version="0.0.0"/>
 <unit id="org.eclipse.platform.feature.group" version="0.0.0"/>
 <unit id="org.eclipse.rcp.feature.group" version="0.0.0"/>
-<repository location="http://download.eclipse.org/eclipse/updates/4.4/R-4.4-201406061215"/>
+<repository location="http://mirror.csclub.uwaterloo.ca/eclipse/eclipse/updates/4.4/R-4.4-201406061215"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.eclipse.jgit.feature.group" version="4.4.0.201606070830-r"/>
-<repository location="http://download.eclipse.org/egit/updates-4.4"/>
+<repository location="http://mirror.csclub.uwaterloo.ca/eclipse/egit/updates-4.4/"/>
 </location>
 <location includeAllPlatforms="false" includeConfigurePhase="true" includeMode="slicer" includeSource="true" type="InstallableUnit">
 <unit id="org.hamcrest.text" version="1.1.0.v20090501071000"/>
