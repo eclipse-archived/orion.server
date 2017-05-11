@@ -98,7 +98,23 @@
          </init-param>
          <init-param
                name="includeMatches"
-               value=".*[.](js|html|css|pref|woff|ttf)$">
+               value=".*[.](js|css|pref|woff|ttf)$">
+         </init-param>
+         <init-param
+               name="excludeMatches"
+               value="^/(file|hosted|gitapi|requirejs)/.*">
+         </init-param>
+      </filter>
+      <filter
+            alias="/"
+            class="org.eclipse.orion.server.servlets.CacheFilter">
+         <init-param
+               name="directives"
+               value="max-age=0, no-cache, no-store">
+         </init-param>
+         <init-param
+               name="includeMatches"
+               value=".*[.](html)$">
          </init-param>
          <init-param
                name="excludeMatches"
