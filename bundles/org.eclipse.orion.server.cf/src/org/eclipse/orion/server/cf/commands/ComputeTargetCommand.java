@@ -13,10 +13,15 @@ package org.eclipse.orion.server.cf.commands;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
+
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.server.cf.*;
+import org.eclipse.orion.server.cf.CFActivator;
+import org.eclipse.orion.server.cf.CFProtocolConstants;
+import org.eclipse.orion.server.cf.ExpiryCache;
 import org.eclipse.orion.server.cf.objects.Target;
 import org.eclipse.orion.server.cf.utils.HttpUtil;
 import org.eclipse.orion.server.core.ServerStatus;
@@ -61,12 +66,28 @@ public class ComputeTargetCommand implements ICFCommand {
 		target = CFActivator.getDefault().getTargetRegistry().getTarget(userId, targetUrl);
 		if (target == null)
 			return HttpUtil.createErrorStatus(IStatus.WARNING, "CF-TargetNotSet", "Target not set");
-
-		IStatus result = new SetOrgCommand(target, org, targetJSON != null ? targetJSON.optBoolean("isGuid") : false).doIt();
+		
+		boolean isOrgGuid = targetJSON != null ? targetJSON.optBoolean("isGuid") : false;
+		if (!isOrgGuid && org.length() == 36) {
+			try{
+				UUID.fromString(org);
+				isOrgGuid = true;
+			}catch (Exception e) {}
+		}
+		
+		IStatus result = new SetOrgCommand(target, org, isOrgGuid).doIt();
 		if (!result.isOK())
 			return result;
+		
+		boolean isSpaceGuid = targetJSON != null ? targetJSON.optBoolean("isGuid") : false;
+		if (!isSpaceGuid && space.length() == 36) {
+			try{
+				UUID.fromString(space);
+				isSpaceGuid = true;
+			}catch (Exception e) {}
+		}
 
-		result = new SetSpaceCommand(target, space, targetJSON != null ? targetJSON.optBoolean("isGuid") : false).doIt();
+		result = new SetSpaceCommand(target, space, isSpaceGuid).doIt();
 		if (!result.isOK())
 			return result;
 
