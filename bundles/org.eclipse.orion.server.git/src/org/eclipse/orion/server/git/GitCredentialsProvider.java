@@ -88,7 +88,7 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 	@Override
 	public boolean get(URIish uri, CredentialItem... items) throws UnsupportedCredentialItem {
 		for (CredentialItem item : items) {
-			if (item instanceof CredentialItem.Username) {
+			if (item instanceof CredentialItem.Username || item instanceof CredentialItem.Password) {
 				if ((this.privateKey == null || this.privateKey.length == 0) && (this.publicKey == null || this.publicKey.length == 0) && (this.passphrase == null || this.passphrase.length == 0)) {
 					CredentialItem.Username u = new CredentialItem.Username();
 					CredentialItem.Password p = new CredentialItem.Password();
@@ -103,7 +103,11 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 									token = GithubTokenProviders.get(i).getToken(uriString, remoteUser);
 								}
 								if (token != null) {
-									((CredentialItem.Username)item).setValue(token);
+									if (item instanceof CredentialItem.Username) {
+										((CredentialItem.Username)item).setValue(token);
+									} else {
+										((CredentialItem.Password)item).setValue(token.toCharArray());
+									}
 									continue;
 								}
 							}
