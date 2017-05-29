@@ -11,7 +11,9 @@
 package org.eclipse.orion.server.git;
 
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Vector;
 
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
@@ -27,6 +29,7 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 	private byte[] privateKey;
 	private byte[] publicKey;
 	private byte[] passphrase;
+	private Map<String, String> tokenCache = new HashMap<String, String>();
 
 	private static Vector<IGitHubTokenProvider> GithubTokenProviders = new Vector<IGitHubTokenProvider>(9);
 
@@ -98,9 +101,11 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 							if (this.remoteUser != null) {
 								/* see if a GitHub token is available (obviously only applicable for repos hosted at a GitHub) */
 								String uriString = uri.toString();
-								String token = null;
-								for (int i = 0; token == null && i < GithubTokenProviders.size(); i++) {
-									token = GithubTokenProviders.get(i).getToken(uriString, remoteUser);
+								String token = tokenCache.get(uriString);
+								if (token == null) {
+									for (int i = 0; token == null && i < GithubTokenProviders.size(); i++) {
+										token = GithubTokenProviders.get(i).getToken(uriString, remoteUser);
+									}
 								}
 								if (token != null) {
 									if (item instanceof CredentialItem.Username) {
@@ -108,6 +113,7 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 									} else {
 										((CredentialItem.Password)item).setValue(token.toCharArray());
 									}
+									tokenCache.put(uriString, token);
 									continue;
 								}
 							}
