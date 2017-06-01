@@ -104,6 +104,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			return;
 		}
 
+		resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
 		resp.getWriter().write(
 				"<html><body><p>Your password has been successfully reset. Your new password has been sent to the email address associated with your account.</p></body></html>");
@@ -113,6 +114,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 
 	private void confirmEmail(UserInfo userInfo, HttpServletRequest req, HttpServletResponse resp) throws IOException {
 		if (userInfo.getProperty(UserConstants.EMAIL_CONFIRMATION_ID) == null) {
+			resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 			resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
 			resp.getWriter().write("<html><body><p>Your email address has already been confirmed. Thank you!</p></body></html>");
 			return;
@@ -134,6 +136,7 @@ public class EmailConfirmationServlet extends OrionServlet {
 			return;
 		}
 
+		resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
 		StringBuffer host = new StringBuffer();
 		String scheme = req.getScheme();

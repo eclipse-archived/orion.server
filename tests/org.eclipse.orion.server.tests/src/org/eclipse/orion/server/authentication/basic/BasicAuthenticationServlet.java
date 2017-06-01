@@ -66,6 +66,7 @@ public class BasicAuthenticationServlet extends OrionServlet {
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setCharacterEncoding("UTF-8");
 		try {

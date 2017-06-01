@@ -139,6 +139,7 @@ public class AuthorizedUserFilter implements Filter {
 		String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
 
 		String msg = "You are not authorized to access " + resourceURL;
+		resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
 			resp.sendError(HttpServletResponse.SC_FORBIDDEN, msg);
 		} else {

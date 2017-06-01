@@ -71,6 +71,7 @@ public class FormAuthLoginServlet extends HttpServlet {
 						resp.sendRedirect(req.getParameter("redirect"));
 					}
 				} else {
+					resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 					resp.setStatus(HttpServletResponse.SC_OK);
 					PrintWriter writer = resp.getWriter();
 					String uid = (String) req.getSession().getAttribute("user");
@@ -107,6 +108,7 @@ public class FormAuthLoginServlet extends HttpServlet {
 				jsonResp.put("RegistrationURI", FormAuthHelper.registrationURI());
 			} catch (JSONException e) {
 			}
+			resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 			resp.getWriter().print(jsonResp);
 			resp.setContentType("application/json");
 			return;
@@ -141,6 +143,7 @@ public class FormAuthLoginServlet extends HttpServlet {
 				LogHelper.log(e);
 			}
 
+			resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 			resp.setStatus(HttpServletResponse.SC_OK);
 			try {
 				JSONObject jsonResp = FormAuthHelper.getUserJson(user, req.getContextPath());
@@ -178,6 +181,7 @@ public class FormAuthLoginServlet extends HttpServlet {
 			resp.sendRedirect(url);
 
 		} else {
+			resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 			resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			PrintWriter writer = resp.getWriter();
 			JSONObject jsonError = new JSONObject();

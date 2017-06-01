@@ -47,6 +47,7 @@ public class ServletStatusHandler extends ServletResourceHandler<IStatus> {
 			}
 		}
 		response.setStatus(httpCode);
+		response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		response.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
 		try {
 			response.getWriter().print(serverStatus.toJSON().toString());
