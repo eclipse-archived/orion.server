@@ -19,7 +19,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.eclipse.core.filesystem.*;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.osgi.util.NLS;
@@ -37,6 +39,7 @@ public class GenericDirectoryHandler extends ServletResourceHandler<IFileStore> 
 			return false;
 		try {
 			response.setCharacterEncoding("UTF-8");
+			response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 			response.setContentType(ProtocolConstants.CONTENT_TYPE_HTML);
 			String path = request.getPathInfo();
 			IFileStore[] children = dir.childStores(EFS.NONE, null);

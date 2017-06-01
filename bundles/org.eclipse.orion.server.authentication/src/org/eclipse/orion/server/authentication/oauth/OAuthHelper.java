@@ -231,6 +231,7 @@ public class OAuthHelper {
 			}
 
 			PrintWriter out = resp.getWriter();
+			resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 			resp.setContentType("text/html; charset=UTF-8");
 			out.println("<html><head></head>"); //$NON-NLS-1$
 			// TODO: send a message using

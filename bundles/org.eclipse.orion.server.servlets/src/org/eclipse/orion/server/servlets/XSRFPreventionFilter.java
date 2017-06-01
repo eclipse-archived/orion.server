@@ -15,11 +15,23 @@ import java.security.SecureRandom;
 import java.text.MessageFormat;
 import java.util.HashSet;
 import java.util.Set;
-import javax.servlet.*;
-import javax.servlet.http.*;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.codec.binary.Base64;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.orion.server.core.*;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,6 +134,7 @@ public class XSRFPreventionFilter implements Filter {
 	private void prepareResponseForInvalidNonce(HttpServletResponse response) throws IOException {
 		response.setHeader(XSRF_TOKEN, "required");//$NON-NLS-1$
 		ServerStatus status = new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_FORBIDDEN, "Access Denied", null);
+		response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		response.setContentType("application/json");//$NON-NLS-1$
 		response.setStatus(status.getHttpCode());
 		response.getWriter().print(status.toJSON().toString());

@@ -63,6 +63,7 @@ public class FormAuthenticationService implements IAuthenticationService {
 		// that does not include the WebEclipse version header
 		String xRequestedWith = req.getHeader("X-Requested-With"); //$NON-NLS-1$
 
+		resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (version == null && !"XMLHttpRequest".equals(xRequestedWith)) { //$NON-NLS-1$
 			resp.sendRedirect(req.getContextPath() + "/mixloginstatic/LoginWindow.html?redirect=" + req.getRequestURL());
 		} else {

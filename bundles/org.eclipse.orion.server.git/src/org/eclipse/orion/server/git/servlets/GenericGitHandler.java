@@ -36,6 +36,7 @@ public class GenericGitHandler extends ServletResourceHandler<String> {
 			return false;
 
 		try {
+			response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 			PrintWriter writer = response.getWriter();
 			writer.println("<!DOCTYPE HTML>"); //$NON-NLS-1$
 			writer.println("<html>"); //$NON-NLS-1$

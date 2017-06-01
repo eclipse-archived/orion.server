@@ -86,6 +86,7 @@ public class AboutHandler extends ServletResourceHandler<String> {
 		StringBuffer buf = computeAboutInfo(request);
 		String output = buf.toString();
 		try {
+			response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 			response.getWriter().write(output);
 		} catch (IOException e) {
 			// should not occur
