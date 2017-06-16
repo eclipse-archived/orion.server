@@ -67,7 +67,7 @@ public class TaskStore {
 	 * @param td
 	 *            description of the task to read
 	 */
-	public String readTask(TaskDescription td) {
+	public synchronized String readTask(TaskDescription td) {
 		File directory = new File(root, getUserDirectory(td.getUserId()));
 		if (!directory.exists())
 			return null;
@@ -117,7 +117,7 @@ public class TaskStore {
 	 * @param representation
 	 *            string representation or the task
 	 */
-	public void writeTask(TaskDescription td, String representation) {
+	public synchronized void writeTask(TaskDescription td, String representation) {
 		File directory = new File(root, getUserDirectory(td.getUserId()));
 		if (!directory.exists()) {
 			directory.mkdir();
@@ -151,7 +151,7 @@ public class TaskStore {
 	 *            description of the task to remove
 	 * @return <code>true</code> if task was removed, <code>false</code> otherwise.
 	 */
-	public boolean removeTask(TaskDescription td) {
+	public synchronized boolean removeTask(TaskDescription td) {
 		File directory = new File(root, getUserDirectory(td.getUserId()));
 		if (!directory.exists())
 			return false;
@@ -188,7 +188,7 @@ public class TaskStore {
 			LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Cannot delete file " + f.getName())); //$NON-NLS-1$
 	}
 
-	public void removeAllTempTasks() {
+	public synchronized void removeAllTempTasks() {
 		File[] children = root.listFiles();
 		// listFiles returns null in case of IO exception
 		if (children == null)
@@ -200,7 +200,7 @@ public class TaskStore {
 		}
 	}
 
-	private void removeAllTempTasks(File userDirectory) {
+	private synchronized void removeAllTempTasks(File userDirectory) {
 		if (!userDirectory.exists())
 			return;
 
@@ -251,7 +251,7 @@ public class TaskStore {
 	 *            id of a user that is an owner of tasks
 	 * @return a list of tasks tracked for this user
 	 */
-	public List<TaskDescription> readAllTasks(String userId) {
+	public synchronized List<TaskDescription> readAllTasks(String userId) {
 		File userDirectory = new File(root, getUserDirectory(userId));
 		if (!userDirectory.exists())
 			return new ArrayList<TaskDescription>();
@@ -272,7 +272,7 @@ public class TaskStore {
 		return readAllTasks(false);
 	}
 
-	public List<TaskDescription> readAllTasks(boolean includeTempTasks) {
+	public synchronized List<TaskDescription> readAllTasks(boolean includeTempTasks) {
 		List<TaskDescription> result = new ArrayList<TaskDescription>();
 		if (root.exists() && root.isDirectory()) {
 			for (File userDirectory : root.listFiles()) {

@@ -10,10 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.resources;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
-import org.eclipse.orion.server.core.*;
+
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -23,7 +28,7 @@ public class FileLocker {
 	private File lockFile;
 	private RandomAccessFile raFile = null;
 	private FileLock lock = null;
-	private static final boolean locking = Boolean.parseBoolean(PreferenceHelper.getString(ServerConstants.CONFIG_FILE_CONTENT_LOCKING, "true")); //$NON-NLS-1$
+	private static final boolean locking = Boolean.parseBoolean(PreferenceHelper.getString(ServerConstants.CONFIG_FILE_CONTENT_LOCKING));
 
 	/**
 	 * Create the locker.
