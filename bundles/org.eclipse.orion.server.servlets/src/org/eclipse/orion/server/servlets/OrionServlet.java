@@ -68,8 +68,7 @@ public abstract class OrionServlet extends HttpServlet {
 		Assert.isLegal(result instanceof JSONObject || result instanceof JSONArray);
 		resp.setCharacterEncoding("UTF-8"); //$NON-NLS-1$
 		resp.setStatus(HttpServletResponse.SC_OK);
-		resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
-		resp.setHeader("Cache-Control", "no-store"); //$NON-NLS-1$ //$NON-NLS-2$
+		resp.setHeader("Cache-Control", "no-cache, no-store"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (result instanceof JSONObject) {
 			decorateResponse(req, (JSONObject) result);
 		}
