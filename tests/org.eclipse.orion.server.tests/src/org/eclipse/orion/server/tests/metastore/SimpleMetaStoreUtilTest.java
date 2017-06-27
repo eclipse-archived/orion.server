@@ -132,13 +132,7 @@ public class SimpleMetaStoreUtilTest {
 		File parent = getTempDir();
 		String name = "this//is//bad";
 		// try to create the file
-		try {
-			SimpleMetaStoreUtil.createMetaFile(parent, name, jsonObject);
-		} catch (RuntimeException e) {
-			/* this is the desired outcome */
-			return;
-		}
-		assertTrue("Attempting to create a metafile with an invalid path should have thrown an exception", false);
+		assertFalse(SimpleMetaStoreUtil.createMetaFile(parent, name, jsonObject));
 	}
 
 	@Test

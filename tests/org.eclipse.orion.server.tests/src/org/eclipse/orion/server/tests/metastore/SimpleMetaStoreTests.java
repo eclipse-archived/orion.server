@@ -664,10 +664,10 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		projectInfo.setWorkspaceId(workspaceInfo.getUniqueId());
 		try {
 			metaStore.createProject(projectInfo);
-		} catch (RuntimeException e) {
-			// we expect to get a runtime exception here
+		} catch (CoreException e) {
+			// we expect to get a core exception here
 			String message = e.getMessage();
-			assertTrue(message.contains("Meta File Error, file IO error, could not lock the file"));
+			assertTrue(message.contains("could not find workspace"));
 		}
 	}
 
