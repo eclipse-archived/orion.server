@@ -63,7 +63,6 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 
 	private final ServletResourceHandler<IFileStore> directorySerializerV1;
 	private final ServletResourceHandler<IFileStore> fileSerializerV1;
-	private final ServletResourceHandler<IFileStore> genericDirectorySerializer;
 	private final ServletResourceHandler<IFileStore> genericFileSerializer;
 
 	final ServletResourceHandler<IStatus> statusHandler;
@@ -150,18 +149,10 @@ public class ServletFileStoreHandler extends ServletResourceHandler<IFileStore> 
 		fileSerializerV1 = new FileHandlerV1(statusHandler, context);
 		genericFileSerializer = new GenericFileHandler(context);
 		directorySerializerV1 = new DirectoryHandlerV1(statusHandler);
-		genericDirectorySerializer = new GenericDirectoryHandler();
 	}
 
 	private boolean handleDirectory(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
-		String versionString = request.getHeader(ProtocolConstants.HEADER_ORION_VERSION);
-		Version version = versionString == null ? null : new Version(versionString);
-		ServletResourceHandler<IFileStore> handler;
-		if (version != null && VERSION1.isIncluded(version))
-			handler = directorySerializerV1;
-		else
-			handler = genericDirectorySerializer;
-		return handler.handleRequest(request, response, file);
+		return directorySerializerV1.handleRequest(request, response, file);
 	}
 
 	private boolean handleFile(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
