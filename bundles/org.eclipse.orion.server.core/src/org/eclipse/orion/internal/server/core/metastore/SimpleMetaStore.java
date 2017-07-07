@@ -19,8 +19,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
@@ -33,6 +31,7 @@ import org.eclipse.orion.server.core.metastore.MetadataInfo;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
 import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
+import org.eclipse.orion.server.core.resources.FileLocker;
 import org.eclipse.orion.server.core.users.UserConstants;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -95,7 +94,7 @@ public class SimpleMetaStore implements IMetaStore {
 	/**
 	 * A map of read write locks keyed by userId.
 	 */
-	private final Map<String, ReadWriteLock> lockMap = Collections.synchronizedMap(new HashMap<String, ReadWriteLock>());
+	private final Map<String, FileLocker> lockMap = Collections.synchronizedMap(new HashMap<String, FileLocker>());
 
 	/**
 	 * The root location of this Simple Meta Store.
@@ -131,9 +130,9 @@ public class SimpleMetaStore implements IMetaStore {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: project name is null.", null));
 		}
 		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(projectInfo.getWorkspaceId());
-		ReadWriteLock lock = getLockForUser(userId);
-		lock.writeLock().lock();
+		FileLocker.Lock lock = null;
 		try {
+			lock = getUserLock(userId).lock(false);
 			WorkspaceInfo workspaceInfo = readWorkspace(projectInfo.getWorkspaceId());
 			if (workspaceInfo == null) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
@@ -188,8 +187,13 @@ public class SimpleMetaStore implements IMetaStore {
 		} catch (CoreException exception) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
 					"SimpleMetaStore.createProject: could not find workspace with id:" + projectInfo.getWorkspaceId() + ", workspace does not exist.", null));
+		} catch (IOException exception) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+					"SimpleMetaStore.createProject: failed to lock user metadata:" + userId, exception));
 		} finally {
-			lock.writeLock().unlock();
+			if (lock != null) {
+				lock.release();
+			}
 		}
 	}
 
@@ -200,9 +204,9 @@ public class SimpleMetaStore implements IMetaStore {
 					"SimpleMetaStore.createUser: could not create user, did not provide a userName", null));
 		}
 		String userId = userInfo.getUserName();
-		ReadWriteLock lock = getLockForUser(userId);
-		lock.writeLock().lock();
+		FileLocker.Lock lock = null;
 		try {
+			lock = getUserLock(userId).lock(false);
 			userInfo.setProperty(UserConstants.CREATION_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
 			userInfo.setUniqueId(userId);
 			File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
@@ -244,8 +248,13 @@ public class SimpleMetaStore implements IMetaStore {
 				userPropertyCache.add(UserConstants.USER_NAME, userId, userId);
 			}
 			logger.debug("Created new user " + userId + "."); //$NON-NLS-1$
+		} catch (IOException exception) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+					"SimpleMetaStore.createUser: failed to lock user metadata:" + userId, exception));
 		} finally {
-			lock.writeLock().unlock();
+			if (lock != null) {
+				lock.release();
+			}
 		}
 	}
 
@@ -270,9 +279,10 @@ public class SimpleMetaStore implements IMetaStore {
 					"SimpleMetaStore.createWorkspace: could not find user with id: " + workspaceInfo.getUserId() + ", user does not exist.", null));
 		}
 		// lock the user when creating the workspace and updating the user.
-		ReadWriteLock lock = getLockForUser(userInfo.getUniqueId());
-		lock.writeLock().lock();
+		String userId = userInfo.getUniqueId();
+		FileLocker.Lock lock = null;
 		try {
+			lock = getUserLock(userId).lock(false);
 			// We create a meta folder for the workspace using the encoded workspace name
 			String workspaceId = SimpleMetaStoreUtil.encodeWorkspaceId(workspaceInfo.getUserId(), workspaceInfo.getUniqueId() != null ?  workspaceInfo.getUniqueId() : workspaceInfo.getFullName());
 			String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
@@ -315,17 +325,22 @@ public class SimpleMetaStore implements IMetaStore {
 			newWorkspaceIds.add(workspaceId);
 			userInfo.setWorkspaceIds(newWorkspaceIds);
 			updateUser(userInfo);
+		} catch (IOException exception) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+					"SimpleMetaStore.createWorkspace: failed to lock user metadata:" + userId, exception));
 		} finally {
-			lock.writeLock().unlock();
+			if (lock != null) {
+				lock.release();
+			}
 		}
 	}
 
 	@Override
 	public void deleteProject(String workspaceId, String projectName) throws CoreException {
 		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceId);
-		ReadWriteLock lock = getLockForUser(userId);
-		lock.writeLock().lock();
+		FileLocker.Lock lock = null;
 		try {
+			lock = getUserLock(userId).lock(false);
 			String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 			File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
 			File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
@@ -360,16 +375,21 @@ public class SimpleMetaStore implements IMetaStore {
 							"SimpleMetaStore.deleteProject: could not delete project: " + projectName + " for user " + userId, null));
 				}
 			}
+		} catch (IOException exception) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+					"SimpleMetaStore.deleteProject: failed to lock user metadata:" + userId, exception));
 		} finally {
-			lock.writeLock().unlock();
+			if (lock != null) {
+				lock.release();
+			}
 		}
 	}
 
 	@Override
 	public void deleteUser(String userId) throws CoreException {
-		ReadWriteLock lock = getLockForUser(userId);
-		lock.writeLock().lock();
+		FileLocker.Lock lock = null;
 		try {
+			lock = getUserLock(userId).lock(false);
 			UserInfo userInfo;
 			try {
 				userInfo = readUser(userId);
@@ -394,16 +414,21 @@ public class SimpleMetaStore implements IMetaStore {
 			}
 			// update the userid cache
 			userPropertyCache.deleteUser(userId);
+		} catch (IOException exception) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+					"SimpleMetaStore.deleteUser: failed to lock user metadata:" + userId, exception));
 		} finally {
-			lock.writeLock().unlock();
+			if (lock != null) {
+				lock.release();
+			}
 		}
 	}
 
 	@Override
 	public void deleteWorkspace(String userId, String workspaceId) throws CoreException {
-		ReadWriteLock lock = getLockForUser(userId);
-		lock.writeLock().lock();
+		FileLocker.Lock lock = null;
 		try {
+			lock = getUserLock(userId).lock(false);
 			String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 			File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
 
@@ -438,8 +463,13 @@ public class SimpleMetaStore implements IMetaStore {
 							"SimpleMetaStore.deleteWorkspace: could not delete workspace: " + encodedWorkspaceName, null));
 				}
 			}
+		} catch (IOException exception) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+					"SimpleMetaStore.deleteWorkspace: failed to lock user metadata:" + userId, exception));
 		} finally {
-			lock.writeLock().unlock();
+			if (lock != null) {
+				lock.release();
+			}
 		}
 	}
 
@@ -459,12 +489,17 @@ public class SimpleMetaStore implements IMetaStore {
 		return projectFolder;
 	}
 
-	private ReadWriteLock getLockForUser(String userId) {
+	public FileLocker getUserLock(String userId) throws IOException {
 		synchronized (lockMap) {
 			if (!lockMap.containsKey(userId)) {
-				ReadWriteLock lock = new ReentrantReadWriteLock();
-				lockMap.put(userId, lock);
-				return lock;
+				String userPrefix = userId.substring(0, Math.min(2, userId.length()));
+				File file = new File(getRootLocation(), userPrefix);
+				file = new File(file, userId);
+				file.mkdirs();
+				file = new File(file, ".lock");
+				FileLocker result = new FileLocker(file);
+				lockMap.put(userId, result);
+				return result;
 			}
 			return lockMap.get(userId);
 		}
@@ -546,51 +581,64 @@ public class SimpleMetaStore implements IMetaStore {
 	 * @throws CoreException
 	 */
 	protected void initializeMetaStore(File rootLocation) throws CoreException {
-		if (!SimpleMetaStoreUtil.isMetaFile(rootLocation, SimpleMetaStore.ROOT)) {
-			// the root metastore.json file does not exist, create a new root metastore.json file
-			JSONObject jsonObject = new JSONObject();
-			try {
-				jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
-				jsonObject.put(SimpleMetaStore.ORION_DESCRIPTION, DESCRIPTION);
-			} catch (JSONException e) {
-				logger.error("SimpleMetaStore.initializeMetaStore: JSON error.", e);
-				throw new RuntimeException("SimpleMetaStore.initializeMetaStore: could not create new metastore.json");
-			}
-			if (!SimpleMetaStoreUtil.createMetaFile(rootLocation, SimpleMetaStore.ROOT, jsonObject)) {
-				throw new RuntimeException("SimpleMetaStore.initializeMetaStore: could not create MetaStore");
-			}
-			if (logger.isDebugEnabled()) {
-				logger.debug("Created new simple metadata store (version " + VERSION + ")."); //$NON-NLS-1$
-			}
-		} else {
-			// Verify we have a valid MetaStore with the right version
-			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(rootLocation, SimpleMetaStore.ROOT);
-			try {
-				int version = jsonObject.getInt(SimpleMetaStore.ORION_VERSION);
-				if (version < VERSION) {
-					// the root metastore.json file is an older version, update the root metastore.json file
+		FileLocker.Lock lock = null;
+		try {
+			FileLocker locker = new FileLocker(new File(rootLocation, ".lock"));
+			lock = locker.lock(false);
+
+			if (!SimpleMetaStoreUtil.isMetaFile(rootLocation, SimpleMetaStore.ROOT)) {
+				// the root metastore.json file does not exist, create a new root metastore.json file
+				JSONObject jsonObject = new JSONObject();
+				try {
 					jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
 					jsonObject.put(SimpleMetaStore.ORION_DESCRIPTION, DESCRIPTION);
-					if (!SimpleMetaStoreUtil.updateMetaFile(rootLocation, SimpleMetaStore.ROOT, jsonObject)) {
-						throw new RuntimeException("SimpleMetaStore.initializeMetaStore: could not update MetaStore");
-					}
-					if (logger.isDebugEnabled()) {
-						logger.debug("Updated simple metadata store to a new version (version " + VERSION + ")."); //$NON-NLS-1$
-					}
-				} else if (version > VERSION) {
-					// we are running an old server on metadata that is at a newer version
-					throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
-							"SimpleMetaStore.initializeMetaStore: cannot run an old server (version " + SimpleMetaStore.VERSION
-									+ ") on metadata that is at a newer version (version " + version + ")",
-							null));
+				} catch (JSONException e) {
+					logger.error("SimpleMetaStore.initializeMetaStore: JSON error.", e);
+					throw new RuntimeException("SimpleMetaStore.initializeMetaStore: could not create new metastore.json");
 				}
-			} catch (JSONException e) {
-				logger.error("SimpleMetaStore.initializeMetaStore: JSON error.", e);
-				throw new RuntimeException("SimpleMetaStore.initializeMetaStore: could not read or update metastore.json");
+				if (!SimpleMetaStoreUtil.createMetaFile(rootLocation, SimpleMetaStore.ROOT, jsonObject)) {
+					throw new RuntimeException("SimpleMetaStore.initializeMetaStore: could not create MetaStore");
+				}
+				if (logger.isDebugEnabled()) {
+					logger.debug("Created new simple metadata store (version " + VERSION + ")."); //$NON-NLS-1$
+				}
+			} else {
+				// Verify we have a valid MetaStore with the right version
+				JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(rootLocation, SimpleMetaStore.ROOT);
+				try {
+					int version = jsonObject.getInt(SimpleMetaStore.ORION_VERSION);
+					if (version < VERSION) {
+						// the root metastore.json file is an older version, update the root metastore.json file
+						jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
+						jsonObject.put(SimpleMetaStore.ORION_DESCRIPTION, DESCRIPTION);
+						if (!SimpleMetaStoreUtil.updateMetaFile(rootLocation, SimpleMetaStore.ROOT, jsonObject)) {
+							throw new RuntimeException("SimpleMetaStore.initializeMetaStore: could not update MetaStore");
+						}
+						if (logger.isDebugEnabled()) {
+							logger.debug("Updated simple metadata store to a new version (version " + VERSION + ")."); //$NON-NLS-1$
+						}
+					} else if (version > VERSION) {
+						// we are running an old server on metadata that is at a newer version
+						throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+								"SimpleMetaStore.initializeMetaStore: cannot run an old server (version " + SimpleMetaStore.VERSION
+										+ ") on metadata that is at a newer version (version " + version + ")",
+								null));
+					}
+				} catch (JSONException e) {
+					logger.error("SimpleMetaStore.initializeMetaStore: JSON error.", e);
+					throw new RuntimeException("SimpleMetaStore.initializeMetaStore: could not read or update metastore.json");
+				}
+			}
+	
+			logger.info("Loaded simple metadata store (version " + VERSION + ")."); //$NON-NLS-1$
+		} catch (IOException exception) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+					"SimpleMetaStore.initializeMetaStore: failed to lock root metadata:" + SimpleMetaStore.ROOT, exception));
+		} finally {
+			if (lock != null) {
+				lock.release();
 			}
 		}
-
-		logger.info("Loaded simple metadata store (version " + VERSION + ")."); //$NON-NLS-1$
 	}
 
 	@Override
@@ -610,9 +658,9 @@ public class SimpleMetaStore implements IMetaStore {
 			}
 			return null;
 		}
-		ReadWriteLock lock = getLockForUser(userId);
-		lock.readLock().lock();
+		FileLocker.Lock lock = null;
 		try {
+			lock = getUserLock(userId).lock(true);
 			String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 			if (encodedWorkspaceName == null) {
 				if (logger.isDebugEnabled()) {
@@ -647,9 +695,9 @@ public class SimpleMetaStore implements IMetaStore {
 					projectInfo.setFullName(projectName);
 					projectInfo.setWorkspaceId(workspaceId);
 					projectInfo.setContentLocation(projectLocation);
-					lock.readLock().unlock();
+					lock.release();
 					createProject(projectInfo);
-					lock.readLock().lock();
+					lock = getUserLock(userId).lock(true);
 					jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, metafileId);
 				} else {
 					// both the project folder and project json do not exist, no project
@@ -675,8 +723,13 @@ public class SimpleMetaStore implements IMetaStore {
 						"SimpleMetaStore.readProject: could not read project " + projectName + " for userId " + userId, e));
 			}
 			return projectInfo;
+		} catch (IOException exception) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+					"SimpleMetaStore.readProject: failed to lock user metadata:" + userId, exception));
 		} finally {
-			lock.readLock().unlock();
+			if (lock != null) {
+				lock.release();
+			}
 		}
 	}
 
@@ -685,9 +738,9 @@ public class SimpleMetaStore implements IMetaStore {
 		if (userId == null) {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.readUser: user is null", null));
 		}
-		ReadWriteLock lock = getLockForUser(userId);
-		lock.readLock().lock();
+		FileLocker.Lock lock = null;
 		try {
+			lock = getUserLock(userId).lock(true);
 			File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
 			if (SimpleMetaStoreUtil.isMetaFile(userMetaFolder, SimpleMetaStore.USER)) {
 				JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
@@ -701,8 +754,8 @@ public class SimpleMetaStore implements IMetaStore {
 					if (migration.isMigrationRequired(jsonObject)) {
 						logger.info("Migration: Migration required for user " + userId + " to the latest (version " + SimpleMetaStore.VERSION + ")");
 						// Migration to the latest version is required for this user
-						lock.readLock().unlock();
-						lock.writeLock().lock();
+						lock.release();
+						lock = getUserLock(userId).lock(false);
 						try {
 							// Bug 451012: since we now have locked for write, check again if we need to migrate
 							jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
@@ -712,9 +765,9 @@ public class SimpleMetaStore implements IMetaStore {
 								logger.info("Migration: Migration no longer required for user " + userId + ", completed in other thread");
 							}
 						} finally {
-							lock.writeLock().unlock();
+							lock.release();
 						}
-						lock.readLock().lock();
+						lock = getUserLock(userId).lock(true);
 						jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
 					}
 					userInfo.setUniqueId(jsonObject.getString(MetadataInfo.UNIQUE_ID));
@@ -745,8 +798,13 @@ public class SimpleMetaStore implements IMetaStore {
 				}
 				return userInfo;
 			}
+		} catch (IOException exception) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+					"SimpleMetaStore.readUser: failed to lock user metadata:" + userId, exception));
 		} finally {
-			lock.readLock().unlock();
+			if (lock != null) {
+				lock.release();
+			}
 		}
 
 		// user does not exist for this userId, create it ( see Bug 415505 )
@@ -791,9 +849,9 @@ public class SimpleMetaStore implements IMetaStore {
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
 		JSONObject jsonObject = null;
 		// add a read lock when reading the the.
-		ReadWriteLock lock = getLockForUser(userId);
-		lock.readLock().lock();
+		FileLocker.Lock lock = null;
 		try {
+			lock = getUserLock(userId).lock(true);
 			jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, workspaceId);
 			if (jsonObject == null) {
 				return null;
@@ -818,8 +876,13 @@ public class SimpleMetaStore implements IMetaStore {
 						"SimpleMetaStore.readWorkspace: could not read workspace " + encodedWorkspaceName + " for user id " + userId, e));
 			}
 			return workspaceInfo;
+		} catch (IOException exception) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+					"SimpleMetaStore.readWorkspace: failed to lock user metadata:" + userId, exception));
 		} finally {
-			lock.readLock().unlock();
+			if (lock != null) {
+				lock.release();
+			}
 		}
 	}
 
@@ -840,23 +903,33 @@ public class SimpleMetaStore implements IMetaStore {
 	 */
 	private int initializeAllRegisteredPropertiesFromDisk() {
 		List<String> allUsers = SimpleMetaStoreUtil.listMetaUserFolders(rootLocation);
-		for (String user : allUsers) {
-			File userMetaFile = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, user);
-			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFile, SimpleMetaStoreUtil.USER);
-			JSONObject properties = null;
+		for (String userId : allUsers) {
+			FileLocker.Lock lock = null;
 			try {
-				properties = jsonObject.getJSONObject("Properties");
-			} catch (JSONException e) {
-				logger.error("SimpleMetaStore.initializeAllRegisteredPropertiesFromDisk: failed reading metafile for user " + user, e);
-			}
-
-			UserInfo info = new UserInfo();
-			info.setUniqueId(user);
-			// call setProperties for its side effect of writing registered properties to the cache.
-			try {
-				setProperties(info, properties);
-			} catch (JSONException e) {
-				logger.error("SimpleMetaStore.initializeAllRegisteredPropertiesFromDisk: failed reading properties for user " + user, e);
+				lock = getUserLock(userId).lock(true);				
+				File userMetaFile = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, userId);
+				JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFile, SimpleMetaStoreUtil.USER);
+				JSONObject properties = null;
+				try {
+					properties = jsonObject.getJSONObject("Properties");
+				} catch (JSONException e) {
+					logger.error("SimpleMetaStore.initializeAllRegisteredPropertiesFromDisk: failed reading metafile for user " + userId, e);
+				}
+	
+				UserInfo info = new UserInfo();
+				info.setUniqueId(userId);
+				// call setProperties for its side effect of writing registered properties to the cache.
+				try {
+					setProperties(info, properties);
+				} catch (JSONException e) {
+					logger.error("SimpleMetaStore.initializeAllRegisteredPropertiesFromDisk: failed reading properties for user " + userId, e);
+				}
+			} catch (IOException exception) {
+				logger.error("SimpleMetaStore.initializeAllRegisteredPropertiesFromDisk: failed to lock user metadata: " + userId, exception);
+			} finally {
+				if (lock != null) {
+					lock.release();
+				}
 			}
 		}
 		return allUsers.size();
@@ -898,9 +971,9 @@ public class SimpleMetaStore implements IMetaStore {
 	@Override
 	public void updateProject(ProjectInfo projectInfo) throws CoreException {
 		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(projectInfo.getWorkspaceId());
-		ReadWriteLock lock = getLockForUser(userId);
-		lock.writeLock().lock();
+		FileLocker.Lock lock = null;
 		try {
+			lock = getUserLock(userId).lock(false);
 			String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(projectInfo.getWorkspaceId());
 			File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
 			File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
@@ -1014,8 +1087,13 @@ public class SimpleMetaStore implements IMetaStore {
 						"SimpleMetaStore.updateProject: could not update project: " + projectInfo.getFullName() + " for workspace " + encodedWorkspaceName,
 						null));
 			}
+		} catch (IOException exception) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+					"SimpleMetaStore.updateProject: failed to lock user metadata:" + userId, exception));
 		} finally {
-			lock.writeLock().unlock();
+			if (lock != null) {
+				lock.release();
+			}
 		}
 	}
 
@@ -1090,11 +1168,11 @@ public class SimpleMetaStore implements IMetaStore {
 			String newUserId = userInfo.getUserName();
 
 			// lock both the old and new userId
-			ReadWriteLock oldUserLock = getLockForUser(oldUserId);
-			oldUserLock.writeLock().lock();
-			ReadWriteLock newUserLock = getLockForUser(newUserId);
-			newUserLock.writeLock().lock();
+			FileLocker.Lock oldUserLock = null;
+			FileLocker.Lock newUserLock = null;
 			try {
+				oldUserLock = getUserLock(oldUserId).lock(false);
+				newUserLock = getUserLock(newUserId).lock(false);
 
 				// update the workspace JSON with the new userId
 				List<String> oldWorkspaceIds = userInfo.getWorkspaceIds();
@@ -1164,15 +1242,22 @@ public class SimpleMetaStore implements IMetaStore {
 
 				logger.debug("Moved MetaStore for user " + oldUserId + " to user " + newUserId + "."); //$NON-NLS-1$
 
+			} catch (IOException exception) {
+				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+						"SimpleMetaStore.updateUser: failed to lock user metadata for one of: " + oldUserId + ", " + newUserId, exception));
 			} finally {
-				oldUserLock.writeLock().unlock();
-				newUserLock.writeLock().unlock();
+				if (oldUserLock != null) {
+					oldUserLock.release();
+				}
+				if (newUserLock != null) {
+					newUserLock.release();
+				}
 			}
 		}
 		String userId = userInfo.getUserName();
-		ReadWriteLock lock = getLockForUser(userId);
-		lock.writeLock().lock();
+		FileLocker.Lock lock = null;
 		try {
+			lock = getUserLock(userId).lock(false);
 			File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
 			JSONObject jsonObject = SimpleMetaStoreUtil.readMetaFile(userMetaFolder, SimpleMetaStore.USER);
 			if (jsonObject == null) {
@@ -1195,8 +1280,13 @@ public class SimpleMetaStore implements IMetaStore {
 				throw new CoreException(
 						new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateUser: could not update user: " + userId, null));
 			}
+		} catch (IOException exception) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+					"SimpleMetaStore.updateUser: failed to lock user metadata:" + userId, exception));
 		} finally {
-			lock.writeLock().unlock();
+			if (lock != null) {
+				lock.release();
+			}
 		}
 	}
 
@@ -1204,9 +1294,9 @@ public class SimpleMetaStore implements IMetaStore {
 	public void updateWorkspace(WorkspaceInfo workspaceInfo) throws CoreException {
 		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceInfo.getUniqueId());
 		// lock the user when updating the workspace, see Bugzilla 462608.
-		ReadWriteLock lock = getLockForUser(userId);
-		lock.writeLock().lock();
+		FileLocker.Lock lock = null;
 		try {
+			lock = getUserLock(userId).lock(false);
 
 			String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceInfo.getUniqueId());
 			boolean renameUser = false;
@@ -1249,8 +1339,13 @@ public class SimpleMetaStore implements IMetaStore {
 
 				workspaceInfo.setUniqueId(newWorkspaceId);
 			}
+		} catch (IOException exception) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
+					"SimpleMetaStore.updateWorkspace: failed to lock user metadata:" + userId, exception));
 		} finally {
-			lock.writeLock().unlock();
+			if (lock != null) {
+				lock.release();
+			}
 		}
 	}
 }

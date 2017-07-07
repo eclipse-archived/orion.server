@@ -145,9 +145,9 @@ public class Activator implements BundleActivator {
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
 		bundleContext = context;
-		registerServices();
 		initializeFileSystem();
 		initializeMetaStore();
+		registerServices();
 		startWorkspacePrunerJob();
 		logger.info("Started Orion server core successfully."); //$NON-NLS-1$
 	}
@@ -164,7 +164,7 @@ public class Activator implements BundleActivator {
 	private void registerServices() {
 		try {
 			IPath taskLocation = getTaskLocation();
-			taskService = new TaskService(taskLocation);
+			taskService = new TaskService(taskLocation, metastore);
 			taskServiceRegistration = bundleContext.registerService(ITaskService.class, taskService, null);
 		} catch (IOException e) {
 			LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Failed to initialize task service", e)); //$NON-NLS-1$

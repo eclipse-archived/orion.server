@@ -10,10 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.metastore;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.server.core.resources.FileLocker;
 
 /**
  * The metadata store is responsible for persisting Orion user and workspace metadata. The
@@ -105,6 +107,12 @@ public interface IMetaStore {
 	 * @return The file store for the given user.
 	 */
 	public IFileStore getUserHome(String userId);
+
+	/**
+	 * Returns a locker for a user. 
+	 * @return The file locker.
+	 */
+	public FileLocker getUserLock(String userId) throws IOException;
 
 	/**
 	 * Returns the location for the the given workspace. 

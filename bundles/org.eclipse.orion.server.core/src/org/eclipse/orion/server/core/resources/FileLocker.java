@@ -15,6 +15,8 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.eclipse.orion.server.core.IOUtilities;
 import org.eclipse.orion.server.core.PreferenceHelper;
@@ -27,8 +29,26 @@ import org.eclipse.osgi.util.NLS;
 public class FileLocker {
 	private File lockFile;
 	private RandomAccessFile raFile = null;
-	private FileLock lock = null;
+	private int counter = 0;
+	private FileLock fileLock = null;
+	ReadWriteLock lock = new ReentrantReadWriteLock();
 	private static final boolean locking = Boolean.parseBoolean(PreferenceHelper.getString(ServerConstants.CONFIG_FILE_CONTENT_LOCKING));
+
+	public class Lock {
+		private boolean isShared;
+		public Lock(boolean isShared) {
+			super();
+			this.isShared = isShared;
+		}
+		public void release() {
+			releaseLock();
+			if (this.isShared) {
+				lock.readLock().unlock();
+			} else {
+				lock.writeLock().unlock();
+			}
+		}
+	}
 
 	/**
 	 * Create the locker.
@@ -41,41 +61,6 @@ public class FileLocker {
 	}
 
 	/**
-	 * Try and lock the file.  Return <code>true</code> if it now has the lock, and 
-	 * <code>false</code> if it did not acquire the lock.
-	 * <p>
-	 * If this acquires the lock on the file, the caller must use {@link #release()} 
-	 * to release the lock.
-	 * </p>
-	 * 
-	 * @return <code>true</code> if it acquired the lock, false otherwise.
-	 * @throws IOException
-	 */
-	public synchronized boolean tryLock() throws IOException {
-		if (!locking) {
-			return true;
-		}
-		lockFile.createNewFile();
-		raFile = new RandomAccessFile(lockFile, "rw"); //$NON-NLS-1$
-		try {
-			lock = raFile.getChannel().tryLock(0, 1L, false);
-		} catch (IOException ioe) {
-			// produce a more specific message for clients
-			String specificMessage = NLS.bind("An error occurred while locking file \"{0}\": \"{1}\". A common reason is that the file system or Runtime Environment does not support file locking for that location.", new Object[] {lock, ioe.getMessage()});
-			throw new IOException(specificMessage);
-		} catch (OverlappingFileLockException e) {
-			// handle it as null result
-			lock = null;
-		} finally {
-			if (lock == null) {
-				IOUtilities.safeClose(raFile);
-				raFile = null;
-			}
-		}
-		return lock != null;
-	}
-
-	/**
 	 * Try and lock the file.  This method blocks until it gets the lock.
 	 * <p>
 	 * The caller must use {@link #release()} to release the lock.
@@ -84,66 +69,73 @@ public class FileLocker {
 	 * @return <code>true</code> if it acquired the lock, false otherwise.
 	 * @throws IOException
 	 */
-	public synchronized void lock() throws IOException {
-		if (!locking) {
-			return;
-		}
-		lockFile.createNewFile();
-		raFile = new RandomAccessFile(lockFile, "rw"); //$NON-NLS-1$
-		boolean locked = false;
+	public Lock lock(boolean shared) throws IOException {
 		try {
-			do {
-				try {
-					lock = raFile.getChannel().lock(0, 1L, false);
-					locked = true;
-				} catch (OverlappingFileLockException e) {
-					// another thread within this process probably has the lock
-					Thread.sleep(1L);
-				}
-			} while (!locked);
-		} catch (InterruptedException e1) {
-			String specificMessage = NLS.bind("An error occurred while locking file \"{0}\": \"{1}\". A common reason is that the file system or Runtime Environment does not support file locking for that location.", new Object[] {lock, e1.getMessage()});
-			lock = null;
-			throw new IOException(specificMessage);
+			if (shared) {
+				lock.readLock().lock();
+			} else {
+				lock.writeLock().lock();
+			}
+			acquireLock(shared);
 		} catch (IOException ioe) {
 			// produce a more specific message for clients
-			String specificMessage = NLS.bind("An error occurred while locking file \"{0}\": \"{1}\". A common reason is that the file system or Runtime Environment does not support file locking for that location.", new Object[] {lock, ioe.getMessage()});
-			lock = null;
-			throw new IOException(specificMessage);
+			String specificMessage = NLS.bind("An error occurred while locking file \"{0}\": \"{1}\". A common reason is that the file system or Runtime Environment does not support file locking for that location.", new Object[] {fileLock, ioe.getMessage()});
+			fileLock = null;
+			throw new IOException(specificMessage, ioe);
+		}
+
+		return new Lock(shared);
+	}
+
+	private synchronized void acquireLock(boolean shared) throws IOException {
+		try {
+			boolean locked = false;
+			do {	
+				if (locking && counter == 0) {
+					lockFile.createNewFile();
+					if (raFile == null) {
+						raFile = new RandomAccessFile(lockFile, "rw"); //$NON-NLS-1$
+					}
+
+					try {
+						if (shared) {
+							fileLock = raFile.getChannel().lock(0, 1L, true);
+						} else {
+							fileLock = raFile.getChannel().lock(0, 1L, false);
+						}
+						locked = true;
+					} catch (OverlappingFileLockException e) {
+						// another thread within this process probably has the lock
+					}
+				} else {
+					locked = true;
+				}
+			} while (!locked);
+			counter++;
 		} finally {
-			if (lock == null) {
+			if (fileLock == null) {
 				IOUtilities.safeClose(raFile);
 				raFile = null;
 			}
 		}
 	}
-
-	/**
-	 * The lock is valid if it was acquired and has not been released.
-	 * @return <code>true</code> if the lock is valid, <code>false</code> otherwise
-	 */
-	public synchronized boolean isValid() {
-		return !locking || (lock != null && lock.isValid());
-	}
-
-	/**
-	 * Release the file lock.  If this lock has already been released, this is a no-op.
-	 */
-	public synchronized void release() {
-		if (!locking) {
-			return;
-		}
-		if (lock != null) {
-			try {
-				lock.release();
-			} catch (IOException e) {
-				//no-op
+	
+	private synchronized void releaseLock() {
+		if (--counter == 0) {
+			if (!locking) {
+				return;
 			}
+			if (fileLock != null) {
+				try {
+					fileLock.release();
+				} catch (IOException e) {
+					//no-op
+				}
+			}
+			if (raFile != null) {
+				IOUtilities.safeClose(raFile);
+			}
+			raFile = null;
 		}
-		if (raFile != null) {
-			IOUtilities.safeClose(raFile);
-		}
-		lock = null;
-		raFile = null;
 	}
 }

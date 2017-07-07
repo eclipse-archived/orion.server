@@ -12,6 +12,7 @@ package org.eclipse.orion.server.core.metastore;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -47,7 +48,7 @@ public class WorkspaceInfo extends MetadataInfo {
 			this.projectNames = EMPTY;
 		} else {
 			//copy and wrap read only 
-			this.projectNames = Collections.unmodifiableList(new ArrayList<String>(names));
+			this.projectNames = Collections.unmodifiableList(new ArrayList<String>(new HashSet<String>(names)));
 		}
 	}
 
