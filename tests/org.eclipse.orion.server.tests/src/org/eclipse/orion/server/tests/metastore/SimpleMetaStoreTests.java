@@ -474,10 +474,9 @@ public class SimpleMetaStoreTests extends AbstractServerTest {
 		projectInfo.setWorkspaceId("77");
 		try {
 			metaStore.createProject(projectInfo);
+			assertTrue(false); /* should not reach here */
 		} catch (CoreException e) {
-			// we expect to get a core exception here
-			String message = e.getMessage();
-			assertTrue(message.contains("could not find workspace"));
+			assertTrue(true); /* this exception is expected */
 		}
 	}
 

@@ -509,6 +509,9 @@ public class SimpleMetaStoreUtil {
 			} else if (file.getName().equals(".lock")) {
 				// skip the eclipse workspace .lock file
 				continue;
+			} else if (file.getName().equals("locks")) {
+				// skip the eclipse workspace .lock file
+				continue;
 			} else if (file.getName().equals("healthChecks")) {
 				// skip the eclipse workspace .lock file
 				continue;

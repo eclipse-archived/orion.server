@@ -108,6 +108,8 @@ public class SimpleMetaStore implements IMetaStore {
 
 	private final Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config");
 
+	private static final String FILENAME_LOCK = ".lock";
+	
 	/**
 	 * Create an instance of a SimpleMetaStore under the provided folder.
 	 * 
@@ -130,6 +132,10 @@ public class SimpleMetaStore implements IMetaStore {
 			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: project name is null.", null));
 		}
 		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(projectInfo.getWorkspaceId());
+		if (userId == null) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.createProject: there's no user id in workspace id '" + projectInfo.getWorkspaceId() + "'", null));
+		}
+
 		FileLocker.Lock lock = null;
 		try {
 			lock = getUserLock(userId).lock(false);
@@ -338,6 +344,10 @@ public class SimpleMetaStore implements IMetaStore {
 	@Override
 	public void deleteProject(String workspaceId, String projectName) throws CoreException {
 		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceId);
+		if (userId == null) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.deleteProject: there's no user id in workspace id '" + workspaceId + "'", null));
+		}
+
 		FileLocker.Lock lock = null;
 		try {
 			lock = getUserLock(userId).lock(false);
@@ -493,10 +503,11 @@ public class SimpleMetaStore implements IMetaStore {
 		synchronized (lockMap) {
 			if (!lockMap.containsKey(userId)) {
 				String userPrefix = userId.substring(0, Math.min(2, userId.length()));
-				File file = new File(getRootLocation(), userPrefix);
+				File file = new File(getRootLocation(), "locks");
+				file = new File(file, userPrefix);
 				file = new File(file, userId);
 				file.mkdirs();
-				file = new File(file, ".lock");
+				file = new File(file, FILENAME_LOCK);
 				FileLocker result = new FileLocker(file);
 				lockMap.put(userId, result);
 				return result;
@@ -564,7 +575,13 @@ public class SimpleMetaStore implements IMetaStore {
 			throw new CoreException(
 					new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.getWorkspaceContentLocation: workspace id is null.", null));
 		}
+
 		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceId);
+		if (userId == null) {
+			throw new CoreException(
+					new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.getWorkspaceContentLocation: there's no user id in workspace id '" + workspaceId + "'", null));
+		}
+
 		String encodedWorkspaceName = SimpleMetaStoreUtil.decodeWorkspaceNameFromWorkspaceId(workspaceId);
 		File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
 		File workspaceMetaFolder = SimpleMetaStoreUtil.readMetaFolder(userMetaFolder, encodedWorkspaceName);
@@ -971,6 +988,10 @@ public class SimpleMetaStore implements IMetaStore {
 	@Override
 	public void updateProject(ProjectInfo projectInfo) throws CoreException {
 		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(projectInfo.getWorkspaceId());
+		if (userId == null) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateProject: there's no user id in workspace id '" + projectInfo.getWorkspaceId() + "'", null));
+		}
+
 		FileLocker.Lock lock = null;
 		try {
 			lock = getUserLock(userId).lock(false);
@@ -1293,6 +1314,10 @@ public class SimpleMetaStore implements IMetaStore {
 	@Override
 	public void updateWorkspace(WorkspaceInfo workspaceInfo) throws CoreException {
 		String userId = SimpleMetaStoreUtil.decodeUserIdFromWorkspaceId(workspaceInfo.getUniqueId());
+		if (userId == null) {
+			throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1, "SimpleMetaStore.updateWorkspace: there's no user id in workspace id '" + workspaceInfo.getUniqueId() + "'", null));
+		}
+
 		// lock the user when updating the workspace, see Bugzilla 462608.
 		FileLocker.Lock lock = null;
 		try {
