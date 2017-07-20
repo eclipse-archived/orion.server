@@ -215,11 +215,11 @@ public class SimpleMetaStore implements IMetaStore {
 			lock = getUserLock(userId).lock(false);
 			userInfo.setProperty(UserConstants.CREATION_TIMESTAMP, new Long(System.currentTimeMillis()).toString());
 			userInfo.setUniqueId(userId);
-			File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
-			if (SimpleMetaStoreUtil.isMetaFolder(getRootLocation(), userId)) {
+			if (SimpleMetaStoreUtil.isMetaUserFolder(getRootLocation(), userId)) {
 				throw new CoreException(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, 1,
 						"SimpleMetaStore.createUser: could not create user: " + userId + ", user already exists", null));
 			}
+			File userMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), userId);
 			JSONObject jsonObject = new JSONObject();
 			try {
 				jsonObject.put(SimpleMetaStore.ORION_VERSION, VERSION);
@@ -503,8 +503,7 @@ public class SimpleMetaStore implements IMetaStore {
 		synchronized (lockMap) {
 			if (!lockMap.containsKey(userId)) {
 				String userPrefix = userId.substring(0, Math.min(2, userId.length()));
-				File file = new File(getRootLocation(), "locks");
-				file = new File(file, userPrefix);
+				File file = new File(getRootLocation(), userPrefix);
 				file = new File(file, userId);
 				file.mkdirs();
 				file = new File(file, FILENAME_LOCK);
@@ -1249,9 +1248,7 @@ public class SimpleMetaStore implements IMetaStore {
 							"SimpleMetaStore.updateUser: user name " + userInfo.getUniqueId() + " does not exist, cannot rename to " + userInfo.getUserName(),
 							null));
 				}
-				File oldUserMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), oldUserId);
-				File newUserMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(getRootLocation(), newUserId);
-				SimpleMetaStoreUtil.moveUserMetaFolder(oldUserMetaFolder, newUserMetaFolder);
+				SimpleMetaStoreUtil.moveUserMetaFolder(getRootLocation(), oldUserId, newUserId);
 
 				userInfo.setUniqueId(newUserId);
 

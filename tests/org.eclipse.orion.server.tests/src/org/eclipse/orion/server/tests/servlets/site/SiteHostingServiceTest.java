@@ -40,7 +40,7 @@ public class SiteHostingServiceTest {
 
 		UserInfo user = new UserInfo();
 		user.setUniqueId("A");
-		user.setUserName("carlos");
+		user.setUserName("carlos1");
 		metaStore.createUser(user);
 
 		SiteInfo site = SiteInfo.newSiteConfiguration(user, "mysite", "myworkspace");
@@ -63,7 +63,7 @@ public class SiteHostingServiceTest {
 
 		UserInfo user = new UserInfo();
 		user.setUniqueId("A");
-		user.setUserName("carlos");
+		user.setUserName("carlos2");
 		metaStore.createUser(user);
 
 		SiteInfo site1 = SiteInfo.newSiteConfiguration(user, "site1", "myworkspace");
@@ -94,7 +94,7 @@ public class SiteHostingServiceTest {
 
 		UserInfo user = new UserInfo();
 		user.setUniqueId("A");
-		user.setUserName("carlos");
+		user.setUserName("carlos3");
 		metaStore.createUser(user);
 
 		SiteInfo site = SiteInfo.newSiteConfiguration(user, "mysite", "myworkspace");

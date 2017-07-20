@@ -450,7 +450,7 @@ public class SimpleMetaStoreUtil {
 			throw new RuntimeException("Meta File Error, parent is not a folder");
 		}
 
-		// the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		// the user-tree layout organizes projects by the user who created it: metastore/an/anthony
 		String userPrefix = userName.substring(0, Math.min(2, userName.length()));
 		File orgFolder = new File(parent, userPrefix);
 		if (!orgFolder.exists()) {
@@ -606,16 +606,18 @@ public class SimpleMetaStoreUtil {
 	 *            The new MetaFolder.
 	 * @return true if the move was successful.
 	 */
-	public static boolean moveUserMetaFolder(File oldUserMetaFolder, File newUserMetaFolder) {
-		if (!oldUserMetaFolder.exists()) {
-			throw new RuntimeException("Meta File Error, parent folder does not exist");
+	public static boolean moveUserMetaFolder(File rootLocation, String oldUserId, String newUserId) {
+		if (!SimpleMetaStoreUtil.isMetaUserFolder(rootLocation, oldUserId)) {
+			throw new RuntimeException("moveUserMetaFolder Error, source is not a user metadata folder");
 		}
-		if (!oldUserMetaFolder.isDirectory()) {
-			throw new RuntimeException("Meta File Error, parent is not a folder");
+
+		if (SimpleMetaStoreUtil.isMetaUserFolder(rootLocation, newUserId)) {
+			throw new RuntimeException("moveUserMetaFolder Error, destination user already exists");
 		}
-		if (newUserMetaFolder.exists()) {
-			throw new RuntimeException("Meta File Error, new folder already exists");
-		}
+
+		File oldUserMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, oldUserId);
+		File newUserMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, newUserId);
+
 		File orgFolder = newUserMetaFolder.getParentFile();
 		if (!orgFolder.exists()) {
 			if (!orgFolder.mkdir()) {
@@ -701,7 +703,7 @@ public class SimpleMetaStoreUtil {
 	 * @return the folder.
 	 */
 	public static File readMetaUserFolder(File parent, String userName) {
-		// the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		// the user-tree layout organizes projects by the user who created it: metastore/an/anthony
 		String userPrefix = userName.substring(0, Math.min(2, userName.length()));
 		File orgFolder = new File(parent, userPrefix);
 		return new File(orgFolder, userName);
