@@ -26,7 +26,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.URIUtil;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.TransportConfigCallback;
@@ -39,8 +38,6 @@ import org.eclipse.jgit.submodule.SubmoduleWalk;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.Transport;
 import org.eclipse.jgit.transport.TransportHttp;
-import org.eclipse.jgit.util.FileUtils;
-import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.metastore.ProjectInfo;
@@ -244,16 +241,8 @@ public class CloneJob extends GitJob {
 		IStatus result = doClone(monitor);
 		if (result.isOK())
 			return result;
-		try {
-			if (project != null)
-				GitCloneHandlerV1.removeProject(user, project);
-			else
-				FileUtils.delete(URIUtil.toFile(clone.getContentLocation()), FileUtils.RECURSIVE);
-		} catch (IOException e) {
-			// log the secondary failure and return the original failure
-			String msg = "An error occurred when cleaning up after a clone failure"; //$NON-NLS-1$
-			LogHelper.log(new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
-		}
+		if (project != null)
+			GitCloneHandlerV1.removeProject(user, project);
 		return result;
 	}
 }
