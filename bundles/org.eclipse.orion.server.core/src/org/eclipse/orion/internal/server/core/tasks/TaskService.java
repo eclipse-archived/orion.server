@@ -20,6 +20,7 @@ import java.util.TimerTask;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.core.tasks.CorruptedTaskException;
 import org.eclipse.orion.server.core.tasks.ITaskCanceller;
@@ -65,8 +66,8 @@ public class TaskService implements ITaskService {
 
 	}
 
-	public TaskService(IPath baseLocation) {
-		store = new TaskStore(baseLocation.toFile());
+	public TaskService(IPath baseLocation, IMetaStore metastore) {
+		store = new TaskStore(baseLocation.toFile(), metastore);
 		timer = new Timer();
 		initTaskCleanupJob(store);
 	}

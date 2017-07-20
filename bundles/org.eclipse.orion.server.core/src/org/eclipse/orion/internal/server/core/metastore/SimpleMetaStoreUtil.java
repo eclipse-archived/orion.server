@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.orion.server.core.OrionConfiguration;
-import org.eclipse.orion.server.core.resources.FileLocker;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -132,26 +131,14 @@ public class SimpleMetaStoreUtil {
 				throw new RuntimeException("Meta File Error, parent is not a folder");
 			}
 			File newFile = retrieveMetaFile(parent, name);
-			FileLocker locker = new FileLocker(newFile);
-			try {
-				locker.lock();
-			} catch (IOException e) {
-				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
-				logger.error("Meta File Error, file IO error, could not lock the file", e); //$NON-NLS-1$
-				throw new RuntimeException("Meta File Error, file IO error, could not lock the file", e);
-			}
-			try {
-				FileOutputStream fileOutputStream = new FileOutputStream(newFile);
-				Charset utf8 = Charset.forName("UTF-8");
-				OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
-				outputStreamWriter.write(jsonObject.toString(4));
-				outputStreamWriter.write("\n");
-				outputStreamWriter.flush();
-				outputStreamWriter.close();
-				fileOutputStream.close();
-			} finally {
-				locker.release();
-			}
+			FileOutputStream fileOutputStream = new FileOutputStream(newFile);
+			Charset utf8 = Charset.forName("UTF-8");
+			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
+			outputStreamWriter.write(jsonObject.toString(4));
+			outputStreamWriter.write("\n");
+			outputStreamWriter.flush();
+			outputStreamWriter.close();
+			fileOutputStream.close();
 		} catch (FileNotFoundException e) {
 			Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.config"); //$NON-NLS-1$
 			logger.error("Meta File Error, cannot create file under " + parent.toString() + ": invalid file name: " + name); //$NON-NLS-1$
@@ -304,17 +291,9 @@ public class SimpleMetaStoreUtil {
 			throw new RuntimeException("Meta File Error, cannot delete, does not exist.");
 		}
 		File savedFile = retrieveMetaFile(parent, name);
-		FileLocker locker = new FileLocker(savedFile);
-		try {
-			locker.lock();
-			if (!savedFile.delete()) {
-				throw new RuntimeException("Meta File Error, cannot delete file.");
-			}
-		} catch (IOException e) {
-			throw new RuntimeException("Meta File Error, cannot delete file.", e);
-		} finally {
-			locker.release();
-		}
+		if (!savedFile.delete()) {
+			throw new RuntimeException("Meta File Error, cannot delete file.");
+		}			
 		return true;
 	}
 
@@ -471,7 +450,7 @@ public class SimpleMetaStoreUtil {
 			throw new RuntimeException("Meta File Error, parent is not a folder");
 		}
 
-		// the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		// the user-tree layout organizes projects by the user who created it: metastore/an/anthony
 		String userPrefix = userName.substring(0, Math.min(2, userName.length()));
 		File orgFolder = new File(parent, userPrefix);
 		if (!orgFolder.exists()) {
@@ -526,6 +505,15 @@ public class SimpleMetaStoreUtil {
 				continue;
 			} else if (file.getName().equals(".metadata")) {
 				// skip the eclipse workspace metadata folder
+				continue;
+			} else if (file.getName().equals(".lock")) {
+				// skip the eclipse workspace .lock file
+				continue;
+			} else if (file.getName().equals("locks")) {
+				// skip the eclipse workspace .lock file
+				continue;
+			} else if (file.getName().equals("healthChecks")) {
+				// skip the eclipse workspace .lock file
 				continue;
 			} else if (file.getName().equals("orion.conf")) {
 				// skip the orion.conf configuration file.
@@ -618,16 +606,18 @@ public class SimpleMetaStoreUtil {
 	 *            The new MetaFolder.
 	 * @return true if the move was successful.
 	 */
-	public static boolean moveUserMetaFolder(File oldUserMetaFolder, File newUserMetaFolder) {
-		if (!oldUserMetaFolder.exists()) {
-			throw new RuntimeException("Meta File Error, parent folder does not exist");
+	public static boolean moveUserMetaFolder(File rootLocation, String oldUserId, String newUserId) {
+		if (!SimpleMetaStoreUtil.isMetaUserFolder(rootLocation, oldUserId)) {
+			throw new RuntimeException("moveUserMetaFolder Error, source is not a user metadata folder");
 		}
-		if (!oldUserMetaFolder.isDirectory()) {
-			throw new RuntimeException("Meta File Error, parent is not a folder");
+
+		if (SimpleMetaStoreUtil.isMetaUserFolder(rootLocation, newUserId)) {
+			throw new RuntimeException("moveUserMetaFolder Error, destination user already exists");
 		}
-		if (newUserMetaFolder.exists()) {
-			throw new RuntimeException("Meta File Error, new folder already exists");
-		}
+
+		File oldUserMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, oldUserId);
+		File newUserMetaFolder = SimpleMetaStoreUtil.readMetaUserFolder(rootLocation, newUserId);
+
 		File orgFolder = newUserMetaFolder.getParentFile();
 		if (!orgFolder.exists()) {
 			if (!orgFolder.mkdir()) {
@@ -666,18 +656,12 @@ public class SimpleMetaStoreUtil {
 			}
 			File savedFile = retrieveMetaFile(parent, name);
 			char[] chars = new char[(int) savedFile.length()];
-			FileLocker locker = new FileLocker(savedFile);
-			locker.lock();
-			try {
-				FileInputStream fileInputStream = new FileInputStream(savedFile);
-				Charset utf8 = Charset.forName("UTF-8");
-				InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, utf8);
-				inputStreamReader.read(chars);
-				inputStreamReader.close();
-				fileInputStream.close();
-			} finally {
-				locker.release();
-			}
+			FileInputStream fileInputStream = new FileInputStream(savedFile);
+			Charset utf8 = Charset.forName("UTF-8");
+			InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream, utf8);
+			inputStreamReader.read(chars);
+			inputStreamReader.close();
+			fileInputStream.close();
 			jsonObject = new JSONObject(new String(chars));
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException("Meta File Error, file not found", e);
@@ -719,7 +703,7 @@ public class SimpleMetaStoreUtil {
 	 * @return the folder.
 	 */
 	public static File readMetaUserFolder(File parent, String userName) {
-		// the user-tree layout organises projects by the user who created it: metastore/an/anthony
+		// the user-tree layout organizes projects by the user who created it: metastore/an/anthony
 		String userPrefix = userName.substring(0, Math.min(2, userName.length()));
 		File orgFolder = new File(parent, userPrefix);
 		return new File(orgFolder, userName);
@@ -768,20 +752,14 @@ public class SimpleMetaStoreUtil {
 				throw new RuntimeException("Meta File Error, cannot update, does not exist.");
 			}
 			File savedFile = retrieveMetaFile(parent, name);
-			FileLocker locker = new FileLocker(savedFile);
-			locker.lock();
-			try {
-				FileOutputStream fileOutputStream = new FileOutputStream(savedFile);
-				Charset utf8 = Charset.forName("UTF-8");
-				OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
-				outputStreamWriter.write(jsonObject.toString(4));
-				outputStreamWriter.write("\n");
-				outputStreamWriter.flush();
-				outputStreamWriter.close();
-				fileOutputStream.close();
-			} finally {
-				locker.release();
-			}
+			FileOutputStream fileOutputStream = new FileOutputStream(savedFile);
+			Charset utf8 = Charset.forName("UTF-8");
+			OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, utf8);
+			outputStreamWriter.write(jsonObject.toString(4));
+			outputStreamWriter.write("\n");
+			outputStreamWriter.flush();
+			outputStreamWriter.close();
+			fileOutputStream.close();
 		} catch (FileNotFoundException e) {
 			throw new RuntimeException("Meta File Error, file not found", e);
 		} catch (IOException e) {

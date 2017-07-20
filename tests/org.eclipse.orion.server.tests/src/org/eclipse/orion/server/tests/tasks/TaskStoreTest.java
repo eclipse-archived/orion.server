@@ -15,8 +15,6 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-import junit.framework.TestCase;
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
@@ -25,6 +23,8 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.core.tasks.TaskDescription;
 import org.eclipse.orion.internal.server.core.tasks.TaskService;
 import org.eclipse.orion.internal.server.core.tasks.TaskStore;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
 import org.eclipse.orion.server.core.tasks.CorruptedTaskException;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
@@ -32,15 +32,18 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import junit.framework.TestCase;
+
 /**
  * Tests for {@link TaskStore}.
  */
 public class TaskStoreTest extends TestCase {
 	File tempDir;
+	IMetaStore metaStore;
 
 	@Test
 	public void testRead() {
-		TaskStore store = new TaskStore(tempDir);
+		TaskStore store = new TaskStore(tempDir, metaStore);
 		String task = store.readTask(new TaskDescription("Userdoesnotexist", "Doesnotexist", true));
 		assertNull(task);
 	}
@@ -48,7 +51,7 @@ public class TaskStoreTest extends TestCase {
 	@Test
 	public void testRoundTrip() throws CorruptedTaskException {
 		TaskInfo task = AllTaskTests.createTestTask("test");
-		TaskStore store = new TaskStore(tempDir);
+		TaskStore store = new TaskStore(tempDir ,metaStore);
 		store.writeTask(new TaskDescription(task.getUserId(), task.getId(), true), task.toJSON().toString());
 
 		TaskInfo task2 = TaskInfo.fromJSON(new TaskDescription(task.getUserId(), task.getId(), true), store.readTask(new TaskDescription(task.getUserId(), task.getId(), true)));
@@ -59,7 +62,7 @@ public class TaskStoreTest extends TestCase {
 	public void testDeleteTask() {
 		TaskInfo task = AllTaskTests.createTestTask("test");
 		task.done(Status.OK_STATUS);
-		TaskStore store = new TaskStore(tempDir);
+		TaskStore store = new TaskStore(tempDir, metaStore);
 		store.writeTask(new TaskDescription(task.getUserId(), task.getId(), true), task.toJSON().toString());
 		assertNotNull(store.readTask(new TaskDescription(task.getUserId(), task.getId(), true)));
 		assertTrue(store.removeTask(new TaskDescription(task.getUserId(), task.getId(), true)));
@@ -72,7 +75,7 @@ public class TaskStoreTest extends TestCase {
 		task1.done(Status.OK_STATUS);
 		TaskInfo task2 = new TaskInfo("test", "taskid2", true);
 		task2.done(Status.OK_STATUS);
-		TaskStore store = new TaskStore(tempDir);
+		TaskStore store = new TaskStore(tempDir, metaStore);
 		store.writeTask(new TaskDescription("test", task1.getId(), true), task1.toJSON().toString());
 		assertEquals(1, store.readAllTasks("test"));
 		store.writeTask(new TaskDescription("test", task2.getId(), true), task2.toJSON().toString());
@@ -86,6 +89,7 @@ public class TaskStoreTest extends TestCase {
 		tempDir = new File(new File(System.getProperty("java.io.tmpdir")), "eclipse.TaskStoreTest");
 		tearDown();
 		tempDir.mkdir();
+		metaStore = OrionConfiguration.getMetaStore();
 	}
 
 	@After
@@ -127,7 +131,7 @@ public class TaskStoreTest extends TestCase {
 
 	@Test
 	public void testUniqueTaskInfo() throws InterruptedException { //see Bug 370729
-		final ITaskService taskService = new TaskService(new Path(tempDir.getAbsolutePath()));
+		final ITaskService taskService = new TaskService(new Path(tempDir.getAbsolutePath()), metaStore);
 		int numberOfChecks = 100;
 		Job[] jobs = new Job[numberOfChecks];
 		final TaskInfo[] taskInfos = new TaskInfo[numberOfChecks];
