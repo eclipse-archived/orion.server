@@ -467,7 +467,15 @@ class ClientImport {
 		try {
 			File dir = getStorageDirectory();
 			File index = new File(dir, FILE_INDEX);
-			props.load(new FileInputStream(index));
+			FileInputStream inStream = null;
+			try {
+				inStream = new FileInputStream(index);
+				props.load(inStream);
+			} finally {
+				if (inStream != null) {
+					inStream.close();
+				}
+			}
 		} catch (FileNotFoundException e) {
 			//ok if file doesn't exist yet
 		}
@@ -481,7 +489,15 @@ class ClientImport {
 		File dir = getStorageDirectory();
 		dir.mkdirs();
 		File index = new File(dir, FILE_INDEX);
-		props.store(new FileOutputStream(index), null);
+		FileOutputStream outStream = null;
+		try {
+			outStream = new FileOutputStream(index);
+			props.store(outStream, null);
+		} finally {
+			if (outStream != null) {
+				outStream.close();
+			}
+		}
 	}
 
 	/**
