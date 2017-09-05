@@ -30,6 +30,9 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 	private byte[] publicKey;
 	private byte[] passphrase;
 	private Map<String, String> tokenCache = new HashMap<String, String>();
+	
+	private static final String GITLAB = "gitlab.com";
+	private static final String OAUTH2 = "oauth2";
 
 	private static Vector<IGitHubTokenProvider> GithubTokenProviders = new Vector<IGitHubTokenProvider>(9);
 
@@ -109,7 +112,11 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 								}
 								if (token != null) {
 									if (item instanceof CredentialItem.Username) {
-										((CredentialItem.Username)item).setValue(token);
+										if (uri.getHost().equalsIgnoreCase(GITLAB)) {
+											((CredentialItem.Username)item).setValue(OAUTH2);
+										} else {
+											((CredentialItem.Username)item).setValue(token);
+										}
 									} else {
 										((CredentialItem.Password)item).setValue(token.toCharArray());
 									}
