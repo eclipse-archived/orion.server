@@ -210,6 +210,10 @@
                path="/web">
          </resource-mapping>
          <resource-mapping
+               bundle="org.eclipse.orion.client.debug"
+               path="/web">
+         </resource-mapping>
+         <resource-mapping
                bundle="org.eclipse.orion.client.help"
                path="/web">
          </resource-mapping>
