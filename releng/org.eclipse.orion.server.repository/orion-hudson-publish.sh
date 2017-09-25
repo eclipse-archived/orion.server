@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2012, 2015 IBM Corporation and others.
+# Copyright (c) 2012, 2017 IBM Corporation and others.
 # All rights reserved.   This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License v1.0
 # which accompanies this distribution, and is available at
@@ -84,8 +84,8 @@ echo "Working in `pwd`"
 
 # Download and prepare Eclipse SDK, which is needed to process the update site
 echo "Downloading eclipse to $PWD"
-cp /home/data/httpd/download.eclipse.org/eclipse/downloads/drops4/R-4.6.2-201611241400/eclipse-SDK-4.6.2-linux-gtk-x86_64.tar.gz .
-tar -xzf eclipse-SDK-4.6.2-linux-gtk-x86_64.tar.gz
+cp /home/data/httpd/download.eclipse.org/eclipse/downloads/drops4/R-4.6.3-201703010400/eclipse-SDK-4.6.3-linux-gtk-x86_64.tar.gz
+tar -xzf eclipse-SDK-4.6.3-linux-gtk-x86_64.tar.gz
 cd eclipse
 chmod 700 eclipse
 cd ..
