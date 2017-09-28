@@ -31,8 +31,10 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 	private byte[] passphrase;
 	private Map<String, String> tokenCache = new HashMap<String, String>();
 	
+	private static final String BITBUCKET = "bitbucket.org";
 	private static final String GITLAB = "gitlab.com";
 	private static final String OAUTH2 = "oauth2";
+	private static final String XTOKENAUTH = "x-token-auth";
 
 	private static Vector<IGitHubTokenProvider> GithubTokenProviders = new Vector<IGitHubTokenProvider>(9);
 
@@ -102,7 +104,7 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 					if ((u.getValue() == null || u.getValue().length() == 0) && (p.getValue() == null || p.getValue().length == 0)) {
 						if (uri != null) {
 							if (this.remoteUser != null) {
-								/* see if a GitHub token is available (obviously only applicable for repos hosted at a GitHub) */
+								/* see if a user token is available */
 								String uriString = uri.toString();
 								String token = tokenCache.get(uriString);
 								if (token == null) {
@@ -114,13 +116,17 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 									if (item instanceof CredentialItem.Username) {
 										if (uri.getHost().equalsIgnoreCase(GITLAB)) {
 											((CredentialItem.Username)item).setValue(OAUTH2);
+										} else if (uri.getHost().equalsIgnoreCase(BITBUCKET)) {
+											((CredentialItem.Username)item).setValue(XTOKENAUTH);
 										} else {
 											((CredentialItem.Username)item).setValue(token);
 										}
 									} else {
 										((CredentialItem.Password)item).setValue(token.toCharArray());
 									}
-									tokenCache.put(uriString, token);
+									if (!uri.getHost().equalsIgnoreCase(BITBUCKET)) {
+										tokenCache.put(uriString, token);	
+									}
 									continue;
 								}
 							}
