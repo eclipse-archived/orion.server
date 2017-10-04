@@ -25,14 +25,14 @@
    </plugins>
 
    <features>
-      <feature id="org.eclipse.orion.client.feature" version="16.0.0.qualifier"/>
-      <feature id="org.eclipse.orion.server.authentication.feature" version="16.0.0.qualifier"/>
-      <feature id="org.eclipse.orion.server.feature" version="16.0.0.qualifier"/>
-      <feature id="org.eclipse.orion.base.feature" version="16.0.0.qualifier"/>
-      <feature id="org.eclipse.orion.server.hosting.feature" version="16.0.0.qualifier"/>
-      <feature id="org.eclipse.orion.server.jetty.feature" version="16.0.0.qualifier"/>
-      <feature id="org.eclipse.orion.server.search.feature" version="16.0.0.qualifier"/>
-      <feature id="org.eclipse.orion.server.war" version="16.0.0.qualifier"/>
+      <feature id="org.eclipse.orion.client.feature" version="17.0.0.qualifier"/>
+      <feature id="org.eclipse.orion.server.authentication.feature" version="17.0.0.qualifier"/>
+      <feature id="org.eclipse.orion.server.feature" version="17.0.0.qualifier"/>
+      <feature id="org.eclipse.orion.base.feature" version="17.0.0.qualifier"/>
+      <feature id="org.eclipse.orion.server.hosting.feature" version="17.0.0.qualifier"/>
+      <feature id="org.eclipse.orion.server.jetty.feature" version="17.0.0.qualifier"/>
+      <feature id="org.eclipse.orion.server.search.feature" version="17.0.0.qualifier"/>
+      <feature id="org.eclipse.orion.server.war" version="17.0.0.qualifier"/>
    </features>
 
    <configurations>

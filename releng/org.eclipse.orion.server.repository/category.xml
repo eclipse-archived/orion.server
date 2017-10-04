@@ -1,30 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-   <feature url="features/org.eclipse.orion_16.0.0.qualifier.jar" id="org.eclipse.orion" version="16.0.0.qualifier">
+   <feature url="features/org.eclipse.orion_17.0.0.qualifier.jar" id="org.eclipse.orion" version="17.0.0.qualifier">
       <category name="org.eclipse.orion.server"/>
    </feature>
-   <feature url="features/org.eclipse.orion.base.feature_16.0.0.qualifier.jar" id="org.eclipse.orion.base.feature" version="16.0.0.qualifier">
+   <feature url="features/org.eclipse.orion.base.feature_17.0.0.qualifier.jar" id="org.eclipse.orion.base.feature" version="17.0.0.qualifier">
       <category name="org.eclipse.orion.server"/>
    </feature>
-   <feature url="features/org.eclipse.orion.client.feature_16.0.0.qualifier.jar" id="org.eclipse.orion.client.feature" version="16.0.0.qualifier">
+   <feature url="features/org.eclipse.orion.client.feature_17.0.0.qualifier.jar" id="org.eclipse.orion.client.feature" version="17.0.0.qualifier">
       <category name="org.eclipse.orion.server"/>
    </feature>
-   <feature url="features/org.eclipse.orion.releng.test.master_16.0.0.qualifier.jar" id="org.eclipse.orion.releng.test.master" version="16.0.0.qualifier">
+   <feature url="features/org.eclipse.orion.releng.test.master_17.0.0.qualifier.jar" id="org.eclipse.orion.releng.test.master" version="17.0.0.qualifier">
       <category name="org.eclipse.orion.server"/>
    </feature>
-   <feature url="features/org.eclipse.orion.server.authentication.feature_16.0.0.qualifier.jar" id="org.eclipse.orion.server.authentication.feature" version="16.0.0.qualifier">
+   <feature url="features/org.eclipse.orion.server.authentication.feature_17.0.0.qualifier.jar" id="org.eclipse.orion.server.authentication.feature" version="17.0.0.qualifier">
       <category name="org.eclipse.orion.server"/>
    </feature>
-   <feature url="features/org.eclipse.orion.server.feature_16.0.0.qualifier.jar" id="org.eclipse.orion.server.feature" version="16.0.0.qualifier">
+   <feature url="features/org.eclipse.orion.server.feature_17.0.0.qualifier.jar" id="org.eclipse.orion.server.feature" version="17.0.0.qualifier">
       <category name="org.eclipse.orion.server"/>
    </feature>
-   <feature url="features/org.eclipse.orion.server.search.feature_16.0.0.qualifier.jar" id="org.eclipse.orion.server.search.feature" version="16.0.0.qualifier">
+   <feature url="features/org.eclipse.orion.server.search.feature_17.0.0.qualifier.jar" id="org.eclipse.orion.server.search.feature" version="17.0.0.qualifier">
       <category name="org.eclipse.orion.server"/>
    </feature>
-   <feature url="features/org.eclipse.orion.server.tests.feature_16.0.0.qualifier.jar" id="org.eclipse.orion.server.tests.feature" version="16.0.0.qualifier">
+   <feature url="features/org.eclipse.orion.server.tests.feature_17.0.0.qualifier.jar" id="org.eclipse.orion.server.tests.feature" version="17.0.0.qualifier">
       <category name="org.eclipse.orion.server"/>
    </feature>
-   <feature url="features/org.eclipse.orion.server.ui.feature_16.0.0.qualifier.jar" id="org.eclipse.orion.server.ui.feature" version="16.0.0.qualifier">
+   <feature url="features/org.eclipse.orion.server.ui.feature_17.0.0.qualifier.jar" id="org.eclipse.orion.server.ui.feature" version="17.0.0.qualifier">
       <category name="org.eclipse.orion.server"/>
    </feature>
    <category-def name="org.eclipse.orion.server" label="Orion Server"/>
