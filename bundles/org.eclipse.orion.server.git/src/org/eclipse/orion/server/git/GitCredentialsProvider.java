@@ -30,11 +30,6 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 	private byte[] publicKey;
 	private byte[] passphrase;
 	private Map<String, IGitHubToken> tokenCache = new HashMap<String, IGitHubToken>();
-	
-	private static final String BITBUCKET = "bitbucket.org";
-	private static final String GITLAB = "gitlab.com";
-	private static final String OAUTH2 = "oauth2";
-	private static final String XTOKENAUTH = "x-token-auth";
 
 	private static Vector<IGitHubTokenProvider> GithubTokenProviders = new Vector<IGitHubTokenProvider>(9);
 
