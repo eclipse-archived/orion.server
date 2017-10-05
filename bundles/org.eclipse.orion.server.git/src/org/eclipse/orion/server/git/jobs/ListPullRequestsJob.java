@@ -37,6 +37,7 @@ import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskJob;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
+import org.eclipse.orion.server.git.IGitHubToken;
 import org.eclipse.orion.server.git.IGitHubTokenProvider;
 import org.eclipse.orion.server.git.objects.PullRequest;
 import org.json.JSONArray;
@@ -96,7 +97,7 @@ public class ListPullRequestsJob  extends TaskJob {
 
 		String toCall =  host+"repos/"+hostUser+"/"+project+"/pulls";
 		
-		String token=null;
+		IGitHubToken token = null;
 		Enumeration<IGitHubTokenProvider> providers = GitCredentialsProvider.GetGitHubTokenProviders();
 		while (providers.hasMoreElements()) {
 			token = providers.nextElement().getToken(this.url, remote);
@@ -106,9 +107,9 @@ public class ListPullRequestsJob  extends TaskJob {
 		}
 		GetMethod m;
 		HttpClient hc = getHttpClient();
-		if(token!=null){
-			toCall += "?access_token="+token;
-		}else{
+		if (token != null) {
+			toCall += "?access_token=" + new String(token.getPassword());
+		} else {
 			String client_secret = PreferenceHelper.getString(CLIENT_SECRET);
 			String client_key = PreferenceHelper.getString(CLIENT_KEY);
 			
@@ -116,7 +117,7 @@ public class ListPullRequestsJob  extends TaskJob {
 		}
 
 		m = new GetMethod(toCall);
-		if(!this.username.isEmpty()&&!this.password.isEmpty()){
+		if (!this.username.isEmpty() && !this.password.isEmpty()) {
 			String userCredentials = this.username+":"+this.password;
 			String basicAuth = "Basic " + new String(Base64.encode(userCredentials.getBytes()));
 		    m.setRequestHeader("Authorization", basicAuth);

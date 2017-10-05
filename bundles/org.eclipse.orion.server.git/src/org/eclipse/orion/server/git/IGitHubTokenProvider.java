@@ -21,7 +21,7 @@ public interface IGitHubTokenProvider {
 	 * @param repositoryUrl the URL of the repository
 	 * @param userId the Orion user id
 	 */
-	public String getToken(String repositoryUrl, String userId);
+	public IGitHubToken getToken(String repositoryUrl, String userId);
 	
 	/**
 	 * Answers the URL where a user can request an authorization token for a given GitHub

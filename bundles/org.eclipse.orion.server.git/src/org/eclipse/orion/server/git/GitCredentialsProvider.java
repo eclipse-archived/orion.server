@@ -29,7 +29,7 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 	private byte[] privateKey;
 	private byte[] publicKey;
 	private byte[] passphrase;
-	private Map<String, String> tokenCache = new HashMap<String, String>();
+	private Map<String, IGitHubToken> tokenCache = new HashMap<String, IGitHubToken>();
 	
 	private static final String BITBUCKET = "bitbucket.org";
 	private static final String GITLAB = "gitlab.com";
@@ -106,7 +106,10 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 							if (this.remoteUser != null) {
 								/* see if a user token is available */
 								String uriString = uri.toString();
-								String token = tokenCache.get(uriString);
+								IGitHubToken token = tokenCache.get(uriString);
+								if (token != null && token.getExpiry() != 0 && token.getExpiry() < System.currentTimeMillis()) {
+									token = null;
+								}
 								if (token == null) {
 									for (int i = 0; token == null && i < GithubTokenProviders.size(); i++) {
 										token = GithubTokenProviders.get(i).getToken(uriString, remoteUser);
@@ -114,19 +117,11 @@ public class GitCredentialsProvider extends UsernamePasswordCredentialsProvider 
 								}
 								if (token != null) {
 									if (item instanceof CredentialItem.Username) {
-										if (uri.getHost().equalsIgnoreCase(GITLAB)) {
-											((CredentialItem.Username)item).setValue(OAUTH2);
-										} else if (uri.getHost().equalsIgnoreCase(BITBUCKET)) {
-											((CredentialItem.Username)item).setValue(XTOKENAUTH);
-										} else {
-											((CredentialItem.Username)item).setValue(token);
-										}
+										((CredentialItem.Username)item).setValue(token.getUsername());
 									} else {
-										((CredentialItem.Password)item).setValue(token.toCharArray());
+										((CredentialItem.Password)item).setValue(token.getPassword());
 									}
-									if (!uri.getHost().equalsIgnoreCase(BITBUCKET)) {
-										tokenCache.put(uriString, token);	
-									}
+									tokenCache.put(uriString, token);
 									continue;
 								}
 							}
