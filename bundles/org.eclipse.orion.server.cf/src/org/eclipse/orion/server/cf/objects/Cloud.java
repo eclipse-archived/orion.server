@@ -25,6 +25,7 @@ public abstract class Cloud extends CFObject {
 	public static final String TYPE = "Cloud"; //$NON-NLS-1$
 
 	private String regionId;
+	private String regionName;
 	private URL targetUrl;
 	private URL manageUrl;
 	private URL uaaUrl;
@@ -53,6 +54,14 @@ public abstract class Cloud extends CFObject {
 	
 	protected void setRegion(String regionId) {
 		this.regionId = regionId;
+	}
+	
+	public String getRegionName(){
+		return regionName;
+	}
+	
+	protected void setRegionName(String regionName) {
+		this.regionName = regionName;
 	}
 
 	public URL getManageUrl() {

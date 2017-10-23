@@ -49,6 +49,8 @@ public class HttpUtil {
 		
 		JSONObject errorJSON = new JSONObject();
 		try {
+			errorJSON.put(CFProtocolConstants.V2_KEY_REGION_ID, cloud.getRegion());
+			errorJSON.put(CFProtocolConstants.V2_KEY_REGION_NAME, cloud.getRegionName() != null ? cloud.getRegionName() : "");
 			errorJSON.put(CFProtocolConstants.V2_KEY_ERROR_CODE, "CF-NotAuthenticated");
 			errorJSON.put(CFProtocolConstants.V2_KEY_ERROR_DESCRIPTION, "Not authenticated");
 		} catch (JSONException e) {
