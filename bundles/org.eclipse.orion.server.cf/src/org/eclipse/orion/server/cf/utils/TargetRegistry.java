@@ -66,7 +66,7 @@ public class TargetRegistry {
 
 		private String userId;
 
-		private Map<URL, Cloud> userCloudMap = new HashMap<URL, Cloud>();
+		private Map<String, Cloud> userCloudMap = new HashMap<String, Cloud>();
 		private volatile Target defaultTarget;
 
 		private UserClouds(String userId) {
@@ -83,7 +83,7 @@ public class TargetRegistry {
 
 			Cloud cloud;
 			synchronized (userCloudMap) {
-				cloud = userCloudMap.get(url);
+				cloud = userCloudMap.get(url.toString());
 				if (cloud == null) {
 					CFExtServiceHelper helper = CFExtServiceHelper.getDefault();
 					if (helper != null && helper.getService() != null) {
@@ -102,7 +102,7 @@ public class TargetRegistry {
 						}
 					}
 					
-					userCloudMap.put(url, cloud);
+					userCloudMap.put(url.toString(), cloud);
 				}				
 			}
 			setAuthToken(cloud);
@@ -127,7 +127,7 @@ public class TargetRegistry {
 				return defaultTarget;
 			}
 
-			if (defaultTarget != null && url.equals(defaultTarget.getCloud().getUrl())) {
+			if (defaultTarget != null && url.toString().equals(defaultTarget.getCloud().getUrl().toString())) {
 				return new Target(defaultTarget.getCloud());
 			}
 
