@@ -18,7 +18,7 @@ import org.eclipse.orion.server.core.resources.Base64;
 import org.junit.Test;
 
 /**
- * Tests for {@link Base64}.
+ * Tests for {@link Base64}
  */
 public class Base64Test {
 	@Test
