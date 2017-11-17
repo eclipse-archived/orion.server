@@ -78,6 +78,11 @@ public class FileLocker {
 			}
 			acquireLock(shared);
 		} catch (IOException ioe) {
+			if (shared) {
+				lock.readLock().unlock();
+			} else {
+				lock.writeLock().unlock();
+			}
 			// produce a more specific message for clients
 			String specificMessage = NLS.bind("An error occurred while locking file \"{0}\": \"{1}\". A common reason is that the file system or Runtime Environment does not support file locking for that location.", new Object[] {fileLock, ioe.getMessage()});
 			fileLock = null;
@@ -92,6 +97,7 @@ public class FileLocker {
 			boolean locked = false;
 			do {	
 				if (locking && counter == 0) {
+					lockFile.getParentFile().mkdirs();
 					lockFile.createNewFile();
 					if (raFile == null) {
 						raFile = new RandomAccessFile(lockFile, "rw"); //$NON-NLS-1$
