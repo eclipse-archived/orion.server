@@ -10,19 +10,15 @@
  *******************************************************************************/
 package org.eclipse.orion.server.tests.servlets.git;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
 import java.io.UnsupportedEncodingException;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jgit.transport.URIish;
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.tests.AbstractServerTest;
-import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -31,7 +27,7 @@ import com.meterware.httpunit.WebRequest;
 
 public class PostGitCloneRequest {
 
-	private String requestURI = FileSystemTest.SERVER_LOCATION + GitTest.GIT_SERVLET_LOCATION + Clone.RESOURCE + '/';
+	private String requestURI = AbstractServerTest.SERVER_LOCATION + GitTest.GIT_SERVLET_LOCATION + Clone.RESOURCE + '/';
 	private JSONObject body = new JSONObject();
 
 	PostGitCloneRequest setWorkspacePath(IPath workspacePath) throws JSONException {
@@ -42,8 +38,8 @@ public class PostGitCloneRequest {
 
 	PostGitCloneRequest setFilePath(IPath filePath) throws JSONException {
 		if (filePath != null && filePath.isAbsolute()) {
-			assertEquals("file", filePath.segment(0));
-			assertTrue(filePath.segmentCount() > 1);
+			//			assertEquals("file", filePath.segment(0));
+			//			assertTrue(filePath.segmentCount() > 1);
 			body.put(ProtocolConstants.KEY_PATH, filePath);
 		}
 		return this;

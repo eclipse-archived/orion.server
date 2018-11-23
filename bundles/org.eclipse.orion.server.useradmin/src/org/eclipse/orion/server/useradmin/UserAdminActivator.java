@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others 
+ * Copyright (c) 2010, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,9 +10,11 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin;
 
-import org.eclipse.orion.server.core.authentication.IAuthenticationService;
-import org.osgi.framework.*;
-import org.osgi.util.tracker.ServiceTracker;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.useradmin.diskusage.DiskUsageJob;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
 
 public class UserAdminActivator implements BundleActivator {
 
@@ -23,6 +25,7 @@ public class UserAdminActivator implements BundleActivator {
 
 	private static UserAdminActivator singleton;
 	private BundleContext bundleContext;
+	private DiskUsageJob diskUsageJob;
 
 	public BundleContext getBundleContext() {
 		return bundleContext;
@@ -31,13 +34,6 @@ public class UserAdminActivator implements BundleActivator {
 	public static UserAdminActivator getDefault() {
 		return singleton;
 	}
-
-	private ServiceTracker<IAuthenticationService, IAuthenticationService> authServiceTracker;
-
-	/**
-	 * If an {@link IOrionCredentialsService} of this name exists it will be returned as default by {@link #getUserStore()}
-	 */
-	public static final String eclipseWebUsrAdminName = "Orion";
 
 	/*
 	 * (non-Javadoc)
@@ -50,10 +46,12 @@ public class UserAdminActivator implements BundleActivator {
 		singleton = this;
 		this.bundleContext = bundleContext;
 
-		Filter authFilter = FrameworkUtil.createFilter("(&(" + Constants.OBJECTCLASS + "=" + IAuthenticationService.class.getName() + ")(configured=true))");
-
-		authServiceTracker = new ServiceTracker<IAuthenticationService, IAuthenticationService>(bundleContext, authFilter, null);
-		authServiceTracker.open();
+		String diskUsageEnabled = PreferenceHelper.getString(ServerConstants.CONFIG_DISK_USAGE_ENABLED, "false").toLowerCase(); //$NON-NLS-1$
+		if ("true".equals(diskUsageEnabled)) {
+			diskUsageJob = new DiskUsageJob();
+			// Collect the disk usage data in ten seconds.
+			diskUsageJob.schedule(10000);
+		}
 	}
 
 	/*
@@ -63,16 +61,6 @@ public class UserAdminActivator implements BundleActivator {
 	 * org.osgi.framework.BundleActivator#stop(org.osgi.framework.BundleContext)
 	 */
 	public void stop(BundleContext bundleContext) throws Exception {
-		if (authServiceTracker != null) {
-			authServiceTracker.close();
-			authServiceTracker = null;
-		}
-
 		this.bundleContext = null;
 	}
-
-	public IAuthenticationService getAuthenticationService() {
-		return authServiceTracker.getService();
-	}
-
 }

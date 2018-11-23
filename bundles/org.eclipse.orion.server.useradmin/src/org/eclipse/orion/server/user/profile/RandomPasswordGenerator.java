@@ -37,7 +37,7 @@ public class RandomPasswordGenerator {
 	 * Generates random string that may be used as auto-generated password after user reset.
 	 * @return
 	 */
-	public static String getRanromPassword() {
+	public static String getRandomPassword() {
 		return randomstring(5, 25);
 	}
 

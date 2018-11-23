@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.equinox.http.registry.servlets">
+      <servlet
+            alias="/cfapi"
+            class="org.eclipse.orion.server.cf.servlets.CFServlet">
+      </servlet>
+      <serviceSelector
+            filter="(other.info=org.eclipse.orion)">
+      </serviceSelector>
+   </extension>
+   <extension
+         point="org.eclipse.equinox.http.registry.filters">
+ 
+      <filter
+            alias="/cfapi"
+            class="org.eclipse.orion.server.servlets.LoggedInUserFilter">
+      </filter>
+      <serviceSelector
+            filter="(other.info=org.eclipse.orion)">
+      </serviceSelector>
+   </extension>
+   <extension
+         point="org.eclipse.equinox.http.registry.httpcontexts">
+      <httpcontext
+            id="org.eclipse.orion.server.httpcontext.cf">
+         <resource-mapping
+               bundle="org.eclipse.orion.client.cf"
+               path="/web/cfui">
+         </resource-mapping>
+      </httpcontext>
+      <httpcontext
+            id="org.eclipse.orion.server.httpcontext.cf.components">
+         <resource-mapping
+               bundle="org.eclipse.orion.client.cf"
+               path="/web/orion/cfui">
+         </resource-mapping>
+      </httpcontext>
+   </extension>
+   <extension
+         point="org.eclipse.equinox.http.registry.resources">
+      <resource
+            alias="/cfui"
+            httpcontextId="org.eclipse.orion.server.httpcontext.cf">
+      </resource>
+      <resource
+            alias="/orion/cfui"
+            httpcontextId="org.eclipse.orion.server.httpcontext.cf.components">
+      </resource>
+      <serviceSelector
+            filter="(other.info=org.eclipse.orion)">
+      </serviceSelector>
+   </extension>
+</plugin>

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2010 IBM Corporation and others 
+ * Copyright (c) 2009, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,27 +10,45 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets;
 
-import java.net.URI;
-import java.net.URL;
-import java.util.*;
+import java.util.Collection;
+import java.util.Dictionary;
+import java.util.Hashtable;
+import java.util.Properties;
+
 import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileStore;
-import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.core.IAliasRegistry;
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-import org.eclipse.orion.internal.server.servlets.hosting.ISiteHostingService;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStoreUtil;
 import org.eclipse.orion.internal.server.servlets.workspace.ProjectParentDecorator;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.internal.server.servlets.xfer.TransferResourceDecorator;
-import org.eclipse.osgi.service.datalocation.Location;
-import org.osgi.framework.*;
+import org.eclipse.orion.server.authentication.IAuthenticationService;
+import org.eclipse.orion.server.authentication.NoneAuthenticationService;
+import org.eclipse.orion.server.core.IWebResourceDecorator;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.Filter;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.util.tracker.ServiceTracker;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Activator for the server servlet bundle. Responsible for tracking the HTTP
- * service and registering/unregistering servlets.
+ * Activator for the server servlet bundle. Responsible for tracking required services
+ * and registering/unregistering servlets.
  */
-public class Activator implements BundleActivator, IAliasRegistry {
+public class Activator implements BundleActivator {
+
+	private static final String ADMIN_LOGIN_VALUE = "admin"; //$NON-NLS-1$
+	private static final String ADMIN_NAME_VALUE = "Administrative User"; //$NON-NLS-1$
 
 	public static volatile BundleContext bundleContext;
 
@@ -40,20 +58,25 @@ public class Activator implements BundleActivator, IAliasRegistry {
 	public static final boolean DEBUG = true;
 
 	public static final String LOCATION_FILE_SERVLET = "/file"; //$NON-NLS-1$
-	public static final String LOCATION_PROJECT_SERVLET = "/project"; //$NON-NLS-1$
+	public static final String LOCATION_WORKSPACE_SERVLET = "/workspace"; //$NON-NLS-1$
 
 	public static final String PI_SERVER_SERVLETS = "org.eclipse.orion.server.servlets"; //$NON-NLS-1$
 	public static final String PROP_USER_AREA = "org.eclipse.orion.server.core.userArea"; //$NON-NLS-1$
 
+	public static final String DEFAULT_AUTHENTICATION_NAME = "FORM+OAuth"; //$NON-NLS-1$
+	/**
+	 * Service reference property indicating if the authentication service has been configured.
+	 */
+	static final String PROP_CONFIGURED = "configured"; //$NON-NLS-1$
+
 	static Activator singleton;
 
-	private Map<String, URI> aliases = Collections.synchronizedMap(new HashMap<String, URI>());
 	private ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> decoratorTracker;
-	private ServiceTracker<ISiteHostingService, ISiteHostingService> siteHostingTracker;
 
-	private URI rootStoreURI;
 	private ServiceRegistration<IWebResourceDecorator> transferDecoratorRegistration;
 	private ServiceRegistration<IWebResourceDecorator> parentDecoratorRegistration;
+
+	private AuthServiceTracker authServiceTracker;
 
 	public static Activator getDefault() {
 		return singleton;
@@ -71,106 +94,15 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		return decoratorTracker;
 	}
 
-	private synchronized ServiceTracker<ISiteHostingService, ISiteHostingService> getSiteHostingTracker() {
-		if (siteHostingTracker == null) {
-			siteHostingTracker = new ServiceTracker<ISiteHostingService, ISiteHostingService>(bundleContext, ISiteHostingService.class, null);
-			siteHostingTracker.open();
-		}
-		return siteHostingTracker;
-	}
-
-	/**
-	 * Returns the root file system location for the workspace.
-	 */
-	public IPath getPlatformLocation() {
-		BundleContext context = Activator.getDefault().getContext();
-		Collection<ServiceReference<Location>> refs;
-		try {
-			refs = context.getServiceReferences(Location.class, Location.INSTANCE_FILTER);
-		} catch (InvalidSyntaxException e) {
-			// we know the instance location filter syntax is valid
-			throw new RuntimeException(e);
-		}
-		if (refs.isEmpty())
-			return null;
-		ServiceReference<Location> ref = refs.iterator().next();
-		Location location = context.getService(ref);
-		try {
-			if (location == null)
-				return null;
-			URL root = location.getURL();
-			if (root == null)
-				return null;
-			// strip off file: prefix from URL
-			return new Path(root.toExternalForm().substring(5));
-		} finally {
-			context.ungetService(ref);
-		}
-	}
-
-	/**
-	 * Returns the root location for storing content and metadata on this server.
-	 */
-	public URI getRootLocationURI() {
-		return rootStoreURI;
-	}
-
 	public Collection<IWebResourceDecorator> getWebResourceDecorators() {
 		ServiceTracker<IWebResourceDecorator, IWebResourceDecorator> tracker = getDecoratorTracker();
 		return tracker.getTracked().values();
 	}
 
-	public ISiteHostingService getSiteHostingService() {
-		ServiceTracker<ISiteHostingService, ISiteHostingService> tracker = getSiteHostingTracker();
-		Collection<ISiteHostingService> hostingServices = tracker.getTracked().values();
-		return hostingServices.size() == 0 ? null : hostingServices.iterator().next();
-	}
-
-	private void initializeFileSystem() {
-		IPath location = getPlatformLocation();
-		if (location == null)
-			throw new RuntimeException("Unable to compute base file system location"); //$NON-NLS-1$
-
-		IFileStore rootStore = EFS.getLocalFileSystem().getStore(location);
-		try {
-			rootStore.mkdir(EFS.NONE, null);
-			rootStoreURI = rootStore.toURI();
-		} catch (CoreException e) {
-			throw new RuntimeException("Instance location is read only: " + rootStore, e); //$NON-NLS-1$
-		}
-
-		//initialize user area if not specified
-		if (System.getProperty(PROP_USER_AREA) == null) {
-			System.setProperty(PROP_USER_AREA, rootStore.getFileStore(new Path(".metadata/.plugins/org.eclipse.orion.server.core/userArea")).toString()); //$NON-NLS-1$
-		}
-	}
-
-	public URI lookupAlias(String alias) {
-		return aliases.get(alias);
-	}
-
-	public void registerAlias(String alias, URI location) {
-		aliases.put(alias, location);
-	}
-
 	/**
-	 * Registers the location of a project with the alias registry
-	 * @param project
+	 * Registers services supplied by this bundle
 	 */
-	public void registerProjectLocation(WebProject project) {
-		URI contentURI = project.getContentLocation();
-		// if the location is relative to this server, we need to register an alias so the file service can find it
-		if (!contentURI.isAbsolute() || "file".equals(contentURI.getScheme())) { //$NON-NLS-1$
-			IPath contentPath = new Path(contentURI.getSchemeSpecificPart());
-			if (contentPath.isAbsolute())
-				registerAlias(project.getId(), contentURI);
-		}
-	}
-
-	/**
-	 * Registers decorators supplied by servlets in this bundle
-	 */
-	private void registerDecorators() {
+	private void registerServices() {
 		//adds the import/export locations to representations
 		transferDecoratorRegistration = bundleContext.registerService(IWebResourceDecorator.class, new TransferResourceDecorator(), null);
 		//adds parent links to representations
@@ -180,34 +112,27 @@ public class Activator implements BundleActivator, IAliasRegistry {
 	public void start(BundleContext context) throws Exception {
 		singleton = this;
 		bundleContext = context;
-		initializeFileSystem();
-		initializeProjects();
-		registerDecorators();
-	}
-
-	private void initializeProjects() {
-		for (WebProject project : WebProject.allProjects())
-			registerProjectLocation(project);
+		registerServices();
+		authServiceTracker = new AuthServiceTracker(context);
+		authServiceTracker.open();
+		initializeAdminUser();
 	}
 
 	public void stop(BundleContext context) throws Exception {
+		if (authServiceTracker != null) {
+			authServiceTracker.close();
+			authServiceTracker = null;
+		}
+
 		if (decoratorTracker != null) {
 			decoratorTracker.close();
 			decoratorTracker = null;
 		}
-		if (siteHostingTracker != null) {
-			siteHostingTracker.close();
-			siteHostingTracker = null;
-		}
-		unregisterDecorators();
+		unregisterServices();
 		bundleContext = null;
 	}
 
-	public void unregisterAlias(String alias) {
-		aliases.remove(alias);
-	}
-
-	private void unregisterDecorators() {
+	private void unregisterServices() {
 		if (transferDecoratorRegistration != null) {
 			transferDecoratorRegistration.unregister();
 			transferDecoratorRegistration = null;
@@ -215,6 +140,90 @@ public class Activator implements BundleActivator, IAliasRegistry {
 		if (parentDecoratorRegistration != null) {
 			parentDecoratorRegistration.unregister();
 			parentDecoratorRegistration = null;
+		}
+	}
+
+	public IAuthenticationService getAuthService() {
+		return authServiceTracker.getService();
+	}
+
+	String getAuthName() {
+		//lookup order is:
+		// 1: Defined preference called "orion.auth.name"
+		// 2: System property called "orion.tests.authtype"
+		// 3: Default to Form+OAuth
+		return PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_NAME, System.getProperty("orion.tests.authtype", DEFAULT_AUTHENTICATION_NAME)); //$NON-NLS-1$
+	}
+
+	Filter getAuthFilter() throws InvalidSyntaxException {
+		StringBuilder sb = new StringBuilder("("); //$NON-NLS-1$
+		sb.append(ServerConstants.CONFIG_AUTH_NAME);
+		sb.append('=');
+		sb.append(getAuthName());
+		sb.append(')');
+		return FrameworkUtil.createFilter(sb.toString());
+	}
+
+	private class AuthServiceTracker extends ServiceTracker<IAuthenticationService, IAuthenticationService> {
+
+		public AuthServiceTracker(BundleContext context) throws InvalidSyntaxException {
+			super(context, getAuthFilter(), null);
+			// TODO: Filters are case sensitive, we should be too
+			if (NoneAuthenticationService.AUTH_TYPE.equalsIgnoreCase(getAuthName())) {
+				Dictionary<String, String> properties = new Hashtable<String, String>();
+				properties.put(ServerConstants.CONFIG_AUTH_NAME, getAuthName());
+				// TODO: shouldn't we always register the none-auth service?
+				context.registerService(IAuthenticationService.class, new NoneAuthenticationService(), properties);
+			}
+		}
+
+		@SuppressWarnings({"rawtypes", "unchecked"})
+		@Override
+		public IAuthenticationService addingService(ServiceReference<IAuthenticationService> reference) {
+			if ("true".equals(reference.getProperty(PROP_CONFIGURED))) //$NON-NLS-1$
+				return null;
+
+			IAuthenticationService authService = super.addingService(reference);
+			Dictionary dictionary = new Properties();
+			dictionary.put(PROP_CONFIGURED, "true"); //$NON-NLS-1$
+			if (getService() != null) {
+				getService().setRegistered(false);
+			}
+			authService.setRegistered(true);
+			context.registerService(IAuthenticationService.class.getName(), authService, dictionary);
+			return authService;
+		}
+	}
+
+	/**
+	 * Initialize the admin user on the server.
+	 */
+	private void initializeAdminUser() {
+		try {
+			// initialize the admin account in the IMetaStore
+			String adminDefaultPassword = PreferenceHelper.getString(ServerConstants.CONFIG_AUTH_ADMIN_DEFAULT_PASSWORD);
+			Boolean adminUserFolderExists = SimpleMetaStoreUtil.readMetaUserFolder(OrionConfiguration.getRootLocation().toLocalFile(EFS.NONE, null), ADMIN_LOGIN_VALUE).exists();
+			if (!adminUserFolderExists && adminDefaultPassword != null) {
+				UserInfo userInfo = new UserInfo();
+				userInfo.setUserName(ADMIN_LOGIN_VALUE);
+				userInfo.setFullName(ADMIN_NAME_VALUE);
+				userInfo.setProperty(UserConstants2.PASSWORD, adminDefaultPassword);
+				OrionConfiguration.getMetaStore().createUser(userInfo);
+
+				try {
+					AuthorizationService.addUserRight(ADMIN_LOGIN_VALUE, "/users");
+					AuthorizationService.addUserRight(ADMIN_LOGIN_VALUE, "/users/*"); //$NON-NLS-1$
+				} catch (CoreException e) {
+					LogHelper.log(e);
+				}
+
+				Logger logger = LoggerFactory.getLogger("org.eclipse.orion.server.account"); //$NON-NLS-1$
+				if (logger.isInfoEnabled()) {
+					logger.info("Account created: " + ADMIN_LOGIN_VALUE); //$NON-NLS-1$
+				}
+			}
+		} catch (CoreException e) {
+			LogHelper.log(e);
 		}
 	}
 

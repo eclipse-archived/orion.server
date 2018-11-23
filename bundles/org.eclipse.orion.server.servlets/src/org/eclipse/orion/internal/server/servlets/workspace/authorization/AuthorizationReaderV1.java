@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,8 +10,9 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.servlets.workspace.authorization;
 
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.json.*;
 
 /**
@@ -19,16 +20,30 @@ import org.json.*;
  */
 public class AuthorizationReaderV1 extends AuthorizationReader {
 	@Override
-	JSONArray readAuthorizationInfo(IEclipsePreferences preferences) throws JSONException {
-		//need to convert to the new format that takes an array of objects.
-		JSONArray oldArray = new JSONArray(preferences.get(ProtocolConstants.KEY_USER_RIGHTS, "[]")); //$NON-NLS-1$
-		JSONArray newArray = new JSONArray();
-		for (int i = 0; i < oldArray.length(); i++) {
-			JSONObject right = new JSONObject();
-			right.put(ProtocolConstants.KEY_USER_RIGHT_URI, oldArray.getString(i));
-			right.put(ProtocolConstants.KEY_USER_RIGHT_METHOD, AuthorizationService.POST | AuthorizationService.PUT | AuthorizationService.GET | AuthorizationService.DELETE);
-			newArray.put(right);
+	JSONArray readAuthorizationInfo(UserInfo user) throws JSONException {
+		//recompute permissions based on workspace ownership 
+		//because file URL structure changed in V3
+		JSONArray newPermissions = new JSONArray();
+		addPermission(newPermissions, "/users/" + user.getUniqueId()); //$NON-NLS-1$
+		try {
+			//do for each workspace owned by current user
+			for (String workspaceId : user.getWorkspaceIds()) {
+				//user has access to their own workspace
+				addPermission(newPermissions, Activator.LOCATION_WORKSPACE_SERVLET + '/' + workspaceId);
+				addPermission(newPermissions, Activator.LOCATION_WORKSPACE_SERVLET + '/' + workspaceId + "/*"); //$NON-NLS-1$
+				//access to project contents
+				addPermission(newPermissions, Activator.LOCATION_FILE_SERVLET + '/' + workspaceId);
+				addPermission(newPermissions, Activator.LOCATION_FILE_SERVLET + '/' + workspaceId + "/*"); //$NON-NLS-1$
+			}
+		} catch (JSONException e) {
+			//log and continue with no permissions
+			LogHelper.log(e);
 		}
-		return newArray;
+		return newPermissions;
+	}
+
+	private void addPermission(JSONArray permissions, String uri) throws JSONException {
+		JSONObject newPermission = AuthorizationService.createUserRight(uri);
+		permissions.put(newPermission);
 	}
 }

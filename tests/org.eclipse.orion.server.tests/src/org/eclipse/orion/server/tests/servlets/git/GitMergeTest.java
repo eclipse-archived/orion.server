@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c)  2011 IBM Corporation and others.
+ * Copyright (c)  2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,20 +14,20 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.util.List;
 
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.merge.ResolveMerger.MergeFailureReason;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
@@ -40,9 +40,9 @@ import com.meterware.httpunit.WebResponse;
 public class GitMergeTest extends GitTest {
 	@Test
 	public void testMergeSelf() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.optJSONObject(GitConstants.KEY_GIT);
@@ -58,16 +58,17 @@ public class GitMergeTest extends GitTest {
 	@Test
 	public void testMerge() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -137,12 +138,12 @@ public class GitMergeTest extends GitTest {
 		// assert clean
 		assertStatus(StatusResult.CLEAN, gitStatusUri);
 
-		request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("change in a", response.getText());
 
-		request = getGetFilesRequest(folderTxt.getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(folderTxt.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("change in master", response.getText());
@@ -152,9 +153,9 @@ public class GitMergeTest extends GitTest {
 
 	@Test
 	public void testMergeAlreadyUpToDate() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -184,16 +185,17 @@ public class GitMergeTest extends GitTest {
 	@Test
 	public void testMergeConflict() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -265,7 +267,7 @@ public class GitMergeTest extends GitTest {
 		// check status
 		assertStatus(new StatusResult().setConflictingNames("test.txt"), gitStatusUri);
 
-		request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		String[] responseLines = response.getText().split("\n");
@@ -283,13 +285,14 @@ public class GitMergeTest extends GitTest {
 	@Test
 	public void testMergeIntoLocalFailedDirtyWorkTree() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -298,12 +301,12 @@ public class GitMergeTest extends GitTest {
 		String gitRemoteUri = gitSection.getString(GitConstants.KEY_REMOTE);
 
 		// add a parallel commit in secondary clone and push it to the remote
-		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project2"), null);
+		IPath clonePath2 = getClonePath(workspaceId, project2);
 		clone(clonePath2);
 
 		// get project2 metadata
-		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -337,15 +340,16 @@ public class GitMergeTest extends GitTest {
 	@Test
 	public void testMergeFailedDirtyWorkTree() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -397,15 +401,16 @@ public class GitMergeTest extends GitTest {
 
 	@Test
 	public void testMergeRemote() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1
-		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project1"), null);
+		IPath clonePath1 = getClonePath(workspaceId, project1);
 		clone(clonePath1);
 
 		// get project1 metadata
-		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -413,12 +418,12 @@ public class GitMergeTest extends GitTest {
 		String gitRemoteUri1 = gitSection1.getString(GitConstants.KEY_REMOTE);
 
 		// clone2
-		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project2"), null);
+		IPath clonePath2 = getClonePath(workspaceId, project2);
 		clone(clonePath2);
 
 		// get project2 metadata
-		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -452,7 +457,9 @@ public class GitMergeTest extends GitTest {
 
 		// clone1: fetch
 		request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation1, true, false);
-		waitForTaskCompletion(webConversation.getResponse(request));
+		response = webConversation.getResponse(request);
+		ServerStatus status = waitForTask(response);
+		assertTrue(status.toString(), status.isOK());
 
 		// clone1: get remote details again
 		JSONObject remoteBranch = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);
@@ -471,7 +478,7 @@ public class GitMergeTest extends GitTest {
 		MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
 		assertEquals(MergeStatus.FAST_FORWARD, mergeResult);
 
-		request = getGetFilesRequest(getChild(project1, "test.txt").getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(getChild(project1, "test.txt").getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("incoming change", response.getText());
@@ -480,14 +487,8 @@ public class GitMergeTest extends GitTest {
 	@Test
 	public void testMergeRemovingFolders() throws Exception {
 		// see org.eclipse.jgit.api.MergeCommandTest.testMergeRemovingFolders()
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -495,7 +496,7 @@ public class GitMergeTest extends GitTest {
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -574,7 +575,7 @@ public class GitMergeTest extends GitTest {
 			MergeStatus mergeResult = MergeStatus.valueOf(merge.getString(GitConstants.KEY_RESULT));
 			assertEquals(MergeStatus.FAST_FORWARD, mergeResult);
 
-			request = getGetFilesRequest(folderChildrenLocation);
+			request = getGetRequest(folderChildrenLocation);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.equinox.http.registry.servlets">
+      <servlet
+            alias="/filesearch"
+            class="org.eclipse.orion.internal.server.search.SearchServlet"
+            httpcontextId="org.eclipse.orion.server.httpcontext.search">
+      </servlet>
+      <serviceSelector
+            filter="(other.info=org.eclipse.orion)">
+      </serviceSelector>
+   </extension>
+   <extension
+         point="org.eclipse.equinox.http.registry.filters">
+      <filter
+            alias="/filesearch"
+            class="org.eclipse.orion.server.servlets.LoggedInUserFilter">
+      </filter>
+      <serviceSelector
+            filter="(other.info=org.eclipse.orion)">
+      </serviceSelector>
+   </extension>
+   <extension
+         point="org.eclipse.equinox.http.registry.httpcontexts">
+      <httpcontext
+            id="org.eclipse.orion.server.httpcontext.search">
+         <resource-mapping
+               bundle="org.eclipse.orion.server.search"
+               path="/">
+         </resource-mapping>
+      </httpcontext>
+   </extension>
+</plugin>

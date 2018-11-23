@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,31 +10,20 @@
  *******************************************************************************/
 package org.eclipse.orion.server.jsch;
 
-import com.jcraft.jsch.*;
+import com.jcraft.jsch.HostKeyRepository;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.Session;
+import com.jcraft.jsch.UserInfo;
 
 /**
- * Use this handler to obtain and connect {@link Session}. 
+ * Use this handler to obtain and connect {@link Session}.
  *
  */
 public class SessionHandler {
 
 	private Session session;
 	private JSch jSch;
-
-	/**
-	 * Creates a session based on general information.
-	 * 
-	 * @param user
-	 * @param host
-	 * @param port
-	 * @param knownHosts
-	 * @throws JSchException
-	 */
-	public SessionHandler(String user, String host, int port, String knownHosts) throws JSchException {
-		this.jSch = new JSch();
-		JSchUtil.knownHosts(jSch, knownHosts);
-		this.session = jSch.getSession(user, host);
-	}
 
 	/**
 	 * Creates a session identified via private key.
@@ -52,7 +41,9 @@ public class SessionHandler {
 		jSch = new JSch();
 		JSchUtil.knownHosts(jSch, knownHosts);
 		JSchUtil.identity(jSch, privateKey, publicKey, passphrase);
-		this.session = jSch.getSession(user, host);
+		this.session = jSch.getSession(user, host, port);
+		// we don't prompt for password on the server so we never want to retry on authorization failure
+		this.session.setConfig("MaxAuthTries", "1"); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	public void setPassword(String password) {
@@ -73,6 +64,7 @@ public class SessionHandler {
 
 	/**
 	 * Connects this session and adds custom error handling.
+	 * 
 	 * @param tms
 	 * @throws JSchException
 	 */

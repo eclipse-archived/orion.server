@@ -18,7 +18,7 @@ import org.junit.runners.Suite.SuiteClasses;
  * Runs all automated server tests for site configuration/hosting support.
  */
 @RunWith(Suite.class)
-@SuiteClasses({SiteTest.class, HostingTest.class})
+@SuiteClasses({SiteHostingServiceTest.class, SiteTest.class, HostingTest.class})
 public class AllSiteTests {
 	//goofy junit4, no class body needed
 }

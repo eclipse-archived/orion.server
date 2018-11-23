@@ -39,4 +39,15 @@ public class PreferenceHelper {
 		return service.getString(ServerConstants.PREFERENCE_SCOPE, key, defaultValue, null);
 	}
 
+	/**
+	 * Returns the value of the integer preference corresponding to the given key,
+	 * or the provided default value if not defined.
+	 */
+	public static int getInt(String key, int defaultValue) {
+		IPreferencesService service = Activator.getPreferenceService();
+		if (service == null)
+			return defaultValue;
+		return service.getInt(ServerConstants.PREFERENCE_SCOPE, key, defaultValue, null);
+	}
+
 }

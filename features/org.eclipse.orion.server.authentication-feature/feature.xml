@@ -2,10 +2,11 @@
 <feature
       id="org.eclipse.orion.server.authentication.feature"
       label="%featureName"
-      version="0.5.0.qualifier"
+      version="8.0.0.qualifier"
       provider-name="%providerName"
+      plugin="org.eclipse.orion.server.authentication"
       license-feature="org.eclipse.license"
-      license-feature-version="1.0.0.qualifier">
+      license-feature-version="1.0.1.qualifier">
 
    <description>
       %description
@@ -20,44 +21,31 @@
    </license>
 
    <requires>
-      <import feature="org.eclipse.orion.server.feature" version="0.1.0.qualifier"/>
+      <import feature="org.eclipse.orion.server.feature" version="8.0.0.qualifier"/>
    </requires>
-
-   <plugin
-         id="org.eclipse.orion.server.authentication.form.core"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.orion.server.authentication.formopenid"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.orion.server.authentication.openid.core"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
 
    <plugin
          id="org.cyberneko.html"
          download-size="0"
          install-size="0"
-         version="1.9.14.qualifier"/>
+         version="0.0.0"/>
 
    <plugin
-         id="org.openid4java"
+         id="org.eclipse.orion.server.authentication"
          download-size="0"
          install-size="0"
-         version="0.9.5.qualifier"/>
+         version="0.0.0"
+         unpack="false"/>
 
    <plugin
-         id="org.eclipse.orion.server.authentication.basic"
+         id="org.apache.oltu.oauth2.client"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.apache.oltu.oauth2.common"
          download-size="0"
          install-size="0"
          version="0.0.0"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,13 +12,19 @@ package org.eclipse.orion.internal.server.servlets.workspace;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import javax.servlet.http.HttpServletRequest;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.IWebResourceDecorator;
 import org.eclipse.orion.server.core.LogHelper;
-import org.json.*;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Augments a file resource with information about parents up to the level
@@ -34,38 +40,55 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 	 * @see org.eclipse.orion.internal.server.core.IWebResourceDecorator#addAtributesFor(java.net.URI, org.json.JSONObject)
 	 */
 	public void addAtributesFor(HttpServletRequest request, URI resource, JSONObject representation) {
-		IPath resourcePath = new Path(resource.getPath());
-
 		if (!"/file".equals(request.getServletPath())) //$NON-NLS-1$
 			return;
 		try {
-			if (resourcePath.hasTrailingSeparator() && !representation.getBoolean(ProtocolConstants.KEY_DIRECTORY)) {
-				resourcePath = resourcePath.append(representation.getString(ProtocolConstants.KEY_NAME));
+			URI base = new URI(resource.getScheme(), resource.getUserInfo(), resource.getHost(), resource.getPort(), request.getServletPath() + "/", null, null);
+			IPath basePath = new Path(base.getPath());
+			IPath resourcePath = null;
+			try {
+				String locationString = representation.getString(ProtocolConstants.KEY_LOCATION);
+				URI location = new URI(locationString);
+				resourcePath = new Path(location.getPath());
+			} catch (JSONException je) {
+				// no String value found for ProtocolConstants.KEY_LOCATION,
+				// use resource path instead
+				resourcePath = new Path(resource.getPath());
+				if (resourcePath.hasTrailingSeparator() && !representation.getBoolean(ProtocolConstants.KEY_DIRECTORY)) {
+					resourcePath = resourcePath.append(representation.getString(ProtocolConstants.KEY_NAME));
+				}
 			}
-			addParents(resource, representation, resourcePath);
+			IPath path = resourcePath.makeRelativeTo(basePath);
+			//nothing to do if request is not a folder or file
+			if (path.segmentCount() < 2)
+				return;
+			ProjectInfo project = OrionConfiguration.getMetaStore().readProject(path.segment(0), path.segment(1));
+			//nothing to do if project does not exist
+			if (project == null) {
+				return;
+			}
+			addParents(base, representation, project, path);
 			//set the name of the project file to be the project name
-			if (resourcePath.segmentCount() == 2) {
-				WebProject project = WebProject.fromId(resourcePath.segment(1));
-				String projectName = project.getName();
+			if (path.segmentCount() == 2) {
+				String projectName = project.getFullName();
 				if (projectName != null)
 					representation.put(ProtocolConstants.KEY_NAME, projectName);
 			}
-		} catch (JSONException e) {
-			//Shouldn't happen because names and locations should be valid JSON.
-			//Since we are just decorating some else's response we shouldn't cause a failure
+		} catch (Exception e) {
+			//don't let problems in decorator propagate
 			LogHelper.log(e);
 		}
 	}
 
-	private void addParents(URI resource, JSONObject representation, IPath resourcePath) throws JSONException {
+	private void addParents(URI resource, JSONObject representation, ProjectInfo project, IPath resourcePath) throws JSONException {
 		//start at parent of current resource
 		resourcePath = resourcePath.removeLastSegments(1).addTrailingSeparator();
 		JSONArray parents = new JSONArray();
 		//for all but the project we can just manipulate the path to get the name and location
 		while (resourcePath.segmentCount() > 2) {
 			try {
-				URI uri = resource.resolve(new URI(null, resourcePath.toString(), null));
-				addParent(parents, resourcePath.lastSegment(), new URI(null, null, null, -1, uri.getPath(), uri.getQuery(), uri.getFragment()));
+				URI uri = resource.resolve(new URI(null, null, resourcePath.toString(), null));
+				addParent(parents, resourcePath.lastSegment(), new URI(resource.getScheme(), resource.getAuthority(), uri.getPath(), uri.getQuery(), uri.getFragment()));
 			} catch (URISyntaxException e) {
 				//ignore this parent
 				LogHelper.log(e);
@@ -74,10 +97,9 @@ public class ProjectParentDecorator implements IWebResourceDecorator {
 		}
 		//add the project
 		if (resourcePath.segmentCount() == 2) {
-			WebProject project = WebProject.fromId(resourcePath.segment(1));
-			URI uri = resource.resolve(resourcePath.toString());
 			try {
-				addParent(parents, project.getName(), new URI(null, null, null, -1, uri.getPath(), uri.getQuery(), uri.getFragment()));
+				URI uri = resource.resolve(new URI(null, null, resourcePath.toString(), null));
+				addParent(parents, project.getFullName(), new URI(resource.getScheme(), resource.getAuthority(), uri.getPath(), uri.getQuery(), uri.getFragment()));
 			} catch (URISyntaxException e) {
 				//ignore this project
 				LogHelper.log(e);

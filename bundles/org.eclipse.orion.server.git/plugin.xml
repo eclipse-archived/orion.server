@@ -2,20 +2,51 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension
+         point="org.eclipse.equinox.http.registry.servlets">
+      <servlet
+            alias="/gitapi"
+            class="org.eclipse.orion.server.git.servlets.GitServlet">
+      </servlet>
+      <serviceSelector
+            filter="(other.info=org.eclipse.orion)">
+      </serviceSelector>
+   </extension>
+   <extension
+         point="org.eclipse.equinox.http.registry.filters">
+      <filter
+            alias="/gitapi"
+            class="org.eclipse.orion.server.servlets.LoggedInUserFilter">
+      </filter>
+      <serviceSelector
+            filter="(other.info=org.eclipse.orion)">
+      </serviceSelector>
+   </extension>
+   <extension
          point="org.eclipse.equinox.http.registry.httpcontexts">
       <httpcontext
-            id="org.eclipse.orion.server.git.httpcontext.plugins">
+            id="org.eclipse.orion.server.httpcontext.git">
          <resource-mapping
-               bundle="org.eclipse.orion.server.git"
-               path="/web/plugins">
+               bundle="org.eclipse.orion.client.git"
+               path="/web/git">
          </resource-mapping>
-      </httpcontext>
+      </httpcontext>      
+      <httpcontext
+            id="org.eclipse.orion.server.httpcontext.git.components">
+         <resource-mapping
+               bundle="org.eclipse.orion.client.git"
+               path="/web/orion/git">
+         </resource-mapping>
+      </httpcontext>      
    </extension>
    <extension
          point="org.eclipse.equinox.http.registry.resources">
       <resource
-            alias="/plugins/git"
-            httpcontextId="org.eclipse.orion.server.git.httpcontext.plugins">
+            alias="/git"
+            httpcontextId="org.eclipse.orion.server.httpcontext.git">
+      </resource>
+      <resource
+            alias="/orion/git"
+            httpcontextId="org.eclipse.orion.server.httpcontext.git.components">
       </resource>
       <serviceSelector
             filter="(other.info=org.eclipse.orion)">

@@ -10,20 +10,29 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search;
 
+import java.io.File;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.CommonParams;
-import org.eclipse.core.filesystem.*;
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.URIUtil;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.FileLocker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,10 +46,12 @@ public class IndexPurgeJob extends Job {
 	private static final long DEFAULT_DELAY = 30000;//3 minutes
 	private static final long PAGE_SIZE = 1000;
 	private final SolrServer server;
+	private File lockFile;
 
-	public IndexPurgeJob(SolrServer server) {
+	public IndexPurgeJob(SolrServer server, File indexRoot) {
 		super("Purging Index"); //$NON-NLS-1$
 		this.server = server;
+		this.lockFile = new File(indexRoot, "lockp.txt");
 		setSystem(true);
 	}
 
@@ -102,8 +113,16 @@ public class IndexPurgeJob extends Job {
 		if (logger.isDebugEnabled())
 			logger.debug("Purging indexes"); //$NON-NLS-1$
 		long start = System.currentTimeMillis();
+		FileLocker lock = new FileLocker(lockFile);
 		SolrQuery query = findAllQuery();
 		try {
+			if (!lock.tryLock()) {
+				if (logger.isInfoEnabled()) {
+					logger.info("Search index purge: another process is currently running");
+				}
+				schedule(DEFAULT_DELAY * 2);
+				return Status.OK_STATUS;
+			}
 			QueryResponse solrResponse = this.server.query(query);
 			SolrDocumentList result = solrResponse.getResults();
 			long numFound = result.getNumFound();
@@ -135,6 +154,10 @@ public class IndexPurgeJob extends Job {
 			//ignore and fall through
 		} catch (Exception e) {
 			handleIndexingFailure(e);
+		} finally {
+			if (lock.isValid()) {
+				lock.release();
+			}
 		}
 		long duration = System.currentTimeMillis() - start;
 		if (logger.isDebugEnabled())

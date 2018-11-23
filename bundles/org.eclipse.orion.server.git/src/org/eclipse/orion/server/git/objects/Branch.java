@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,12 +15,19 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Comparator;
 import java.util.List;
-import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.lib.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.RemoteConfig;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
@@ -29,7 +36,9 @@ import org.eclipse.orion.server.git.BaseToCommitConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitServlet;
 import org.eclipse.orion.server.git.servlets.GitUtils;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 @ResourceDescription(type = Branch.TYPE)
 public class Branch extends GitObject {
@@ -37,7 +46,16 @@ public class Branch extends GitObject {
 	public static final String RESOURCE = "branch"; //$NON-NLS-1$
 	public static final String TYPE = "Branch"; //$NON-NLS-1$
 	public static final Comparator<Branch> COMPARATOR = new Comparator<Branch>() {
+		@Override
 		public int compare(Branch o1, Branch o2) {
+			try {
+				if (o1.isCurrent()) {
+					return -1;
+				} else if (o2.isCurrent()) {
+					return 1;
+				}
+			} catch (IOException e) {
+			}
 			return o1.getTime() < o2.getTime() ? 1 : (o1.getTime() > o2.getTime() ? -1 : o2.getName(true, false).compareTo(o1.getName(true, false)));
 		}
 	};
@@ -51,11 +69,12 @@ public class Branch extends GitObject {
 				new Property(ProtocolConstants.KEY_LOCATION), //
 				new Property(ProtocolConstants.KEY_FULL_NAME), //
 				new Property(GitConstants.KEY_COMMIT), //
+				new Property(GitConstants.KEY_TREE), //
 				new Property(GitConstants.KEY_DIFF), //
 				new Property(GitConstants.KEY_REMOTE), //
 				new Property(GitConstants.KEY_HEAD), //
 				new Property(GitConstants.KEY_BRANCH_CURRENT), //
-				new Property(ProtocolConstants.KEY_LOCAL_TIMESTAMP)};
+				new Property(ProtocolConstants.KEY_LOCAL_TIMESTAMP) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
@@ -75,7 +94,7 @@ public class Branch extends GitObject {
 	}
 
 	@PropertyDescription(name = GitConstants.KEY_BRANCH_CURRENT)
-	private boolean isCurrent() throws IOException {
+	public boolean isCurrent() throws IOException {
 		return getName(false, false).equals(db.getBranch());
 	}
 
@@ -88,7 +107,8 @@ public class Branch extends GitObject {
 		String shortName = getName(false, true);
 		IPath basePath = new Path(cloneLocation.getPath());
 		IPath newPath = new Path(GitServlet.GIT_URI).append(resource).append(shortName).append(basePath.removeFirstSegments(2));
-		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), newPath.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), newPath.toString(),
+				cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
 	// TODO: expandable
@@ -144,6 +164,11 @@ public class Branch extends GitObject {
 		return BaseToCommitConverter.getCommitLocation(cloneLocation, getName(true, true), BaseToCommitConverter.REMOVE_FIRST_2);
 	}
 
+	@PropertyDescription(name = GitConstants.KEY_TREE)
+	private URI getTreeLocation() throws URISyntaxException {
+		return createTreeLocation(null);
+	}
+
 	@PropertyDescription(name = GitConstants.KEY_DIFF)
 	private URI getDiffLocation() throws IOException, URISyntaxException {
 		return createLocation(Diff.RESOURCE);
@@ -174,6 +199,18 @@ public class Branch extends GitObject {
 		if (c != null)
 			return c.getCommitTime();
 		return 0;
+	}
+
+	private URI createTreeLocation(String path) throws URISyntaxException {
+		// remove /gitapi/clone from the start of path
+		IPath clonePath = new Path(cloneLocation.getPath()).removeFirstSegments(2);
+
+		IPath result = new Path(GitServlet.GIT_URI).append(Tree.RESOURCE).append(clonePath).append(GitUtils.encode(this.getName()));
+		if (path != null) {
+			result.append(path);
+		}
+		return new URI(cloneLocation.getScheme(), cloneLocation.getUserInfo(), cloneLocation.getHost(), cloneLocation.getPort(), result.makeAbsolute()
+				.toString(), cloneLocation.getQuery(), cloneLocation.getFragment());
 	}
 
 	private RevCommit parseCommit() {

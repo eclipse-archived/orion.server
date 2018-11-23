@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 IBM Corporation and others.
+ * Copyright (c) 2012, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,14 +14,21 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map.Entry;
 import java.util.Set;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.workspace.authorization.AuthorizationService;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
@@ -89,6 +96,10 @@ public abstract class AbstractGitHandler extends ServletResourceHandler<String> 
 				p = p.removeFirstSegments(1);
 			}
 			IPath filePath = p;
+			if (!AuthorizationService.checkRights(request.getRemoteUser(), "/" + filePath.toString(), request.getMethod())) {
+				response.sendError(HttpServletResponse.SC_FORBIDDEN);
+				return true;
+			}
 			IPath gitSearchPath = filePath.hasTrailingSeparator() ? filePath : filePath.removeLastSegments(1);
 			Set<Entry<IPath, File>> gitDirsFound = GitUtils.getGitDirs(gitSearchPath, Traverse.GO_UP).entrySet();
 			Entry<IPath, File> firstGitDir = gitDirsFound.iterator().next();
@@ -98,21 +109,21 @@ public abstract class AbstractGitHandler extends ServletResourceHandler<String> 
 				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, msg, null));
 			}
 			String relativePath = GitUtils.getRelativePath(filePath, firstGitDir.getKey());
-			db = new FileRepository(gitDir);
+			db = FileRepositoryBuilder.create(gitDir);
 			RequestInfo requestInfo = new RequestInfo(request, response, db, gitSegment, relativePath, filePath);
 			switch (getMethod(request)) {
-				case GET :
-					return handleGet(requestInfo);
-				case POST :
-					return handlePost(requestInfo);
-				case PUT :
-					return handlePut(requestInfo);
-				case DELETE :
-					return handleDelete(requestInfo);
-				case OPTIONS :
-				case HEAD :
-				default :
-					return false;
+			case GET:
+				return handleGet(requestInfo);
+			case POST:
+				return handlePost(requestInfo);
+			case PUT:
+				return handlePut(requestInfo);
+			case DELETE:
+				return handleDelete(requestInfo);
+			case OPTIONS:
+			case HEAD:
+			default:
+				return false;
 			}
 		} catch (IOException e) {
 			String msg = NLS.bind("Failed to process a git request for {0}", path);
@@ -121,8 +132,10 @@ public abstract class AbstractGitHandler extends ServletResourceHandler<String> 
 			String msg = NLS.bind("Failed to process a git request for {0}", path);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, msg, e));
 		} finally {
-			if (db != null)
+			if (db != null) {
+				// close the git repository
 				db.close();
+			}
 		}
 	}
 

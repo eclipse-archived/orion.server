@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -26,7 +26,10 @@ import java.util.Set;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.jgit.api.InitCommand;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.orion.server.git.servlets.GitUtils.Traverse;
 import org.json.JSONObject;
@@ -39,19 +42,20 @@ import com.meterware.httpunit.WebResponse;
 public class GitUtilsTest extends GitTest {
 	@Test
 	public void testGitDirPathNoGit() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(location);
-		assertNull(GitUtils.getGitDir(new Path(uri.getPath())));
+		File dir = GitUtils.getGitDir(new Path(uri.getPath()));
+		assertNull(dir == null ? "N/A" : dir.toURI().toURL().toString(), dir);
 	}
 
 	@Test
 	public void testGitDirPathLinked() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), gitDir.toURI().toString());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), gitDir.toURI().toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		URI uri = URI.create(location);
+		URI uri = URI.create(toRelativeURI(location));
 		File gitDirFile = GitUtils.getGitDir(new Path(uri.getPath()));
 		assertNotNull(gitDirFile);
 		assertEquals(gitDir, gitDirFile.getParentFile());
@@ -59,10 +63,10 @@ public class GitUtilsTest extends GitTest {
 
 	@Test
 	public void testGitDirPathLinkedToSubfolder() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), new File(gitDir, "folder").toURI().toString());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), new File(gitDir, "folder").toURI().toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		URI uri = URI.create(location);
+		URI uri = URI.create(toRelativeURI(location));
 		Set<Entry<IPath, File>> set = GitUtils.getGitDirs(new Path(uri.getPath()), Traverse.GO_UP).entrySet();
 		assertEquals(1, set.size());
 		Entry<IPath, File> entry = set.iterator().next();
@@ -75,15 +79,55 @@ public class GitUtilsTest extends GitTest {
 
 	@Test
 	public void testGitDirEmptyPath() throws Exception {
-		assertNull(GitUtils.getGitDir(new Path("")));
+		File emptyPathFile = GitUtils.getGitDir(new Path(""));
+		assertNull(emptyPathFile == null ? "N/A" : emptyPathFile.toURI().toURL().toString(), emptyPathFile);
+	}
+
+	private boolean deleteDir(File dir) {
+		if (dir.isDirectory()) {
+			String[] children = dir.list();
+			for (int i = 0; i < children.length; i++) {
+				boolean success = deleteDir(new File(dir, children[i]));
+				if (!success) {
+					return false;
+				}
+			}
+		}
+
+		// The directory is now empty so delete it
+		return dir.delete();
+	}
+
+	@Test
+	public void testGetGitDirWorkspaceIsInRepo() throws Exception {
+		InitCommand command = new InitCommand();
+		File workspace = getWorkspaceRoot();
+		File parent = workspace.getParentFile();
+		command.setDirectory(parent);
+		Repository repository = command.call().getRepository();
+		assertNotNull(repository);
+
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
+		URI uri = URI.create(location);
+		File dir = GitUtils.getGitDir(new Path(uri.getPath()));
+		assertNull(dir == null ? "N/A" : dir.toURI().toURL().toString(), dir);
+
+		File[] parentChildren = parent.listFiles();
+		for (int i = 0; i < parentChildren.length; i++) {
+			if (parentChildren[i].getName().equals(".git")) {
+				assertTrue(deleteDir(parentChildren[i]));
+			}
+		}
 	}
 
 	@Test
 	public void testGitDirsNoGit() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		URI uri = URI.create(location);
+		URI uri = URI.create(toRelativeURI(location));
 		IPath projectPath = new Path(uri.getPath());
 		Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 		assertTrue(gitDirs.isEmpty());
@@ -91,26 +135,26 @@ public class GitUtilsTest extends GitTest {
 
 	@Test
 	public void testGitDirPathLinkedRemovedFile() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), gitDir.toURI().toString());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), gitDir.toURI().toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// drill down to folder/folder.txt and delete it
-		WebRequest request = getGetFilesRequest(location);
+		WebRequest request = getGetRequest(location);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject jsonResponse = new JSONObject(response.getText());
-		request = getGetFilesRequest(jsonResponse.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
+		request = getGetRequest(jsonResponse.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
 		JSONObject testTxt = getChildByName(children, "folder");
 		String folderLocation = testTxt.getString(ProtocolConstants.KEY_LOCATION);
-		request = getGetFilesRequest(folderLocation);
+		request = getGetRequest(folderLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		jsonResponse = new JSONObject(response.getText());
-		request = getGetFilesRequest(jsonResponse.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
+		request = getGetRequest(jsonResponse.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		children = getDirectoryChildren(new JSONObject(response.getText()));
@@ -121,7 +165,7 @@ public class GitUtilsTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// then try to get git directory for the removed file
-		URI uri = URI.create(folderTxtLocation);
+		URI uri = URI.create(toRelativeURI(folderTxtLocation));
 		File gitDirFile = GitUtils.getGitDir(new Path(uri.getPath()));
 		assertNotNull(gitDirFile);
 		assertEquals(gitDir, gitDirFile.getParentFile());
@@ -130,8 +174,8 @@ public class GitUtilsTest extends GitTest {
 	@Test
 	@Ignore(/*TODO*/"not yet implemented")
 	public void testGitDirsLinked() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), gitDir.toURI().toString());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), gitDir.toURI().toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 		URI uri = URI.create(location);
 		IPath projectPath = new Path(uri.getPath());
@@ -141,58 +185,59 @@ public class GitUtilsTest extends GitTest {
 
 	@Test
 	public void testGitDirsCloned() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		URI uri = URI.create(location);
-		IPath projectPath = new Path(uri.getPath()).removeFirstSegments(1); // remove /file
+		URI uri = URI.create(toRelativeURI(location));
+		IPath projectPath = new Path(uri.getPath());
 		Map<IPath, File> gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 		assertFalse(gitDirs.isEmpty());
 	}
 
 	@Test
 	public void testGitDirsClonedIntoSubfolder() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 
 		// create folder1
 		String folderName = "clone1";
-		WebRequest request = getPostFilesRequest(projectId + "/", getNewDirJSON(folderName).toString(), folderName);
+		WebRequest request = getPostFilesRequest("", getNewDirJSON(folderName).toString(), folderName);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject cloneFolder1 = new JSONObject(response.getText());
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).append(folderName).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project).append(folderName).makeAbsolute();
 		clone(clonePath);
 
 		// create folder2
 		folderName = "clone2";
-		request = getPostFilesRequest(projectId + "/", getNewDirJSON(folderName).toString(), folderName);
+		request = getPostFilesRequest("", getNewDirJSON(folderName).toString(), folderName);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 		JSONObject cloneFolder2 = new JSONObject(response.getText());
-		clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).append(folderName).makeAbsolute();
+		clonePath = getClonePath(workspaceId, project).append(folderName).makeAbsolute();
 		clone(clonePath);
 
 		String cloneLocation = cloneFolder1.getString(ProtocolConstants.KEY_LOCATION);
-		URI subfolderUri = URI.create(cloneLocation);
-		IPath subfolderPath = new Path(subfolderUri.getPath()).removeFirstSegments(1); // remove /file
+		URI subfolderUri = URI.create(toRelativeURI(cloneLocation));
+		IPath subfolderPath = new Path(subfolderUri.getPath());
 		Map<IPath, File> gitDirs = GitUtils.getGitDirs(subfolderPath, Traverse.GO_DOWN);
 		assertFalse(gitDirs.isEmpty());
 		gitDirs.clear();
 
 		cloneLocation = cloneFolder2.getString(ProtocolConstants.KEY_LOCATION);
-		subfolderUri = URI.create(cloneLocation);
-		subfolderPath = new Path(subfolderUri.getPath()).removeFirstSegments(1); // remove /file
+		subfolderUri = URI.create(toRelativeURI(cloneLocation));
+		subfolderPath = new Path(subfolderUri.getPath());
 		gitDirs = GitUtils.getGitDirs(subfolderPath, Traverse.GO_DOWN);
 		assertFalse(gitDirs.isEmpty());
 		gitDirs.clear();
 
 		String projectLocation = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		URI projectUri = URI.create(projectLocation);
-		IPath projectPath = new Path(projectUri.getPath()).removeFirstSegments(1); // remove /file
+		URI projectUri = URI.create(toRelativeURI(projectLocation));
+		IPath projectPath = new Path(projectUri.getPath());
 		gitDirs = GitUtils.getGitDirs(projectPath, Traverse.GO_DOWN);
 		assertFalse(gitDirs.isEmpty());
 		assertEquals(2, gitDirs.size());

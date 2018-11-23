@@ -1,0 +1,44 @@
+<configuration>
+  <!-- See documentation at http://logback.qos.ch/manual/joran.html -->
+  
+  <!-- address performance concern with jul-to-slf4j -->
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+    <resetJUL>true</resetJUL>
+  </contextListener>
+  
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <layout class="ch.qos.logback.classic.PatternLayout">
+      <Pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
+    </layout>
+  </appender>
+
+  <!-- Uncomment any of these lines to debug Orion -->
+
+  <!-- Print information on requests and responses to Orion servlets -->
+  <logger name="org.eclipse.orion.server.servlets.OrionServlet" level="DEBUG"/>
+  
+  <!-- Print information on search indexing -->  
+  <logger name="org.eclipse.orion.internal.server.search.Indexer" level="DEBUG"/>
+
+  <!-- Prints successful and failed logins -->
+  <logger name="org.eclipse.orion.server.login" level="INFO"/>
+
+  <!-- Prints user account creations and deletions -->
+  <logger name="org.eclipse.orion.server.account" level="INFO"/>
+
+  <!-- Prints details on sftp connections -->
+  <!--   <logger name="org.eclipse.orion.server.sftp" level="INFO"/> -->
+
+  <!-- Prints information on locating and reading the server configuration file -->
+  <logger name="org.eclipse.orion.server.config" level="INFO"/>
+
+  <!-- Prints information on starting up the orion application -->
+  <logger name="org.eclipse.orion.app" level="INFO"/>
+
+  <!-- Prints docker / terminal connections -->
+  <logger name="org.eclipse.orion.server.docker" level="DEBUG"/>
+
+  <root level="WARN">
+    <appender-ref ref="STDOUT" />
+  </root>
+</configuration>

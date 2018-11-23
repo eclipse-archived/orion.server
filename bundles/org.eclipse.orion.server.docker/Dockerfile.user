@@ -1,0 +1,36 @@
+################################################################################
+# Copyright (c) 2013, 2014 IBM Corporation and others.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+# 
+# Contributors:
+#     IBM Corporation - initial API and implementation
+#################################################################################
+# Dockerfile for an Orion terminal user
+
+FROM orion-base
+MAINTAINER Anthony Hunter anthonyh@ca.ibm.com
+
+# Configure a local user to interact with the volumes
+RUN addgroup --gid GID orion
+RUN adduser --uid UID --disabled-password --gecos "Orion User,,," --gid GID USERNAME
+
+# set the bash shell to vi mode
+RUN echo 'set -o vi' >> /home/USERNAME/.bashrc
+
+# update the command prompt (remove the hostname)
+RUN echo 'PS1="\u:\w[\!] % "' >> /home/USERNAME/.bashrc
+
+USER USERNAME
+
+WORKDIR /home/USERNAME
+
+ENV HOME /home/USERNAME
+
+EXPOSE 8080
+
+EXPOSE 5858
+
+CMD ["/bin/bash"] 

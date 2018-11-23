@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others
+ * Copyright (c) 2011, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,9 +20,10 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -35,14 +36,8 @@ import com.meterware.httpunit.WebResponse;
 public class GitTagTest extends GitTest {
 	@Test
 	public void testTag() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -51,7 +46,7 @@ public class GitTagTest extends GitTest {
 			String tagLocation = clone.getString(GitConstants.KEY_TAG);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -79,14 +74,8 @@ public class GitTagTest extends GitTest {
 
 	@Test
 	public void testListDeleteTags() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -94,7 +83,7 @@ public class GitTagTest extends GitTest {
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -146,14 +135,8 @@ public class GitTagTest extends GitTest {
 
 	@Test
 	public void testTagFailed() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -161,7 +144,7 @@ public class GitTagTest extends GitTest {
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -207,7 +190,7 @@ public class GitTagTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
 			assertEquals("Error", result.getString("Severity"));
 			assertEquals("An error occured when tagging.", result.getString("Message"));
-			assertTrue(result.getString("DetailedMessage").endsWith("REJECTED"));
+			assertTrue(result.toString(), result.getString("DetailedMessage").endsWith("already exists"));
 
 			// tag HEAD with 'tag' again (CommitHandler) - should fail
 			request = getPutGitCommitRequest(gitHeadUri, "tag");
@@ -217,20 +200,14 @@ public class GitTagTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_INTERNAL_ERROR, result.getInt("HttpCode"));
 			assertEquals("Error", result.getString("Severity"));
 			assertEquals("An error occured when tagging.", result.getString("Message"));
-			assertTrue(result.getString("DetailedMessage").endsWith("REJECTED"));
+			assertTrue(result.toString(), result.getString("DetailedMessage").endsWith("already exists"));
 		}
 	}
 
 	@Test
 	public void testTagFromLogAll() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -239,7 +216,7 @@ public class GitTagTest extends GitTest {
 			String cloneCommitUri = clone.getString(GitConstants.KEY_COMMIT);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -264,14 +241,8 @@ public class GitTagTest extends GitTest {
 
 	@Test
 	public void testCheckoutTag() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -280,7 +251,7 @@ public class GitTagTest extends GitTest {
 			String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -309,7 +280,9 @@ public class GitTagTest extends GitTest {
 			// check current branch
 			request = getGetRequest(clone.getString(GitConstants.KEY_BRANCH));
 			response = webConversation.getResponse(request);
-			JSONObject branches = waitForTaskCompletion(response);
+			ServerStatus status = waitForTask(response);
+			assertTrue(status.toString(), status.isOK());
+			JSONObject branches = status.getJsonData();
 			assertEquals("tag_tag", GitBranchTest.getCurrentBranch(branches).getString(ProtocolConstants.KEY_NAME));
 			// log
 			JSONArray commitsArray = log(gitHeadUri);
@@ -330,12 +303,12 @@ public class GitTagTest extends GitTest {
 		File orionServer = new File("").getAbsoluteFile().getParentFile(/*org.eclipse.orion.server.tests*/).getParentFile(/*tests*/);
 		Assume.assumeTrue(new File(orionServer, Constants.DOT_GIT).exists());
 
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), orionServer.toURI().toString());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), orionServer.toURI().toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 		// get project/folder metadata
-		WebRequest request = getGetFilesRequest(location);
+		WebRequest request = getGetRequest(location);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject folder = new JSONObject(response.getText());
@@ -346,7 +319,20 @@ public class GitTagTest extends GitTest {
 		JSONArray tags = listTags(gitTagUri);
 		assertTrue(tags.length() > 0);
 		long lastTime = Long.MAX_VALUE;
-		for (int i = 0; i < tags.length(); i++) {
+		for (int i = 0; i < 5; i++) {
+			JSONObject tag = tags.getJSONObject(i);
+
+			// assert properly sorted, new first
+			long t = tag.getLong(ProtocolConstants.KEY_LOCAL_TIMESTAMP);
+			assertTrue(t <= lastTime);
+			lastTime = t;
+
+			// get 'tag' metadata
+			request = getGetGitTagRequest(tag.getString(ProtocolConstants.KEY_LOCATION).toString());
+			response = webConversation.getResponse(request);
+			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+		}
+		for (int i = tags.length() - 5; i < tags.length(); i++) {
 			JSONObject tag = tags.getJSONObject(i);
 
 			// assert properly sorted, new first

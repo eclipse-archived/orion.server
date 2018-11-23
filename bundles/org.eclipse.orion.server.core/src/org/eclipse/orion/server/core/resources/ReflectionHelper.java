@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 IBM Corporation and others.
+ * Copyright (c) 2012, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,6 +14,10 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.osgi.util.NLS;
 
@@ -49,7 +53,7 @@ public class ReflectionHelper {
 			method.setAccessible(true);
 			return method.invoke(object);
 		} catch (Exception e) {
-			// Ignore and return null
+			LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, e.getMessage(), e));
 		}
 		return null;
 	}
@@ -87,6 +91,7 @@ public class ReflectionHelper {
 		throw new IllegalArgumentException(NLS.bind("Could not field named {0}", resourceShapeFieldName));
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <T> T getValue(Field field) {
 		try {
 			field.setAccessible(true);

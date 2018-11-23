@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,17 +11,33 @@
 package org.eclipse.orion.server.git.jobs;
 
 import java.io.IOException;
-import org.eclipse.core.runtime.*;
+import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
+
+import javax.servlet.http.Cookie;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jgit.api.*;
+import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
+import org.eclipse.jgit.api.PullCommand;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.JGitInternalException;
+import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.jgit.transport.*;
-import org.eclipse.orion.internal.server.servlets.workspace.WebProject;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.FetchResult;
+import org.eclipse.jgit.transport.Transport;
+import org.eclipse.jgit.transport.TransportHttp;
 import org.eclipse.orion.server.git.GitActivator;
+import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.GitCredentialsProvider;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
@@ -35,35 +51,51 @@ public class PullJob extends GitJob {
 	private String projectName;
 
 	public PullJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force) {
-		super("Pulling", userRunningTask, "Pulling...", false, false, (GitCredentialsProvider) credentials); //$NON-NLS-1$
+		super(userRunningTask, true, (GitCredentialsProvider) credentials);
 		// path: file/{...}
 		this.path = path;
-		this.projectName = path.segmentCount() == 2 ? WebProject.fromId(path.segment(1)).getName() : path.lastSegment();
+		this.projectName = path.lastSegment();
 		// this.force = force; // TODO: enable when JGit starts to support this option
 		setName(NLS.bind("Pulling {0}", projectName));
-		setMessage(NLS.bind("Pulling {0}...", projectName));
 		setFinalMessage(NLS.bind("Pulling {0} done", projectName));
+		setTaskExpirationTime(TimeUnit.DAYS.toMillis(7));
 	}
 
-	private IStatus doPull() throws IOException, GitAPIException, CoreException {
-		Repository db = new FileRepository(GitUtils.getGitDir(path));
+	public PullJob(String userRunningTask, CredentialsProvider credentials, Path path, boolean force, Object cookie) {
+		this(userRunningTask, credentials, path, force);
+		this.cookie = (Cookie) cookie;
+	}
 
-		Git git = new Git(db);
-		PullCommand pc = git.pull();
-		pc.setCredentialsProvider(credentials);
-		pc.setTransportConfigCallback(new TransportConfigCallback() {
-			@Override
-			public void configure(Transport t) {
-				credentials.setUri(t.getURI());
+	private IStatus doPull(IProgressMonitor monitor) throws IOException, GitAPIException, CoreException {
+		ProgressMonitor gitMonitor = new EclipseGitProgressTransformer(monitor);
+		Repository db = null;
+		try {
+			db = FileRepositoryBuilder.create(GitUtils.getGitDir(path));
+			Git git = new Git(db);
+			PullCommand pc = git.pull();
+			pc.setProgressMonitor(gitMonitor);
+			pc.setCredentialsProvider(credentials);
+			pc.setTransportConfigCallback(new TransportConfigCallback() {
+				@Override
+				public void configure(Transport t) {
+					credentials.setUri(t.getURI());
+					if (t instanceof TransportHttp && cookie != null) {
+						HashMap<String, String> map = new HashMap<String, String>();
+						map.put(GitConstants.KEY_COOKIE, cookie.getName() + "=" + cookie.getValue());
+						((TransportHttp) t).setAdditionalHeaders(map);
+					}
+				}
+			});
+			PullResult pullResult = pc.call();
+
+			if (monitor.isCanceled()) {
+				return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
 			}
-		});
-		PullResult pullResult = pc.call();
 
-		// handle result
-		if (pullResult.isSuccessful()) {
-			return Status.OK_STATUS;
-		} else {
-
+			// handle result
+			if (pullResult.isSuccessful()) {
+				return Status.OK_STATUS;
+			}
 			FetchResult fetchResult = pullResult.getFetchResult();
 
 			IStatus fetchStatus = FetchJob.handleFetchResult(fetchResult);
@@ -72,19 +104,21 @@ public class PullJob extends GitJob {
 			}
 
 			MergeStatus mergeStatus = pullResult.getMergeResult().getMergeStatus();
-			if (mergeStatus.isSuccessful()) {
-				return Status.OK_STATUS;
-			} else {
+			if (!mergeStatus.isSuccessful())
 				return new Status(IStatus.ERROR, GitActivator.PI_GIT, mergeStatus.name());
+		} finally {
+			if (db != null) {
+				db.close();
 			}
 		}
+		return Status.OK_STATUS;
 	}
 
 	@Override
-	protected IStatus performJob() {
+	protected IStatus performJob(IProgressMonitor monitor) {
 		IStatus result = Status.OK_STATUS;
 		try {
-			result = doPull();
+			result = doPull(monitor);
 		} catch (IOException e) {
 			result = new Status(IStatus.ERROR, GitActivator.PI_GIT, "Pulling error", e);
 		} catch (CoreException e) {

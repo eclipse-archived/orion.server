@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c)  2011 IBM Corporation and others.
+ * Copyright (c)  2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,24 +13,24 @@ package org.eclipse.orion.server.tests.servlets.git;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URI;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RebaseCommand.Operation;
 import org.eclipse.jgit.api.RebaseResult;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.AdditionalRebaseStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Commit;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -42,21 +42,15 @@ import com.meterware.httpunit.WebResponse;
 public class GitRebaseTest extends GitTest {
 	@Test
 	public void testRebaseSelf() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -73,14 +67,8 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebase() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -91,7 +79,7 @@ public class GitRebaseTest extends GitTest {
 			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -161,12 +149,12 @@ public class GitRebaseTest extends GitTest {
 			// assert clean
 			assertStatus(StatusResult.CLEAN, gitStatusUri);
 
-			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("change in a", response.getText());
 
-			request = getGetFilesRequest(folderTxt.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(folderTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("change in master", response.getText());
@@ -175,14 +163,8 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebaseStopOnConflictAndAbort() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -193,7 +175,7 @@ public class GitRebaseTest extends GitTest {
 			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -262,10 +244,10 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.STOPPED, rebaseResult);
 
 			// check conflicting file
-			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			assertEquals("<<<<<<< OURS\n1master\n=======\n1a\n>>>>>>> THEIRS\n2\n3\n4a\n", response.getText());
+			assertTrue(response.getText(), Pattern.matches("<<<<<<< Upstream, based on .*\n1master\n=======\n1a\n>>>>>>> .* first commit on a\n2\n3\n4a\n", response.getText()));
 
 			// abort rebase
 			rebase = rebase(gitHeadUri, Operation.ABORT);
@@ -273,7 +255,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.ABORTED, rebaseResult);
 
 			// file should reset to "a" branch
-			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("1a\n2\n3\n4a", response.getText());
@@ -285,14 +267,8 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebaseStopOnConflictAndContinue() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -303,7 +279,7 @@ public class GitRebaseTest extends GitTest {
 			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -372,10 +348,10 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.STOPPED, rebaseResult);
 
 			// check conflicting file
-			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			assertEquals("<<<<<<< OURS\n1master\n=======\n1a\n>>>>>>> THEIRS\n2\n3\n4a\n", response.getText());
+			assertTrue(response.getText(), Pattern.matches("<<<<<<< Upstream, based on .*\n1master\n=======\n1a\n>>>>>>> .* first commit on a\n2\n3\n4a\n", response.getText()));
 
 			// continue rebase without conflict resolving
 			rebase = rebase(gitHeadUri, Operation.CONTINUE);
@@ -402,14 +378,8 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebaseStopOnConflictAndSkipPatch() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -420,7 +390,7 @@ public class GitRebaseTest extends GitTest {
 			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -489,10 +459,10 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.STOPPED, rebaseResult);
 
 			// check conflicting file
-			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-			assertEquals("<<<<<<< OURS\n1master\n=======\n1a\n>>>>>>> THEIRS\n2\n3\n4a\n", response.getText());
+			assertTrue(response.getText(), Pattern.matches("<<<<<<< Upstream, based on .*\n1master\n=======\n1a\n>>>>>>> .* first commit on a\n2\n3\n4a\n", response.getText()));
 
 			// continue rebase without conflict resolving - error expected
 			rebase = rebase(gitHeadUri, Operation.CONTINUE);
@@ -505,7 +475,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.OK, rebaseResult);
 
 			// file should reset to "master" branch
-			request = getGetFilesRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(testTxt.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("1master\n2\n3", response.getText());
@@ -517,21 +487,15 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebaseInvalidOperation() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -555,36 +519,15 @@ public class GitRebaseTest extends GitTest {
 
 	@Test
 	public void testRebaseOnRemote() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, getMethodName() + "-top1", null);
-		IPath clonePathTop1 = new Path("file").append(projectTop1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectTop2 = createProjectOrLink(workspaceLocation, getMethodName() + "-top2", null);
-		IPath clonePathTop2 = new Path("file").append(projectTop2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder1 = createProjectOrLink(workspaceLocation, getMethodName() + "-folder1", null);
-		IPath clonePathFolder1 = new Path("file").append(projectFolder1.getString(ProtocolConstants.KEY_ID)).append("folder1").makeAbsolute();
-
-		JSONObject projectFolder2 = createProjectOrLink(workspaceLocation, getMethodName() + "-folder2", null);
-		IPath clonePathFolder2 = new Path("file").append(projectFolder2.getString(ProtocolConstants.KEY_ID)).append("folder2").makeAbsolute();
-
-		JSONObject projectTop3 = createProjectOrLink(workspaceLocation, getMethodName() + "-top3", null);
-		IPath clonePathTop3 = new Path("file").append(projectTop3.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder3 = createProjectOrLink(workspaceLocation, getMethodName() + "-folder3", null);
-		IPath clonePathFolder3 = new Path("file").append(projectFolder3.getString(ProtocolConstants.KEY_ID)).append("folder1").makeAbsolute();
-
-		IPath[] clonePathsTop = new IPath[] {clonePathTop1, clonePathTop2};
-		IPath[] clonePathsFolder = new IPath[] {clonePathFolder1, clonePathFolder2};
-		IPath[] clonePathsMixed = new IPath[] {clonePathTop3, clonePathFolder3};
-		IPath[][] clonePaths = new IPath[][] {clonePathsTop, clonePathsFolder, clonePathsMixed};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[][] clonePaths = createTestClonePairs(workspaceLocation);
 
 		for (IPath[] clonePath : clonePaths) {
 			// clone1
 			String contentLocation1 = clone(clonePath[0]).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project1 metadata
-			WebRequest request = getGetFilesRequest(contentLocation1);
+			WebRequest request = getGetRequest(contentLocation1);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project1 = new JSONObject(response.getText());
@@ -595,7 +538,7 @@ public class GitRebaseTest extends GitTest {
 			String contentLocation2 = clone(clonePath[1]).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project2 metadata
-			request = getGetFilesRequest(contentLocation2);
+			request = getGetRequest(contentLocation2);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project2 = new JSONObject(response.getText());
@@ -629,7 +572,9 @@ public class GitRebaseTest extends GitTest {
 
 			// clone1: fetch
 			request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation1, true, false);
-			waitForTaskCompletion(webConversation.getResponse(request));
+			response = webConversation.getResponse(request);
+			ServerStatus status = waitForTask(response);
+			assertTrue(status.toString(), status.isOK());
 
 			// clone1: get remote details again
 			JSONObject remoteBranch = getRemoteBranch(gitRemoteUri1, 1, 0, Constants.MASTER);
@@ -646,7 +591,7 @@ public class GitRebaseTest extends GitTest {
 			assertEquals(RebaseResult.Status.FAST_FORWARD, rebaseResult);
 
 			JSONObject testTxt1 = getChild(project1, "test.txt");
-			request = getGetFilesRequest(testTxt1.getString(ProtocolConstants.KEY_LOCATION));
+			request = getGetRequest(testTxt1.getString(ProtocolConstants.KEY_LOCATION));
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			assertEquals("incoming change", response.getText());
@@ -654,12 +599,7 @@ public class GitRebaseTest extends GitTest {
 	}
 
 	public static WebRequest getPostGitRebaseRequest(String location, String commit, Operation operation) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
-
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_REBASE, commit);
 		if (operation != null)

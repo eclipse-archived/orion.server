@@ -1,0 +1,4 @@
+---
+inherit: intermediate-manifest.yml
+memory: 256M
+instances: 1

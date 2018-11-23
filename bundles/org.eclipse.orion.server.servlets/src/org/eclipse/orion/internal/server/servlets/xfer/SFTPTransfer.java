@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,16 +15,18 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.file.NewFileServlet;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.eclipse.orion.server.servlets.OrionServlet;
@@ -49,7 +51,7 @@ class SFTPTransfer {
 		this.response = resp;
 		this.statusHandler = statusHandler;
 		this.options = options;
-		initLocalPath();
+		initLocalPath(req);
 	}
 
 	public void doTransfer() throws ServletException {
@@ -94,9 +96,9 @@ class SFTPTransfer {
 		JSONObject result = task.toJSON();
 		//Not nice that the import service knows the location of the task servlet, but task service doesn't know this either
 		URI requestLocation = ServletResourceHandler.getURI(request);
-		URI taskLocation = new URI(requestLocation.getScheme(), requestLocation.getAuthority(), "/task/id/" + task.getTaskId(), null, null); //$NON-NLS-1$
+		URI taskLocation = new URI(requestLocation.getScheme(), requestLocation.getAuthority(), "/task/temp/" + task.getId(), null, null); //$NON-NLS-1$
 		result.put(ProtocolConstants.KEY_LOCATION, taskLocation);
-		response.setHeader(ProtocolConstants.HEADER_LOCATION, taskLocation.toString());
+		response.setHeader(ProtocolConstants.HEADER_LOCATION, ServletResourceHandler.resovleOrionURI(request, taskLocation).toString());
 		OrionServlet.writeJSONResponse(request, response, result);
 		response.setStatus(HttpServletResponse.SC_ACCEPTED);
 	}
@@ -105,9 +107,9 @@ class SFTPTransfer {
 		statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, httpCode, string, exception));
 	}
 
-	private void initLocalPath() {
+	private void initLocalPath(HttpServletRequest req) {
 		IPath path = new Path(request.getPathInfo());
 		//first segment is "import" or "export"
-		localRoot = NewFileServlet.getFileStore(path.removeFirstSegments(1).removeFileExtension());
+		localRoot = NewFileServlet.getFileStore(req, path.removeFirstSegments(1).removeFileExtension());
 	}
 }

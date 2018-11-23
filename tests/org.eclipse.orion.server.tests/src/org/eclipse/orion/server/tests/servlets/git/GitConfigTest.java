@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others
+ * Copyright (c) 2011, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -19,16 +19,14 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URI;
+import java.util.ArrayList;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.lib.ConfigConstants;
-import org.eclipse.jgit.lib.StoredConfig;
-import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Clone;
 import org.eclipse.orion.server.git.objects.ConfigOption;
@@ -47,7 +45,7 @@ import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
 public class GitConfigTest extends GitTest {
-
+	/*
 	private static final String GIT_NAME = "test";
 	private static final String GIT_MAIL = "test mail";
 	private static final String GIT_COMMIT_MESSAGE = "message";
@@ -60,9 +58,10 @@ public class GitConfigTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// clone a  repo
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project);
 
 		String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
@@ -74,7 +73,7 @@ public class GitConfigTest extends GitTest {
 
 		// now check if commits have the right committer set
 
-		request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -98,7 +97,7 @@ public class GitConfigTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit all
-		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri /* all */, GIT_COMMIT_MESSAGE, false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, GIT_COMMIT_MESSAGE, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -121,9 +120,10 @@ public class GitConfigTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// init a repo
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath initPath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		IPath initPath = getClonePath(workspaceId, project);
 
 		String contentLocation = init(null, initPath, null).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
@@ -135,7 +135,7 @@ public class GitConfigTest extends GitTest {
 
 		// now check if commits have the right committer set
 
-		request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -160,7 +160,7 @@ public class GitConfigTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		// commit all
-		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri /* all */, GIT_COMMIT_MESSAGE, false);
+		request = GitCommitTest.getPostGitCommitRequest(gitHeadUri, GIT_COMMIT_MESSAGE, false);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -174,24 +174,18 @@ public class GitConfigTest extends GitTest {
 			}
 		}
 	}
-
+	*/
 	@Test
 	public void testGetListOfConfigEntries() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -214,21 +208,15 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testAddConfigEntry() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -260,7 +248,7 @@ public class GitConfigTest extends GitTest {
 			for (int i = 0; i < configEntries.length(); i++) {
 				JSONObject configEntry = configEntries.getJSONObject(i);
 				if (ENTRY_KEY.equals(configEntry.getString(GitConstants.KEY_CONFIG_ENTRY_KEY))) {
-					assertConfigOption(configEntry, ENTRY_KEY, ENTRY_VALUE);
+					assertMultiConfigOption(configEntry, ENTRY_KEY, new String[] {ENTRY_VALUE});
 					break;
 				}
 			}
@@ -273,21 +261,15 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testGetSingleConfigEntry() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -305,27 +287,21 @@ public class GitConfigTest extends GitTest {
 			String entryLocation = configResponse.getString(ProtocolConstants.KEY_LOCATION);
 
 			JSONObject configEntry = listConfigEntries(entryLocation);
-			assertConfigOption(configEntry, ENTRY_KEY, ENTRY_VALUE);
+			assertMultiConfigOption(configEntry, ENTRY_KEY, new String[] {ENTRY_VALUE});
 		}
 	}
 
 	@Test
 	public void testUpdateConfigEntryUsingPOST() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -348,32 +324,26 @@ public class GitConfigTest extends GitTest {
 
 			request = getPostGitConfigRequest(gitConfigUri, ENTRY_KEY, NEW_ENTRY_VALUE);
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_CONFLICT, response.getResponseCode());
+			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 			// get value of config entry
 			JSONObject configEntry = listConfigEntries(entryLocation);
 			// assert unchanged
-			assertConfigOption(configEntry, ENTRY_KEY, ENTRY_VALUE);
+			assertMultiConfigOption(configEntry, ENTRY_KEY, new String[] {ENTRY_VALUE, NEW_ENTRY_VALUE});
 		}
 	}
 
 	@Test
 	public void testUpdateConfigEntryUsingPUT() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -399,27 +369,21 @@ public class GitConfigTest extends GitTest {
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			JSONObject configEntry = listConfigEntries(entryLocation);
-			assertConfigOption(configEntry, ENTRY_KEY, NEW_ENTRY_VALUE);
+			assertMultiConfigOption(configEntry, ENTRY_KEY, new String[] {NEW_ENTRY_VALUE});
 		}
 	}
 
 	@Test
 	public void testDeleteConfigEntry() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -461,21 +425,15 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testCreateInvalidConfigEntry() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -494,21 +452,15 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testUpdateNonExistingConfigEntryUsingPUT() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -534,21 +486,15 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testRequestWithMissingArguments() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -589,7 +535,7 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testGetConfigEntryForNonExistingRepository() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		String workspaceId = getWorkspaceId(workspaceLocation);
 
 		JSONArray clonesArray = listClones(workspaceId, null);
@@ -601,12 +547,12 @@ public class GitConfigTest extends GitTest {
 		// get value of config entry
 		WebRequest request = getGetGitConfigRequest(entryLocation);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+		assertEquals(response.getResponseMessage(), HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 	}
 
 	@Test
 	public void testKeyToSegmentsMethod() throws Exception {
-		Object configOption = ReflectionUtils.callConstructor(ConfigOption.class, new Object[] {new URI(""), new FileRepository(new File(""))});
+		Object configOption = ReflectionUtils.callConstructor(ConfigOption.class, new Object[] {new URI(""), FileRepositoryBuilder.create(new File(""))});
 
 		String[] segments = (String[]) ReflectionUtils.callMethod(configOption, "keyToSegments", new Object[] {"a.b.c"});
 		assertArrayEquals(new String[] {"a", "b", "c"}, segments);
@@ -623,7 +569,7 @@ public class GitConfigTest extends GitTest {
 
 	@Test
 	public void testSegmentsToKeyMethod() throws Exception {
-		Object configOption = ReflectionUtils.callConstructor(ConfigOption.class, new Object[] {new URI(""), new FileRepository(new File(""))});
+		Object configOption = ReflectionUtils.callConstructor(ConfigOption.class, new Object[] {new URI(""), FileRepositoryBuilder.create(new File(""))});
 
 		String key = (String) ReflectionUtils.callMethod(configOption, "segmentsToKey", new Object[] {new String[] {"a", "b", "c"}});
 		assertEquals("a.b.c", key);
@@ -642,13 +588,7 @@ public class GitConfigTest extends GitTest {
 	}
 
 	static WebRequest getDeleteGitConfigRequest(String location) {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + ConfigOption.RESOURCE + location;
+		String requestURI = toAbsoluteURI(location);
 		WebRequest request = new DeleteMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
@@ -656,13 +596,11 @@ public class GitConfigTest extends GitTest {
 	}
 
 	static WebRequest getPutGitConfigRequest(String location, String value) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + location;
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
-		body.put(GitConstants.KEY_CONFIG_ENTRY_VALUE, value);
+		JSONArray array = new JSONArray();
+		array.put(value);
+		body.put(GitConstants.KEY_CONFIG_ENTRY_VALUE, array);
 		WebRequest request = new PutMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "UTF-8");
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
@@ -670,13 +608,7 @@ public class GitConfigTest extends GitTest {
 	}
 
 	static WebRequest getPostGitConfigRequest(String location, String key, String value) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + ConfigOption.RESOURCE + "/" + Clone.RESOURCE + location;
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_CONFIG_ENTRY_KEY, key);
 		body.put(GitConstants.KEY_CONFIG_ENTRY_VALUE, value);
@@ -696,34 +628,26 @@ public class GitConfigTest extends GitTest {
 	}
 
 	static WebRequest getGetGitConfigRequest(String location) {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + ConfigOption.RESOURCE + "/" + Clone.RESOURCE + location;
+		String requestURI = toAbsoluteURI(location);
 		WebRequest request = new GetMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
 	}
 
-	// TODO: should be moved to User tests as a static method
-	private WebRequest getPutUserRequest() throws JSONException, UnsupportedEncodingException {
-		String requestURI = SERVER_LOCATION + "/users/" + testUserId;
-		JSONObject body = new JSONObject();
-		body.put(GitConstants.KEY_NAME, GIT_NAME);
-		body.put(GitConstants.KEY_MAIL, GIT_MAIL);
-		WebRequest request = new PutMethodWebRequest(requestURI, IOUtilities.toInputStream(body.toString()), "UTF-8");
-		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
-		setAuthentication(request);
-		return request;
-	}
-
-	private void assertConfigOption(final JSONObject cfg, final String k, final String v) throws JSONException, CoreException, IOException {
+	private void assertMultiConfigOption(final JSONObject cfg, final String k, final String[] v) throws JSONException, CoreException, IOException {
 		assertEquals(k, cfg.getString(GitConstants.KEY_CONFIG_ENTRY_KEY));
-		assertEquals(v, cfg.getString(GitConstants.KEY_CONFIG_ENTRY_VALUE));
+
+		ArrayList<String> list = new ArrayList<String>();
+		JSONArray jsonArray = cfg.getJSONArray(GitConstants.KEY_CONFIG_ENTRY_VALUE);
+		if (jsonArray != null) {
+			for (int i = 0; i < jsonArray.length(); i++) {
+				list.add(jsonArray.get(i).toString());
+			}
+		}
+		String[] compare = new String[list.size()];
+		compare = list.toArray(compare);
+		assertArrayEquals(v, compare);
 		assertConfigUri(cfg.getString(ProtocolConstants.KEY_LOCATION));
 		assertCloneUri(cfg.getString(GitConstants.KEY_CLONE));
 	}

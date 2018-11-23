@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-SymbolicName: org.eclipse.orion.server.servlets
-Bundle-Version: 0.5.0.qualifier
+Bundle-SymbolicName: org.eclipse.orion.server.servlets;singleton:=true
+Bundle-Version: 1.0.0.qualifier
 Bundle-Name: %Bundle-Name
 Bundle-Vendor: %Bundle-Vendor
 Bundle-Localization: bundle
@@ -9,21 +9,47 @@ Bundle-Activator: org.eclipse.orion.internal.server.servlets.Activator
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: J2SE-1.5
 Require-Bundle: org.eclipse.orion.server.core;bundle-version="0.1.0",
- javax.servlet;bundle-version="2.5.0",
  org.json;bundle-version="1.0.0",
  org.eclipse.core.filesystem;bundle-version="1.3.100",
  org.eclipse.equinox.common;bundle-version="3.6.0",
  org.eclipse.equinox.preferences;bundle-version="3.4.0",
  org.eclipse.osgi;bundle-version="3.7.0",
  com.jcraft.jsch;bundle-version="0.1.44",
- org.eclipse.core.jobs;bundle-version="[3.5.0,4.0.0)"
-Export-Package: org.eclipse.orion.internal.server.servlets;x-friends:="org.eclipse.orion.server.search,org.eclipse.orion.server.git",
- org.eclipse.orion.internal.server.servlets.file;x-friends:="org.eclipse.orion.server.configurator",
- org.eclipse.orion.internal.server.servlets.hosting;uses:="org.eclipse.orion.internal.server.servlets.site,org.eclipse.orion.internal.server.servlets.workspace",
- org.eclipse.orion.internal.server.servlets.site;x-friends:="org.eclipse.orion.server.configurator,org.eclipse.orion.server.hosting",
- org.eclipse.orion.internal.server.servlets.task;x-internal:=true,
- org.eclipse.orion.internal.server.servlets.workspace;x-friends:="org.eclipse.orion.server.search,org.eclipse.orion.server.configurator",
+ org.eclipse.core.jobs;bundle-version="[3.5.0,4.0.0)",
+ org.eclipse.orion.server.useradmin;bundle-version="1.0.0",
+ org.eclipse.core.runtime;bundle-version="3.10.0"
+Export-Package: org.eclipse.orion.internal.server.servlets;
+  x-friends:="org.eclipse.orion.server.git,
+   org.eclipse.orion.server.logs,
+   org.eclipse.orion.server.search,
+   org.eclipse.orion.server.useradmin,
+   org.eclipse.orion.server.hosting,
+   org.eclipse.orion.server.authentication,
+   org.eclipse.orion.server.tests,
+   org.eclipse.orion.server.docker,
+   org.eclipse.orion.server.cf",
+ org.eclipse.orion.internal.server.servlets.about;x-internal:=true,
+ org.eclipse.orion.internal.server.servlets.metrics;x-internal:=true,
+ org.eclipse.orion.internal.server.servlets.file;
+  x-friends:="org.eclipse.orion.server.npm,
+   org.eclipse.orion.server.hosting,
+   org.eclipse.orion.server.git,
+   org.eclipse.orion.server.tests,
+   org.eclipse.orion.server.cf",
+ org.eclipse.orion.internal.server.servlets.task;x-friends:="org.eclipse.orion.server.logs,org.eclipse.orion.server.git,org.eclipse.orion.server.tests",
+ org.eclipse.orion.internal.server.servlets.useradmin,
+ org.eclipse.orion.internal.server.servlets.workspace;
+  x-friends:="org.eclipse.orion.server.search,
+   org.eclipse.orion.server.git,
+   org.eclipse.orion.server.useradmin,
+   org.eclipse.orion.server.tests",
  org.eclipse.orion.internal.server.servlets.workspace.authorization,
- org.eclipse.orion.internal.server.servlets.xfer;x-friends:="org.eclipse.orion.server.configurator",
+ org.eclipse.orion.internal.server.servlets.xfer;x-internal:=true,
+ org.eclipse.orion.internal.server.sftpfile;x-internal:=true,
  org.eclipse.orion.server.servlets
-Import-Package: org.slf4j;version="1.5.11"
+Import-Package: javax.servlet;version="2.5.0",
+ javax.servlet.http;version="2.5.0",
+ org.apache.commons.codec.binary;version="1.6.0",
+ org.eclipse.orion.server.authentication,
+ org.osgi.service.http;version="1.2.1",
+ org.slf4j;version="1.5.11"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,14 +11,18 @@
 package org.eclipse.orion.internal.server.servlets.xfer;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.Arrays;
 import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.Slug;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.servlets.OrionServlet;
 
@@ -86,20 +90,33 @@ public class TransferServlet extends OrionServlet {
 			new SFTPTransfer(req, resp, getStatusHandler(), options).doTransfer();
 			return;
 		}
+		String sourceURL = req.getParameter(ProtocolConstants.PARM_SOURCE);
 		long length = -1;
 		try {
-			//a chunked upload indicates the length to be uploaded in future calls
-			String lengthHeader = req.getHeader(ProtocolConstants.HEADER_XFER_LENGTH);
-			//a regular content length indicates the file to be uploaded is included in the post
-			if (lengthHeader == null)
-				lengthHeader = req.getHeader(ProtocolConstants.HEADER_CONTENT_LENGTH);
-			length = Long.parseLong(lengthHeader);
+			//length must be provided unless we are importing from another URL
+			if (sourceURL == null) {
+				//a chunked upload indicates the length to be uploaded in future calls
+				String lengthHeader = req.getHeader(ProtocolConstants.HEADER_XFER_LENGTH);
+				//a regular content length indicates the file to be uploaded is included in the post
+				if (lengthHeader == null)
+					lengthHeader = req.getHeader(ProtocolConstants.HEADER_CONTENT_LENGTH);
+				length = Long.parseLong(lengthHeader);
+			}
 		} catch (NumberFormatException e) {
 			handleException(resp, "Transfer request must indicate transfer size", e, HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
 		boolean unzip = !options.contains("raw"); //$NON-NLS-1$
-		String fileName = req.getHeader(ProtocolConstants.HEADER_SLUG);
+		String slugHeader = req.getHeader(ProtocolConstants.HEADER_SLUG);
+		String fileName = Slug.decode(slugHeader);
+
+		//if file name is not provided we can guess from the source URL
+		if (fileName == null && sourceURL != null) {
+			int lastSlash = sourceURL.lastIndexOf('/');
+			if (lastSlash > 0)
+				fileName = sourceURL.substring(lastSlash + 1);
+		}
+
 		if (fileName == null && !unzip) {
 			handleException(resp, "Transfer request must indicate target filename", null, HttpServletResponse.SC_BAD_REQUEST);
 			return;
@@ -111,6 +128,12 @@ public class TransferServlet extends OrionServlet {
 		newImport.setPath(path);
 		newImport.setLength(length);
 		newImport.setFileName(fileName);
+		try {
+			if (sourceURL != null)
+				newImport.setSourceURL(sourceURL);
+		} catch (MalformedURLException e) {
+			handleException(resp, "Invalid input URL", e, HttpServletResponse.SC_BAD_REQUEST);
+		}
 		newImport.setOptions(optionString);
 		newImport.doPost(req, resp);
 	}

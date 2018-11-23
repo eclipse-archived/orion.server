@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others
+ * Copyright (c) 2011, 2012 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,18 +11,16 @@
 package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 
-import junit.framework.Assert;
-
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
+import org.eclipse.orion.internal.server.hosting.SiteConfigurationConstants;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
@@ -33,7 +31,6 @@ import org.xml.sax.SAXException;
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PostMethodWebRequest;
 import com.meterware.httpunit.PutMethodWebRequest;
-import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
@@ -42,10 +39,8 @@ import com.meterware.httpunit.WebResponse;
  */
 public abstract class CoreSiteTest extends FileSystemTest {
 
-	public static final String SITE_SERVLET_LOCATION = "/site" + '/';
-	public static final String SERVER_LOCATION = ServerTestsActivator.getServerLocation();
-
-	WebConversation webConversation;
+	public static final String SITE_SERVLET_LOCATION = "site" + '/';
+	public static final String SITE_CONFIG_PREF_NODE = "SiteConfigurations";
 
 	/**
 	 * Turns a Java array-of-arrays {{"/foo","/A"},{"/bar","/B"}} into a mappings array 
@@ -84,16 +79,6 @@ public abstract class CoreSiteTest extends FileSystemTest {
 	}
 
 	/**
-	 * Creates workspace and asserts that it was created.
-	 */
-	WebResponse createWorkspace(String workspaceName) throws IOException, SAXException {
-		WebRequest request = getCreateWorkspaceRequest(workspaceName);
-		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
-		return response;
-	}
-
-	/**
 	 * Returns a request that can create a site.
 	 * @param name
 	 * @param workspaceId
@@ -115,9 +100,9 @@ public abstract class CoreSiteTest extends FileSystemTest {
 			setAuthentication(request);
 			return request;
 		} catch (UnsupportedEncodingException e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} catch (JSONException e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 		return null;
 	}
@@ -128,7 +113,7 @@ public abstract class CoreSiteTest extends FileSystemTest {
 	 * @throws URISyntaxException 
 	 */
 	protected WebRequest getDeleteSiteRequest(String locationUri) throws URISyntaxException {
-		WebRequest request = new DeleteMethodWebRequest(makeAbsolute(locationUri));
+		WebRequest request = new DeleteMethodWebRequest(toAbsoluteURI(locationUri));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);
 		return request;
@@ -141,7 +126,17 @@ public abstract class CoreSiteTest extends FileSystemTest {
 	 * @throws URISyntaxException 
 	 */
 	protected WebRequest getRetrieveSiteRequest(String locationUri, String user) throws URISyntaxException {
-		WebRequest request = new GetMethodWebRequest(makeAbsolute(locationUri));
+		WebRequest request = new GetMethodWebRequest(toAbsoluteURI(locationUri));
+		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
+		if (user == null)
+			setAuthentication(request);
+		else
+			setAuthentication(request, user, user);
+		return request;
+	}
+
+	protected WebRequest getRetrieveAllSitesRequest(String user) {
+		WebRequest request = new GetMethodWebRequest(toAbsoluteURI(SITE_SERVLET_LOCATION));
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		if (user == null)
 			setAuthentication(request);
@@ -167,14 +162,14 @@ public abstract class CoreSiteTest extends FileSystemTest {
 			json.putOpt(SiteConfigurationConstants.KEY_MAPPINGS, mappings);
 			json.putOpt(SiteConfigurationConstants.KEY_HOST_HINT, hostHint);
 			json.putOpt(SiteConfigurationConstants.KEY_HOSTING_STATUS, hostingStatus);
-			WebRequest request = new PutMethodWebRequest(makeAbsolute(locationUri), IOUtilities.toInputStream(json.toString()), "application/json");
+			WebRequest request = new PutMethodWebRequest(toAbsoluteURI(locationUri), IOUtilities.toInputStream(json.toString()), "application/json");
 			request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 			setAuthentication(request);
 			return request;
 		} catch (UnsupportedEncodingException e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		} catch (JSONException e) {
-			Assert.fail(e.getMessage());
+			fail(e.getMessage());
 		}
 		return null;
 	}

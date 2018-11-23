@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others 
+ * Copyright (c) 2011, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -18,25 +18,23 @@ import static org.junit.Assert.assertTrue;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.storage.file.FileBasedConfig;
-import org.eclipse.jgit.storage.file.FileRepository;
+import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.RemoteRefUpdate.Status;
 import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FileUtils;
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Remote;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -58,13 +56,14 @@ public class GitPushTest extends GitTest {
 	@Test
 	public void testPushNoBody() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -84,15 +83,16 @@ public class GitPushTest extends GitTest {
 
 	@Test
 	public void testPushHead() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1
-		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project1"), null);
+		IPath clonePath1 = getClonePath(workspaceId, project1);
 		clone(clonePath1);
 
 		// get project1 metadata
-		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -102,12 +102,12 @@ public class GitPushTest extends GitTest {
 		String gitHeadUri1 = gitSection1.getString(GitConstants.KEY_HEAD);
 
 		// clone2
-		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project2"), null);
+		IPath clonePath2 = getClonePath(workspaceId, project2);
 		clone(clonePath2);
 
 		// get project2 metadata
-		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -160,7 +160,7 @@ public class GitPushTest extends GitTest {
 
 		// clone2: assert change from clone1 is in place
 		JSONObject testTxt2 = getChild(project2, "test.txt");
-		request = getGetFilesRequest(testTxt2.getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(testTxt2.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("incoming change", response.getText());
@@ -173,18 +173,19 @@ public class GitPushTest extends GitTest {
 		Assume.assumeTrue(privateKey != null);
 		Assume.assumeTrue(passphrase != null);
 
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 		URIish uri = new URIish(sshRepo2);
 
 		// clone1: create
-		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		String projectId1 = project1.getString(ProtocolConstants.KEY_ID);
-		IPath clonePath = new Path("file").append(projectId1).makeAbsolute();
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project1"), null);
+		IPath clonePath = getClonePath(workspaceId, project1);
+
 		WebRequest request = new PostGitCloneRequest().setURIish(uri).setFilePath(clonePath).setKnownHosts(knownHosts2).setPrivateKey(privateKey).setPublicKey(publicKey).setPassphrase(passphrase).getWebRequest();
 		String cloneContentLocation1 = clone(request);
 
 		// clone1: get project/folder metadata
-		request = getGetFilesRequest(cloneContentLocation1);
+		request = getGetRequest(cloneContentLocation1);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -196,14 +197,13 @@ public class GitPushTest extends GitTest {
 		String gitHeadUri1 = gitSection1.optString(GitConstants.KEY_HEAD);
 
 		// clone2: create
-		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		String projectId2 = project2.getString(ProtocolConstants.KEY_ID);
-		clonePath = new Path("file").append(projectId2).makeAbsolute();
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project2"), null);
+		clonePath = getClonePath(workspaceId, project2);
 		request = new PostGitCloneRequest().setURIish(uri).setFilePath(clonePath).setKnownHosts(knownHosts2).setPrivateKey(privateKey).setPublicKey(publicKey).setPassphrase(passphrase).getWebRequest();
 		String cloneContentLocation2 = clone(request);
 
 		// clone2: get project/folder metadata
-		request = getGetFilesRequest(cloneContentLocation2);
+		request = getGetRequest(cloneContentLocation2);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -261,7 +261,7 @@ public class GitPushTest extends GitTest {
 
 		// clone2: assert change from clone1 is in place
 		JSONObject testTxt2 = getChild(project2, "test.txt");
-		request = getGetFilesRequest(testTxt2.getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(testTxt2.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("incoming change", response.getText());
@@ -269,17 +269,18 @@ public class GitPushTest extends GitTest {
 
 	@Test
 	public void testPushBranch() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1: create
-		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project1"), null);
+		IPath clonePath1 = getClonePath(workspaceId, project1);
 		JSONObject clone1 = clone(clonePath1);
 		String cloneLocation1 = clone1.getString(ProtocolConstants.KEY_LOCATION);
 		String branchesLocation1 = clone1.getString(GitConstants.KEY_BRANCH);
 
 		// get project1 metadata
-		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -322,14 +323,14 @@ public class GitPushTest extends GitTest {
 		String remoteBranchName1 = remoteBranch1.getString(ProtocolConstants.KEY_NAME);
 
 		// clone2
-		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project2"), null);
+		IPath clonePath2 = getClonePath(workspaceId, project2);
 		JSONObject clone2 = clone(clonePath2);
 		String cloneLocation2 = clone2.getString(ProtocolConstants.KEY_LOCATION);
 		String branchesLocation2 = clone2.getString(GitConstants.KEY_BRANCH);
 
 		// get project2 metadata
-		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -343,7 +344,7 @@ public class GitPushTest extends GitTest {
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 		JSONObject testTxt2 = getChild(project2, "test.txt");
-		request = getGetFilesRequest(testTxt2.getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(testTxt2.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("branch 'a' change", response.getText());
@@ -351,29 +352,8 @@ public class GitPushTest extends GitTest {
 
 	@Test
 	public void testPushToDelete() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, getMethodName() + "-top1", null);
-		IPath clonePathTop1 = new Path("file").append(projectTop1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectTop2 = createProjectOrLink(workspaceLocation, getMethodName() + "-top2", null);
-		IPath clonePathTop2 = new Path("file").append(projectTop2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder1 = createProjectOrLink(workspaceLocation, getMethodName() + "-folder1", null);
-		IPath clonePathFolder1 = new Path("file").append(projectFolder1.getString(ProtocolConstants.KEY_ID)).append("folder1").makeAbsolute();
-
-		JSONObject projectFolder2 = createProjectOrLink(workspaceLocation, getMethodName() + "-folder2", null);
-		IPath clonePathFolder2 = new Path("file").append(projectFolder2.getString(ProtocolConstants.KEY_ID)).append("folder2").makeAbsolute();
-
-		JSONObject projectTop3 = createProjectOrLink(workspaceLocation, getMethodName() + "-top3", null);
-		IPath clonePathTop3 = new Path("file").append(projectTop3.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder3 = createProjectOrLink(workspaceLocation, getMethodName() + "-folder3", null);
-		IPath clonePathFolder3 = new Path("file").append(projectFolder3.getString(ProtocolConstants.KEY_ID)).append("folder1").makeAbsolute();
-
-		IPath[] clonePathsTop = new IPath[] {clonePathTop1, clonePathTop2};
-		IPath[] clonePathsFolder = new IPath[] {clonePathFolder1, clonePathFolder2};
-		IPath[] clonePathsMixed = new IPath[] {clonePathTop3, clonePathFolder3};
-		IPath[][] clonePaths = new IPath[][] {clonePathsTop, clonePathsFolder, clonePathsMixed};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[][] clonePaths = createTestClonePairs(workspaceLocation);
 
 		for (IPath[] clonePath : clonePaths) {
 			// clone 1
@@ -383,7 +363,7 @@ public class GitPushTest extends GitTest {
 			String branchesLocation1 = clone1.getString(GitConstants.KEY_BRANCH);
 
 			// clone 1 - get project1 metadata
-			WebRequest request = getGetFilesRequest(contentLocation1);
+			WebRequest request = getGetRequest(contentLocation1);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project1 = new JSONObject(response.getText());
@@ -435,7 +415,9 @@ public class GitPushTest extends GitTest {
 
 			request = GitRemoteTest.getGetGitRemoteRequest(remoteLocation1);
 			response = webConversation.getResponse(request);
-			remote1 = waitForTaskCompletion(response);
+			ServerStatus status = waitForTask(response);
+			assertTrue(status.toString(), status.isOK());
+			remote1 = status.getJsonData();
 			JSONArray refsArray = remote1.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			assertEquals(2, refsArray.length());
 			JSONObject ref = refsArray.getJSONObject(0);
@@ -449,7 +431,7 @@ public class GitPushTest extends GitTest {
 			String contentLocation2 = clone2.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// clone 2 - get project2 metadata
-			request = getGetFilesRequest(contentLocation2);
+			request = getGetRequest(contentLocation2);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project2 = new JSONObject(response.getText());
@@ -490,11 +472,13 @@ public class GitPushTest extends GitTest {
 
 			// clone 2 - fetch
 			request = GitFetchTest.getPostGitRemoteRequest(remoteBranchLocation2, true, false);
-			response = waitForTaskCompletionObjectResponse(webConversation.getResponse(request));
+			response = webConversation.getResponse(request);
+			status = waitForTask(response);
+			assertFalse(status.toString(), status.isOK());
 
 			// clone 2 - fetch task should fail
-			JSONObject status = new JSONObject(response.getText());
-			JSONObject result = status.has("Result") ? status.getJSONObject("Result") : status;
+			JSONObject statusJson = status.toJSON();
+			JSONObject result = statusJson.has("Result") ? statusJson.getJSONObject("Result") : statusJson;
 			assertEquals("Error", result.getString("Severity"));
 		}
 	}
@@ -502,13 +486,14 @@ public class GitPushTest extends GitTest {
 	@Test
 	public void testPushFromLog() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -546,20 +531,23 @@ public class GitPushTest extends GitTest {
 
 		// push
 		request = getPostGitRemoteRequest(remoteBranchLocation, Constants.HEAD, false, false);
-		waitForTaskCompletion(webConversation.getResponse(request));
+		response = webConversation.getResponse(request);
+		ServerStatus status = waitForTask(response);
+		assertTrue(status.toString(), status.isOK());
 	}
 
 	@Test
 	public void testPushRejected() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1
-		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project1"), null);
+		IPath clonePath1 = getClonePath(workspaceId, project1);
 		clone(clonePath1);
 
 		// get project1 metadata
-		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -570,12 +558,12 @@ public class GitPushTest extends GitTest {
 		String gitHeadUri1 = gitSection1.optString(GitConstants.KEY_HEAD);
 
 		// clone2
-		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project2"), null);
+		IPath clonePath2 = getClonePath(workspaceId, project2);
 		clone(clonePath2);
 
 		// get project2 metadata
-		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -619,22 +607,27 @@ public class GitPushTest extends GitTest {
 
 		// clone2: push
 		pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false);
-		assertEquals(IStatus.WARNING, pushStatus.getSeverity());
+		JSONObject jo = pushStatus.getJsonData();
+		assertEquals("Error", jo.get("Severity"));
 
-		Status pushResult = Status.valueOf(pushStatus.getMessage());
+		JSONArray up = (JSONArray) jo.get("Updates");
+		assertEquals(1, up.length());
+
+		Status pushResult = Status.valueOf((String) ((JSONObject) up.get(0)).get("Result"));
 		assertEquals(Status.REJECTED_NONFASTFORWARD, pushResult);
 	}
 
 	@Test
 	public void testPushRemoteRejected() throws Exception {
 		// clone a repo
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -660,54 +653,34 @@ public class GitPushTest extends GitTest {
 		FileUtils.delete(new File(gitDir, Constants.DOT_GIT + "/objects/pack/"), FileUtils.RECURSIVE);
 
 		pushStatus = push(gitRemoteUri, 1, 0, Constants.MASTER, Constants.HEAD, false);
-		assertEquals(IStatus.WARNING, pushStatus.getSeverity());
-		Status pushResult = Status.valueOf(pushStatus.getMessage());
+		JSONObject jo = pushStatus.getJsonData();
+
+		JSONArray up = (JSONArray) jo.get("Updates");
+		assertEquals(1, up.length());
+
+		assertEquals("Error", jo.get("Severity"));
+		Status pushResult = Status.valueOf((String) ((JSONObject) up.get(0)).get("Result"));
 		assertEquals(Status.REJECTED_OTHER_REASON, pushResult);
-		JSONObject jsonResult = pushStatus.toJSON();
-		if (jsonResult.has("JsonData")) {
-			jsonResult = jsonResult.getJSONObject("JsonData");
-		}
-		assertTrue(jsonResult.toString(), jsonResult.has("DetailedMessage"));
-		assertTrue(jsonResult.getString("DetailedMessage"), jsonResult.getString("DetailedMessage").matches("^object [\\da-f]+ missing$"));
+
+		assertTrue(((JSONObject) up.get(0)).getString("Message"), ((JSONObject) up.get(0)).getString("Message").matches("^object [\\da-f]+ missing$"));
 	}
 
 	@Test
 	public void testForcedPush() throws Exception {
 		// overwrite system settings, allow forced pushes, see bug 371881
-		FileBasedConfig cfg = db.getConfig();
+		StoredConfig cfg = db.getConfig();
 		cfg.setBoolean("receive", null, "denyNonFastforwards", false);
 		cfg.save();
 
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop1 = createProjectOrLink(workspaceLocation, getMethodName() + "-top1", null);
-		IPath clonePathTop1 = new Path("file").append(projectTop1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectTop2 = createProjectOrLink(workspaceLocation, getMethodName() + "-top2", null);
-		IPath clonePathTop2 = new Path("file").append(projectTop2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder1 = createProjectOrLink(workspaceLocation, getMethodName() + "-folder1", null);
-		IPath clonePathFolder1 = new Path("file").append(projectFolder1.getString(ProtocolConstants.KEY_ID)).append("folder1").makeAbsolute();
-
-		JSONObject projectFolder2 = createProjectOrLink(workspaceLocation, getMethodName() + "-folder2", null);
-		IPath clonePathFolder2 = new Path("file").append(projectFolder2.getString(ProtocolConstants.KEY_ID)).append("folder2").makeAbsolute();
-
-		JSONObject projectTop3 = createProjectOrLink(workspaceLocation, getMethodName() + "-top3", null);
-		IPath clonePathTop3 = new Path("file").append(projectTop3.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder3 = createProjectOrLink(workspaceLocation, getMethodName() + "-folder3", null);
-		IPath clonePathFolder3 = new Path("file").append(projectFolder3.getString(ProtocolConstants.KEY_ID)).append("folder1").makeAbsolute();
-
-		IPath[] clonePathsTop = new IPath[] {clonePathTop1, clonePathTop2};
-		IPath[] clonePathsFolder = new IPath[] {clonePathFolder1, clonePathFolder2};
-		IPath[] clonePathsMixed = new IPath[] {clonePathTop3, clonePathFolder3};
-		IPath[][] clonePaths = new IPath[][] {clonePathsTop, clonePathsFolder, clonePathsMixed};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[][] clonePaths = createTestClonePairs(workspaceLocation);
 
 		for (IPath[] clonePath : clonePaths) {
 			// clone1
 			String contentLocation1 = clone(clonePath[0]).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project1 metadata
-			WebRequest request = getGetFilesRequest(contentLocation1);
+			WebRequest request = getGetRequest(contentLocation1);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project1 = new JSONObject(response.getText());
@@ -720,7 +693,7 @@ public class GitPushTest extends GitTest {
 			String contentLocation2 = clone(clonePath[1]).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project2 metadata
-			request = getGetFilesRequest(contentLocation2);
+			request = getGetRequest(contentLocation2);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project2 = new JSONObject(response.getText());
@@ -763,27 +736,36 @@ public class GitPushTest extends GitTest {
 
 			// clone2: push
 			pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false);
-			assertEquals(IStatus.WARNING, pushStatus.getSeverity());
-			Status pushResult = Status.valueOf(pushStatus.getMessage());
+			JSONObject jo = pushStatus.getJsonData();
+
+			JSONArray up = (JSONArray) jo.get("Updates");
+			assertEquals(1, up.length());
+
+			assertEquals("Error", jo.get("Severity"));
+			Status pushResult = Status.valueOf((String) ((JSONObject) up.get(0)).get("Result"));
 			assertEquals(Status.REJECTED_NONFASTFORWARD, pushResult);
 
 			// clone2: forced push
 			pushStatus = push(gitRemoteUri2, 1, 0, Constants.MASTER, Constants.HEAD, false, true);
-			assertTrue(pushStatus.toJSON().toString(), pushStatus.isOK());
+			jo = pushStatus.getJsonData();
+			up = (JSONArray) jo.get("Updates");
+			assertEquals(1, up.length());
+			assertEquals("OK", ((JSONObject) up.get(0)).get("Result"));
 		}
 	}
 
 	@Test
 	public void testPushTags() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
 		// clone1
-		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName() + "1", null);
-		IPath clonePath1 = new Path("file").append(project1.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject project1 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project1"), null);
+		IPath clonePath1 = getClonePath(workspaceId, project1);
 		clone(clonePath1);
 
 		// get project1 metadata
-		WebRequest request = getGetFilesRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project1.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project1 = new JSONObject(response.getText());
@@ -794,12 +776,12 @@ public class GitPushTest extends GitTest {
 		String gitTagUri1 = gitSection1.optString(GitConstants.KEY_TAG);
 
 		// clone2
-		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName() + "2", null);
-		IPath clonePath2 = new Path("file").append(project2.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		JSONObject project2 = createProjectOrLink(workspaceLocation, getMethodName().concat("Project2"), null);
+		IPath clonePath2 = getClonePath(workspaceId, project2);
 		clone(clonePath2);
 
 		// get project2 metadata
-		request = getGetFilesRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		request = getGetRequest(project2.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project2 = new JSONObject(response.getText());
@@ -834,16 +816,12 @@ public class GitPushTest extends GitTest {
 	@Test
 	public void testPushNewBranchToSecondaryRemote() throws Exception {
 		// see bug 353557
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
 
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
-
-		for (IPath clonePath : clonePaths) {
+		for (int i = 0; i < clonePaths.length; i++) {
+			IPath clonePath = clonePaths[i];
 			// clone a  repo
 			JSONObject clone = clone(clonePath);
 			String cloneContentLocation = clone.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
@@ -851,7 +829,7 @@ public class GitPushTest extends GitTest {
 			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -861,12 +839,13 @@ public class GitPushTest extends GitTest {
 			getRemote(remotesLocation, 1, 0, Constants.DEFAULT_REMOTE_NAME);
 
 			// create secondary repository
-			IPath randomLocation = AllGitTests.getRandomLocation();
+			IPath randomLocation = createTempDir();
 			randomLocation = randomLocation.addTrailingSeparator().append(Constants.DOT_GIT);
 			File dotGitDir = randomLocation.toFile().getCanonicalFile();
-			Repository db2 = new FileRepository(dotGitDir);
+			Repository db2 = FileRepositoryBuilder.create(dotGitDir);
 			assertFalse(dotGitDir.exists());
 			db2.create(false /* non bare */);
+			toClose.add(db2);
 
 			// dummy commit to start off master branch
 			File dummyFile = new File(dotGitDir.getParentFile(), "test.txt");
@@ -877,7 +856,7 @@ public class GitPushTest extends GitTest {
 			git2.commit().setMessage("dummy commit").call();
 
 			// create remote
-			response = addRemote(remotesLocation, "secondary", dotGitDir.getParentFile().toURL().toString());
+			response = addRemote(remotesLocation, "secondary", dotGitDir.getParentFile().toURI().toURL().toString());
 			String secondaryRemoteLocation = response.getHeaderField(ProtocolConstants.HEADER_LOCATION);
 			assertNotNull(secondaryRemoteLocation);
 
@@ -926,8 +905,8 @@ public class GitPushTest extends GitTest {
 			assertEquals("secondary/branch", remoteBranchLocations.getJSONObject(0).getJSONArray(ProtocolConstants.KEY_CHILDREN).getJSONObject(0).getString(ProtocolConstants.KEY_NAME));
 
 			// clone the secondary branch and check if the new branch is there
-			JSONObject secondProject = createProjectOrLink(workspaceLocation, getMethodName() + "-second", null);
-			IPath secondClonePath = new Path("file").append(secondProject.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+			JSONObject secondProject = createProjectOrLink(workspaceLocation, getMethodName().concat("-second-").concat(Integer.toString(i)), null);
+			IPath secondClonePath = getClonePath(workspaceId, secondProject);
 			URIish uri = new URIish(dotGitDir.getParentFile().toURI().toURL());
 			JSONObject clone2 = clone(uri, null, secondClonePath, null, null, null);
 			String cloneLocation2 = clone2.getString(ProtocolConstants.KEY_LOCATION);
@@ -946,7 +925,7 @@ public class GitPushTest extends GitTest {
 
 			// check file content
 			String cloneContentLocation2 = clone2.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-			request = getGetFilesRequest(cloneContentLocation2);
+			request = getGetRequest(cloneContentLocation2);
 			response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder2 = new JSONObject(response.getText());
@@ -956,12 +935,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	static WebRequest getPostGitRemoteRequest(String location, String srcRef, boolean tags, boolean force) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
-
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 		if (srcRef != null)
 			body.put(GitConstants.KEY_PUSH_SRC_REF, srcRef);
@@ -974,12 +948,7 @@ public class GitPushTest extends GitTest {
 	}
 
 	static WebRequest getPostGitRemoteRequest(String location, String srcRef, boolean tags, boolean force, String name, String kh, byte[] privk, byte[] pubk, byte[] p) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Remote.RESOURCE + location;
-
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 
 		body.put(ProtocolConstants.KEY_NAME, name);

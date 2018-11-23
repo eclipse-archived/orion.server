@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others
+ * Copyright (c) 2011, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -30,8 +30,9 @@ import java.util.List;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.objects.Diff;
 import org.eclipse.orion.server.git.servlets.GitServlet;
@@ -44,15 +45,16 @@ import org.xml.sax.SAXException;
 
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PostMethodWebRequest;
+import com.meterware.httpunit.WebConversation;
 import com.meterware.httpunit.WebRequest;
 import com.meterware.httpunit.WebResponse;
 
 public class GitDiffTest extends GitTest {
 	@Test
 	public void testNoDiff() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
@@ -71,9 +73,9 @@ public class GitDiffTest extends GitTest {
 			w.close();
 		}
 
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
@@ -96,9 +98,9 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffModifiedByOrion() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -123,9 +125,9 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffFilter() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -168,9 +170,9 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffPaths() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -219,9 +221,9 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffCached() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -249,9 +251,9 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffCommits() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -300,9 +302,9 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffCommitWithWorkingTree() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -350,9 +352,9 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffBranchWithWorkingTree() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		JSONObject clone = getCloneForGitResource(project);
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
@@ -381,9 +383,9 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffPost() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
@@ -403,7 +405,7 @@ public class GitDiffTest extends GitTest {
 		expectedLocation += "test.txt";
 		assertEquals(expectedLocation, location);
 
-		WebRequest request = getGetFilesRequest(location);
+		WebRequest request = getGetRequest(location);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		String[] parts = parseMultiPartResponse(response);
@@ -425,9 +427,9 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffParts() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -461,12 +463,12 @@ public class GitDiffTest extends GitTest {
 		assertDiffUris(location, new String[] {"test", "change", "test"}, new JSONObject(parts[0]));
 		assertEquals(sb.toString(), parts[1]);
 
-		WebRequest request = getGetFilesRequest(location + "?parts=diff");
+		WebRequest request = getGetRequest(location + "?parts=diff");
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals(sb.toString(), response.getText());
 
-		request = getGetFilesRequest(location + "?parts=uris");
+		request = getGetRequest(location + "?parts=uris");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertDiffUris(location, new String[] {"test", "change", "test"}, new JSONObject(response.getText()));
@@ -474,21 +476,21 @@ public class GitDiffTest extends GitTest {
 
 	@Test
 	public void testDiffUntrackedUri() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
 
 		String fileName = "new.txt";
-		WebRequest request = getPostFilesRequest(projectId + "/", getNewFileJSON(fileName).toString(), fileName);
+		WebRequest request = getPostFilesRequest("", getNewFileJSON(fileName).toString(), fileName);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 		JSONObject newTxt = getChild(project, "new.txt");
 
 		String gitDiffUri = newTxt.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_DIFF);
-		request = getGetFilesRequest(gitDiffUri + "?parts=uris");
+
+		request = getGetRequest(gitDiffUri + "?parts=uris");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -497,18 +499,18 @@ public class GitDiffTest extends GitTest {
 		assertEquals(Diff.TYPE, jsonPart.getString(ProtocolConstants.KEY_TYPE));
 
 		String fileOldUri = jsonPart.getString(GitConstants.KEY_COMMIT_OLD);
-		request = getGetFilesRequest(fileOldUri);
+		request = getGetRequest(fileOldUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
 		String fileNewUri = jsonPart.getString(GitConstants.KEY_COMMIT_NEW);
-		request = getGetFilesRequest(fileNewUri);
+		request = getGetRequest(fileNewUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals("", response.getText());
 
 		String fileBaseUri = jsonPart.getString(GitConstants.KEY_COMMIT_BASE);
-		request = getGetFilesRequest(fileBaseUri);
+		request = getGetRequest(fileBaseUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
@@ -518,16 +520,16 @@ public class GitDiffTest extends GitTest {
 	@Test
 	public void testDiffWithCommonAncestor() throws Exception {
 		// clone: create
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String cloneLocation = clone.getString(ProtocolConstants.KEY_LOCATION);
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -564,7 +566,7 @@ public class GitDiffTest extends GitTest {
 		checkoutBranch(cloneLocation, Constants.MASTER);
 
 		// modify the same file on master
-		request = getPutFileRequest(projectId + "/test.txt", "change in master");
+		request = getPutFileRequest(clonePath.append("test.txt").toString(), "change in master");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -591,7 +593,7 @@ public class GitDiffTest extends GitTest {
 		// TODO: don't create URIs out of thin air
 		location += "test.txt";
 
-		request = getGetFilesRequest(location + "?parts=uris,diff");
+		request = getGetRequest(location + "?parts=uris,diff");
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		String[] parts = parseMultiPartResponse(response);
@@ -602,15 +604,16 @@ public class GitDiffTest extends GitTest {
 	@Test
 	public void testDiffForBranches() throws Exception {
 		// clone
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
 		JSONObject clone = clone(clonePath);
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 		String remotesLocation = clone.getString(GitConstants.KEY_REMOTE);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -670,19 +673,19 @@ public class GitDiffTest extends GitTest {
 		assertEquals(Diff.TYPE, jsonPart.getString(ProtocolConstants.KEY_TYPE));
 
 		String fileOldUri = jsonPart.getString(GitConstants.KEY_COMMIT_OLD);
-		WebRequest request = getGetFilesRequest(fileOldUri);
+		WebRequest request = getGetRequest(fileOldUri);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals(expectedContent[0], response.getText());
 
 		String fileNewUri = jsonPart.getString(GitConstants.KEY_COMMIT_NEW);
-		request = getGetFilesRequest(fileNewUri);
+		request = getGetRequest(fileNewUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals(expectedContent[1], response.getText());
 
 		String fileBaseUri = jsonPart.getString(GitConstants.KEY_COMMIT_BASE);
-		request = getGetFilesRequest(fileBaseUri);
+		request = getGetRequest(fileBaseUri);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		assertEquals(expectedContent[2], response.getText());
@@ -692,7 +695,9 @@ public class GitDiffTest extends GitTest {
 
 	static String[] getDiff(String location) throws IOException, SAXException {
 		WebRequest request = getGetGitDiffRequest(location, new String[] {});
-		WebResponse response = webConversation.getResponse(request);
+		WebConversation conversation = new WebConversation();
+		conversation.setExceptionsThrownOnErrorStatus(false);
+		WebResponse response = conversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		return parseMultiPartResponse(response);
 	}
@@ -703,13 +708,7 @@ public class GitDiffTest extends GitTest {
 	 * @param paths an array containing paths to be included in the diff, can be empty
 	 */
 	static WebRequest getGetGitDiffRequest(String location, String[] paths) {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Diff.RESOURCE + location;
+		String requestURI = toAbsoluteURI(location);
 		for (String path : paths) {
 			requestURI = addParam(requestURI, "Path=" + path);
 		}
@@ -750,19 +749,19 @@ public class GitDiffTest extends GitTest {
 
 		// request the status on parent
 		String fileLocation = fileObject.getString(ProtocolConstants.KEY_LOCATION);
-		WebRequest request = getGetFilesRequest(fileLocation + "?parts=meta");
+		WebRequest request = getGetRequest(fileLocation + "?parts=meta");
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject fileMetaObject = new JSONObject(response.getText());
 		JSONArray parents = fileMetaObject.getJSONArray(ProtocolConstants.KEY_PARENTS);
 		JSONObject parentObject = parents.getJSONObject(0);
 
-		request = getGetFilesRequest(parentObject.getString(ProtocolConstants.KEY_LOCATION));
+		request = getGetRequest(parentObject.getString(ProtocolConstants.KEY_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		parentObject = new JSONObject(response.getText());
 
-		request = GitStatusTest.getGetGitStatusRequest(parentObject.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_STATUS));
+		request = getGetGitStatusRequest(parentObject.getJSONObject(GitConstants.KEY_GIT).getString(GitConstants.KEY_STATUS));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject statusResponse = new JSONObject(response.getText());
@@ -780,14 +779,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	private static WebRequest getPostGitDiffRequest(String location, String str) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Diff.RESOURCE + location;
-
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_COMMIT_NEW, str);
 		str = body.toString();
@@ -834,7 +826,7 @@ public class GitDiffTest extends GitTest {
 	}
 
 	private static void assertDiffUri(String diffUri) {
-		URI uri = URI.create(diffUri);
+		URI uri = URI.create(toRelativeURI(diffUri));
 		IPath path = new Path(uri.getPath());
 		// /gitapi/diff/{scope}/file/{filePath}
 		assertTrue(path.segmentCount() > 4);

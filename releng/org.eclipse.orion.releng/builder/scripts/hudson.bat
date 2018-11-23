@@ -1,5 +1,3 @@
-IF NOT EXIST %WORKSPACE%\org.eclipse.releng.basebuilder cvs -Q -d :pserver:anonymous@dev.eclipse.org:/cvsroot/eclipse ex -r v20110302 -d org.eclipse.releng.basebuilder org.eclipse.releng.basebuilder
-
 cd %WORKSPACE%
 
 set java.home=%JAVA_HOME%
@@ -7,6 +5,34 @@ c:\java\jdk1.6.0_20\jre\bin\java -version
 
 mkdir test
 rd /S /Q %WORKSPACE%\test\eclipse
+
+REM set current proxy configurations in base builder
+
+set settingsDir=%WORKSPACE%\org.eclipse.releng.basebuilder\configuration\.settings
+set settingsFile=%settingsDir%\org.eclipse.core.net.prefs
+
+echo settingsDir: %settingsDir% 
+echo settingsFile: %settingsFile%
+
+REM mkdir, just in case does not exist yet. 
+mkdir %settingsDir%
+
+REM replace contents of org.eclipse.core.net.prefs as exported from CVS
+(
+echo eclipse.preferences.version=1
+echo org.eclipse.core.net.hasMigrated=true
+echo proxiesEnabled=true
+echo systemProxiesEnabled=true
+echo nonProxiedHosts=172.30.206.*
+echo proxyData/HTTP/hasAuth=false
+echo proxyData/HTTP/host=proxy.eclipse.org
+echo proxyData/HTTP/port=9898
+echo proxyData/HTTPS/hasAuth=false
+echo proxyData/HTTPS/host=proxy.eclipse.org
+echo proxyData/HTTPS/port=9898
+echo. 
+) >%settingsFile%
+
 
 "c:\java\jdk1.6.0_20\jre\bin\java" -Xmx500m -jar %WORKSPACE%/org.eclipse.releng.basebuilder/plugins/org.eclipse.equinox.launcher.jar -application org.eclipse.equinox.p2.director -repository %repository% -i org.eclipse.orion -d %WORKSPACE%/test/eclipse
 

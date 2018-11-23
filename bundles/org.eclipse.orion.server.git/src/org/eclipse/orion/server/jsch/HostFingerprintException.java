@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,9 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.server.jsch;
 
-import com.jcraft.jsch.*;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.jcraft.jsch.HostKey;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
 
 /**
  * This exception should be thrown when host fingerprint is not added to known hosts.
@@ -32,12 +35,13 @@ public class HostFingerprintException extends JSchException {
 		try {
 			this.hostkey = new HostKey(host, key);
 		} catch (JSchException e) {
-			//no hostkey
+			// no hostkey
 		}
 	}
 
 	/**
 	 * Contains a {@link HostKey} information about a host that is not added to known hosts.
+	 * 
 	 * @return
 	 */
 	public HostKey getHostkey() {
@@ -46,6 +50,7 @@ public class HostFingerprintException extends JSchException {
 
 	/**
 	 * Return information about host and its fingerprint returned by server
+	 * 
 	 * @return JSON representation of host and key
 	 */
 	public JSONObject formJson() {

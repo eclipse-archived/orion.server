@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,25 +15,25 @@ import java.net.URL;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
+
+import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.provider.FileInfo;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.JSONException;
-import org.json.JSONObject;
+import org.json.*;
 
 /**
  * Handles files in version 1 of eclipse web protocol syntax.
@@ -51,25 +51,44 @@ class FileHandlerV1 extends GenericFileHandler {
 	 */
 	private static final String EOL = "\r\n"; //$NON-NLS-1$
 
-	// responseWriter is used, as in some cases response should be
-	// appended to response generated earlier (i.e. multipart get)
-	protected void handleGetMetadata(HttpServletRequest request, HttpServletResponse response, Writer responseWriter, IFileStore file) throws IOException, NoSuchAlgorithmException, JSONException, CoreException {
-		JSONObject result = ServletFileStoreHandler.toJSON(file, file.fetchInfo(), getURI(request));
-		String etag = generateFileETag(file);
-		result.put(ProtocolConstants.KEY_ETAG, etag);
-		response.setHeader(ProtocolConstants.KEY_ETAG, etag);
-		OrionServlet.decorateResponse(request, result, JsonURIUnqualificationStrategy.ALL);
-		responseWriter.append(result.toString());
+	/**
+	 * Appends metadata to a Writer. Does not flush the Writer.
+	 */
+	protected void appendGetMetadata(HttpServletRequest request, HttpServletResponse response, Writer responseWriter, IFileStore file) throws IOException, NoSuchAlgorithmException, JSONException, CoreException {
+		JSONObject metadata = getMetadata(request, file);
+		response.setHeader(ProtocolConstants.KEY_ETAG, metadata.getString(ProtocolConstants.KEY_ETAG));
+		response.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
+		OrionServlet.decorateResponse(request, metadata, JsonURIUnqualificationStrategy.ALL);
+		responseWriter.append(metadata.toString());
+	}
+
+	/**
+	 * Writes metadata to the response.
+	 */
+	protected void handleGetMetadata(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws IOException, NoSuchAlgorithmException, JSONException, CoreException {
+		JSONObject metadata = getMetadata(request, file);
+		response.setHeader(ProtocolConstants.KEY_ETAG, metadata.getString(ProtocolConstants.KEY_ETAG));
+		OrionServlet.writeJSONResponse(request, response, metadata);
+	}
+
+	/**
+	 * @return Metadata for the file. The returned object is guaranteed to have an ETag string.
+	 */
+	private JSONObject getMetadata(HttpServletRequest request, IFileStore file) throws CoreException, NoSuchAlgorithmException, IOException, JSONException {
+		JSONObject metadata = ServletFileStoreHandler.toJSON(file, file.fetchInfo(EFS.NONE, null), getURI(request));
+		metadata.put(ProtocolConstants.KEY_ETAG, generateFileETag(file));
+		return metadata;
 	}
 
 	private void handleMultiPartGet(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException {
 		String boundary = createBoundaryString();
+		response.setHeader(ProtocolConstants.HEADER_ACCEPT_PATCH, ProtocolConstants.CONTENT_TYPE_JSON_PATCH);
 		response.setHeader(ProtocolConstants.HEADER_CONTENT_TYPE, "multipart/related; boundary=\"" + boundary + '"'); //$NON-NLS-1$
 		OutputStream outputStream = response.getOutputStream();
-		Writer out = new OutputStreamWriter(outputStream);
+		Writer out = new OutputStreamWriter(outputStream, "UTF-8");
 		out.write("--" + boundary + EOL); //$NON-NLS-1$
 		out.write("Content-Type: application/json" + EOL + EOL); //$NON-NLS-1$
-		handleGetMetadata(request, response, out, file);
+		appendGetMetadata(request, response, out, file);
 		out.write(EOL + "--" + boundary + EOL); //$NON-NLS-1$
 		// headers for file contents go here
 		out.write(EOL);
@@ -83,25 +102,62 @@ class FileHandlerV1 extends GenericFileHandler {
 		return new UniversalUniqueIdentifier().toBase64String();
 	}
 
-	private void handlePutContents(HttpServletRequest request, BufferedReader requestReader, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException {
+	private void handlePutContents(HttpServletRequest request, ServletInputStream requestStream, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException {
 		String source = request.getParameter(ProtocolConstants.PARM_SOURCE);
 		if (source != null) {
 			//if source is specified, read contents from different URL rather than from this request stream
 			IOUtilities.pipe(new URL(source).openStream(), file.openOutputStream(EFS.NONE, null), true, true);
 		} else {
 			//read from the request stream
-			Writer fileWriter = new BufferedWriter(new OutputStreamWriter(file.openOutputStream(EFS.NONE, null), "UTF-8"));
-			IOUtilities.pipe(requestReader, fileWriter, false, true);
+			IOUtilities.pipe(requestStream, file.openOutputStream(EFS.NONE, null), false, true);
 		}
 
 		// return metadata with the new Etag
-		handleGetMetadata(request, response, response.getWriter(), file);
+		handleGetMetadata(request, response, file);
+	}
+
+	private void handlePatchContents(HttpServletRequest request, BufferedReader requestReader, HttpServletResponse response, IFileStore file) throws IOException, CoreException, NoSuchAlgorithmException, JSONException, ServletException {
+		JSONObject changes = OrionServlet.readJSONRequest(request);
+		//read file to memory
+		Reader fileReader = new InputStreamReader(file.openInputStream(EFS.NONE, null));
+		StringWriter oldFile = new StringWriter();
+		IOUtilities.pipe(fileReader, oldFile, true, false);
+		StringBuffer oldContents = oldFile.getBuffer();
+
+		JSONArray changeList = changes.getJSONArray("diff");
+		for (int i = 0; i < changeList.length(); i++) {
+			JSONObject change = changeList.getJSONObject(i);
+			long start = change.getLong("start");
+			long end = change.getLong("end");
+			String text = change.getString("text");
+			oldContents.replace((int) start, (int) end, text);
+		}
+
+		String newContents = oldContents.toString();
+		boolean failed = false;
+		if (changes.has("contents")) {
+			String contents = changes.getString("contents");
+			if (!newContents.equals(contents)) {
+				failed = true;
+				newContents = contents;
+			}
+		}
+		Writer fileWriter = new OutputStreamWriter(file.openOutputStream(EFS.NONE, null), "UTF-8");
+		IOUtilities.pipe(new StringReader(newContents), fileWriter, false, true);
+		if (failed) {
+			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_ACCEPTABLE, "Bad File Diffs. Please paste this content in a bug report: \u00A0\u00A0 	" + changes.toString(), null));
+			return;
+		}
+
+		// return metadata with the new Etag
+		handleGetMetadata(request, response, file);
 	}
 
 	private void handleMultiPartPut(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws IOException, CoreException, JSONException, NoSuchAlgorithmException {
 		String typeHeader = request.getHeader(ProtocolConstants.HEADER_CONTENT_TYPE);
 		String boundary = typeHeader.substring(typeHeader.indexOf("boundary=\"") + 10, typeHeader.length() - 1); //$NON-NLS-1$
-		BufferedReader requestReader = request.getReader();
+		ServletInputStream requestStream = request.getInputStream();
+		BufferedReader requestReader = new BufferedReader(new InputStreamReader(requestStream, "UTF-8")); //$NON-NLS-1$
 		handlePutMetadata(requestReader, boundary, file);
 		// next come the headers for the content
 		Map<String, String> contentHeaders = new HashMap<String, String>();
@@ -112,7 +168,7 @@ class FileHandlerV1 extends GenericFileHandler {
 				contentHeaders.put(header[0], header[1]);
 		}
 		// now for the file contents
-		handlePutContents(request, requestReader, response, file);
+		handlePutContents(request, requestStream, response, file);
 	}
 
 	private void handlePutMetadata(BufferedReader reader, String boundary, IFileStore file) throws IOException, CoreException, JSONException {
@@ -121,7 +177,7 @@ class FileHandlerV1 extends GenericFileHandler {
 		while ((line = reader.readLine()) != null && !line.equals(boundary))
 			buf.append(line);
 		//merge with existing metadata
-		FileInfo info = (FileInfo) file.fetchInfo();
+		FileInfo info = (FileInfo) file.fetchInfo(EFS.NONE, null);
 		ServletFileStoreHandler.copyJSONToFileInfo(new JSONObject(buf.toString()), info);
 		file.putInfo(info, EFS.SET_ATTRIBUTES, null);
 	}
@@ -129,11 +185,14 @@ class FileHandlerV1 extends GenericFileHandler {
 	@Override
 	public boolean handleRequest(HttpServletRequest request, HttpServletResponse response, IFileStore file) throws ServletException {
 		try {
-			String receivedETag = request.getHeader("If-Match");
-			if (receivedETag != null && !receivedETag.equals(generateFileETag(file))) {
-				response.setStatus(HttpServletResponse.SC_PRECONDITION_FAILED);
+			String fileETag = generateFileETag(file);
+			if (handleIfMatchHeader(request, response, fileETag)) {
 				return true;
 			}
+			if (handleIfNoneMatchHeader(request, response, fileETag)) {
+				return true;
+			}
+
 			String parts = IOUtilities.getQueryParameter(request, "parts");
 			if (parts == null || "body".equals(parts)) { //$NON-NLS-1$
 				switch (getMethod(request)) {
@@ -141,25 +200,30 @@ class FileHandlerV1 extends GenericFileHandler {
 						file.delete(EFS.NONE, null);
 						break;
 					case PUT :
-						handlePutContents(request, request.getReader(), response, file);
+						handlePutContents(request, request.getInputStream(), response, file);
+						break;
+					case POST :
+						if ("PATCH".equals(request.getHeader(ProtocolConstants.HEADER_METHOD_OVERRIDE))) {
+							handlePatchContents(request, request.getReader(), response, file);
+						}
 						break;
 					default :
-						handleFileContents(request, response, file);
+						return handleFileContents(request, response, file);
 				}
 				return true;
 			}
 			if ("meta".equals(parts)) { //$NON-NLS-1$
 				switch (getMethod(request)) {
 					case GET :
-						response.setCharacterEncoding("UTF-8");
-						handleGetMetadata(request, response, response.getWriter(), file);
+						handleGetMetadata(request, response, file);
 						return true;
 					case PUT :
 						handlePutMetadata(request.getReader(), null, file);
 						response.setStatus(HttpServletResponse.SC_NO_CONTENT);
 						return true;
+					default :
+						return false;
 				}
-				return false;
 			}
 			if ("meta,body".equals(parts) || "body,meta".equals(parts)) { //$NON-NLS-1$ //$NON-NLS-2$
 				switch (getMethod(request)) {
@@ -169,13 +233,15 @@ class FileHandlerV1 extends GenericFileHandler {
 					case PUT :
 						handleMultiPartPut(request, response, file);
 						return true;
+					default :
+						return false;
 				}
-				return false;
 			}
 		} catch (JSONException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Syntax error in request", e));
 		} catch (Exception e) {
-			throw new ServletException(NLS.bind("Error retrieving file: {0}", file), e);
+			if (!handleAuthFailure(request, response, e))
+				throw new ServletException(NLS.bind("Error retrieving file: {0}", file), e);
 		}
 		return false;
 	}

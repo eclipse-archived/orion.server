@@ -1,14 +1,30 @@
+/*******************************************************************************
+ * Copyright (c) 2013, 2014 IBM Corporation and others
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ * IBM Corporation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.orion.server.tests.servlets.site;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.internal.server.servlets.site.SiteConfigurationConstants;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.internal.server.hosting.SiteConfigurationConstants;
+import org.eclipse.orion.internal.server.hosting.SiteInfo;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.metastore.UserInfo;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -48,11 +64,10 @@ public class SiteTest extends CoreSiteTest {
 	 * Before each test, create a workspace and prepare fields for use by test methods.
 	 */
 	public void setUp() throws CoreException, SAXException, IOException, JSONException {
-		clearWorkspace();
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
 		setUpAuthorization();
-		workspaceResponse = createWorkspace(this.getClass().getName());
+		workspaceResponse = basicCreateWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 		workspaceObject = new JSONObject(workspaceResponse.getText());
 	}
 
@@ -118,7 +133,8 @@ public class SiteTest extends CoreSiteTest {
 		final String hostHint = "bobhost";
 		WebResponse createResp = createSite(name, workspaceId, mappings, hostHint, null);
 		JSONObject site = new JSONObject(createResp.getText());
-		final String location = site.getString(ProtocolConstants.HEADER_LOCATION);
+
+		String location = site.getString(ProtocolConstants.HEADER_LOCATION);
 
 		// Fetch site using its Location and ensure that what we find matches what was POSTed
 		WebRequest fetchReq = getRetrieveSiteRequest(location, null);
@@ -143,7 +159,7 @@ public class SiteTest extends CoreSiteTest {
 		final String hostHint = "orion-is-awesome";
 		WebResponse createResp = createSite(name, workspaceId, mappings, hostHint, null);
 		JSONObject site = new JSONObject(createResp.getText());
-		final String location = site.getString(ProtocolConstants.HEADER_LOCATION);
+		String location = site.getString(ProtocolConstants.HEADER_LOCATION);
 
 		// Update site
 		final String newName = "A site that was updated";
@@ -165,13 +181,18 @@ public class SiteTest extends CoreSiteTest {
 	/**
 	 * Create a site, then delete it and make sure it's gone.
 	 */
-	public void testDeleteSite() throws SAXException, JSONException, IOException, URISyntaxException {
+	public void testDeleteSite() throws SAXException, JSONException, IOException, URISyntaxException, CoreException {
 		// Create site
 		final String name = "A site to delete";
 		final String workspaceId = workspaceObject.getString(ProtocolConstants.KEY_ID);
 		WebResponse createResp = createSite(name, workspaceId, null, null, null);
 		JSONObject site = new JSONObject(createResp.getText());
-		final String location = site.getString(ProtocolConstants.HEADER_LOCATION);
+		final String siteId = site.getString(ProtocolConstants.KEY_ID);
+		String location = site.getString(ProtocolConstants.HEADER_LOCATION);
+
+		UserInfo user = OrionConfiguration.getMetaStore().readUser(testUserId);
+		SiteInfo siteInfo = SiteInfo.getSite(user, siteId);
+		assertNotNull(siteInfo);
 
 		// Delete site
 		WebRequest deleteReq = getDeleteSiteRequest(location);
@@ -182,6 +203,19 @@ public class SiteTest extends CoreSiteTest {
 		WebRequest getReq = getRetrieveSiteRequest(location, null);
 		WebResponse getResp = webConversation.getResponse(getReq);
 		assertEquals(HttpURLConnection.HTTP_NOT_FOUND, getResp.getResponseCode());
+
+		user = OrionConfiguration.getMetaStore().readUser(testUserId);
+		siteInfo = SiteInfo.getSite(user, siteId);
+		assertNull(siteInfo);
+
+		// GET all sites should not include the deleted site
+		WebRequest getAllReq = getRetrieveAllSitesRequest(null);
+		WebResponse getAllResp = webConversation.getResponse(getAllReq);
+		JSONObject allSitesJson = new JSONObject(getAllResp.getText());
+		JSONArray allSites = allSitesJson.getJSONArray(SiteConfigurationConstants.KEY_SITE_CONFIGURATIONS);
+		for (int i = 0; i < allSites.length(); i++) {
+			assertEquals(false, allSites.getJSONObject(i).getString(ProtocolConstants.KEY_ID).equals(siteId));
+		}
 	}
 
 	@Test
@@ -197,7 +231,7 @@ public class SiteTest extends CoreSiteTest {
 		final String workspaceId = workspaceObject.getString(ProtocolConstants.KEY_ID);
 		WebResponse createResp = createSite(name, workspaceId, null, null, "alice");
 		JSONObject site = new JSONObject(createResp.getText());
-		final String location = site.getString(ProtocolConstants.HEADER_LOCATION);
+		String location = site.getString(ProtocolConstants.HEADER_LOCATION);
 
 		// Alice: Get site
 		WebRequest getReq = getRetrieveSiteRequest(location, "alice");

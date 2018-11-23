@@ -1,0 +1,8 @@
+---
+path: .
+domain: example.com
+memory: 256M
+instances: 1
+
+applications:
+ - name: A

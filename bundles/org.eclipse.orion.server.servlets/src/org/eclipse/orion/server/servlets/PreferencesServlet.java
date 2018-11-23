@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,16 +12,31 @@ package org.eclipse.orion.server.servlets;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.preferences.IEclipsePreferences;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.server.core.users.OrionScope;
+import org.eclipse.orion.server.core.EncodingUtils;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.metastore.IMetaStore;
+import org.eclipse.orion.server.core.metastore.MetadataInfo;
+import org.eclipse.orion.server.core.metastore.ProjectInfo;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.metastore.WorkspaceInfo;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
-import org.osgi.service.prefs.BackingStoreException;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 /**
  * A servlet for accessing and modifying preferences.
@@ -35,42 +50,51 @@ import org.osgi.service.prefs.BackingStoreException;
  */
 public class PreferencesServlet extends OrionServlet {
 	private static final long serialVersionUID = 1L;
-	private IEclipsePreferences prefRoot;
 
 	public PreferencesServlet() {
 		super();
 	}
 
 	@Override
-	public void init() throws ServletException {
-		super.init();
-		prefRoot = new OrionScope().getNode(""); //$NON-NLS-1$
-	}
-
-	@Override
-	public void destroy() {
-		super.destroy();
-	}
-
-	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
-		IEclipsePreferences node = getNode(req, resp, false);
-		if (node == null)
+
+		// ensure that there is at least one additional segment following
+		// the /user, /workspace or /project segment
+		IPath path = getPath(req);
+		if (path.segmentCount() < 2) {
+			handleNotFound(req, resp, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
 			return;
-		String key = req.getParameter("key");
+		}
+
+		MetadataInfo node = getNode(path, req, resp);
+		if (node == null) {
+			handleNotFound(req, resp, HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+
+		String key = req.getParameter("key"); //$NON-NLS-1$
 		try {
-			//if a key is specified write that single value, otherwise write the entire node
+			String prefix = getPrefix(path);
+
+			//if a key is specified get that single value, otherwise get the entire node
 			JSONObject result = null;
 			if (key != null) {
-				String value = node.get(key, null);
+				prefix = prefix + '/' + key;
+				String value = node.getProperty(prefix.toString());
 				if (value == null) {
 					handleNotFound(req, resp, HttpServletResponse.SC_NOT_FOUND);
 					return;
 				}
 				result = new JSONObject().put(key, value);
-			} else
-				result = toJSON(req, node);
+			} else {
+				result = toJSON(req, prefix.toString(), node);
+				//empty result should be treated as not found
+				if (result.length() == 0) {
+					handleNotFound(req, resp, HttpServletResponse.SC_NOT_FOUND);
+					return;
+				}
+			}
 			writeJSONResponse(req, resp, result);
 		} catch (Exception e) {
 			handleException(resp, NLS.bind("Failed to retrieve preferences for path {0}", req.getPathInfo()), e);
@@ -78,10 +102,46 @@ public class PreferencesServlet extends OrionServlet {
 		}
 	}
 
+	private IPath getPath(HttpServletRequest req) {
+		String pathString = req.getPathInfo();
+		if (pathString == null) {
+			pathString = ""; //$NON-NLS-1$
+		}
+		return new Path(pathString);
+	}
+
+	/**
+	 * Returns the prefix for the preference to be retrieved or manipulated.
+	 */
+	private String getPrefix(IPath path) {
+		String scope = path.segment(0);
+		if ("user".equalsIgnoreCase(scope)) { //$NON-NLS-1$
+			//format is /user/prefix
+			path = path.removeFirstSegments(1);
+		} else if ("workspace".equalsIgnoreCase(scope)) { //$NON-NLS-1$
+			//format is /workspace/{workspaceId}/prefix
+			path = path.removeFirstSegments(2);
+		} else if ("project".equalsIgnoreCase(scope)) { //$NON-NLS-1$
+			//format is /project/{workspaceId}/{projectName}/prefix
+			path = path.removeFirstSegments(3);
+		}
+		return path.toString();
+	}
+
 	@Override
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		IEclipsePreferences node = getNode(req, resp, false);
-		if (node == null) {
+		traceRequest(req);
+
+		// ensure that there is at least one additional segment following
+		// the /user, /workspace or /project segment
+		IPath path = getPath(req);
+		if (path.segmentCount() < 2) {
+			handleNotFound(req, resp, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+			return;
+		}
+
+		MetadataInfo info = getNode(path, req, resp);
+		if (info == null) {
 			//should not fail on delete when resource doesn't exist
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 			return;
@@ -89,12 +149,22 @@ public class PreferencesServlet extends OrionServlet {
 		}
 		String key = req.getParameter("key");
 		try {
+			String prefix = getPrefix(path);
 			//if a key is specified write that single value, otherwise write the entire node
-			if (key != null)
-				node.remove(key);
-			else
-				node.removeNode();
-			prefRoot.flush();
+			boolean changed = false;
+			if (key != null) {
+				prefix = prefix + '/' + key;
+				changed = info.setProperty(prefix.toString(), null) != null;
+			} else {
+				//can't overwrite base user settings via preference servlet
+				if (prefix.startsWith("User")) {
+					resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+					return;
+				}
+				changed = removeMatchingProperties(info, prefix.toString());
+			}
+			if (changed)
+				save(info);
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 		} catch (Exception e) {
 			handleException(resp, NLS.bind("Failed to retrieve preferences for path {0}", req.getPathInfo()), e);
@@ -103,85 +173,96 @@ public class PreferencesServlet extends OrionServlet {
 	}
 
 	/**
-	 * Returns the preference node associated with this request. This method controls
-	 * exactly what preference nodes are exposed via this service. If there is no matching
-	 * preference node for the request, this method handles the appropriate response
+	 * Returns the metadata object associated with this request. This method controls
+	 * exactly what metadata objects are exposed via this service. If there is no matching
+	 * metadata object for the request, this method handles the appropriate response
 	 * and returns <code>null</code>.
 	 * @param req
 	 * @param resp
-	 * @param create If <code>true</code>, the node will be created if it does not already exist. If
-	 * <code>false</code>, this method sets the response status to 404 and returns null.
 	 */
-	private IEclipsePreferences getNode(HttpServletRequest req, HttpServletResponse resp, boolean create) throws ServletException {
-		if (prefRoot == null) {
-			handleException(resp, "Unable to obtain preference service", null);
-			return null;
-		}
-		String pathString = req.getPathInfo();
-		if (pathString == null)
-			pathString = ""; //$NON-NLS-1$
-		IPath path = new Path(pathString);
+	private MetadataInfo getNode(IPath path, HttpServletRequest req, HttpServletResponse resp) throws ServletException {
 		int segmentCount = path.segmentCount();
 		String scope = path.segment(0);
-		//note that the preference service API scope names don't match those used in our persistence layer.
-		IPath nodePath = null;
-		if ("user".equalsIgnoreCase(scope)) { //$NON-NLS-1$
-			String username = req.getRemoteUser();
-			if (username == null) {
-				resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-				return null;
+		try {
+			if ("user".equalsIgnoreCase(scope)) { //$NON-NLS-1$
+				String username = req.getRemoteUser();
+				if (username == null) {
+					resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+					return null;
+				}
+				return OrionConfiguration.getMetaStore().readUser(username);
+			} else if ("workspace".equalsIgnoreCase(scope) && segmentCount > 1) { //$NON-NLS-1$
+				//format is /workspace/{workspaceId}
+				return OrionConfiguration.getMetaStore().readWorkspace(path.segment(1));
+			} else if ("project".equalsIgnoreCase(scope) && segmentCount > 2) { //$NON-NLS-1$
+				//format is /project/{workspaceId}/{projectName}
+				return OrionConfiguration.getMetaStore().readProject(path.segment(1), path.segment(2));
 			}
-			nodePath = new Path("Users").append(username); //$NON-NLS-1$
-		} else if ("workspace".equalsIgnoreCase(scope) && segmentCount > 1) { //$NON-NLS-1$
-			nodePath = new Path("Workspaces"); //$NON-NLS-1$
-		} else if ("project".equalsIgnoreCase(scope) && segmentCount > 1) { //$NON-NLS-1$
-			nodePath = new Path("Projects"); //$NON-NLS-1$
-		} else {
-			//invalid prefix
-			handleNotFound(req, resp, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+		} catch (CoreException e) {
+			handleException(resp, "Internal error obtaining preferences", e, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			return null;
 		}
-		//we allow arbitrary subtrees beneath our three supported roots
-		if (nodePath != null) {
-			String childPath = nodePath.append(path.removeFirstSegments(1)).toString();
-			try {
-				if (create || prefRoot.nodeExists(childPath))
-					return (IEclipsePreferences) prefRoot.node(childPath);
-			} catch (BackingStoreException e) {
-				String msg = NLS.bind("Error retrieving preferences for path {0}", pathString);
-				handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, msg), HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-				return null;
-			}
-		}
-		handleNotFound(req, resp, HttpServletResponse.SC_NOT_FOUND);
+		//invalid prefix
+		handleNotFound(req, resp, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
 		return null;
 	}
 
 	private void handleNotFound(HttpServletRequest req, HttpServletResponse resp, int code) throws ServletException {
 		String path = req.getPathInfo() == null ? "/" : req.getPathInfo();
 		String msg = code == HttpServletResponse.SC_NOT_FOUND ? "No preferences found for path {0}" : "Invalid preference path {0}";
-		handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, NLS.bind(msg, path)), code);
+		handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, NLS.bind(msg, EncodingUtils.encodeForHTML(path.toString()))), code);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
-		IEclipsePreferences node = getNode(req, resp, true);
-		if (node == null)
+
+		// ensure that there is at least one additional segment following
+		// the /user, /workspace or /project segment
+		IPath path = getPath(req);
+		if (path.segmentCount() < 2) {
+			handleNotFound(req, resp, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
 			return;
-		String key = req.getParameter("key");
+		}
+		MetadataInfo info = getNode(path, req, resp);
+		if (info == null) {
+			handleNotFound(req, resp, HttpServletResponse.SC_NOT_FOUND);
+			return;
+		}
+
+		String key = req.getParameter("key"); //$NON-NLS-1$
+		String prefix = getPrefix(path);
 		try {
+			boolean changed = false;
 			if (key != null) {
-				node.put(key, req.getParameter("value"));
+				prefix = prefix + '/' + key;
+				String newValue = req.getParameter("value"); //$NON-NLS-1$
+				String oldValue = info.setProperty(prefix.toString(), newValue);
+				changed = !newValue.equals(oldValue);
 			} else {
 				JSONObject newNode = new JSONObject(new JSONTokener(req.getReader()));
-				node.clear();
+				//can't overwrite base user settings via preference servlet
+				if (prefix.startsWith("User")) {
+					resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+					return;
+				}
+				//operations should not be removed by PUT
+				if (!prefix.equals("operations")) {
+
+					//clear existing values matching prefix
+					changed |= removeMatchingProperties(info, prefix.toString());
+				}
 				for (Iterator<String> it = newNode.keys(); it.hasNext();) {
 					key = it.next();
-					node.put(key, newNode.getString(key));
+					String newValue = newNode.getString(key);
+					String qualifiedKey = prefix + '/' + key;
+					String oldValue = info.setProperty(qualifiedKey, newValue);
+					changed |= !newValue.equals(oldValue);
 				}
 			}
-			prefRoot.flush();
+			if (changed)
+				save(info);
 			resp.setStatus(HttpServletResponse.SC_NO_CONTENT);
 		} catch (Exception e) {
 			handleException(resp, NLS.bind("Failed to store preferences for {0}", req.getRequestURL()), e);
@@ -189,21 +270,72 @@ public class PreferencesServlet extends OrionServlet {
 		}
 	}
 
+	private void save(MetadataInfo info) throws CoreException {
+		IMetaStore store = OrionConfiguration.getMetaStore();
+		if (info instanceof UserInfo) {
+			store.updateUser((UserInfo) info);
+		} else if (info instanceof WorkspaceInfo) {
+			store.updateWorkspace((WorkspaceInfo) info);
+		} else if (info instanceof ProjectInfo) {
+			store.updateProject((ProjectInfo) info);
+		}
+	}
+
+	private boolean removeMatchingProperties(MetadataInfo info, String prefix) {
+		final Map<String, String> properties = info.getProperties();
+		boolean changed = false;
+		final Set<String> keySet = properties.keySet();
+		//convert keys to array to avoid concurrent modification of set
+		for (String key : keySet.toArray(new String[keySet.size()])) {
+			if (key.startsWith(prefix)) {
+				String previous = info.setProperty(key, null);
+				if (previous != null)
+					changed = true;
+			}
+		}
+		return changed;
+	}
+
 	/**
 	 * Serializes a preference node as a JSON object.
 	 */
-	private JSONObject toJSON(HttpServletRequest req, IEclipsePreferences node) throws JSONException, BackingStoreException {
+	private JSONObject toJSON(HttpServletRequest req, String prefix, MetadataInfo info) throws JSONException {
 		JSONObject result = new JSONObject();
-		//TODO Do we need this extra information?
-		//		String nodePath = node.absolutePath();
-		//		result.put("path", nodePath);
-		//		JSONObject children = new JSONObject();
-		//		for (String child : node.childrenNames())
-		//			children.put(child, createQuery(req, "/prefs" + nodePath + '/' + child));
-		//		result.put("children", children);
-		//		JSONObject values = new JSONObject();
-		for (String key : node.keys())
-			result.put(key, node.get(key, null));
+		final Map<String, String> properties = info.getProperties();
+		//from client's perspective key is the part after prefix
+		for (String key : properties.keySet()) {
+			if (key.startsWith(prefix) && !key.startsWith("User"))
+				result.put(key.substring(prefix.length() + 1), stringToJSON(properties.get(key)));
+		}
 		return result;
 	}
+
+	/**
+	 * Converts a string representation of a JSON value into the appropriate object type.
+	 * Possible return types are: String, JSONObject, JSONArray, Boolean, Integer, Long, Double
+	 */
+	private static Object stringToJSON(String input) {
+		if (input == null)
+			return null;
+		Object result = null;
+		//test if the value is a JSON object
+		if (input.startsWith("{")) { //$NON-NLS-1$
+			try {
+				result = new JSONObject(input);
+			} catch (JSONException e) {
+				//treat as string
+			}
+		} else if (input.startsWith("[")) { //$NON-NLS-1$
+			try {
+				result = new JSONArray(input);
+			} catch (JSONException e) {
+				//treat as string
+			}
+		}
+		if (result == null)
+			result = JSONObject.stringToValue(input);
+		return result;
+
+	}
+
 }

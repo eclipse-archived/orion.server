@@ -1,34 +1,53 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: Server Tests
+Bundle-Name: %Bundle-Name
+Bundle-Vendor: %Bundle-Vendor
 Bundle-SymbolicName: org.eclipse.orion.server.tests
-Bundle-Version: 0.2.0.qualifier
-Bundle-RequiredExecutionEnvironment: J2SE-1.5
-Require-Bundle: org.junit;bundle-version="4.8.2",
+Bundle-Version: 4.0.0.qualifier
+Bundle-Localization: bundle
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Service-Component: OSGI-INF/*.xml
+Require-Bundle: org.eclipse.equinox.ds;bundle-version="1.2.100",
+ org.eclipse.equinox.util;bundle-version="1.0.200",
+ org.eclipse.osgi.services;bundle-version="3.2.100",
+ org.junit;bundle-version="4.11.0",
  org.json;bundle-version="1.0.0",
  org.eclipse.equinox.common;bundle-version="3.6.0",
+ org.eclipse.equinox.app;bundle-version="1.3.100",
  org.eclipse.core.jobs;bundle-version="3.5.0",
  org.mozilla.javascript;bundle-version="1.7.2",
- org.eclipse.orion.server.configurator;bundle-version="0.1.0",
  org.eclipse.orion.server.core;bundle-version="0.1.0",
  org.eclipse.orion.server.servlets;bundle-version="0.1.0",
  org.eclipse.core.filesystem;bundle-version="1.3.100",
  org.eclipse.orion.server.useradmin;bundle-version="0.1.0",
- org.eclipse.orion.server.authentication.basic;bundle-version="0.1.0",
  org.eclipse.test.performance;bundle-version="3.7.0",
  org.eclipse.core.tests.harness;bundle-version="3.7.0",
  org.eclipse.equinox.preferences;bundle-version="3.4.0",
  org.eclipse.osgi;bundle-version="3.7.0",
  org.eclipse.jgit;bundle-version="2.0.0",
- org.eclipse.orion.server.git;bundle-version="0.2.0"
+ org.eclipse.orion.server.git;bundle-version="0.2.0",
+ org.eclipse.orion.server.authentication;bundle-version="0.3.0",
+ javax.servlet;bundle-version="3.0.0",
+ org.eclipse.orion.server.search;bundle-version="0.5.0",
+ org.apache.commons.logging;bundle-version="1.1.1",
+ org.eclipse.orion.server.hosting;bundle-version="1.0.0",
+ org.eclipse.orion.server.docker;bundle-version="1.0.0";resolution:=optional,
+ org.eclipse.orion.server.cf,
+ org.mockito;bundle-version="1.9.5",
+ org.hamcrest;bundle-version="1.1.0",
+ org.eclipse.orion.server.jetty;bundle-version="1.0.0"
 Bundle-ActivationPolicy: lazy
 Bundle-Activator: org.eclipse.orion.server.tests.ServerTestsActivator
-Import-Package: org.antlr.runtime;version="3.2.0",
- org.antlr.runtime.tree;version="3.2.0",
+Import-Package: org.apache.commons.io,
  org.eclipse.equinox.http.jetty;version="1.1.0",
  org.osgi.service.http;version="1.2.1",
- org.osgi.service.useradmin;version="1.1.0"
+ org.osgi.service.useradmin;version="1.1.0",
+ org.slf4j;version="1.5.11"
 Bundle-ClassPath: .,
  lib/httpunit.jar,
  lib/nekohtml-0.9.5.jar,
- lib/xercesImpl-2.6.1.jar
+ lib/xercesImpl-2.6.2.jar
+Export-Package: com.meterware.httpunit,
+ org.eclipse.orion.server.authentication.basic,
+ org.eclipse.orion.server.tests,
+ org.eclipse.orion.server.tests.servlets.files

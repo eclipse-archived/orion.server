@@ -11,11 +11,13 @@
 package org.eclipse.orion.internal.server.servlets.xfer;
 
 import com.jcraft.jsch.*;
+
 import java.io.*;
 import java.util.*;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -67,7 +69,6 @@ public class SFTPExportJob extends SFTPTransferJob {
 
 	@Override
 	protected void transferDirectory(ChannelSftp channel, IPath remotePath, File localFile) throws SftpException, IOException {
-		setTaskMessage(NLS.bind("Exporting {0}...", host + remotePath.toString()));
 		try {
 			//create the remote folder on export
 			channel.mkdir(remotePath.toString());
@@ -79,16 +80,20 @@ public class SFTPExportJob extends SFTPTransferJob {
 		File[] localFiles = localFile.listFiles();
 		if (localFiles != null)
 			localChildren.addAll(Arrays.asList(localFiles));
+		addTaskTotal(localFiles.length);
 		for (File localChild : localChildren) {
 			String childName = localChild.getName();
-			if (shouldSkip(childName))
+			if (shouldSkip(childName)) {
+				taskItemLoaded();
 				continue;
+			}
 			IPath remoteChild = remotePath.append(childName);
 			if (localChild.isDirectory()) {
 				transferDirectory(channel, remoteChild, localChild);
 			} else {
 				doTransferFile(channel, remoteChild, localChild);
 			}
+			taskItemLoaded();
 		}
 	}
 }

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<site>
+   <feature url="features/org.eclipse.orion_8.0.0.qualifier.jar" id="org.eclipse.orion" version="8.0.0.qualifier">
+      <category name="org.eclipse.orion.server"/>
+   </feature>
+   <feature url="features/org.eclipse.orion.base.feature_8.0.0.qualifier.jar" id="org.eclipse.orion.base.feature" version="8.0.0.qualifier">
+      <category name="org.eclipse.orion.server"/>
+   </feature>
+   <feature url="features/org.eclipse.orion.client.feature_8.0.0.qualifier.jar" id="org.eclipse.orion.client.feature" version="8.0.0.qualifier">
+      <category name="org.eclipse.orion.server"/>
+   </feature>
+   <feature url="features/org.eclipse.orion.releng.test.master_8.0.0.qualifier.jar" id="org.eclipse.orion.releng.test.master" version="8.0.0.qualifier">
+      <category name="org.eclipse.orion.server"/>
+   </feature>
+   <feature url="features/org.eclipse.orion.server.authentication.feature_8.0.0.qualifier.jar" id="org.eclipse.orion.server.authentication.feature" version="8.0.0.qualifier">
+      <category name="org.eclipse.orion.server"/>
+   </feature>
+   <feature url="features/org.eclipse.orion.server.feature_8.0.0.qualifier.jar" id="org.eclipse.orion.server.feature" version="8.0.0.qualifier">
+      <category name="org.eclipse.orion.server"/>
+   </feature>
+   <feature url="features/org.eclipse.orion.server.search.feature_8.0.0.qualifier.jar" id="org.eclipse.orion.server.search.feature" version="8.0.0.qualifier">
+      <category name="org.eclipse.orion.server"/>
+   </feature>
+   <feature url="features/org.eclipse.orion.server.tests.feature_8.0.0.qualifier.jar" id="org.eclipse.orion.server.tests.feature" version="8.0.0.qualifier">
+      <category name="org.eclipse.orion.server"/>
+   </feature>
+   <feature url="features/org.eclipse.orion.server.ui.feature_8.0.0.qualifier.jar" id="org.eclipse.orion.server.ui.feature" version="8.0.0.qualifier">
+      <category name="org.eclipse.orion.server"/>
+   </feature>
+   <category-def name="org.eclipse.orion.server" label="Orion Server"/>
+</site>

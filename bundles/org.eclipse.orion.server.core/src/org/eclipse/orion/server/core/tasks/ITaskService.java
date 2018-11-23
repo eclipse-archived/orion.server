@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.tasks;
 
-import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -25,23 +23,21 @@ public interface ITaskService {
 	 * Further changes to the task will not be reflected in the task service until
 	 * {@link #updateTask(TaskInfo)} is invoked.
 	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
-	 * @param taskName task name, can be <code>null<code>
-	 * @param idempotent <code>true</code> if task is a idempotent operation. Clients will use this value to decrease task persistence
+	 * @param keep <code>false</code> if task is an operation that should be stored for further result checking. Clients will use this value to decrease task persistence
 	 * @return A new task
 	 */
-	TaskInfo createTask(String taskName, String userId, boolean idempotent);
+	TaskInfo createTask(String userId, boolean keep);
 
 	/**
 	 * Creates a new task. In its initial state the task is running and 0% complete.
 	 * Further changes to the task will not be reflected in the task service until
 	 * {@link #updateTask(TaskInfo)} is invoked.
 	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
-	 * @param taskName task name, can be <code>null<code>
-	 * @param taskCanceler an implementation of {@link ITaskCanceler} that handles canceling this task
-	 * @param idempotent <code>true</code> if task is a idempotent operation. Clients will use this value to decrease task persistence
+	 * @param keep <code>false</code> if task is an operation that should be stored for further result checking. Clients will use this value to decrease task persistence
+	 * @param taskCanceller will be called when task is requested to be cancelled
 	 * @return A new task
 	 */
-	TaskInfo createTask(String taskName, String userId, ITaskCanceler taskCanceler, boolean idempotent);
+	TaskInfo createTask(String userId, boolean keep, ITaskCanceller taskCanceller);
 
 	/**
 	 * Returns the task with the given task id, or <code>null</code> if no such task exists.
@@ -49,7 +45,7 @@ public interface ITaskService {
 	 * @param id The task id
 	 * @return The task, or <code>null</code>
 	 */
-	TaskInfo getTask(String userId, String id);
+	TaskInfo getTask(String userId, String id, boolean keep);
 
 	/**
 	 * Returns a list of tasks tracked for given user.
@@ -57,23 +53,6 @@ public interface ITaskService {
 	 * @return a list of tasks owned by the user
 	 */
 	List<TaskInfo> getTasks(String userId);
-
-	/**
-	 * Returns a list of tasks tracked for given user that have been modified since <code>modifiedSince</code> date.
-	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
-	 * @param modifiedSince a starting date since which modified tasks will be returned
-	 * @param runningOnly return only running tasks
-	 * @return a list of tasks owned by the user
-	 */
-	List<TaskInfo> getTasks(String userId, Date modifiedSince, boolean runningOnly);
-
-	/**
-	 * Returns all user's tasks deleted since given date.
-	 * @param userId
-	 * @param deletedSince
-	 * @return
-	 */
-	Collection<String> getTasksDeletedSince(String userId, Date deletedSince);
 
 	/**
 	 * Updates the state of the given task within the task service. Any changes
@@ -95,23 +74,14 @@ public interface ITaskService {
 	 * @param id The task id
 	 * @throws TaskOperationException thrown when task cannot be removed, for instance task is running 
 	 */
-	public void removeTask(String userId, String id) throws TaskOperationException;
-
+	public void removeTask(String userId, String id, boolean keep) throws TaskOperationException;
+	
 	/**
-	 * Cancels the task.
-	 * @throws TaskOperationException if task does not support canceling
+	 * Cancel task.
+	 * @param userId id of the user starting the task or if not logged in temporary identifier, for instance a session id
+	 * @param id The task id
+	 * @throws TaskOperationException thrown when task cannot be removed, for instance task is running 
 	 */
-	public void cancelTask(TaskInfo task) throws TaskOperationException;
+	public void cancelTask(String userId, String id, boolean keep) throws TaskOperationException;
 
-	/**
-	 * Registers a listener that is notified when task is updated
-	 * @param listener
-	 */
-	public void addTaskModyficationListener(TaskModificationListener listener);
-
-	/**
-	 * Unregisters a listener that is notified when task is updated
-	 * @param listener
-	 */
-	public void removeTaskModyficationListener(TaskModificationListener listener);
 }

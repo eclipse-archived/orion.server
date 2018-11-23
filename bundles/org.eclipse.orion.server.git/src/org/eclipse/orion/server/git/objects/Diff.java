@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,12 +13,17 @@ package org.eclipse.orion.server.git.objects;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import org.eclipse.core.runtime.*;
-import org.eclipse.jgit.lib.*;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.merge.ResolveMerger;
 import org.eclipse.jgit.merge.ThreeWayMerger;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
@@ -44,7 +49,7 @@ public class Diff extends GitObject {
 				new Property(GitConstants.KEY_CLONE), // super
 				new Property(GitConstants.KEY_COMMIT_OLD), //
 				new Property(GitConstants.KEY_COMMIT_NEW), //
-				new Property(GitConstants.KEY_COMMIT_BASE)};
+				new Property(GitConstants.KEY_COMMIT_BASE) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
@@ -112,7 +117,8 @@ public class Diff extends GitObject {
 			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), p.toString(), null, null);
 		} else {
 			/* including scope.equals(GitConstants.KEY_DIFF_DEFAULT */
-			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), path.removeFirstSegments(1).makeAbsolute().toString(), null, null);
+			return new URI(location.getScheme(), location.getUserInfo(), location.getHost(), location.getPort(), path.removeFirstSegments(1).makeAbsolute()
+					.toString(), null, null);
 		}
 	}
 
@@ -130,6 +136,7 @@ public class Diff extends GitObject {
 				throw new IllegalArgumentException(NLS.bind("Illegal scope format, expected {old}..{new}, was {0}", scope));
 			}
 			ThreeWayMerger merger = new ResolveMerger(db) {
+				@Override
 				protected boolean mergeImpl() throws IOException {
 					// do nothing
 					return false;
@@ -138,7 +145,7 @@ public class Diff extends GitObject {
 			// use #merge to set sourceObjects
 			String tip0 = GitUtils.decode(commits[0]);
 			String tip1 = GitUtils.decode(commits[1]);
-			merger.merge(new ObjectId[] {db.resolve(tip0), db.resolve(tip1)});
+			merger.merge(new ObjectId[] { db.resolve(tip0), db.resolve(tip1) });
 			RevCommit baseCommit = merger.getBaseCommit(0, 1);
 
 			IPath p = new Path(GitServlet.GIT_URI + '/' + Commit.RESOURCE).append(baseCommit.getId().getName()).append(path.removeFirstSegments(1));

@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.core.tasks.TaskDescription;
 import org.eclipse.orion.internal.server.core.tasks.TaskService;
 import org.eclipse.orion.internal.server.core.tasks.TaskStore;
+import org.eclipse.orion.server.core.tasks.CorruptedTaskException;
 import org.eclipse.orion.server.core.tasks.ITaskService;
 import org.eclipse.orion.server.core.tasks.TaskInfo;
 import org.junit.After;
@@ -40,17 +41,17 @@ public class TaskStoreTest extends TestCase {
 	@Test
 	public void testRead() {
 		TaskStore store = new TaskStore(tempDir);
-		String task = store.readTask(new TaskDescription("Userdoesnotexist", "Doesnotexist"));
+		String task = store.readTask(new TaskDescription("Userdoesnotexist", "Doesnotexist", true));
 		assertNull(task);
 	}
 
 	@Test
-	public void testRoundTrip() {
+	public void testRoundTrip() throws CorruptedTaskException {
 		TaskInfo task = AllTaskTests.createTestTask("test");
 		TaskStore store = new TaskStore(tempDir);
-		store.writeTask(new TaskDescription(task.getUserId(), task.getTaskId()), task.toJSON().toString());
+		store.writeTask(new TaskDescription(task.getUserId(), task.getId(), true), task.toJSON().toString());
 
-		TaskInfo task2 = TaskInfo.fromJSON(store.readTask(new TaskDescription(task.getUserId(), task.getTaskId())));
+		TaskInfo task2 = TaskInfo.fromJSON(new TaskDescription(task.getUserId(), task.getId(), true), store.readTask(new TaskDescription(task.getUserId(), task.getId(), true)));
 		AllTaskTests.assertEqualTasks(task, task2);
 	}
 
@@ -59,24 +60,24 @@ public class TaskStoreTest extends TestCase {
 		TaskInfo task = AllTaskTests.createTestTask("test");
 		task.done(Status.OK_STATUS);
 		TaskStore store = new TaskStore(tempDir);
-		store.writeTask(new TaskDescription(task.getUserId(), task.getTaskId()), task.toJSON().toString());
-		assertNotNull(store.readTask(new TaskDescription(task.getUserId(), task.getTaskId())));
-		assertTrue(store.removeTask(new TaskDescription(task.getUserId(), task.getTaskId())));
-		assertNull(store.readTask(new TaskDescription(task.getUserId(), task.getTaskId())));
+		store.writeTask(new TaskDescription(task.getUserId(), task.getId(), true), task.toJSON().toString());
+		assertNotNull(store.readTask(new TaskDescription(task.getUserId(), task.getId(), true)));
+		assertTrue(store.removeTask(new TaskDescription(task.getUserId(), task.getId(), true)));
+		assertNull(store.readTask(new TaskDescription(task.getUserId(), task.getId(), true)));
 	}
 
 	@Test
 	public void readAllTasksTest() {
-		TaskInfo task1 = new TaskInfo("test", "taskid1", false);
+		TaskInfo task1 = new TaskInfo("test", "taskid1", true);
 		task1.done(Status.OK_STATUS);
-		TaskInfo task2 = new TaskInfo("test", "taskid2", false);
+		TaskInfo task2 = new TaskInfo("test", "taskid2", true);
 		task2.done(Status.OK_STATUS);
 		TaskStore store = new TaskStore(tempDir);
-		store.writeTask(new TaskDescription("test", task1.getTaskId()), task1.toJSON().toString());
+		store.writeTask(new TaskDescription("test", task1.getId(), true), task1.toJSON().toString());
 		assertEquals(1, store.readAllTasks("test"));
-		store.writeTask(new TaskDescription("test", task2.getTaskId()), task2.toJSON().toString());
+		store.writeTask(new TaskDescription("test", task2.getId(), true), task2.toJSON().toString());
 		assertEquals(2, store.readAllTasks("test"));
-		store.removeTask(new TaskDescription("test", task1.getTaskId()));
+		store.removeTask(new TaskDescription("test", task1.getId(), true));
 		assertEquals(1, store.readAllTasks("test"));
 	}
 
@@ -119,7 +120,7 @@ public class TaskStoreTest extends TestCase {
 
 		@Override
 		protected IStatus run(IProgressMonitor monitor) {
-			taskInfoTable[jobNum] = taskService.createTask("TestTaskName " + jobNum, "test", true);
+			taskInfoTable[jobNum] = taskService.createTask("test", true);
 			return Status.OK_STATUS;
 		}
 	}
@@ -141,7 +142,7 @@ public class TaskStoreTest extends TestCase {
 		}
 		Set<String> values = new HashSet<String>();
 		for (int i = 0; i < numberOfChecks; i++) { //check if task ids are unique 
-			String taskInfoId = taskInfos[i].getTaskId();
+			String taskInfoId = taskInfos[i].getId();
 			assertFalse("Bad value number " + i + " value: " + taskInfoId, values.contains(taskInfoId));
 			values.add(taskInfoId);
 		}

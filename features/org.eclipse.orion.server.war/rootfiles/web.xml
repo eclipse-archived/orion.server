@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app id="WebApp"
+    xmlns="http://java.sun.com/xml/ns/j2ee"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd"
+	version="2.4">
+    <distributable/>
+    <servlet id="bridge">
+        <servlet-name>equinoxbridgeservlet</servlet-name>
+        <display-name>Equinox Bridge Servlet</display-name>
+        <description>Equinox Bridge Servlet</description>
+        <servlet-class>org.eclipse.equinox.servletbridge.BridgeServlet</servlet-class>
+        <init-param>
+            <param-name>commandline</param-name>
+            <param-value>-console -Dorion.core.configFile="${catalina.home}/conf/orion.conf" -Dlogback.configurationFile="${catalina.home}/conf/logback.xml" -Dosgi.instance.area="${catalina.home}/serverworkspace"</param-value>
+        </init-param>
+        <init-param>
+            <param-name>enableFrameworkControls</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <init-param>
+            <param-name>other.info</param-name>
+            <param-value>org.eclipse.orion</param-value>
+        </init-param>
+        <init-param>
+            <param-name>_contextPreloads</param-name>
+            <param-value>com.ibm.websphere.ssl.protocol.SSLSocketFactory</param-value>
+       </init-param>
+        <!-- 
+		  You can specify your own framework launcher here.
+		  The default is: org.eclipse.equinox.servletbridge.FrameworkLauncher
+		<init-param><param-name>frameworkLauncherClass</param-name><param-value>org.eclipse.equinox.servletbridge.FrameworkLauncher</param-value></init-param>	
+		-->
+        <!-- 
+		  When the framework is deployed, an extension bundle must be present to allow the Servlet API to 
+		  be exported by the container.  Typically, this extension bundle is created at deploy time by the
+		  FrameworkLauncher.  If, however, an extension bundle (with id 'org.eclipse.equinox.servletbridge.extensionbundle') is
+		  already present in the 'plugins' area, then preference is given to the existing bundle.
+		  If this param is set to 'true', then the existing extension bundle with be *overridden* and
+		  the one created by the FrameworkLauncher will replace any existing one.  The default is 'false' 
+		  (giving preference to the existing extension bundle if present).
+		  
+		  default: false
+		-->
+        <init-param>
+            <param-name>overrideAndReplaceExtensionBundle</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <!--				  
+		  org.eclipse.equinox.servletbridge and the Servlet API are exported automatically to the underlying OSGi framework.
+		  The extendedFrameworkExports parameter allows the specification of additional java package exports.
+		  The format is a comma separated list of exports as specified by the "Export-Package" bundle manifest header.
+		  For example: com.mycompany.exports; version=1.0.0, com.mycompany.otherexports; version=1.0.0
+		  
+		  NOTE: This property is ignored by default and is only processed if overrideAndReplaceExtensionBundle is true.
+		-->
+        <init-param>
+            <param-name>extendedFrameworkExports</param-name>
+            <param-value>com.ibm.websphere.ssl.protocol</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>equinoxbridgeservlet</servlet-name>
+        <url-pattern>/*</url-pattern>
+    </servlet-mapping>
+    <security-constraint>
+        <display-name>Example Security Constraint</display-name>
+        <web-resource-collection>
+         <web-resource-name>Protected Area</web-resource-name>
+         <!-- Define the context-relative URL(s) to be protected -->
+         <url-pattern>/*</url-pattern>
+         <!-- If you list http methods, only those methods are protected -->
+        </web-resource-collection>
+        <auth-constraint>
+            <!-- Anyone with one of the listed roles may access this area -->
+            <role-name>orion</role-name>
+        </auth-constraint>
+    </security-constraint>
+    <!-- Default login configuration uses form-based authentication -->
+    <login-config>
+        <auth-method>BASIC</auth-method>
+    </login-config>
+    <!-- Security roles referenced by this web application -->
+    <security-role>
+        <role-name>orion</role-name>
+    </security-role>
+</web-app>

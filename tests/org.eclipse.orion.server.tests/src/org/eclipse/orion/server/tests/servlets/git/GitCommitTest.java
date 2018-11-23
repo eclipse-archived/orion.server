@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,14 +16,12 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Commit;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -39,9 +37,9 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitOnly() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject gitSection = project.getJSONObject(GitConstants.KEY_GIT);
@@ -74,9 +72,9 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitNoComment() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -95,9 +93,9 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitEmptyComment() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -116,9 +114,9 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitAll() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -151,9 +149,9 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitAmend() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -188,9 +186,9 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitHeadContent() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -223,21 +221,15 @@ public class GitCommitTest extends GitTest {
 	@Test
 	public void testCommitAllInFolder() throws Exception {
 		// see bug 349480
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject cloneFolder = new JSONObject(response.getText());
@@ -253,7 +245,6 @@ public class GitCommitTest extends GitTest {
 			// drill down to 'folder'
 			JSONObject folderGitSection = folder.getJSONObject(GitConstants.KEY_GIT);
 			String folderGitStatusUri = folderGitSection.getString(GitConstants.KEY_STATUS);
-			String folderGitCloneUri = folderGitSection.getString(GitConstants.KEY_CLONE);
 
 			JSONObject folder2Txt = getChild(folder, "folder2.txt");
 			JSONObject folderTxt = getChild(folder, "folder.txt");
@@ -310,7 +301,8 @@ public class GitCommitTest extends GitTest {
 
 			JSONObject commit = commitsArray.getJSONObject(0);
 			assertEquals("test.txt and folder/folder.txt changed", commit.get(GitConstants.KEY_COMMIT_MESSAGE));
-			JSONArray diffs = commit.getJSONArray(GitConstants.KEY_COMMIT_DIFFS);
+			JSONObject diffsParent = commit.getJSONObject(GitConstants.KEY_COMMIT_DIFFS);
+			JSONArray diffs = diffsParent.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			assertEquals(2, diffs.length());
 			String oldPath = diffs.getJSONObject(0).getString(GitConstants.KEY_COMMIT_DIFF_OLDPATH);
 			assertTrue("folder/folder.txt".equals(oldPath) || "test.txt".equals(oldPath));
@@ -321,21 +313,15 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitWithCommiterOverwritten() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -369,21 +355,15 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitWithAuthorOverwritten() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -417,21 +397,15 @@ public class GitCommitTest extends GitTest {
 
 	@Test
 	public void testCommitterAndAuthorFallback() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
 			String contentLocation = clone(clonePath).getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
 			// get project metadata
-			WebRequest request = getGetFilesRequest(contentLocation);
+			WebRequest request = getGetRequest(contentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -448,20 +422,20 @@ public class GitCommitTest extends GitTest {
 			final String defaultEmail = "default email";
 			request = GitConfigTest.getPostGitConfigRequest(gitConfigUri, "user.name", defaultName);
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+			assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 			request = GitConfigTest.getPostGitConfigRequest(gitConfigUri, "user.email", defaultEmail);
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
+			assertEquals(response.getText(), HttpURLConnection.HTTP_CREATED, response.getResponseCode());
 
 			// "git add ."
 			request = GitAddTest.getPutGitIndexRequest(gitIndexUri);
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// commit - author and committer not specified
 			request = getPostGitCommitRequest(gitHeadUri, "1", false, null, null, null, null);
 			response = webConversation.getResponse(request);
-			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+			assertEquals(response.getText(), HttpURLConnection.HTTP_OK, response.getResponseCode());
 
 			// log - expect default values
 			JSONArray commitsArray = log(gitHeadUri);
@@ -506,14 +480,7 @@ public class GitCommitTest extends GitTest {
 	}
 
 	static WebRequest getPostGitCommitRequest(String location, String message, boolean amend, String committerName, String committerEmail, String authorName, String authorEmail) throws JSONException, UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + location;
-
+		String requestURI = toAbsoluteURI(location);
 		JSONObject body = new JSONObject();
 		body.put(GitConstants.KEY_COMMIT_MESSAGE, message);
 		body.put(GitConstants.KEY_COMMIT_AMEND, Boolean.toString(amend));
@@ -536,13 +503,7 @@ public class GitCommitTest extends GitTest {
 	}
 
 	static WebRequest getGetGitCommitRequest(String location, boolean body, Integer page, Integer pageSize) {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Commit.RESOURCE + '/' + location;
+		String requestURI = toAbsoluteURI(location);
 		boolean firstParam = true;
 		if (body) {
 			if (firstParam) {

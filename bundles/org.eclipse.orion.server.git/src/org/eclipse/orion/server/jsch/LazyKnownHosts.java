@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,13 +10,20 @@
  *******************************************************************************/
 package org.eclipse.orion.server.jsch;
 
-import com.jcraft.jsch.*;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+import com.jcraft.jsch.HostKey;
+import com.jcraft.jsch.HostKeyRepository;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.UserInfo;
 
 /**
- * Use this repository instead of standard {@link HostKeyRepository} to record the last checked host fingerprint.
- * If the last status recorded as {@link #lastStatus}, if check in the repository is different than {@link HostKeyRepository#OK}
- * the host and its key are recorded as {@link #lastUnknownHost} and {@link #lastUnknownKey}.
+ * Use this repository instead of standard {@link HostKeyRepository} to record the last checked host fingerprint. If the last status recorded as
+ * {@link #lastStatus}, if check in the repository is different than {@link HostKeyRepository#OK} the host and its key are recorded as {@link #lastUnknownHost}
+ * and {@link #lastUnknownKey}.
  *
  */
 public class LazyKnownHosts implements HostKeyRepository {
@@ -30,7 +37,7 @@ public class LazyKnownHosts implements HostKeyRepository {
 	LazyKnownHosts(JSch jsch, String knownHosts) throws JSchException {
 		if (knownHosts != null) {
 			try {
-				final InputStream in = new StringBufferInputStream(knownHosts);
+				final InputStream in = new ByteArrayInputStream(knownHosts.getBytes("UTF8"));
 				try {
 					jsch.setKnownHosts(in);
 				} finally {

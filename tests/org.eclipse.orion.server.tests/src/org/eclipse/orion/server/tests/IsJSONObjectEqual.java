@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,10 +15,10 @@ import java.util.Iterator;
 import org.hamcrest.Description;
 import org.hamcrest.Factory;
 import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeMatcher;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.internal.matchers.TypeSafeMatcher;
 
 public class IsJSONObjectEqual extends TypeSafeMatcher<JSONObject> {
 
@@ -57,6 +57,16 @@ public class IsJSONObjectEqual extends TypeSafeMatcher<JSONObject> {
 						Long l1 = (Long) v1;
 						Long l2 = (Long) v2;
 						if (!l1.equals(l2))
+							return false;
+					} else if (v1 instanceof Integer && v2 instanceof Integer) {
+						Integer l1 = (Integer) v1;
+						Integer l2 = (Integer) v2;
+						if (!l1.equals(l2))
+							return false;
+					} else if (v1 instanceof JSONObject && v2 instanceof JSONObject) {
+						JSONObject jv1 = (JSONObject) v1;
+						JSONObject jv2 = (JSONObject) v2;
+						if (!new IsJSONObjectEqual(jv1).matchesSafely(jv2))
 							return false;
 					} else {
 						return false;

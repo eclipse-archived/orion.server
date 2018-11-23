@@ -13,17 +13,29 @@ package org.eclipse.orion.server.servlets;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.Collections;
+
 import javax.servlet.ServletException;
-import javax.servlet.http.*;
-import org.eclipse.core.runtime.*;
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-import org.eclipse.orion.internal.server.servlets.*;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.orion.internal.server.servlets.Activator;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.ServletStatusHandler;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.IWebResourceDecorator;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.json.*;
+import org.eclipse.orion.server.core.tasks.IURIUnqualificationStrategy;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -53,15 +65,20 @@ public abstract class OrionServlet extends HttpServlet {
 		writeJSONResponse(req, resp, result, JsonURIUnqualificationStrategy.ALL);
 	}
 
-	public static void writeJSONResponse(HttpServletRequest req, HttpServletResponse resp, Object result, JsonURIUnqualificationStrategy strategy) throws IOException {
+	public static void writeJSONResponse(HttpServletRequest req, HttpServletResponse resp, Object result, IURIUnqualificationStrategy strategy) throws IOException {
 		Assert.isLegal(result instanceof JSONObject || result instanceof JSONArray);
-		resp.setCharacterEncoding("UTF-8");
+		resp.setCharacterEncoding("UTF-8"); //$NON-NLS-1$
 		resp.setStatus(HttpServletResponse.SC_OK);
 		resp.setHeader("Cache-Control", "no-cache"); //$NON-NLS-1$ //$NON-NLS-2$
 		resp.setHeader("Cache-Control", "no-store"); //$NON-NLS-1$ //$NON-NLS-2$
 		if (result instanceof JSONObject) {
-			decorateResponse(req, (JSONObject) result, strategy);
+			decorateResponse(req, (JSONObject) result);
 		}
+		if (strategy == null) {
+			strategy = JsonURIUnqualificationStrategy.ALL;
+		}
+		strategy.run(req, result);
+
 		//TODO look at accept header and chose appropriate response representation
 		resp.setContentType(ProtocolConstants.CONTENT_TYPE_JSON);
 		String response = prettyPrint(result);
@@ -75,12 +92,13 @@ public abstract class OrionServlet extends HttpServlet {
 	 * @param result
 	 * @param strategy
 	 */
-	public static void decorateResponse(HttpServletRequest req, JSONObject result, JsonURIUnqualificationStrategy strategy) {
+	public static void decorateResponse(HttpServletRequest req, JSONObject result, IURIUnqualificationStrategy strategy) {
 		decorateResponse(req, result);
-		if ("XMLHttpRequest".equals(req.getHeader("X-Requested-With"))) { //$NON-NLS-1$ //$NON-NLS-2$
-			// In JSON that is sent to in-Browser clients, remove scheme/userInfo/port information from URLs.
-			strategy.run(req, result);
-		}
+		strategy.run(req, result);
+		//if ("XMLHttpRequest".equals(req.getHeader("X-Requested-With"))) { //$NON-NLS-1$ //$NON-NLS-2$
+		// In JSON that is sent to in-Browser clients, remove scheme/userInfo/port information from URLs.
+		//strategy.run(req, result);
+		//}
 	}
 
 	/**
@@ -96,25 +114,18 @@ public abstract class OrionServlet extends HttpServlet {
 
 	/**
 	 * Returns the JSON object that is serialized in the request stream. Returns an
-	 * empty JSON object if the request body is empty.
+	 * empty JSON object if the request body is empty. Never returns null.
 	 */
 	public static JSONObject readJSONRequest(HttpServletRequest request) throws IOException, JSONException {
-		StringWriter writer = new StringWriter();
-		IOUtilities.pipe(request.getReader(), writer, false, false);
-		String resultString = writer.toString();
-		if (resultString.length() == 0)
-			return new JSONObject();
-		return new JSONObject(resultString);
-	}
-
-	/**
-	 * Creates a URI using the base URL of the request, but with the provided
-	 * query string as a suffix.
-	 */
-	protected String createQuery(HttpServletRequest req, String query) {
-		StringBuffer requestURL = req.getRequestURL();
-		int indexOfURI = requestURL.indexOf(req.getRequestURI().toString());
-		return requestURL.replace(indexOfURI, requestURL.length(), query).toString();
+		JSONObject jsonRequest = (JSONObject) request.getAttribute("JSONRequest");
+		if (jsonRequest == null) {
+			StringWriter writer = new StringWriter();
+			IOUtilities.pipe(request.getReader(), writer, false, false);
+			String resultString = writer.toString();
+			jsonRequest = (resultString.length() == 0) ? new JSONObject() : new JSONObject(resultString);
+			request.setAttribute("JSONRequest", jsonRequest);
+		}
+		return jsonRequest;
 	}
 
 	protected ServletResourceHandler<IStatus> getStatusHandler() {
@@ -149,7 +160,6 @@ public abstract class OrionServlet extends HttpServlet {
 		handleException(resp, new Status(IStatus.ERROR, Activator.PI_SERVER_SERVLETS, msg, e), httpCode);
 	}
 
-	@SuppressWarnings("unchecked")
 	protected void printHeaders(HttpServletRequest req, StringBuffer out) {
 		for (String header : Collections.<String> list(req.getHeaderNames()))
 			out.append(header + ": " + req.getHeader(header) + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -168,18 +178,5 @@ public abstract class OrionServlet extends HttpServlet {
 		if (DEBUG_VEBOSE)
 			printHeaders(req, result);
 		LoggerFactory.getLogger(OrionServlet.class).debug(result.toString());
-	}
-
-	/**
-	 * Convenience method to obtain the URI of the request
-	 */
-	public static URI getURI(HttpServletRequest request) {
-		StringBuffer result = request.getRequestURL();
-		try {
-			return new URI(result.toString());
-		} catch (URISyntaxException e) {
-			//location not properly encoded
-			return null;
-		}
 	}
 }

@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Jetty9 Websocket
+Bundle-SymbolicName: org.eclipse.jetty9.websocket
+Bundle-Version: 1.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ClassPath: jetty9/javax-websocket-client-impl-9.1.0.v20131115.jar,
+ jetty9/javax.websocket-api-1.0.jar,
+ jetty9/jetty-io-9.1.0.v20131115.jar,
+ jetty9/jetty-util-9.1.0.v20131115.jar,
+ jetty9/websocket-api-9.1.0.v20131115.jar,
+ jetty9/websocket-client-9.1.0.v20131115.jar,
+ jetty9/websocket-common-9.1.0.v20131115.jar,
+ jetty9/websocket-servlet-9.1.0.v20131115.jar,
+ .
+Export-Package: org.eclipse.jetty.util.component,
+ org.eclipse.jetty.util.ssl,
+ org.eclipse.jetty.websocket.api,
+ org.eclipse.jetty.websocket.api.annotations,
+ org.eclipse.jetty.websocket.api.extensions,
+ org.eclipse.jetty.websocket.client

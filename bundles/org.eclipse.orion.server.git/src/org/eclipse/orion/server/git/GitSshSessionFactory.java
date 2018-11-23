@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others 
+ * Copyright (c) 2011, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,11 +10,18 @@
  *******************************************************************************/
 package org.eclipse.orion.server.git;
 
-import com.jcraft.jsch.JSchException;
 import org.eclipse.jgit.errors.TransportException;
-import org.eclipse.jgit.transport.*;
+import org.eclipse.jgit.transport.CredentialItem;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.CredentialsProviderUserInfo;
+import org.eclipse.jgit.transport.JschSession;
+import org.eclipse.jgit.transport.RemoteSession;
+import org.eclipse.jgit.transport.SshSessionFactory;
+import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.orion.server.jsch.SessionHandler;
+
+import com.jcraft.jsch.JSchException;
 
 public class GitSshSessionFactory extends SshSessionFactory {
 
@@ -44,10 +51,11 @@ public class GitSshSessionFactory extends SshSessionFactory {
 			}
 
 			try {
-				final SessionHandler session = new SessionHandler(user, uri.getHost(), port, cp.getKnownHosts(), cp.getPrivateKey(), cp.getPublicKey(), cp.getPassphrase());
+				final SessionHandler session = new SessionHandler(user, uri.getHost(), port, cp.getKnownHosts(), cp.getPrivateKey(), cp.getPublicKey(),
+						cp.getPassphrase());
 				if (pass != null)
 					session.setPassword(pass);
-				if (credentialsProvider != null && !credentialsProvider.isInteractive()) {
+				if (!credentialsProvider.isInteractive()) {
 					session.setUserInfo(new CredentialsProviderUserInfo(session.getSession(), credentialsProvider));
 				}
 

@@ -2,11 +2,9 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension
-         id="preferences"
          point="org.eclipse.equinox.preferences.preferences">
-      <scope
-            class="org.eclipse.orion.server.core.users.OrionPreferencesLocal"
-            name="eclipseweb">
-      </scope>
+      <initializer
+            class="org.eclipse.orion.internal.server.core.OrionPreferenceInitializer">
+      </initializer>
    </extension>
 </plugin>

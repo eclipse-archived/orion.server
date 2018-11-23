@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -27,6 +27,10 @@ public class GitConstants {
 
 	public static final String KEY_INDEX = "IndexLocation"; //$NON-NLS-1$
 
+	public static final String KEY_IGNORE = "IgnoreLocation"; //$NON-NLS-1$
+
+	public static final String KEY_STASH = "StashLocation"; //$NON-NLS-1$
+
 	public static final String KEY_COMMIT = "CommitLocation"; //$NON-NLS-1$
 
 	public static final String KEY_REMOTE = "RemoteLocation"; //$NON-NLS-1$
@@ -47,9 +51,13 @@ public class GitConstants {
 
 	public static final String KEY_BRANCH = "BranchLocation"; //$NON-NLS-1$
 
+	public static final String KEY_TREE = "TreeLocation"; //$NON-NLS-1$
+
 	public static final String KEY_URL = "GitUrl"; //$NON-NLS-1$
 
 	public static final String KEY_PUSH_URL = "PushUrl"; //$NON-NLS-1$
+
+	public static final String KEY_IS_GERRIT = "IsGerrit"; //$NON-NLS-1$
 
 	public static final String KEY_USERNAME = "GitSshUsername"; //$NON-NLS-1$
 
@@ -141,17 +149,23 @@ public class GitConstants {
 
 	public static final String KEY_COMMITTER_EMAIL = "CommitterEmail"; //$NON-NLS-1$
 
+	public static final String KEY_CHANGE_ID = "ChangeId"; //$NON-NLS-1$
+
 	public static final String KEY_FETCH = "Fetch"; //$NON-NLS-1$
 
 	public static final String KEY_PULL = "Pull"; //$NON-NLS-1$
 
 	public static final String KEY_MERGE = "Merge"; //$NON-NLS-1$
 
+	public static final String KEY_SQUASH = "Squash"; //$NON-NLS-1$
+
 	public static final String KEY_REBASE = "Rebase"; //$NON-NLS-1$
 
 	public static final String KEY_OPERATION = "Operation"; //$NON-NLS-1$
 
 	public static final String KEY_CHERRY_PICK = "Cherry-Pick"; //$NON-NLS-1$
+
+	public static final String KEY_REVERT = "Revert"; //$NON-NLS-1$
 
 	public static final String KEY_PUSH_SRC_REF = "PushSrcRef"; //$NON-NLS-1$
 
@@ -172,4 +186,50 @@ public class GitConstants {
 	public static final String KEY_TAG_COMMITS = "commits"; //$NON-NLS-1$
 
 	public static final String KEY_TAG_TYPE = "TagType"; //$NON-NLS-1$
+
+	public static final String KEY_REVIEW_REQ_URL = "ReviewReqUrl"; //$NON-NLS-1$
+
+	public static final String KEY_REVIEW_REQ_NOTIFY_LOGIN = "ReviewReqNotifyLogin"; //$NON-NLS-1$
+
+	public static final String KEY_REVIEW_REQ_COMMIT = "ReviewReqCommit"; //$NON-NLS-1$
+
+	public static final String KEY_REVIEW_REQ_AUTHOR_NAME = "ReviewReqAuthorName"; //$NON-NLS-1$
+
+	public static final String KEY_REVIEW_REQ_MESSAGE = "ReviewMessage"; //$NON-NLS-1$
+
+	public static final String KEY_BLAME = "BlameLocation"; //$NON-NLS-1$
+
+	public static final String KEY_START_RANGE = "Start"; //$NON-NLS-1$
+
+	public static final String KEY_END_RANGE = "End"; //$NON-NLS-1$
+
+	public static final String KEY_INIT_PROJECT = "initProject"; //$NON-NLS-1$
+
+	public static final String KEY_SSO_TOKEN = "SSOToken"; //$NON-NLS-1$
+
+	public static final String KEY_COOKIE = "Cookie"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_APPLY_INDEX = "ApplyIndex"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_APPLY_UNTRACKED = "ApplyUntracked"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_INDEX_MESSAGE = "IndexMessage"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_WORKING_DIRECTORY_MESSAGE = "WorkingDirectoryMessage"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_INCLUDE_UNTRACKED = "IncludeUntracked"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_APPLY_LOCATION = "ApplyLocation"; //$NON-NLS-1$
+
+	public static final String KEY_STASH_DROP_LOCATION = "DropLocation"; //$NON-NLS-1$
+
+	public static final String KEY_BEHIND_COUNT = "BehindCount"; //$NON-NLS-1$
+
+	public static final String KEY_AHEAD_COUNT = "AheadCount"; //$NON-NLS-1$
+
+	public static final String KEY_UPDATES = "Updates"; //$NON-NLS-1$
+
+	public static final String KEY_REMOTENAME = "RemoteName"; //$NON-NLS-1$
+
+	public static final String KEY_LOCALNAME = "LocalName"; //$NON-NLS-1$
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 IBM Corporation and others.
+ * Copyright (c) 2012, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,14 +10,30 @@
  *******************************************************************************/
 package org.eclipse.orion.server.useradmin;
 
-import java.io.*;
-import java.net.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Properties;
-import javax.mail.*;
+
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import javax.servlet.http.HttpServletRequest;
+
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.orion.server.core.PreferenceHelper;
 import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.metastore.UserInfo;
+import org.eclipse.orion.server.core.users.UserConstants2;
 
 /**
  * Handles sending emails to users
@@ -26,12 +42,18 @@ import org.eclipse.orion.server.core.ServerConstants;
 public class UserEmailUtil {
 
 	private static UserEmailUtil util = null;
+	/**
+	 * The name of the servlet handling email configuration.
+	 */
+	private static final String PATH_EMAIL_CONFIRMATION = "useremailconfirmation"; //$NON-NLS-1$
+
 	private static final String EMAIL_CONFIRMATION_FILE = "/emails/EmailConfirmation.txt"; //$NON-NLS-1$
 	private static final String EMAIL_CONFIRMATION_RESET_PASS_FILE = "/emails/EmailConfirmationPasswordReset.txt"; //$NON-NLS-1$
 	private static final String EMAIL_PASSWORD_RESET = "/emails/PasswordReset.txt"; //$NON-NLS-1$
 	private static final String EMAIL_URL_LINK = "<URL>"; //$NON-NLS-1$
 	private static final String EMAIL_USER_LINK = "<USER>"; //$NON-NLS-1$
 	private static final String EMAIL_PASSWORD_LINK = "<PASSWORD>"; //$NON-NLS-1$
+	private static final String EMAIL_ADDRESS_LINK = "<EMAIL>"; //$NON-NLS-1$
 	private Properties properties;
 	private EmailContent confirmationEmail;
 	private EmailContent confirmationResetPassEmail;
@@ -68,12 +90,11 @@ public class UserEmailUtil {
 				reader.close();
 			}
 		}
-
 	};
 
 	public UserEmailUtil() {
 		properties = System.getProperties();
-		properties.put("mail.smtp.starttls.enable", "true");
+		properties.put("mail.smtp.starttls.enable", PreferenceHelper.getString(ServerConstants.CONFIG_MAIL_SMTP_STARTTLS, "true"));
 
 		if (PreferenceHelper.getString(ServerConstants.CONFIG_MAIL_SMTP_HOST, null) != null)
 			properties.put("mail.smtp.host", PreferenceHelper.getString(ServerConstants.CONFIG_MAIL_SMTP_HOST, null));
@@ -88,6 +109,8 @@ public class UserEmailUtil {
 			properties.put("mail.smtp.password", PreferenceHelper.getString("mail.smtp.password", null));
 
 		properties.put("mail.smtp.auth", PreferenceHelper.getString("mail.smtp.auth", "false"));
+		
+		properties.put("mail.debug", PreferenceHelper.getString("mail.debug", "false"));
 	}
 
 	public static UserEmailUtil getUtil() {
@@ -101,48 +124,60 @@ public class UserEmailUtil {
 		return PreferenceHelper.getString("mail.from", null) != null;
 	}
 
-	private void sendEmail(String subject, String messageText, String emailAddress) throws URISyntaxException, IOException, MessagingException {
+	public void sendEmail(String subject, String messageText, String emailAddress) throws URISyntaxException, IOException, CoreException {
 		Session session = Session.getInstance(properties, null);
-		InternetAddress from = new InternetAddress(PreferenceHelper.getString("mail.from", "OrionAdmin"));
-		InternetAddress to = new InternetAddress(emailAddress);
+		InternetAddress from;
+		try {
+			from = new InternetAddress(PreferenceHelper.getString("mail.from", "OrionAdmin"));
 
-		MimeMessage message = new MimeMessage(session);
-		message.setFrom(from);
-		message.addRecipient(Message.RecipientType.TO, to);
+			InternetAddress to = new InternetAddress(emailAddress);
 
-		message.setSubject(subject);
-		message.setText(messageText);
+			MimeMessage message = new MimeMessage(session);
+			message.setFrom(from);
+			message.addRecipient(Message.RecipientType.TO, to);
 
-		Transport transport = session.getTransport("smtp");
-		transport.connect(properties.getProperty("mail.smtp.host", null), properties.getProperty("mail.smtp.user", null), properties.getProperty("mail.smtp.password", null));
-		transport.sendMessage(message, message.getAllRecipients());
-		transport.close();
+			message.setSubject(subject);
+			message.setText(messageText);
+
+			Transport transport = session.getTransport("smtp");
+			transport.connect(properties.getProperty("mail.smtp.host", null), properties.getProperty("mail.smtp.user", null), properties.getProperty("mail.smtp.password", null));
+			transport.sendMessage(message, message.getAllRecipients());
+			transport.close();
+		} catch (AddressException e) {
+			throw new CoreException(new Status(IStatus.ERROR, UserAdminActivator.PI_USERADMIN, e.getMessage(), e));
+		} catch (MessagingException e) {
+			throw new CoreException(new Status(IStatus.ERROR, UserAdminActivator.PI_USERADMIN, e.getMessage(), e));
+		}
 	}
 
-	public void sendEmailConfirmation(URI baseURI, User user) throws URISyntaxException, IOException, MessagingException {
+	public void sendEmailConfirmation(HttpServletRequest req, UserInfo userInfo) throws URISyntaxException, IOException, CoreException {
+		URL confirmLocation = new URL(req.getScheme(),
+                req.getServerName(),
+                req.getServerPort(),
+                "/" + PATH_EMAIL_CONFIRMATION);
 		if (confirmationEmail == null) {
 			confirmationEmail = new EmailContent(EMAIL_CONFIRMATION_FILE);
 		}
-		String confirmURL = baseURI.toURL().toString();
-		confirmURL += "/" + user.getUid();
-		confirmURL += "?" + UserConstants.KEY_CONFIRMATION_ID + "=" + user.getConfirmationId();
-		sendEmail(confirmationEmail.getTitle(), confirmationEmail.getContent().replaceAll(EMAIL_USER_LINK, user.getLogin()).replaceAll(EMAIL_URL_LINK, confirmURL), user.getEmail());
+		String confirmURL = confirmLocation.toString();
+		confirmURL += "/" + userInfo.getUniqueId();
+		confirmURL += "?" + UserConstants.KEY_CONFIRMATION_ID + "=" + userInfo.getProperty(UserConstants2.EMAIL_CONFIRMATION_ID);
+		sendEmail(confirmationEmail.getTitle(), confirmationEmail.getContent().replaceAll(EMAIL_USER_LINK, userInfo.getUniqueId()).replaceAll(EMAIL_URL_LINK, confirmURL).replaceAll(EMAIL_ADDRESS_LINK, userInfo.getProperty(UserConstants2.EMAIL)), userInfo.getProperty(UserConstants2.EMAIL));
 	}
 
-	public void sendResetPasswordConfirmation(URI baseURI, User user) throws URISyntaxException, IOException, MessagingException {
+	public void sendResetPasswordConfirmation(URI baseURI, UserInfo userInfo) throws URISyntaxException, IOException, CoreException {
 		if (confirmationResetPassEmail == null) {
 			confirmationResetPassEmail = new EmailContent(EMAIL_CONFIRMATION_RESET_PASS_FILE);
 		}
 		String confirmURL = baseURI.toURL().toString();
-		confirmURL += "/" + user.getUid();
-		confirmURL += "?" + UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID + "=" + user.getProperty(UserConstants.KEY_PASSWORD_RESET_CONFIRMATION_ID);
-		sendEmail(confirmationResetPassEmail.getTitle(), confirmationResetPassEmail.getContent().replaceAll(EMAIL_URL_LINK, confirmURL).replaceAll(EMAIL_USER_LINK, user.getLogin()), user.getEmail());
+		confirmURL += "/" + userInfo.getUniqueId();
+		confirmURL += "?" + UserConstants2.PASSWORD_RESET_ID + "=" + userInfo.getProperty(UserConstants2.PASSWORD_RESET_ID);
+		sendEmail(confirmationResetPassEmail.getTitle(), confirmationResetPassEmail.getContent().replaceAll(EMAIL_URL_LINK, confirmURL).replaceAll(EMAIL_USER_LINK, userInfo.getUniqueId()), userInfo.getProperty(UserConstants2.EMAIL));
 	}
 
-	public void setPasswordResetEmail(User user) throws URISyntaxException, IOException, MessagingException {
+	public void setPasswordResetEmail(UserInfo userInfo) throws URISyntaxException, IOException, CoreException {
 		if (passwordResetEmail == null) {
 			passwordResetEmail = new EmailContent(EMAIL_PASSWORD_RESET);
 		}
-		sendEmail(passwordResetEmail.getTitle(), passwordResetEmail.getContent().replaceAll(EMAIL_USER_LINK, user.getLogin()).replaceAll(EMAIL_PASSWORD_LINK, user.getPassword()), user.getEmail());
+		sendEmail(passwordResetEmail.getTitle(), passwordResetEmail.getContent().replaceAll(EMAIL_USER_LINK, userInfo.getUniqueId()).replaceAll(EMAIL_PASSWORD_LINK, userInfo.getProperty(UserConstants2.PASSWORD)), userInfo.getProperty(UserConstants2.EMAIL));
 	}
 }

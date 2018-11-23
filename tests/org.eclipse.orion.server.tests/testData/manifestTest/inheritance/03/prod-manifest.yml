@@ -1,0 +1,6 @@
+---
+inherit: ./base-manifest.yml
+applications:
+ - name: A
+   memory: 512M
+   instances: 2

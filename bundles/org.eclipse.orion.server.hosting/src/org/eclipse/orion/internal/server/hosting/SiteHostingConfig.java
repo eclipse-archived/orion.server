@@ -66,7 +66,7 @@ public class SiteHostingConfig {
 	 * @return A hosting configuration parsed from <code>hostInfo</code>. If <code>vhostInfo</code>
 	 * is <code>null</code>, returns a default configuration.
 	 */
-	static SiteHostingConfig getSiteHostingConfig(String hostInfo) {
+	public static SiteHostingConfig getSiteHostingConfig(String hostInfo) {
 		return hostInfo == null ? getDefault() : fromString(hostInfo);
 	}
 

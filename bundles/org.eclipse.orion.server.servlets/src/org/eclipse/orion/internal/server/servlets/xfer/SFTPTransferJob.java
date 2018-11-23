@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2012 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -49,6 +49,7 @@ public abstract class SFTPTransferJob extends Job {
 		this.passphrase = passphrase;
 		this.options = options;
 		this.task = createTask(userRunningTask, false);
+		task.setLengthComputable(true);
 	}
 
 	private void cleanUp() {
@@ -59,9 +60,8 @@ public abstract class SFTPTransferJob extends Job {
 		}
 	}
 
-	protected TaskInfo createTask(String userId, boolean isIdempotent) {
-		TaskInfo info = getTaskService().createTask(NLS.bind("Secure transfer to {0}", host), userId, isIdempotent);
-		info.setMessage(NLS.bind("Connecting to {0}...", host));
+	protected TaskInfo createTask(String userId, boolean keep) {
+		TaskInfo info = getTaskService().createTask(userId, keep);
 		getTaskService().updateTask(info);
 		return info;
 	}
@@ -96,7 +96,9 @@ public abstract class SFTPTransferJob extends Job {
 			IStatus result = null;
 			try {
 				Session session = jsch.getSession(user, host, port);
-				session.setUserInfo(new SFTPUserInfo(passphrase, passphrase));
+				session.setPassword(passphrase);
+				//don't require host key to be in orion server's known hosts file
+				session.setConfig("StrictHostKeyChecking", "no"); //$NON-NLS-1$ //$NON-NLS-2$
 				session.connect();
 				try {
 					ChannelSftp channel = (ChannelSftp) session.openChannel("sftp"); //$NON-NLS-1$
@@ -127,8 +129,13 @@ public abstract class SFTPTransferJob extends Job {
 		}
 	}
 
-	protected void setTaskMessage(String message) {
-		task.setMessage(message);
+	protected void taskItemLoaded() {
+		task.setLoaded(task.getLoaded() + 1);
+		getTaskService().updateTask(task);
+	}
+
+	protected void addTaskTotal(int total) {
+		task.setTotal(task.getTotal() + total);
 		getTaskService().updateTask(task);
 	}
 

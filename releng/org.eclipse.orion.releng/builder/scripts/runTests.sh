@@ -83,8 +83,7 @@ mkdir $testDir
 fi
 
 browsers=(\
-        firefox-11.0/firefox,firefox-11.0/firefox-bin \
-        chrome-12.0.742.60/google-chrome,chrome-12.0.742.60/chrome)
+       firefox-23.0.1/firefox,firefox-23.0.1/firefox-bin)
 
 export DISPLAY=:63		# set display to use that of the xvfb
 
@@ -97,7 +96,7 @@ for entry in ${browsers[@]}; do
 	browser=( $entry )	
 	IFS="$OLD_IFS"
 	
-	echo Running $testConf on port $port
+	echo Running $testConf on port $port with browser ${browser[0]}
 	$java -Dbrowser.timeout=120 -jar $testDir/../JsTestDriver.jar --config $testConf --port $port --browser /shared/common/${browser[0]} --tests all --testOutput $testDir
 	killBrowser "${browser[1]}"
 done

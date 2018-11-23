@@ -12,12 +12,14 @@ package org.eclipse.orion.internal.server.servlets.xfer;
 
 import com.jcraft.jsch.*;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
+
 import java.io.*;
 import java.util.List;
 import java.util.Vector;
+
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.osgi.util.NLS;
 
 /**
@@ -30,23 +32,26 @@ public class SFTPImportJob extends SFTPTransferJob {
 	}
 
 	protected void doTransferDirectory(ChannelSftp channel, IPath remotePath, SftpATTRS remoteAttributes, File localFile) throws SftpException, IOException {
-		setTaskMessage(NLS.bind("Importing {0}...", host + remotePath.toString()));
 		//create the local folder on import
 		localFile.mkdirs();
 		@SuppressWarnings("unchecked")
 		Vector<LsEntry> remoteChildren = channel.ls(remotePath.toString());
+		addTaskTotal(remoteChildren.size());
 
 		//visit remote children
 		for (LsEntry remoteChild : remoteChildren) {
 			String childName = remoteChild.getFilename();
-			if (shouldSkip(childName))
+			if (shouldSkip(childName)) {
+				taskItemLoaded();
 				continue;
+			}
 			File localChild = new File(localFile, childName);
 			if (remoteChild.getAttrs().isDir()) {
 				doTransferDirectory(channel, remotePath.append(childName), remoteChild.getAttrs(), localChild);
 			} else {
 				doTransferFile(channel, remotePath.append(childName), remoteChild.getAttrs(), localChild);
 			}
+			taskItemLoaded();
 		}
 		synchronizeTimestamp(remoteAttributes, localFile);
 	}

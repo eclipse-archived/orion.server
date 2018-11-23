@@ -12,19 +12,24 @@ package org.eclipse.orion.server.servlets;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import javax.servlet.http.HttpServletRequest;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.json.*;
+
+import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.tasks.IURIUnqualificationStrategy;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Controls which URLs found in JSON API response bodies will be "unqualified" (rewritten to remove the hostname 
  * and port of this server).
  */
-public abstract class JsonURIUnqualificationStrategy {
+public abstract class JsonURIUnqualificationStrategy implements IURIUnqualificationStrategy {
 	/**
 	 * A strategy that unqualifies all URLs in the JSON body.
 	 */
-	public static final JsonURIUnqualificationStrategy ALL = new JsonURIUnqualificationStrategy() {
+	public static final IURIUnqualificationStrategy ALL = new JsonURIUnqualificationStrategy() {
 		@Override
 		protected URI unqualifyObjectProperty(String key, URI uri, String scheme, String hostname, int port) {
 			return unqualifyURI(uri, scheme, hostname, port);
@@ -34,11 +39,15 @@ public abstract class JsonURIUnqualificationStrategy {
 		protected URI unqualifyArrayValue(int index, URI uri, String scheme, String hostname, int port) {
 			return unqualifyURI(uri, scheme, hostname, port);
 		}
+
+		public String getName() {
+			return "ALL";
+		}
 	};
 	/**
 	 * A strategy that unqualifies only the URLs that are values of a "Location" key in JSON objects.
 	 */
-	public static final JsonURIUnqualificationStrategy LOCATION_ONLY = new JsonURIUnqualificationStrategy() {
+	public static final IURIUnqualificationStrategy LOCATION_ONLY = new JsonURIUnqualificationStrategy() {
 		@Override
 		protected URI unqualifyObjectProperty(String key, URI uri, String scheme, String hostname, int port) {
 			if (!ProtocolConstants.KEY_LOCATION.equals(key))
@@ -51,13 +60,42 @@ public abstract class JsonURIUnqualificationStrategy {
 		protected URI unqualifyArrayValue(int index, URI uri, String scheme, String hostname, int port) {
 			return uri;
 		}
+
+		public String getName() {
+			return "LOCATION_ONLY";
+		}
+	};
+	/**
+	 * A strategy that unqualifies all URLs but doesn't alter URLS that are values of a "GitUrl" key in JSON objects.
+	 */
+	public static final IURIUnqualificationStrategy ALL_NO_GIT = new JsonURIUnqualificationStrategy() {
+		@Override
+		protected URI unqualifyObjectProperty(String key, URI uri, String scheme, String hostname, int port) {
+			//need to make this real constant
+			if ("GitUrl".equals(key))
+				return uri;
+			else
+				return unqualifyURI(uri, scheme, hostname, port);
+		}
+
+		@Override
+		protected URI unqualifyArrayValue(int index, URI uri, String scheme, String hostname, int port) {
+			return uri;
+		}
+
+		public String getName() {
+			return "ALL_NO_GIT";
+		}
 	};
 
-	public void run(HttpServletRequest req, JSONObject result) {
-		rewrite(result, req.getScheme(), req.getServerName(), req.getServerPort());
+	/* (non-Javadoc)
+	 * @see org.eclipse.orion.server.servlets.IURIUnqualificationStrategy#run(javax.servlet.http.HttpServletRequest, java.lang.Object)
+	 */
+	public void run(HttpServletRequest req, Object result) {
+		rewrite(result, req.getScheme(), req.getServerName(), req.getServerPort(), req.getContextPath());
 	}
 
-	private void rewrite(JSONObject json, String scheme, String hostname, int port) {
+	private void rewrite(JSONObject json, String scheme, String hostname, int port, String contextPath) {
 		String[] names = JSONObject.getNames(json);
 		if (names == null)
 			return;
@@ -65,27 +103,36 @@ public abstract class JsonURIUnqualificationStrategy {
 			Object o = json.opt(name);
 			if (o instanceof URI) {
 				try {
-					json.put(name, unqualifyObjectProperty(name, (URI) o, scheme, hostname, port));
+					URI uri = (URI) o;
+					if ("orion".equals(uri.getScheme())) {
+						uri = new URI(null, null, contextPath + uri.getPath(), uri.getQuery(), uri.getFragment());
+					}
+					json.put(name, unqualifyObjectProperty(name, uri, scheme, hostname, port));
 				} catch (JSONException e) {
+				} catch (URISyntaxException e) {
 				}
 			} else if (o instanceof String) {
 				String string = (String) o;
-				if (string.startsWith(scheme)) {
+				if (string.startsWith(scheme) || string.startsWith("orion:/")) {
 					try {
-						json.put(name, unqualifyObjectProperty(name, new URI(string), scheme, hostname, port));
+						URI uri = new URI(string);
+						if ("orion".equals(uri.getScheme())) {
+							uri = new URI(null, null, contextPath + uri.getPath(), uri.getQuery(), uri.getFragment());
+						}
+						json.put(name, unqualifyObjectProperty(name, uri, scheme, hostname, port));
 					} catch (JSONException e) {
 					} catch (URISyntaxException e) {
 					}
 				}
 			} else {
-				rewrite(o, scheme, hostname, port);
+				rewrite(o, scheme, hostname, port, contextPath);
 			}
 		}
 	}
 
-	private void rewrite(Object o, String scheme, String hostname, int port) {
+	private void rewrite(Object o, String scheme, String hostname, int port, String contextPath) {
 		if (o instanceof JSONObject) {
-			rewrite((JSONObject) o, scheme, hostname, port);
+			rewrite((JSONObject) o, scheme, hostname, port, contextPath);
 		} else if (o instanceof JSONArray) {
 			JSONArray a = (JSONArray) o;
 			for (int i = 0; i < a.length(); i++) {
@@ -105,7 +152,7 @@ public abstract class JsonURIUnqualificationStrategy {
 						}
 					}
 				} else {
-					rewrite(v, scheme, hostname, port);
+					rewrite(v, scheme, hostname, port, contextPath);
 				}
 			}
 		}
@@ -119,7 +166,7 @@ public abstract class JsonURIUnqualificationStrategy {
 		URI simpleURI = uri;
 		int uriPort = uri.getPort();
 		if (uriPort == -1) {
-			uriPort = 80;
+			uriPort = getDefaultPort(uri.getScheme());
 		}
 		if (scheme.equals(uri.getScheme()) && hostname.equals(uri.getHost()) && port == uriPort) {
 			try {
@@ -129,5 +176,15 @@ public abstract class JsonURIUnqualificationStrategy {
 			}
 		}
 		return simpleURI;
+	}
+
+	private static int getDefaultPort(String scheme) {
+		if ("http".equalsIgnoreCase(scheme)) {
+			return 80;
+		}
+		if ("https".equalsIgnoreCase(scheme)) {
+			return 443;
+		}
+		return -1;
 	}
 }

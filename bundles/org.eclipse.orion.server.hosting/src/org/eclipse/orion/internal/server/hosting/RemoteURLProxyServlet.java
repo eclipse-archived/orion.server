@@ -20,12 +20,16 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.http.HttpURI;
 import org.eclipse.jetty.servlets.ProxyServlet;
 import org.eclipse.jetty.util.IO;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Override the Jetty ProxyServlet implementation. Do this to tolerate some unusual 
  * HTTP practices that Ajax libraries are using (see NOTE: below.) 
  */
 public class RemoteURLProxyServlet extends ProxyServlet {
+
+	private final Logger logger = LoggerFactory.getLogger(HostingActivator.PI_SERVER_HOSTING);
 
 	{
 		// Bug 346139
@@ -87,8 +91,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 
 			// copy headers
 			boolean xForwardedFor = false;
-			boolean hasContent = false;
-			Enumeration enm = request.getHeaderNames();
+			Enumeration<String> enm = request.getHeaderNames();
 			while (enm.hasMoreElements()) {
 				// TODO could be better than this!
 				String hdr = (String) enm.nextElement();
@@ -110,10 +113,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 				if (connectionHdr != null && connectionHdr.indexOf(lhdr) >= 0)
 					continue;
 
-				if ("content-type".equals(lhdr))
-					hasContent = true;
-
-				Enumeration vals = request.getHeaders(hdr);
+				Enumeration<String> vals = request.getHeaders(hdr);
 				while (vals.hasMoreElements()) {
 					String val = (String) vals.nextElement();
 					if (val != null) {
@@ -129,7 +129,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 				connection.addRequestProperty("X-Forwarded-For", request.getRemoteAddr());
 
 			// Bug 346139: prevent an infinite proxy loop by decrementing the Max-Forwards header
-			Enumeration maxForwardsHeaders = request.getHeaders("Max-Forwards");
+			Enumeration<String> maxForwardsHeaders = request.getHeaders("Max-Forwards");
 			String maxForwardsHeader = null;
 			while (maxForwardsHeaders.hasMoreElements()) {
 				maxForwardsHeader = (String) maxForwardsHeaders.nextElement();
@@ -158,7 +158,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 
 				// do input thang!
 				InputStream in = request.getInputStream();
-				if (hasContent && isOutputSupported(request)) {
+				if (isOutputSupported(request)) {
 					connection.setDoOutput(true);
 					IO.copy(in, connection.getOutputStream());
 				}
@@ -167,7 +167,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 				connection.connect();
 			} catch (Exception e) {
 				if (!(e instanceof UnknownHostException))
-					_context.log("proxy", e);
+					logger.error("Error connecting to " + url, e);
 			}
 
 			InputStream proxy_in = null;
@@ -182,7 +182,7 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 					// make sure this is thrown only in the "fail early on 404" case
 					throw new NotFoundException();
 				}
-				response.setStatus(code, http.getResponseMessage());
+				response.setStatus(code);
 			}
 
 			if (proxy_in == null) {
@@ -190,8 +190,9 @@ public class RemoteURLProxyServlet extends ProxyServlet {
 					proxy_in = connection.getInputStream();
 				} catch (Exception e) {
 					if (!(e instanceof IOException))
-						_context.log("stream", e);
-					proxy_in = http.getErrorStream();
+						logger.error("Error reading input from " + url, e);
+					if (http != null)
+						proxy_in = http.getErrorStream();
 				}
 			}
 

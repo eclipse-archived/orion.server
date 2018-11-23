@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 IBM Corporation and others.
+ * Copyright (c) 2012, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,15 +16,15 @@ import static org.junit.Assert.assertNotNull;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Diff;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -41,13 +41,14 @@ public class GitApplyPatchTest extends GitTest {
 	@Test
 	public void testApplyPatch_addFile() throws Exception {
 		// clone: create
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -67,8 +68,8 @@ public class GitApplyPatchTest extends GitTest {
 		sb.append("+newborn").append("\n");
 		sb.append("\\ No newline at end of file").append("\n");
 
-		/*JSONObject patchResult = */patch(gitDiffUri, sb.toString());
-		//		assertEquals("Ok", patchResult.getString(GitConstants.KEY_RESULT));
+		JSONObject patchResult = patch(gitDiffUri, sb.toString());
+		assertEquals("200", patchResult.getString("HttpCode"));
 
 		JSONObject newTxt = getChild(project, "new.txt");
 		assertEquals("newborn", getFileContent(newTxt));
@@ -79,13 +80,14 @@ public class GitApplyPatchTest extends GitTest {
 	@Test
 	public void testApplyPatch_deleteFile() throws Exception {
 		// clone: create
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -104,8 +106,8 @@ public class GitApplyPatchTest extends GitTest {
 		sb.append("@@ -1 +0,0 @@").append("\n");
 		sb.append("-test").append("\n");
 
-		/*JSONObject patchResult =*/patch(gitDiffUri, sb.toString());
-		//		assertEquals("Ok", patchResult.getString(GitConstants.KEY_RESULT));
+		JSONObject patchResult = patch(gitDiffUri, sb.toString());
+		assertEquals("200", patchResult.getString("HttpCode"));
 
 		String gitStatusUri = gitSection.getString(GitConstants.KEY_STATUS);
 		assertStatus(new StatusResult().setMissingNames("test.txt"), gitStatusUri);
@@ -114,13 +116,14 @@ public class GitApplyPatchTest extends GitTest {
 	@Test
 	public void testApplyPatch_modifyFile() throws Exception {
 		// clone: create
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -141,8 +144,8 @@ public class GitApplyPatchTest extends GitTest {
 		sb.append("+patched").append("\n");
 		sb.append("\\ No newline at end of file").append("\n");
 
-		/*JSONObject patchResult = */patch(gitDiffUri, sb.toString());
-		//		assertEquals("Ok", patchResult.getString(GitConstants.KEY_RESULT));
+		JSONObject patchResult = patch(gitDiffUri, sb.toString());
+		assertEquals("200", patchResult.getString("HttpCode"));
 
 		JSONObject testTxt = getChild(project, "test.txt");
 		assertEquals("patched", getFileContent(testTxt));
@@ -155,13 +158,13 @@ public class GitApplyPatchTest extends GitTest {
 	@Test
 	public void testApplyPatch_modifyFileFormatError() throws Exception {
 		// clone: create
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -175,9 +178,8 @@ public class GitApplyPatchTest extends GitTest {
 		sb.append("diff --git a/test.txt b/test.txt").append("\n");
 		sb.append("malformed patch").append("\n");
 
-		/*JSONObject patchResult =*/patch(gitDiffUri, sb.toString());
-		//		assertNull(patchResult.optString(GitConstants.KEY_RESULT, null));
-		//		assertNotNull(patchResult.getJSONArray("FormatErrors"));
+		JSONObject patchResult = patch(gitDiffUri, sb.toString());
+		assertEquals("400", patchResult.getString("HttpCode"));
 
 		// nothing has changed
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -189,13 +191,14 @@ public class GitApplyPatchTest extends GitTest {
 	@Test
 	public void testApplyPatch_modifyFileApplyError() throws Exception {
 		// clone: create
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
 		clone(clonePath);
 
 		// get project metadata
-		WebRequest request = getGetFilesRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
+		WebRequest request = getGetRequest(project.getString(ProtocolConstants.KEY_CONTENT_LOCATION));
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		project = new JSONObject(response.getText());
@@ -216,9 +219,8 @@ public class GitApplyPatchTest extends GitTest {
 		sb.append("+patched").append("\n");
 		sb.append("\\ No newline at end of file").append("\n");
 
-		/*JSONObject patchResult =*/patch(gitDiffUri, sb.toString());
-		//		assertNull(patchResult.optString(GitConstants.KEY_RESULT, null));
-		//		assertNotNull(patchResult.getJSONArray("ApplyErrors"));
+		JSONObject patchResult = patch(gitDiffUri, sb.toString());
+		assertEquals("400", patchResult.getString("HttpCode"));
 
 		// nothing has changed
 		JSONObject testTxt = getChild(project, "test.txt");
@@ -227,22 +229,14 @@ public class GitApplyPatchTest extends GitTest {
 		assertStatus(StatusResult.CLEAN, gitStatusUri);
 	}
 
-	private static void patch(final String gitDiffUri, String patch) throws IOException, SAXException {
+	private JSONObject patch(final String gitDiffUri, String patch) throws IOException, SAXException, JSONException {
 		WebRequest request = getPostGitDiffRequest(gitDiffUri, patch);
 		WebResponse response = webConversation.getResponse(request);
-		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		// TODO: see bug 366008
-		// return new JSONObject(response.getText());
+		return new JSONObject(response.getText());
 	}
 
 	private static WebRequest getPostGitDiffRequest(String location, String patch) throws UnsupportedEncodingException {
-		String requestURI;
-		if (location.startsWith("http://"))
-			requestURI = location;
-		else if (location.startsWith("/"))
-			requestURI = SERVER_LOCATION + location;
-		else
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Diff.RESOURCE + location;
+		String requestURI = toAbsoluteURI(location);
 
 		String boundary = new UniversalUniqueIdentifier().toBase64String();
 		StringBuilder sb = new StringBuilder();

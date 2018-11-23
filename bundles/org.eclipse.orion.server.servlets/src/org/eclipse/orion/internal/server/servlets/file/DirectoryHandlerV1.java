@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others.
+ * Copyright (c) 2010, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,19 +13,29 @@ package org.eclipse.orion.internal.server.servlets.file;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.filesystem.*;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
+import org.eclipse.core.filesystem.IFileStore;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.URIUtil;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.internal.server.servlets.Slug;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Handles HTTP requests against directories for eclipse web protocol version
@@ -38,13 +48,13 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 
 	private final ServletResourceHandler<IStatus> statusHandler;
 
-	public DirectoryHandlerV1(URI rootStoreURI, ServletResourceHandler<IStatus> statusHandler) {
+	public DirectoryHandlerV1(ServletResourceHandler<IStatus> statusHandler) {
 		this.statusHandler = statusHandler;
 	}
 
 	private boolean handleGet(HttpServletRequest request, HttpServletResponse response, IFileStore dir) throws IOException, CoreException {
 		URI location = getURI(request);
-		JSONObject result = ServletFileStoreHandler.toJSON(dir, dir.fetchInfo(), location);
+		JSONObject result = ServletFileStoreHandler.toJSON(dir, dir.fetchInfo(EFS.NONE, null), location);
 		String depthString = request.getParameter(ProtocolConstants.PARM_DEPTH);
 		int depth = 0;
 		if (depthString != null) {
@@ -63,9 +73,10 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		if (depth <= 0)
 			return;
 		JSONArray children = new JSONArray();
-		IFileStore[] childStores = dir.childStores(EFS.NONE, null);
-		for (IFileStore childStore : childStores) {
-			IFileInfo childInfo = childStore.fetchInfo();
+		//more efficient to ask for child information in bulk for certain file systems
+		IFileInfo[] childInfos = dir.childInfos(EFS.NONE, null);
+		for (IFileInfo childInfo : childInfos) {
+			IFileStore childStore = dir.getChild(childInfo.getName());
 			String name = childInfo.getName();
 			if (childInfo.isDirectory())
 				name += "/"; //$NON-NLS-1$
@@ -89,18 +100,21 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		String name = computeName(request, requestObject);
 		if (name.length() == 0)
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "File name not specified.", null));
-		int options = getCreateOptions(request);
 		IFileStore toCreate = dir.getChild(name);
-		boolean destinationExists = toCreate.fetchInfo().exists();
+		if (!name.equals(toCreate.getName()) || name.contains(":"))
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Bad file name: " + name, null));
+		int options = getCreateOptions(request);
+		boolean destinationExists = toCreate.fetchInfo(EFS.NONE, null).exists();
 		if (!validateOptions(request, response, toCreate, destinationExists, options))
 			return true;
 		//perform the operation
 		if (performPost(request, response, requestObject, toCreate, options)) {
 			//write the response
 			URI location = URIUtil.append(getURI(request), name);
-			JSONObject result = ServletFileStoreHandler.toJSON(toCreate, toCreate.fetchInfo(), location);
+			JSONObject result = ServletFileStoreHandler.toJSON(toCreate, toCreate.fetchInfo(EFS.NONE, null), location);
+			result.append("FileEncoding", System.getProperty("file.encoding"));
 			OrionServlet.writeJSONResponse(request, response, result);
-			response.setHeader(ProtocolConstants.HEADER_LOCATION, location.toString());
+			response.setHeader(ProtocolConstants.HEADER_LOCATION, ServletResourceHandler.resovleOrionURI(request, location).toString());
 			//response code should indicate if a new resource was actually created or not
 			response.setStatus(destinationExists ? HttpServletResponse.SC_OK : HttpServletResponse.SC_CREATED);
 		}
@@ -115,12 +129,22 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 	private boolean performPost(HttpServletRequest request, HttpServletResponse response, JSONObject requestObject, IFileStore toCreate, int options) throws CoreException, IOException, ServletException {
 		boolean isCopy = (options & CREATE_COPY) != 0;
 		boolean isMove = (options & CREATE_MOVE) != 0;
-		if (isCopy || isMove)
-			return performCopyMove(request, response, requestObject, toCreate, isCopy);
-		if (requestObject.optBoolean(ProtocolConstants.KEY_DIRECTORY))
-			toCreate.mkdir(EFS.NONE, null);
-		else
-			toCreate.openOutputStream(EFS.NONE, null).close();
+		try {
+			if (isCopy || isMove)
+				return performCopyMove(request, response, requestObject, toCreate, isCopy, options);
+			if (requestObject.optBoolean(ProtocolConstants.KEY_DIRECTORY))
+				toCreate.mkdir(EFS.NONE, null);
+			else
+				toCreate.openOutputStream(EFS.NONE, null).close();
+		} catch (CoreException e) {
+			IStatus status = e.getStatus();
+			if (status != null && status.getCode() == EFS.ERROR_WRITE) {
+				// Sanitize message, as it might contain the filepath.
+				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to create: " + toCreate.getName(), null));
+				return false;
+			}
+			throw e;
+		}
 		return true;
 	}
 
@@ -128,7 +152,7 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 	 * Perform a copy or move as specified by the request.
 	 * @return <code>true</code> if the operation was successful, and <code>false</code> otherwise.
 	 */
-	private boolean performCopyMove(HttpServletRequest request, HttpServletResponse response, JSONObject requestObject, IFileStore toCreate, boolean isCopy) throws ServletException, CoreException {
+	private boolean performCopyMove(HttpServletRequest request, HttpServletResponse response, JSONObject requestObject, IFileStore toCreate, boolean isCopy, int options) throws ServletException, CoreException {
 		String locationString = requestObject.optString(ProtocolConstants.KEY_LOCATION, null);
 		if (locationString == null) {
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Copy or move request must specify source location", null));
@@ -136,15 +160,34 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		}
 		try {
 			IFileStore source = resolveSourceLocation(request, locationString);
-			//note we checked in preconditions that overwrite is ok here
+			if (source == null) {
+				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("Source does not exist: ", locationString), null));
+				return false;
+			} else if (source.isParentOf(toCreate)) {
+				statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "The destination cannot be a descendent of the source location", null));
+				return false;
+			}
+			boolean allowOverwrite = (options & CREATE_NO_OVERWRITE) == 0;
+			int efsOptions = allowOverwrite ? EFS.OVERWRITE : EFS.NONE;
 			try {
-				if (isCopy)
-					source.copy(toCreate, EFS.OVERWRITE, null);
-				else
-					source.move(toCreate, EFS.OVERWRITE, null);
+				if (isCopy) {
+					source.copy(toCreate, efsOptions, null);
+				} else {
+					source.move(toCreate, efsOptions, null);
+					// Path format is /file/workspaceId/projectId/[location to folder]
+					Path path = new Path(locationString);
+					if (path.segmentCount() == 3 && path.segment(0).equals("file")) {
+						// The folder is a project, remove the metadata
+						OrionConfiguration.getMetaStore().deleteProject(path.segment(1), source.getName());
+					}
+				}
 			} catch (CoreException e) {
-				if (!source.fetchInfo().exists()) {
+				if (!source.fetchInfo(EFS.NONE, null).exists()) {
 					statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, NLS.bind("Source does not exist: ", locationString), e));
+					return false;
+				}
+				if (e.getStatus().getCode() == EFS.ERROR_EXISTS) {
+					statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_PRECONDITION_FAILED, "A file or folder with the same name already exists at this location", null));
 					return false;
 				}
 				//just rethrow if we can't do something more specific
@@ -158,33 +201,12 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 	}
 
 	/**
-	 * Maps the client-facing location URL of a file or directory back to the local
-	 * file system path on the server.
-	 */
-	private IFileStore resolveSourceLocation(HttpServletRequest request, String locationString) throws URISyntaxException, CoreException {
-		URI sourceLocation = new URI(locationString);
-		//resolve relative URI against request URI
-		String sourcePath = getURI(request).resolve(sourceLocation).getPath();
-		//first segment is the servlet path
-		IPath path = new Path(sourcePath).removeFirstSegments(1);
-		IFileStore source = NewFileServlet.getFileStore(path);
-		return source;
-	}
-
-	/**
 	 * Computes the name of the resource to be created by a POST operation. Returns
 	 * an empty string if the name was not specified.
 	 */
 	private String computeName(HttpServletRequest request, JSONObject requestObject) {
-		//get the slug first
-		String name = request.getHeader(ProtocolConstants.HEADER_SLUG);
-		//If the requestObject has a name then it must be used due to UTF-8 issues with names Bug 376671
-		if (requestObject != null && requestObject.has("Name")) {
-			try {
-				name = requestObject.getString("Name");
-			} catch (JSONException e) {
-			}
-		}
+		String name = Slug.decode(request.getHeader(ProtocolConstants.HEADER_SLUG));
+
 		//next comes the source location for a copy/move
 		if (name == null || name.length() == 0) {
 			String location = requestObject.optString(ProtocolConstants.KEY_LOCATION);
@@ -211,7 +233,8 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 		}
 		//if overwrite is disallowed make sure destination does not exist yet
 		boolean noOverwrite = (options & CREATE_NO_OVERWRITE) != 0;
-		if (noOverwrite && destinationExists) {
+		//for copy/move case, let the implementation check for overwrite because pre-validating is complicated
+		if ((options & copyMove) == 0 && noOverwrite && destinationExists) {
 			statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_PRECONDITION_FAILED, "A file or folder with the same name already exists at this location", null));
 			return false;
 		}
@@ -260,6 +283,8 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 					return handlePost(request, response, dir);
 				case DELETE :
 					return handleDelete(request, response, dir);
+				default :
+					return false;
 			}
 		} catch (JSONException e) {
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Syntax error in request", e));
@@ -267,10 +292,11 @@ public class DirectoryHandlerV1 extends ServletResourceHandler<IFileStore> {
 			//core exception messages are designed for end user consumption, so use message directly
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage(), e));
 		} catch (Exception e) {
+			if (handleAuthFailure(request, response, e))
+				return true;
 			//the exception message is probably not appropriate for end user consumption
 			LogHelper.log(e);
 			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An unknown failure occurred. Consult your server log or contact your system administrator.", e));
 		}
-		return false;
 	}
 }

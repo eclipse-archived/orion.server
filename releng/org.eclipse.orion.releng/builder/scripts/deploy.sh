@@ -50,5 +50,5 @@ fi
 archiveFile=`basename $archive`
 echo "Invoking upgrade script on $host with archive file $archiveFile"
 ssh -l admin $host /home/admin/current/upgrade.sh -archive $archiveFile
-echo "Deploy complete"
+echo "Deploy complete in $SECONDS seconds"
 echo "------------------------------------------"

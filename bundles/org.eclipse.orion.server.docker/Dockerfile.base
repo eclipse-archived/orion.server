@@ -1,0 +1,55 @@
+################################################################################
+# Copyright (c) 2013, 2014 IBM Corporation and others.
+# All rights reserved. This program and the accompanying materials
+# are made available under the terms of the Eclipse Public License v1.0
+# which accompanies this distribution, and is available at
+# http://www.eclipse.org/legal/epl-v10.html
+# 
+# Contributors:
+#     IBM Corporation - initial API and implementation
+#################################################################################
+# Dockerfile for an Orion terminal to be used by a Node.js developer
+
+# FROM should match the operating system you are running, or package updates break
+FROM ubuntu:saucy
+MAINTAINER Anthony Hunter anthonyh@ca.ibm.com
+
+# Set the locale
+RUN locale-gen en_US.UTF-8  
+ENV LANG en_US.UTF-8  
+ENV LANGUAGE en_US:en  
+ENV LC_ALL en_US.UTF-8
+
+# make sure the package repository is up to date and all updates installed
+RUN apt-get -y update
+RUN apt-get -y dist-upgrade
+
+# add vi since you most likely will use it
+RUN apt-get -y install vim
+
+# install git client
+RUN apt-get -y install git
+
+# install software-properties-common for add-apt-repository
+RUN apt-get -y install software-properties-common
+
+# install node.js
+RUN apt-get -y install python-software-properties python g++ make
+RUN add-apt-repository -y ppa:chris-lea/node.js
+RUN apt-get -y update
+RUN apt-get -y install nodejs
+
+# install grunt
+RUN npm install -g grunt-cli
+
+# install node-inspector
+RUN npm install -g node-inspector
+
+# install Cloud Foundry CLI
+RUN apt-get -y install wget
+RUN wget http://go-cli.s3-website-us-east-1.amazonaws.com/releases/latest/cf-linux-amd64.tgz
+RUN tar zxvf cf-linux-amd64.tgz ; mv cf /usr/local/bin/cf
+
+# allow end user npm install -g without needing root by adding group privileges
+RUN chgrp -R users /usr/local/
+RUN chmod -R g+w /usr/local/

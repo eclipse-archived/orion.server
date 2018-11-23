@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2013 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,11 +11,16 @@
 package org.eclipse.orion.internal.server.search;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -29,22 +34,31 @@ import org.apache.solr.request.LocalSolrQueryRequest;
 import org.apache.solr.request.SolrQueryRequest;
 import org.apache.solr.response.QueryResponseWriter;
 import org.apache.solr.response.SolrQueryResponse;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.servlets.OrionServlet;
 
 /**
  * Servlet for performing searches against files in the workspace.
  */
 public class SearchServlet extends OrionServlet {
+	/**
+	 * Separator between query terms
+	 */
+	private static final String AND = " AND "; //$NON-NLS-1$
+	private static final String OR = " OR "; //$NON-NLS-1$
 	private static final long serialVersionUID = 1L;
-	private static final String FIELD_NAMES = "Id,Name,NameLower,Length,Directory,LastModified,Location,Path"; //$NON-NLS-1$
+	private static final String FIELD_NAMES = "Name,NameLower,Length,Directory,LastModified,Location,Path"; //$NON-NLS-1$
 	private static final List<String> FIELD_LIST = Arrays.asList(FIELD_NAMES.split(",")); //$NON-NLS-1$
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		traceRequest(req);
 		SolrQuery query = buildSolrQuery(req);
+		if (query == null) {
+			handleException(resp, "Invalid search request", null, HttpServletResponse.SC_BAD_REQUEST);
+			return;
+		}
 		try {
 			QueryResponse solrResponse = SearchActivator.getInstance().getSolrServer().query(query);
 			writeResponse(query, req, resp, solrResponse);
@@ -58,46 +72,104 @@ public class SearchServlet extends OrionServlet {
 		SolrQuery query = new SolrQuery();
 		query.setParam(CommonParams.WT, "json"); //$NON-NLS-1$
 		query.setParam(CommonParams.FL, FIELD_NAMES);
-		String queryString = req.getParameter(CommonParams.Q).trim();
+		String queryString = getEncodedParameter(req, CommonParams.Q);
+		if (queryString == null)
+			return null;
 		if (queryString.length() > 0) {
 			String processedQuery = ""; //$NON-NLS-1$
-			//divide into search terms delimited by space character
-			String[] terms = queryString.split("\\s+"); //$NON-NLS-1$
-			for (String term : terms) {
+			//divide into search terms delimited by space or plus ('+') character
+			List<String> terms = new ArrayList<String>(Arrays.asList(queryString.split("[\\s\\+]+"))); //$NON-NLS-1$
+			while (!terms.isEmpty()) {
+				String term = terms.remove(0);
 				if (term.length() == 0)
 					continue;
 				if (isSearchField(term)) {
-					//solr does not lowercase queries containing wildcards
-					//https://issues.apache.org/jira/browse/SOLR-219
-					if (term.startsWith("NameLower:")) {
-						processedQuery += "NameLower:" + term.substring(10).toLowerCase();
+					if (term.startsWith("NameLower:")) { //$NON-NLS-1$
+						//decode the search term, we do not want to decode the location
+						try {
+							term = URLDecoder.decode(term, "UTF-8"); //$NON-NLS-1$
+						} catch (UnsupportedEncodingException e) {
+							//try with encoded term
+						}
+						//solr does not lowercase queries containing wildcards
+						//https://issues.apache.org/jira/browse/SOLR-219
+						processedQuery += "NameLower:" + term.substring(10).toLowerCase(); //$NON-NLS-1$
+					} else if (term.startsWith("Location:")) { //$NON-NLS-1${
+						//Use Location as a filter query to improve query performence
+						//See https://bugs.eclipse.org/bugs/show_bug.cgi?id=415874
+						//processedQuery += "Location:" + term.substring(9 + req.getContextPath().length()); //$NON-NLS-1$
+						query.addFilterQuery("Location:" + term.substring(9 + req.getContextPath().length()));
+						continue;
+					} else if (term.startsWith("Name:")) { //$NON-NLS-1$
+						try {
+							term = URLDecoder.decode(term, "UTF-8"); //$NON-NLS-1$
+						} catch (UnsupportedEncodingException e) {
+							//try with encoded term
+						}
+						processedQuery += "Name:(" + term.substring(5).replaceAll("/", OR) + ")";
 					} else {
 						//all other field searches are case sensitive
 						processedQuery += term;
 					}
 				} else {
+					//decode the term string now
+					try {
+						term = URLDecoder.decode(term, "UTF-8"); //$NON-NLS-1$
+					} catch (UnsupportedEncodingException e) {
+						//try with encoded term
+					}
+					boolean isPhrase = term.charAt(0) == '"';
+					boolean leadingWildCard = term.charAt(0) == '*';
+					//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=415874#c12
+					//For a term starting with "*" we are using the leading wild card. 
+					//Otherwise we only use tailing wild card to improve performance.
+					if (leadingWildCard) {
+						term = term.substring(1);
+					}
 					//solr does not lowercase queries containing wildcards
 					//see https://bugs.eclipse.org/bugs/show_bug.cgi?id=359766
-					String processedTerm = term.toLowerCase();
+					String processedTerm = ClientUtils.escapeQueryChars(term.toLowerCase());
 					//add leading and trailing wildcards to match word segments
-					if (processedTerm.charAt(0) != '*')
-						processedTerm = '*' + processedTerm;
-					if (processedTerm.charAt(processedTerm.length() - 1) != '*')
-						processedTerm += '*';
+					if (!isPhrase) {
+						if (leadingWildCard)
+							processedTerm = '*' + processedTerm;
+						if (processedTerm.charAt(processedTerm.length() - 1) != '*')
+							processedTerm += '*';
+					}
 					processedQuery += processedTerm;
-
 				}
-				processedQuery += " AND "; //$NON-NLS-1$
+				processedQuery += AND;
 			}
 			queryString = processedQuery;
 		}
-		queryString += ProtocolConstants.KEY_USER_NAME + ':' + ClientUtils.escapeQueryChars(req.getRemoteUser());
+		//remove trailing AND
+		if (queryString.endsWith(AND))
+			queryString = queryString.substring(0, queryString.length() - AND.length());
 		query.setQuery(queryString);
+
+		//filter to search only documents belonging to current user
+		query.addFilterQuery(ProtocolConstants.KEY_USER_NAME + ':' + ClientUtils.escapeQueryChars(req.getRemoteUser()));
+
 		//other common fields
 		setField(req, query, CommonParams.ROWS);
 		setField(req, query, CommonParams.START);
 		setField(req, query, CommonParams.SORT);
 		return query;
+	}
+
+	/**
+	 * Returns a request parameter in encoded form. Returns <code>null</code>
+	 * if no such parameter is defined or has an empty value.
+	 */
+	private String getEncodedParameter(HttpServletRequest req, String key) {
+		//TODO need to get query string unencoded - maybe use req.getQueryString() and parse manually
+		String query = req.getQueryString();
+		for (String param : query.split("&")) { //$NON-NLS-1$
+			String[] pair = param.split("=", 2); //$NON-NLS-1$
+			if (pair.length == 2 && key.equals(pair[0]))
+				return pair[1];
+		}
+		return null;
 	}
 
 	/**
@@ -124,19 +196,32 @@ public class SearchServlet extends OrionServlet {
 	private void writeResponse(SolrQuery query, HttpServletRequest httpRequest, HttpServletResponse httpResponse, QueryResponse queryResponse) throws IOException {
 		SolrCore core = SearchActivator.getInstance().getSolrCore();
 		//this seems to be the only way to obtain the JSON response representation
-		SolrQueryRequest solrRequest = new LocalSolrQueryRequest(core, query.toNamedList());
-		SolrQueryResponse solrResponse = new SolrQueryResponse();
-		//bash the query in the response to remove user info
-		NamedList<Object> params = (NamedList<Object>) queryResponse.getHeader().get("params"); //$NON-NLS-1$
-		params.remove(CommonParams.Q);
-		params.add(CommonParams.Q, httpRequest.getParameter(CommonParams.Q));
-		NamedList<Object> values = queryResponse.getResponse();
-		String contextPath = httpRequest.getContextPath();
-		if (contextPath.length() > 0)
-			setSearchResultContext(values, contextPath);
-		solrResponse.setAllValues(values);
-		QueryResponseWriter writer = core.getQueryResponseWriter("json"); //$NON-NLS-1$
-		writer.write(httpResponse.getWriter(), solrRequest, solrResponse);
+		SolrQueryRequest solrRequest = null;
+		try {
+			solrRequest = new LocalSolrQueryRequest(core, query.toNamedList());
+			SolrQueryResponse solrResponse = new SolrQueryResponse();
+			// Added encoding check as per Bugzilla 406757
+			if (httpRequest.getCharacterEncoding() == null) {
+				httpRequest.setCharacterEncoding("UTF-8"); //$NON-NLS-1$
+				httpResponse.setCharacterEncoding("UTF-8"); //$NON-NLS-1$
+			}
+			//bash the query in the response to remove user info
+			@SuppressWarnings("unchecked")
+			NamedList<Object> params = (NamedList<Object>) queryResponse.getHeader().get("params"); //$NON-NLS-1$
+			params.remove(CommonParams.Q);
+			params.add(CommonParams.Q, httpRequest.getParameter(CommonParams.Q));
+			NamedList<Object> values = queryResponse.getResponse();
+			String contextPath = httpRequest.getContextPath();
+			if (contextPath.length() > 0)
+				setSearchResultContext(values, contextPath);
+			solrResponse.setAllValues(values);
+			QueryResponseWriter writer = core.getQueryResponseWriter("json"); //$NON-NLS-1$
+			writer.write(httpResponse.getWriter(), solrRequest, solrResponse);
+		} finally {
+			if (solrRequest != null) {
+				solrRequest.close();
+			}
+		}
 	}
 
 	/**

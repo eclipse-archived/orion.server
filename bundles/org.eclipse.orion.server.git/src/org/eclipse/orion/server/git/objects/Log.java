@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,15 +13,28 @@ package org.eclipse.orion.server.git.objects;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
-import org.eclipse.core.runtime.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.ListBranchCommand.ListMode;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.errors.MissingObjectException;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.RemoteConfig;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.resources.Property;
 import org.eclipse.orion.server.core.resources.ResourceShape;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
@@ -30,7 +43,9 @@ import org.eclipse.orion.server.git.BaseToCommitConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.servlets.GitUtils;
 import org.eclipse.osgi.util.NLS;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * A compound object for {@link Commit}s.
@@ -49,12 +64,19 @@ public class Log extends GitObject {
 				new Property(GitConstants.KEY_LOG_TO_REF), //
 				new Property(GitConstants.KEY_LOG_FROM_REF), //
 				new Property(ProtocolConstants.KEY_PREVIOUS_LOCATION), //
-				new Property(ProtocolConstants.KEY_NEXT_LOCATION)};
+				new Property(ProtocolConstants.KEY_NEXT_LOCATION) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 
 	private List<RevCommit> commits;
 	private String pattern;
+	private String messagePattern;
+	private String authorPattern;
+	private String committerPattern;
+	private String sha1Pattern;
+	private String fromDate;
+	private String toDate;
+	private boolean mergeBase;
 	private Ref toRefId;
 	private Ref fromRefId;
 	private int page;
@@ -84,6 +106,35 @@ public class Log extends GitObject {
 		this.pageSize = pageSize;
 	}
 
+	public void setMessagePattern(String messagePattern) {
+		this.messagePattern = messagePattern;
+	}
+
+	public void setAuthorPattern(String authorPattern) {
+		this.authorPattern = authorPattern;
+	}
+
+	public void setCommitterPattern(String committerPattern) {
+		this.committerPattern = committerPattern;
+	}
+
+	public void setSHA1Pattern(String sha1Pattern) {
+		this.sha1Pattern = sha1Pattern;
+	}
+
+	public void setFromDate(String fromDate) {
+		this.fromDate = fromDate;
+	}
+
+	public void setToDate(String toDate) {
+		this.toDate = toDate;
+	}
+
+	public void setMergeBaseFilter(boolean mergeBaseFilter) {
+		this.mergeBase = mergeBaseFilter;
+	}
+
+	@Override
 	public JSONObject toJSON() throws JSONException, URISyntaxException, IOException, CoreException {
 		Assert.isNotNull(commits, "'commits' is null");
 		return jsonSerializer.serialize(this, DEFAULT_RESOURCE_SHAPE);
@@ -92,11 +143,13 @@ public class Log extends GitObject {
 	@PropertyDescription(name = ProtocolConstants.KEY_CHILDREN)
 	private JSONArray getChildren() throws GitAPIException, JSONException, URISyntaxException, IOException, CoreException {
 		Map<ObjectId, JSONArray> commitToBranchMap = getCommitToBranchMap(cloneLocation, db);
+		Map<ObjectId, Map<String, Ref>> commitToTagMap = getCommitToTagMap(cloneLocation, db);
 		JSONArray children = new JSONArray();
 		int i = 0;
 		for (RevCommit revCommit : commits) {
 			Commit commit = new Commit(cloneLocation, db, revCommit, pattern);
 			commit.setCommitToBranchMap(commitToBranchMap);
+			commit.setCommitToTagMap(commitToTagMap);
 			children.put(commit.toJSON());
 			if (i++ == pageSize - 1)
 				break;
@@ -126,33 +179,60 @@ public class Log extends GitObject {
 	@PropertyDescription(name = ProtocolConstants.KEY_PREVIOUS_LOCATION)
 	private URI getPreviousPageLocation() throws URISyntaxException {
 		if (page > 0) {
-			StringBuilder c = new StringBuilder(""); //$NON-NLS-1$
-			if (fromRefId != null)
-				c.append(fromRefId.getName());
-			if (fromRefId != null && toRefId != null)
-				c.append(".."); //$NON-NLS-1$
-			if (toRefId != null)
-				c.append(Repository.shortenRefName(toRefId.getName()));
-			final String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
+			String c = getRefRange();
+			String q = getCommitQuery();
 			if (page > 1) {
-				return BaseToCommitConverter.getCommitLocation(cloneLocation, c.toString(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page - 1, pageSize)));
+				return BaseToCommitConverter.getCommitLocation(cloneLocation, GitUtils.encode(c), pattern,
+						BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page - 1, pageSize)));
 			}
 		}
 		return null;
 	}
 
+	private String getRefRange() {
+		StringBuilder c = new StringBuilder(""); //$NON-NLS-1$
+		if (fromRefId != null)
+			c.append(fromRefId.getName());
+		if (fromRefId != null && toRefId != null)
+			c.append(".."); //$NON-NLS-1$
+		if (toRefId != null)
+			c.append(Repository.shortenRefName(toRefId.getName()));
+		return c.toString();
+	}
+
+	private String getCommitQuery() {
+		String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
+		if (this.messagePattern != null) {
+			q += "&filter=" + GitUtils.encode(this.messagePattern); //$NON-NLS-1$
+		}
+		if (this.authorPattern != null) {
+			q += "&author=" + GitUtils.encode(this.authorPattern); //$NON-NLS-1$
+		}
+		if (this.committerPattern != null) {
+			q += "&committer=" + GitUtils.encode(this.committerPattern); //$NON-NLS-1$
+		}
+		if (this.sha1Pattern != null) {
+			q += "&sha1=" + GitUtils.encode(this.sha1Pattern); //$NON-NLS-1$
+		}
+		if (this.fromDate != null) {
+			q += "&fromDate=" + this.fromDate; //$NON-NLS-1$
+		}
+		if (this.toDate != null) {
+			q += "&toDate=" + this.toDate; //$NON-NLS-1$
+		}
+		if (this.mergeBase) {
+			q += "&mergeBase=true"; //$NON-NLS-1$
+		}
+		return q;
+	}
+
 	@PropertyDescription(name = ProtocolConstants.KEY_NEXT_LOCATION)
 	private URI getNextPageLocation() throws URISyntaxException {
 		if (hasNextPage()) {
-			StringBuilder c = new StringBuilder(""); //$NON-NLS-1$
-			if (fromRefId != null)
-				c.append(fromRefId.getName());
-			if (fromRefId != null && toRefId != null)
-				c.append(".."); //$NON-NLS-1$
-			if (toRefId != null)
-				c.append(Repository.shortenRefName(toRefId.getName()));
-			final String q = "page=%d&pageSize=%d"; //$NON-NLS-1$
-			return BaseToCommitConverter.getCommitLocation(cloneLocation, c.toString(), pattern, BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page + 1, pageSize)));
+			String c = getRefRange();
+			String q = getCommitQuery();
+			return BaseToCommitConverter.getCommitLocation(cloneLocation, GitUtils.encode(c), pattern,
+					BaseToCommitConverter.REMOVE_FIRST_2.setQuery(String.format(q, page + 1, pageSize)));
 		}
 		return null;
 	}
@@ -227,5 +307,25 @@ public class Log extends GitObject {
 			}
 		}
 		return commitToBranch;
+	}
+
+	static Map<ObjectId, Map<String, Ref>> getCommitToTagMap(URI cloneLocation, Repository db) throws MissingObjectException, IOException {
+		HashMap<ObjectId, Map<String, Ref>> commitToTag = new HashMap<ObjectId, Map<String, Ref>>();
+		for (Entry<String, Ref> tag : db.getTags().entrySet()) {
+			Ref ref = db.peel(tag.getValue());
+			ObjectId commitId = ref.getPeeledObjectId();
+			if (commitId == null)
+				commitId = ref.getObjectId();
+
+			Map<String, Ref> tags = commitToTag.get(commitId);
+			if (tags != null) {
+				tags.put(tag.getKey(), tag.getValue());
+			} else {
+				tags = new HashMap<String, Ref>();
+				tags.put(tag.getKey(), tag.getValue());
+				commitToTag.put(commitId, tags);
+			}
+		}
+		return commitToTag;
 	}
 }

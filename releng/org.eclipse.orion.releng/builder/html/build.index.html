@@ -52,6 +52,7 @@
 
 				<li><a href="compileLogs-@repbuildlabel@.zip">Download the <b>compile logs</b> for the current build.</a></li>
 				<li><a href="buildLog-@repbuildlabel@.txt">View the <b>build logs</b> for the current build.</a></li>
+				<li><a href="junitLog-@repbuildlabel@.txt">View the <b>server test workspace logs</b> for the current build.</a></li>
 				<li><a href="directory.txt">View the <b>map file entries</b> for the current build.</a></li></ul>
 
 		</div>
@@ -60,10 +61,9 @@
 
 <table align="left" BORDER="0" CELLSPACING="5" CELLPADDING="2" WIDTH="100%">
 <tr><td><div class="homeitem3col">
-<h3><a name="EclipseOrion"> Eclipse Orion&nbsp;</a></h3>
+<h3><a name="EclipseOrion">Orion Java Server&nbsp;</a></h3>
 <table BORDER="0" CELLSPACING="2" CELLPADDING="0" WIDTH="85%" bordercolor="#999999" align="center" > 
 <tr><td width="25%"><b>Platform</b></td><td width="7%" align="center"><b>Download</b></td><td width="7%"><b>Size</b></td><td width="37%"><b>File</b></td></tr> 
-
 <tr>
 <td>Linux x86</td>
 <td><div align="center" id="repdownloadlink"><a href="download.php?dropFile=eclipse-orion-@repbuildlabel@-linux.gtk.x86.zip">(http)</a>&nbsp;&nbsp;</div></td>
@@ -105,13 +105,88 @@
 </tr>
 </table>
 
+<h3><a name="EclipseOrion">Orion Client Components&nbsp;</a></h3>
+<table BORDER="0" CELLSPACING="2" CELLPADDING="0" WIDTH="85%" bordercolor="#999999" align="center" > 
+<tr><td width="20%"><b>File</b></td><td width="7%" align="center"><b>Download</b></td><td width="40%"><b>Description</b></td></tr> 
+<tr>
+<td>built-editor-amd.min.js</td>
+<td><div align="center" id="repdownloadlink"><a href="download.php?dropFile=built-editor-amd.min.js">(http)</a>&nbsp;&nbsp;</div></td>
+<td id="repdownloadlabel">Orion Editor (AMD minified)</td>
+</tr>
+<tr>
+<td>built-editor-amd.js</td>
+<td><div align="center" id="repdownloadlink"><a href="download.php?dropFile=built-editor-amd.js">(http)</a>&nbsp;&nbsp;</div></td>
+<td id="repdownloadlabel">Orion Editor (AMD non-minified)</td>
+</tr>
+<tr>
+<td>built-editor.min.js</td>
+<td><div align="center" id="repdownloadlink"><a href="download.php?dropFile=built-editor.min.js">(http)</a>&nbsp;&nbsp;</div></td>
+<td id="repdownloadlabel">Orion Editor (minified)</td>
+</tr>
+<tr>
+<td>built-editor.js</td>
+<td><div align="center" id="repdownloadlink"><a href="download.php?dropFile=built-editor.js">(http)</a>&nbsp;&nbsp;</div></td>
+<td id="repdownloadlabel">Orion Editor (non-minified)</td>
+</tr>
+<td>built-editor.css</td>
+<td><div align="center" id="repdownloadlink"><a href="download.php?dropFile=built-editor.css">(http)</a>&nbsp;&nbsp;</div></td>
+<td id="repdownloadlabel">Orion Editor CSS (common)</td>
+</tr>
+
+<tr>
+<td>built-compare-amd.min.js</td>
+<td><div align="center" id="repdownloadlink"><a href="download.php?dropFile=built-compare-amd.min.js">(http)</a>&nbsp;&nbsp;</div></td>
+<td id="repdownloadlabel">Orion Compare Widget (AMD minified)</td>
+</tr>
+<tr>
+<td>built-compare-amd.js</td>
+<td><div align="center" id="repdownloadlink"><a href="download.php?dropFile=built-compare-amd.js">(http)</a>&nbsp;&nbsp;</div></td>
+<td id="repdownloadlabel">Orion Compare Widget (AMD non-minified)</td>
+</tr>
+<tr>
+<td>built-compare.min.js</td>
+<td><div align="center" id="repdownloadlink"><a href="download.php?dropFile=built-compare.min.js">(http)</a>&nbsp;&nbsp;</div></td>
+<td id="repdownloadlabel">Orion Compare Widget (minified)</td>
+</tr>
+<tr>
+<td>built-compare.js</td>
+<td><div align="center" id="repdownloadlink"><a href="download.php?dropFile=built-compare.js">(http)</a>&nbsp;&nbsp;</div></td>
+<td id="repdownloadlabel">Orion Compare Widget (non-minified)</td>
+</tr>
+<tr>
+<td>built-compare.css</td>
+<td><div align="center" id="repdownloadlink"><a href="download.php?dropFile=built-compare.css">(http)</a>&nbsp;&nbsp;</div></td>
+<td id="repdownloadlabel">Orion Compare Widget CSS (common)</td>
+</tr>
+<tr>
+<td>OrionIconFont-Regular.eot</td>
+<td><div align="center" id="repdownloadlink"><a href="download.php?dropFile=OrionIconFont-Regular.eot">(http)</a>&nbsp;&nbsp;</div></td>
+<td id="repdownloadlabel">Orion Compare Widget Icon Font</td>
+</tr>
+<tr>
+<td>OrionIconFont-Regular.woff</td>
+<td><div align="center" id="repdownloadlink"><a href="download.php?dropFile=OrionIconFont-Regular.woff">(http)</a>&nbsp;&nbsp;</div></td>
+<td id="repdownloadlabel">Orion Compare Widget Icon Font</td>
+</tr>
+<tr>
+<td>OrionIconFont-Regular.ttf</td>
+<td><div align="center" id="repdownloadlink"><a href="download.php?dropFile=OrionIconFont-Regular.ttf">(http)</a>&nbsp;&nbsp;</div></td>
+<td id="repdownloadlabel">Orion Compare Widget Icon Font</td>
+</tr>
+<tr>
+<td>OrionIconFont-Regular.svg</td>
+<td><div align="center" id="repdownloadlink"><a href="download.php?dropFile=OrionIconFont-Regular.svg">(http)</a>&nbsp;&nbsp;</div></td>
+<td id="repdownloadlabel">Orion Compare Widget Icon Font</td>
+</tr>
+</table>
+
 <!--START-TESTS-->
 <h3><a name="TestResults"> Test Results&nbsp;</a></h3>
 <table BORDER="0" CELLSPACING="2" CELLPADDING="0" WIDTH="85%" bordercolor="#999999" align="center" >
 <tr><th width="40%" align="left">Test</th><th width="12%" align="center"># Tests</th><th width="12%">Failures</th><th width="12%">Errors</th><th width="12%">Success Rate</th><th width="12%">Time</th></tr>
-<tr><td>&nbsp;<a href="Chrome-12.0-testResults.html">JS Tests - Chrome 12</a></td><td>@JS-CHROME12@</tr>
-<tr><td>&nbsp;<a href="Firefox-11.0-testResults.html">JS Tests - Firefox 11.0</a></td><td>@JS-FIREFOX11@</tr>
-<tr><td>&nbsp;<a href="IE-9.0-testResults.html">JS Tests - Internet Explorer 9.0</a></td><td>@JS-IE9@</tr>
+<tr><td>&nbsp;<a href="Firefox-23.0-testResults.html">JS Tests - Firefox 23.0</a></td><td>@JS-FIREFOX23@</tr>
+<!-- <tr><td>&nbsp;<a href="IE-9.0-testResults.html">JS Tests - Internet Explorer 9.0</a></td><td>@JS-IE9@</tr> -->
+<!-- <tr><td>&nbsp;<a href="Chrome-testResults.html">JS Tests - Chrome Windows</a></td><td>@JS-WIN-CHROME@</tr> -->
 <!-- <tr><td>&nbsp;<a href="Performance-testResults.html">JS Performance Tests</a></td><td>@PERFORMANCE@</tr> -->
 <!-- <tr><td>&nbsp;<a href="org.eclipse.orion.server.tests.performance.AllPerformanceTests.html">Performance Tests vs baseline</a></td><td>@JUNIT_PERF_BASELINE@</tr> -->
 <tr><td>&nbsp;<a href="org.eclipse.orion.server.tests.AllServerTests.html">JUnit Tests: Server Tests</a></td><td>@SERVER-TESTS@</tr>
@@ -126,7 +201,7 @@
 		<li><a href="http://www.eclipse.org/legal/privacy.php">Privacy Policy</a></li>
 		<li><a href="http://www.eclipse.org/legal/termsofuse.php">Terms of Use</a></li>
 	</ul>
-	<p>Copyright &copy; 2011 The Eclipse Foundation. All Rights Reserved</p>
+	<p>Copyright &copy; 2013 The Eclipse Foundation. All Rights Reserved</p>
 </div>
 </body>
 </html>

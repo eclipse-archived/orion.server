@@ -1,0 +1,565 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+   Copyright (C) 2013, 2014 SAP AG and others.
+
+   All rights reserved. This program and the accompanying materials
+   are made available under the terms of the Eclipse Public License v1.0
+   which accompanies this distribution, and is available at
+   http://www.eclipse.org/legal/epl-v10.html
+
+   Contributors:
+      Matthias Sohn, Michael Ochmann - initial implementation
+      IBM Corporation - Updated for Orion 6.0
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<prerequisites>
+		<maven>3.0</maven>
+	</prerequisites>
+
+	<groupId>org.eclipse.orion</groupId>
+	<artifactId>org.eclipse.orion.parent</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+	<packaging>pom</packaging>
+
+	<name>Orion Parent</name>
+
+	<mailingLists>
+		<mailingList>
+			<name>orion-dev Mailing List</name>
+			<post>orion-dev@eclipse.org</post>
+			<subscribe>https://dev.eclipse.org/mailman/listinfo/orion-dev</subscribe>
+			<unsubscribe>https://dev.eclipse.org/mailman/listinfo/orion-dev</unsubscribe>
+			<archive>http://dev.eclipse.org/mhonarc/lists/orion-dev</archive>
+		</mailingList>
+	</mailingLists>
+
+	<issueManagement>
+		<url>https://bugs.eclipse.org/bugs/buglist.cgi?query_format=advanced;product=Orion;classification=Eclipse</url>
+		<system>Bugzilla</system>
+	</issueManagement>
+
+	<licenses>
+		<license>
+			<name>Eclipse Public License v1.0</name>
+			<comments>
+       All rights reserved.
+
+       This program and the accompanying materials are made
+       available under the terms of the Eclipse Public License v1.0
+       which accompanies this distribution, and is available at
+       http://www.eclipse.org/legal/epl-v10.htm
+      </comments>
+		</license>
+	</licenses>
+
+	<properties>
+		<orion-version>1.0.0-SNAPSHOT</orion-version>
+		<tycho-version>0.20.0</tycho-version>
+		<tycho-extras-version>0.20.0</tycho-extras-version>
+		<tycho.scmUrl>scm:git:http://git.eclipse.org/gitroot/orion/org.eclipse.orion.server.git</tycho.scmUrl>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java-version>1.6</java-version>
+		<orion-repository>https://repo.eclipse.org/content/repositories/orion/</orion-repository>
+		<antrun-version>1.7</antrun-version>
+	</properties>
+
+	<distributionManagement>
+		<repository>
+			<id>repo.eclipse.org</id>
+			<name>Orion Repository - Releases</name>
+			<url>https://repo.eclipse.org/content/repositories/orion-releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>repo.eclipse.org</id>
+			<name>Orion Repository - Snapshots</name>
+			<url>https://repo.eclipse.org/content/repositories/orion-snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<profiles>
+		<profile>
+			<id>platform-kepler</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<target-platform>org.eclipse.orion.target</target-platform>
+				<platform-version>[3.9,4.0)</platform-version>
+			</properties>
+		</profile>
+		<profile>
+			<id>static-checks</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>findbugs-maven-plugin</artifactId>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-pmd-plugin</artifactId>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>local-build</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<modules>
+				<module>../org.eclipse.orion.client</module>
+			</modules>
+		</profile>
+		<profile>
+			<id>build-server</id>
+			<repositories>
+				<!-- download orion.client artifacts from Nexus -->
+				<repository>
+					<id>repo.eclipse.org</id>
+					<layout>p2</layout>
+					<url>${orion-repository}</url>
+				</repository>
+			</repositories>
+		</profile>
+		<profile>
+			<id>eclipse-sign</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>target-platform-configuration</artifactId>
+						<configuration>
+							<includePackedArtifacts>true</includePackedArtifacts>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.eclipse.tycho.extras</groupId>
+						<artifactId>tycho-pack200a-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>pack200-normalize</id>
+								<goals>
+									<goal>normalize</goal>
+								</goals>
+								<phase>verify</phase>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.eclipse.cbi.maven.plugins</groupId>
+						<artifactId>eclipse-jarsigner-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>sign</id>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+								<phase>verify</phase>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.eclipse.tycho.extras</groupId>
+						<artifactId>tycho-pack200b-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>pack200-pack</id>
+								<goals>
+									<goal>pack</goal>
+								</goals>
+								<phase>verify</phase>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>tycho-p2-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>p2-metadata</id>
+								<goals>
+									<goal>p2-metadata</goal>
+								</goals>
+								<phase>verify</phase>
+							</execution>
+						</executions>
+						<configuration>
+							<defaultP2Metadata>false</defaultP2Metadata>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>eclipse-pack</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>target-platform-configuration</artifactId>
+						<configuration>
+							<includePackedArtifacts>true</includePackedArtifacts>
+						</configuration>
+					</plugin>
+					<plugin>
+						<groupId>org.eclipse.tycho.extras</groupId>
+						<artifactId>tycho-pack200a-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>pack200-normalize</id>
+								<goals>
+									<goal>normalize</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.eclipse.tycho.extras</groupId>
+						<artifactId>tycho-pack200b-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>pack200-pack</id>
+								<goals>
+									<goal>pack</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>tycho-p2-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>p2-metadata</id>
+								<goals>
+									<goal>p2-metadata</goal>
+								</goals>
+								<phase>package</phase>
+							</execution>
+						</executions>
+						<configuration>
+							<defaultP2Metadata>false</defaultP2Metadata>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+	
+	<repositories>
+		<repository>
+			<id>eclipse-license</id>
+			<layout>p2</layout>
+			<url>http://download.eclipse.org/cbi/updates/license</url>
+		</repository>
+	</repositories>
+
+	<modules>
+		<module>releng/org.eclipse.orion.target</module>
+		<module>bundles/org.apache.oltu.oauth2.common</module>
+		<module>bundles/org.apache.oltu.oauth2.client</module>
+		<module>bundles/org.eclipse.orion.server.core</module>
+		<module>bundles/org.eclipse.orion.server.servlets</module>
+		<module>bundles/org.eclipse.orion.server.useradmin</module>
+		<module>bundles/org.eclipse.orion.server.authentication</module>
+		<module>bundles/org.eclipse.orion.server.git</module>
+		<module>bundles/org.eclipse.orion.server.cf</module>
+		<module>bundles/org.eclipse.orion.server.docker</module>
+		<module>bundles/org.eclipse.orion.server.jetty</module>
+		<module>bundles/org.eclipse.orion.server.jettycustomizer</module>
+		<module>bundles/org.eclipse.orion.server.logs</module>
+		<module>bundles/org.eclipse.orion.server.hosting</module>
+		<module>bundles/org.eclipse.orion.server.search</module>
+		<module>bundles/org.eclipse.orion.server.npm</module>
+		<module>bundles/org.eclipse.orion.server.logback.config</module>
+		<module>bundles/org.eclipse.orion.server.ui</module>
+		<module>bundles/org.eclipse.orion.server.gerritfs</module>
+		<module>bundles/org.eclipse.orion.server.events</module>
+		<module>bundles/org.eclipse.jetty9.websocket</module>
+
+		<module>tests/org.eclipse.orion.server.tests</module>
+
+		<module>features/org.eclipse.orion.base-feature</module>
+		<module>features/org.eclipse.orion.server-feature</module>
+		<module>features/org.eclipse.orion.server.authentication-feature</module>
+		<module>features/org.eclipse.orion.server.jetty-feature</module>
+		<module>features/org.eclipse.orion.server.hosting-feature</module>
+		<module>features/org.eclipse.orion.server.search-feature</module>
+		<module>features/org.eclipse.orion.server.ui-feature</module>
+		<module>features/org.eclipse.orion.releng.test.master-feature</module>
+		<module>features/org.eclipse.orion.server.tests-feature</module>
+		<module>features/org.eclipse.orion-feature</module>
+
+		<module>releng/org.eclipse.orion.server.repository</module>
+	</modules>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>maven.eclipse.org</id>
+			<url>https://repo.eclipse.org/content/groups/eclipse/</url>
+		</pluginRepository>
+		<pluginRepository>
+			<id>repo.eclipse.org.cbi-releases</id>
+			<url>https://repo.eclipse.org/content/repositories/cbi-releases/</url>
+		</pluginRepository>
+	</pluginRepositories>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+				<configuration>
+					<source>${java-version}</source>
+					<target>${java-version}</target>
+					<encoding>${project.build.sourceEncoding}</encoding>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-compiler-plugin</artifactId>
+				<version>${tycho-version}</version>
+				<configuration>
+					<source>${java-version}</source>
+					<target>${java-version}</target>
+					<encoding>${project.build.sourceEncoding}</encoding>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>tycho-maven-plugin</artifactId>
+				<version>${tycho-version}</version>
+				<extensions>true</extensions>
+			</plugin>
+			<plugin>
+				<groupId>org.eclipse.tycho</groupId>
+				<artifactId>target-platform-configuration</artifactId>
+				<version>${tycho-version}</version>
+				<configuration>
+					<filters>
+						<!-- work around Equinox bug 348045 -->
+						<filter>
+							<type>p2-installable-unit</type>
+							<id>org.eclipse.equinox.servletbridge.extensionbundle</id>
+							<removeAll />
+						</filter>
+					</filters>
+					<target>
+						<artifact>
+							<groupId>org.eclipse.orion</groupId>
+							<artifactId>org.eclipse.orion.target</artifactId>
+							<version>${orion-version}</version>
+							<classifier>${target-platform}</classifier>
+						</artifact>
+					</target>
+					<resolver>p2</resolver>
+					<pomDependencies>consider</pomDependencies>
+					<environments>
+						<environment>
+							<os>linux</os>
+							<ws>gtk</ws>
+							<arch>x86</arch>
+						</environment>
+						<environment>
+							<os>linux</os>
+							<ws>gtk</ws>
+							<arch>x86_64</arch>
+						</environment>
+						<environment>
+							<os>win32</os>
+							<ws>win32</ws>
+							<arch>x86</arch>
+						</environment>
+						<environment>
+							<os>win32</os>
+							<ws>win32</ws>
+							<arch>x86_64</arch>
+						</environment>
+						<environment>
+							<os>macosx</os>
+							<ws>cocoa</ws>
+							<arch>x86</arch>
+						</environment>
+						<environment>
+							<os>macosx</os>
+							<ws>cocoa</ws>
+							<arch>x86_64</arch>
+						</environment>
+					</environments>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>${antrun-version}</version>
+				<executions>
+					<execution>
+						<id>replace-build-token</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<target>
+								<taskdef resource="net/sf/antcontrib/antcontrib.properties"
+									classpathref="maven.plugin.classpath" />
+								<if>
+									<available file="orion.product" />
+									<then>
+										<echo
+											message="Replacing @qualifier@ token within orion.product with build id ${unqualifiedVersion}.${buildQualifier}" />
+										<replace file="orion.product">
+											<replacefilter token="@qualifier@"
+												value="${unqualifiedVersion}.${buildQualifier}" />
+										</replace>
+									</then>
+								</if>
+								<if>
+									<available file="about.properties" />
+									<then>
+										<echo
+											message="Replacing @qualifier@ token within about.properties with build id ${unqualifiedVersion}.${buildQualifier}" />
+										<replace file="about.properties">
+											<replacefilter token="@qualifier@"
+												value="${unqualifiedVersion}.${buildQualifier}" />
+										</replace>
+									</then>
+								</if>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+				<dependencies>
+					<dependency>
+						<groupId>ant-contrib</groupId>
+						<artifactId>ant-contrib</artifactId>
+						<version>20020829</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+		</plugins>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.eclipse.tycho</groupId>
+					<artifactId>tycho-source-plugin</artifactId>
+					<version>${tycho-version}</version>
+					<executions>
+						<execution>
+							<id>attach-source</id>
+							<goals>
+								<goal>plugin-source</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+				<plugin>
+					<groupId>org.eclipse.tycho</groupId>
+					<artifactId>tycho-packaging-plugin</artifactId>
+					<version>${tycho-version}</version>
+					<configuration>
+						<format>'v'yyyyMMdd-HHmm</format>
+						<timestampProvider>jgit</timestampProvider>
+						<jgit.ignore>pom.xml</jgit.ignore>
+						<jgit.dirtyWorkingTree>warning</jgit.dirtyWorkingTree>
+					</configuration>
+					<dependencies>
+						<dependency>
+							<groupId>org.eclipse.tycho.extras</groupId>
+							<artifactId>tycho-buildtimestamp-jgit</artifactId>
+							<version>${tycho-extras-version}</version>
+						</dependency>
+					</dependencies>
+				</plugin>
+				<plugin>
+					<groupId>org.eclipse.tycho</groupId>    
+					<artifactId>tycho-maven-plugin</artifactId>
+					<version>${tycho-version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.eclipse.tycho</groupId>
+					<artifactId>tycho-p2-plugin</artifactId>
+					<version>${tycho-version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.eclipse.tycho.extras</groupId>
+					<artifactId>tycho-pack200a-plugin</artifactId>
+					<version>${tycho-extras-version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.eclipse.tycho.extras</groupId>
+					<artifactId>tycho-pack200b-plugin</artifactId>
+					<version>${tycho-extras-version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.eclipse.cbi.maven.plugins</groupId>
+					<artifactId>eclipse-jarsigner-plugin</artifactId>
+					<version>1.0.4</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-resources-plugin</artifactId>
+					<version>2.5</version>
+					<configuration>
+						<encoding>ISO-8859-1</encoding>
+					</configuration>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-antrun-plugin</artifactId>
+					<version>${antrun-version}</version>
+				</plugin>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>findbugs-maven-plugin</artifactId>
+					<version>2.5.2</version>
+					<configuration>
+						<findbugsXmlOutput>true</findbugsXmlOutput>
+						<failOnError>false</failOnError>
+					</configuration>
+					<executions>
+						<execution>
+							<goals>
+								<goal>check</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-pmd-plugin</artifactId>
+					<version>2.7.1</version>
+					<configuration>
+						<sourceEncoding>${project.build.sourceEncoding}</sourceEncoding>
+						<minimumTokens>100</minimumTokens>
+						<targetJdk>${java-version}</targetJdk>
+						<format>xml</format>
+						<failOnViolation>false</failOnViolation>
+					</configuration>
+					<executions>
+						<execution>
+							<goals>
+								<goal>cpd-check</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-assembly-plugin</artifactId>
+					<version>2.3</version>
+				</plugin>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>build-helper-maven-plugin</artifactId>
+					<version>1.8</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+</project>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="org.eclipse.orion.server.cf.nodejs.NodeJSDeploymentPlanner">
+   <implementation class="org.eclipse.orion.server.cf.nodejs.NodeJSDeploymentPlanner"/>
+   <service>
+      <provide interface="org.eclipse.orion.server.cf.ds.IDeploymentPlanner"/>
+   </service>
+</scr:component>

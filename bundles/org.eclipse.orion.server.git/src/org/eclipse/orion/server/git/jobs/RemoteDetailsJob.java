@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012 IBM Corporation and others
+ * Copyright (c) 2012, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -14,17 +14,25 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Set;
+
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
+
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.LogCommand;
 import org.eclipse.jgit.errors.IncorrectObjectTypeException;
 import org.eclipse.jgit.errors.MissingObjectException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.ConfigConstants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.jgit.storage.file.FileRepository;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitActivator;
 import org.eclipse.orion.server.git.GitConstants;
@@ -44,19 +52,25 @@ public class RemoteDetailsJob extends GitJob {
 	private int pageSize;
 	private String baseLocation;
 	private String configName;
+	private String nameFilter;
 
 	/**
 	 * Creates job with given page range and adding <code>commitsSize</code> commits to every branch.
+	 * 
 	 * @param userRunningTask
 	 * @param repositoryPath
 	 * @param cloneLocation
-	 * @param commitsSize user 0 to omit adding any log, only CommitLocation will be attached 
+	 * @param commitsSize
+	 *            user 0 to omit adding any log, only CommitLocation will be attached
 	 * @param pageNo
-	 * @param pageSize use negative to indicate that all commits need to be returned
-	 * @param baseLocation URI used as a base for generating next and previous page links. Should not contain any parameters.
+	 * @param pageSize
+	 *            use negative to indicate that all commits need to be returned
+	 * @param baseLocation
+	 *            URI used as a base for generating next and previous page links. Should not contain any parameters.
 	 */
-	public RemoteDetailsJob(String userRunningTask, String configName, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize, String baseLocation) {
-		super(NLS.bind("Getting remote details {0}", configName), userRunningTask, NLS.bind("Getting remote details {0}...", configName), true, false);
+	public RemoteDetailsJob(String userRunningTask, String configName, IPath repositoryPath, URI cloneLocation, int commitsSize, int pageNo, int pageSize,
+			String baseLocation, String filter) {
+		super(userRunningTask, false);
 		this.path = repositoryPath;
 		this.cloneLocation = cloneLocation;
 		this.commitsSize = commitsSize;
@@ -64,27 +78,31 @@ public class RemoteDetailsJob extends GitJob {
 		this.pageSize = pageSize;
 		this.baseLocation = baseLocation;
 		this.configName = configName;
+		this.nameFilter = filter;
 	}
 
 	/**
 	 * Creates job returning list of all branches.
+	 * 
 	 * @param userRunningTask
 	 * @param repositoryPath
 	 * @param cloneLocation
 	 */
 	public RemoteDetailsJob(String userRunningTask, String configName, IPath repositoryPath, URI cloneLocation) {
-		this(userRunningTask, configName, repositoryPath, cloneLocation, 0, 0, -1, null);
+		this(userRunningTask, configName, repositoryPath, cloneLocation, 0, 0, -1, null, "");
 	}
 
 	/**
 	 * Creates job returning list of all branches adding <code>commitsSize</code> commits to every branch.
+	 * 
 	 * @param userRunningTask
 	 * @param repositoryPath
 	 * @param cloneLocation
 	 * @param commitsSize
+	 * @param filterParm
 	 */
-	public RemoteDetailsJob(String userRunningTask, String configName, IPath repositoryPath, URI cloneLocation, int commitsSize) {
-		this(userRunningTask, configName, repositoryPath, cloneLocation, commitsSize, 0, -1, null);
+	public RemoteDetailsJob(String userRunningTask, String configName, IPath repositoryPath, URI cloneLocation, int commitsSize, String filterParm) {
+		this(userRunningTask, configName, repositoryPath, cloneLocation, commitsSize, 0, -1, null, filterParm);
 	}
 
 	private ObjectId getCommitObjectId(Repository db, ObjectId oid) throws MissingObjectException, IncorrectObjectTypeException, IOException {
@@ -97,11 +115,11 @@ public class RemoteDetailsJob extends GitJob {
 	}
 
 	@Override
-	protected IStatus performJob() {
-
+	protected IStatus performJob(IProgressMonitor monitor) {
+		Repository db = null;
 		try {
 			File gitDir = GitUtils.getGitDir(path);
-			Repository db = new FileRepository(gitDir);
+			db = FileRepositoryBuilder.create(gitDir);
 			Git git = new Git(db);
 			Set<String> configNames = db.getConfig().getSubsections(ConfigConstants.CONFIG_REMOTE_SECTION);
 			for (String configN : configNames) {
@@ -112,7 +130,18 @@ public class RemoteDetailsJob extends GitJob {
 						return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 					}
 					JSONArray children = result.getJSONArray(ProtocolConstants.KEY_CHILDREN);
+					JSONArray filteredChildren = new JSONArray();
 					if (children.length() == 0 || (commitsSize == 0 && pageSize < 0)) {
+						if (nameFilter != null && !nameFilter.equals("")) {
+							for (int i = 0; i < children.length(); i++) {
+								JSONObject test = (JSONObject) children.get(i);
+								String name = (String) test.get("Name");
+								if (name.toLowerCase().contains(nameFilter.toLowerCase())) {
+									filteredChildren.put(test);
+								}
+							}
+							result.put(ProtocolConstants.KEY_CHILDREN, filteredChildren);
+						}
 						return new ServerStatus(Status.OK_STATUS, HttpServletResponse.SC_OK, result);
 					}
 
@@ -136,6 +165,9 @@ public class RemoteDetailsJob extends GitJob {
 
 					JSONArray newChildren = new JSONArray();
 					for (int i = firstChild; i <= lastChild; i++) {
+						if (monitor.isCanceled()) {
+							return new Status(IStatus.CANCEL, GitActivator.PI_GIT, "Cancelled");
+						}
 						JSONObject branch = children.getJSONObject(i);
 						if (commitsSize == 0) {
 							newChildren.put(branch);
@@ -171,8 +203,11 @@ public class RemoteDetailsJob extends GitJob {
 		} catch (Exception e) {
 			String msg = NLS.bind("Couldn't get remote details : {0}", configName);
 			return new Status(IStatus.ERROR, GitActivator.PI_GIT, msg, e);
+		} finally {
+			if (db != null) {
+				// close the git repository
+				db.close();
+			}
 		}
-
 	}
-
 }

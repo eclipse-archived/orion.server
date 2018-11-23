@@ -1,0 +1,43 @@
+<configuration>
+  <!-- See documentation at http://logback.qos.ch/manual/joran.html -->
+  
+  <!-- address performance concern with jul-to-slf4j -->
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+    <resetJUL>true</resetJUL>
+  </contextListener>
+  
+  <!-- Import custom properties from the Orion configuration file -->
+  <property file="${orion.core.configFile}" />
+  
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    
+    <!-- by default, write to /var/logs/orion/orion.log -->
+    <file>${orion.log.directory:-/var/logs/orion/}${orion.log.file:-orion.log}</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      
+      <!-- daily rollover -->
+      <fileNamePattern>%d{yyyy-MM-dd}.${orion.log.file:-orion.log}</fileNamePattern>
+
+      <!-- keep log history, by default 30 -->
+      <maxHistory>${orion.log.history:-30}</maxHistory>
+    
+    </rollingPolicy>
+
+    <encoder>
+      <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender> 
+  
+  <!-- Prints successful and failed logins -->
+  <logger name="org.eclipse.orion.server.login" level="INFO"/>
+  
+  <!-- Prints user account creations and deletions -->
+  <logger name="org.eclipse.orion.server.account" level="INFO"/>
+
+  <!-- Prints information on locating and reading the server configuration file -->
+  <logger name="org.eclipse.orion.server.config" level="INFO"/>
+
+  <root level="WARN">
+    <appender-ref ref="FILE" />
+  </root>
+</configuration>

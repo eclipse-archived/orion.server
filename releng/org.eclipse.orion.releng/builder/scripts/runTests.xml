@@ -1,5 +1,5 @@
 <!--
- Copyright (c) 2011 IBM Corporation and others.
+ Copyright (c) 2011, 2013 IBM Corporation and others.
  All rights reserved. This program and the accompanying materials
  are made available under the terms of the Eclipse Public License v1.0
  which accompanies this distribution, and is available at
@@ -19,7 +19,7 @@
 		
 		<antcall target="prepareJsTests"/>
 		<parallel>
-			<antcall target="triggerHudsonTests"/>
+<!--			<antcall target="triggerHudsonTests"/> -->
 			<antcall target="jsTests" />
 		</parallel>
 		
@@ -45,7 +45,7 @@
 			<isset property="runTestsLocally" />
 		</condition>
 		<property file="${builder}/build.properties" />
-		<condition property="orionRepo" value="http://download.eclipse.org/orion/updates/0.3-${buildType}-builds" else="file:${buildDirectory}/buildRepo">
+		<condition property="orionRepo" value="http://download.eclipse.org/orion/updates/integration" else="file:${buildDirectory}/buildRepo">
 			<isset property="runTestsLocally"/>
 		</condition>
 	</target>
@@ -82,7 +82,7 @@
 		
 		<subant target="run">
 			<property name="junit-stylesheet" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}/JUNIT.XSL" />
-            <property name="library-file" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}/library.xml" />
+            <property name="library-file" value="${builder}/library.xml" />
 			<property name="eclipse-home" value="${buildDirectory}/test/eclipse" />
 			<fileset dir="${buildDirectory}/test/eclipse/plugins" includes="*/test.xml" excludes="org.eclipse.core.tests.resources_*/*" />
 			<property name="os" value="${osgi.os}" />
@@ -103,7 +103,7 @@
 		
 		<subant target="performance">
 			<property name="junit-stylesheet" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}/JUNIT.XSL" />
-	        <property name="library-file" value="${buildDirectory}/test/eclipse/plugins/${testLibrary}/library.xml" />
+	        <property name="library-file" value="${builder}/library.xml" />
 			<property name="eclipse-home" value="${buildDirectory}/test/eclipse" />
 			<fileset dir="${buildDirectory}/test/eclipse/plugins" includes="*/test.xml" excludes="org.eclipse.core.tests.resources_*/*" />
 			<property name="os" value="${osgi.os}" />
@@ -122,7 +122,7 @@
 		
 		<property name="baseURL" value="http://build.eclipse.org/eclipse/e4/orion" />
 		<property name="JSON_buildZip" value="{&quot;name&quot;:&quot;buildZip&quot;,&quot;value&quot;:&quot;${baseURL}/${buildType}${timestamp}/test/${buildLabel}.zip&quot;}"/>
-		<property name="JSON_repository" value="{&quot;name&quot;:&quot;repository&quot;,&quot;value&quot;:&quot;${baseURL}/target/0.3-${buildType}-builds/${buildLabel}&quot;}"/>
+		<property name="JSON_repository" value="{&quot;name&quot;:&quot;repository&quot;,&quot;value&quot;:&quot;${baseURL}/target/integration/${buildLabel}&quot;}"/>
 		<property name="json" value="{&quot;parameter&quot;: [${JSON_buildZip}, ${JSON_repository}] }"/>
 
 		<!-- fetch the next hudson build number from the hudson job API -->
@@ -147,8 +147,8 @@
 		</exec>
 		
 		<property name="hudsonResultRootURL" value="https://hudson.eclipse.org/hudson/job/orion-jstest-windows/${nextHudsonBuild}/artifact" />
-		<property name="hudsonResultURL" value="${hudsonResultRootURL}/IE-9.0-testResults.html" />
-		<property name="hudsonDownloadedHTML" value="${buildDirectory}/${buildLabel}/drop/IE-9.0-testResults.html"/>
+		<property name="hudsonResultURL" value="${hudsonResultRootURL}/Chrome-testResults.xml" />
+		<property name="hudsonDownloadedHTML" value="${buildDirectory}/${buildLabel}/drop/Chrome-testResults.xml"/>
 		<delete file="${hudsonDownloadedHTML}" failonerror="false"/>
 		<antcall target="getHudsonResults" />	
 	</target>
@@ -161,7 +161,7 @@
 		</waitfor>
 
 		<get ignoreerrors="true" src="${hudsonResultURL}" dest="${hudsonDownloadedHTML}"/>	
-		<get ignoreerrors="true" src="${hudsonResultRootURL}/TEST-IE-9.0.Performance.xml" dest="${jsTestDir}/TEST-IE-9.0.Performance.xml" />
+<!--		<get ignoreerrors="true" src="${hudsonResultRootURL}/IE-9.0-testResults.html" dest="${jsTestDir}/IE-9.0-testResults.html" /> -->
 	</target>
 	
 	<!-- This target runs on the Hudson Windows Slave -->
@@ -174,43 +174,57 @@
 		<get src="${buildZip}" dest="${workingDir}/build.zip" />
 		<unzip src="${workingDir}/build.zip" dest="${workingDir}" />
 		
-		<!-- Internet Explorer 9 Tests -->
+		<!-- Chrome Tests -->
 		<apply executable="${java.home}/bin/java" parallel="false" >
 			<arg line="-Dhttp.proxyHost=proxy.eclipse.org -Dhttp.proxyPort=9898 -Dhttp.nonProxyHosts=*.eclipse.org" />
 			<arg line="-Dhttps.proxyHost=proxy.eclipse.org -Dhttps.proxyPort=9898 -Dhttps.nonProxyHosts=*.eclipse.org" />
 			<arg line="-Dftp.proxyHost=proxy.eclipse.org -Dftp.proxyPort=9898 -Dftp.nonProxyHosts=*.eclipse.org" />
 			<arg line="-jar ${workingDir}/JsTestDriver.jar" />
-			<arg line="--port 42442" />
+			<arg line="--port 42443" />
+			<arg line="--runnerMode DEBUG_NO_TRACE" />
 			<arg line="--tests all" />
 			<arg line="--testOutput ${workingDir}/results" />
 			<arg value="--browser" />
-			<arg value="C:\\Program Files\\Internet Explorer\\iexplore.exe" />
+			<arg value="c:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" />
 			<arg value="--config" />
 			<fileset dir="${workingDir}" includes="**/jsTestDriver.conf" />	
 		</apply>
-		
+
+		<!-- Internet Explorer 9 Tests
+		<apply executable="${java.home}/bin/java" parallel="false" >
+			<arg line="-Dhttp.proxyHost=proxy.eclipse.org -Dhttp.proxyPort=9898 -Dhttp.nonProxyHosts=*.eclipse.org" />
+			<arg line="-Dhttps.proxyHost=proxy.eclipse.org -Dhttps.proxyPort=9898 -Dhttps.nonProxyHosts=*.eclipse.org" />
+			<arg line="-Dftp.proxyHost=proxy.eclipse.org -Dftp.proxyPort=9898 -Dftp.nonProxyHosts=*.eclipse.org" />
+			<arg line="-jar ${workingDir}/JsTestDriver.jar" />
+			<arg line="- -port 42443" />
+			<arg line="- -runnerMode DEBUG_NO_TRACE" />
+			<arg line="- -tests all" />
+			<arg line="- -testOutput ${workingDir}/results" />
+			<arg value="- -browser" />
+			<arg value="C:\\Program Files\\Internet Explorer\\iexplore.exe" />
+			<arg value="- -config" />
+			<fileset dir="${workingDir}" includes="**/jsTestDriver.conf" />	
+		</apply>
+		-->
+
 		<delete>
 			<fileset dir="${env.WORKSPACE}" includes="*.xml" />
 		</delete>
 		
 		<junitreport todir="${env.WORKSPACE}" tofile="IE-9.0-testResults.xml">
-			<fileset dir="${workingDir}/results" includes="**/TEST-*.xml" />
+			<fileset dir="${workingDir}/results" includes="**/TEST-IE*.xml" />
 		</junitreport>
-		<copy todir="${env.WORKSPACE}" >
-			<fileset dir="${workingDir}/results" includes="TEST-*.Performance.xml"/>
-			<globmapper from="TEST-Microsoft_Internet_Explorer_90_Windows*" to="TEST-IE-9.0*" />
-		</copy>
+		<junitreport todir="${env.WORKSPACE}" tofile="Chrome-testResults.xml">
+			<fileset dir="${workingDir}/results" includes="**/TEST-Chrome*.xml" />
+		</junitreport>
 		<xslt style="${basedir}/../html/JUNIT.XSL" basedir="${env.WORKSPACE}" destdir="${env.WORKSPACE}" includes="IE-9.0-testResults.xml" />
+		<xslt style="${basedir}/../html/JUNIT.XSL" basedir="${env.WORKSPACE}" destdir="${env.WORKSPACE}" includes="Chrome-testResults.xml" />
 
-		<delete dir="${workingDir}" />
+<!-- comment out while debugging -->
+<!--		<delete dir="${workingDir}" /> -->
 	</target>
 			
 	<target name="prepareJsTests" >
-		<!-- js tests need dojo extracted -->
-		<mkdir dir="${buildDirectory}/plugins/org.dojotoolkit" />
-		<unzip dest="${buildDirectory}/plugins/org.dojotoolkit">
-			<fileset dir="${buildDirectory}/buildRepo/plugins" includes="org.dojotoolkit_*.jar" />
-		</unzip>
 		<!-- prepare zip file to send to hudson build before it can be touched by other jstests -->
 		<zip destfile="${buildDirectory}/test/${buildLabel}.zip" >
 			<fileset dir="${buildDirectory}" includes="plugins/**" />
@@ -320,11 +334,8 @@
 	
 	<target name="processResults" >	
 		<!-- js unit results -->
-		<junitreport todir="${dropLocation}" tofile="Chrome-12.0-testResults.xml">
-			<fileset dir="${jsTestDir}" includes="**/TEST-Chrome_120*.xml" />
-		</junitreport>
-		<junitreport todir="${dropLocation}" tofile="Firefox-11.0-testResults.xml">
-			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_11*.xml" />
+		<junitreport todir="${dropLocation}" tofile="Firefox-23.0-testResults.xml">
+			<fileset dir="${jsTestDir}" includes="**/TEST-Firefox_23*.xml" />
 		</junitreport>
 		<junitreport todir="${dropLocation}" tofile="Performance-testResults.xml">
 			<fileset dir="${jsTestDir}" includes="**/TEST-*.Performance.xml" />
@@ -337,11 +348,12 @@
 		
 		<!-- junit results -->
 		<xslt style="${builder}/html/JUNIT.XSL" basedir="${buildDirectory}/test/eclipse/results" destdir="${dropLocation}" includes="*.xml" />
+		<copy file="${buildDirectory}/test/eclipse/server-folder/.metadata/.log" tofile="${dropLocation}/junitLog-${buildLabel}.txt" />
 		
 		<!-- update the test status -->
-		<updateTestResult testFile="Chrome-12.0-testResults.html" token="@JS-CHROME12@"/>
-		<updateTestResult testFile="Firefox-11.0-testResults.html" token="@JS-FIREFOX11@"/>
-		<updateTestResult testFile="IE-9.0-testResults.html" token="@JS-IE9@"/>
+		<updateTestResult testFile="Firefox-23.0-testResults.html" token="@JS-FIREFOX23@"/>
+<!--		<updateTestResult testFile="IE-9.0-testResults.html" token="@JS-IE9@"/> -->
+<!--		<updateTestResult testFile="Chrome-testResults.html" token="@JS-WIN-CHROME@"/> -->
 		<updateTestResult testFile="Performance-testResults.html" token="@PERFORMANCE@"/>
 		<updateTestResult testFile="org.eclipse.orion.server.tests.AllServerTests.html" token="@SERVER-TESTS@"/>
 		<updateTestResult testFile="org.eclipse.orion.server.tests.performance.AllPerformanceTests.html" token="@JUNIT_PERF_BASELINE@"/>

@@ -4,6 +4,5 @@ Bundle-SymbolicName: org.eclipse.orion.server.logback.config
 Bundle-Name: %Bundle-Name
 Bundle-Vendor: %Bundle-Vendor
 Bundle-Localization: fragment
-Bundle-Version: 0.2.0.qualifier
+Bundle-Version: 1.0.0.qualifier
 Fragment-Host: ch.qos.logback.classic;bundle-version="0.9.19"
-Bundle-RequiredExecutionEnvironment: J2SE-1.5

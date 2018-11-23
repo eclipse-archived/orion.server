@@ -1,0 +1,7 @@
+---
+env:
+  TEST: base
+  TEST2: base
+
+applications:
+ - name: A

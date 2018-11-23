@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others
+ * Copyright (c) 2011, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -16,20 +16,18 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.net.HttpURLConnection;
-import java.net.URI;
 
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.MergeResult.MergeStatus;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.lib.ConfigConstants;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.StoredConfig;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.GitConstants;
-import org.eclipse.orion.server.git.objects.Branch;
 import org.eclipse.orion.server.tests.servlets.internal.DeleteMethodWebRequest;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -42,10 +40,11 @@ import com.meterware.httpunit.WebResponse;
 public class GitBranchTest extends GitTest {
 	@Test
 	public void testListBranches() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		JSONObject clone = clone(new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
+		JSONObject clone = clone(clonePath);
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		branch(branchesLocation, "a");
@@ -56,15 +55,15 @@ public class GitBranchTest extends GitTest {
 		assertEquals(3, branchesArray.length());
 
 		// validate branch metadata
-		JSONObject branch = branchesArray.getJSONObject(1);
+		JSONObject branch = branchesArray.getJSONObject(0);
 		assertEquals(Constants.MASTER, branch.getString(ProtocolConstants.KEY_NAME));
 		assertBranchUri(branch.getString(ProtocolConstants.KEY_LOCATION));
 		assertTrue(branch.optBoolean(GitConstants.KEY_BRANCH_CURRENT, false));
-		branch = branchesArray.getJSONObject(0);
+		branch = branchesArray.getJSONObject(1);
 		assertEquals("z", branch.getString(ProtocolConstants.KEY_NAME));
-		// assert properly sorted, new first
+		// assert properly sorted, current branch is first, then other branches sorted by timestamp
 		long lastTime = Long.MAX_VALUE;
-		for (int i = 0; i < branchesArray.length(); i++) {
+		for (int i = 1; i < branchesArray.length(); i++) {
 			long t = branchesArray.getJSONObject(i).getLong(ProtocolConstants.KEY_LOCAL_TIMESTAMP);
 			assertTrue(t <= lastTime);
 			lastTime = t;
@@ -73,10 +72,11 @@ public class GitBranchTest extends GitTest {
 
 	@Test
 	public void testAddRemoveBranch() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		JSONObject clone = clone(new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).makeAbsolute());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
+		IPath clonePath = getClonePath(workspaceId, project);
+		JSONObject clone = clone(clonePath);
 		String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 		String[] branchNames = {"dev", "change/1/1", "working@bug1"};
@@ -108,7 +108,9 @@ public class GitBranchTest extends GitTest {
 			// list branches again, make sure it's gone
 			request = getGetRequest(branchesLocation);
 			response = webConversation.getResponse(request);
-			branches = waitForTaskCompletion(response);
+			ServerStatus status = waitForTask(response);
+			assertTrue(status.toString(), status.isOK());
+			branches = status.getJsonData();
 			branchesArray = branches.getJSONArray(ProtocolConstants.KEY_CHILDREN);
 			assertEquals(1, branchesArray.length());
 			JSONObject branch = branchesArray.getJSONObject(0);
@@ -118,14 +120,8 @@ public class GitBranchTest extends GitTest {
 
 	@Test
 	public void testCreateTrackingBranch() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -140,7 +136,7 @@ public class GitBranchTest extends GitTest {
 			cfg.save();
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject project = new JSONObject(response.getText());
@@ -190,14 +186,8 @@ public class GitBranchTest extends GitTest {
 
 	@Test
 	public void testCheckoutAmbiguousName() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject projectTop = createProjectOrLink(workspaceLocation, getMethodName() + "-top", null);
-		IPath clonePathTop = new Path("file").append(projectTop.getString(ProtocolConstants.KEY_ID)).makeAbsolute();
-
-		JSONObject projectFolder = createProjectOrLink(workspaceLocation, getMethodName() + "-folder", null);
-		IPath clonePathFolder = new Path("file").append(projectFolder.getString(ProtocolConstants.KEY_ID)).append("folder").makeAbsolute();
-
-		IPath[] clonePaths = new IPath[] {clonePathTop, clonePathFolder};
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		IPath[] clonePaths = createTestProjects(workspaceLocation);
 
 		for (IPath clonePath : clonePaths) {
 			// clone a  repo
@@ -207,7 +197,7 @@ public class GitBranchTest extends GitTest {
 			String branchesLocation = clone.getString(GitConstants.KEY_BRANCH);
 
 			// get project/folder metadata
-			WebRequest request = getGetFilesRequest(cloneContentLocation);
+			WebRequest request = getGetRequest(cloneContentLocation);
 			WebResponse response = webConversation.getResponse(request);
 			assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject folder = new JSONObject(response.getText());
@@ -256,12 +246,7 @@ public class GitBranchTest extends GitTest {
 	}
 
 	private WebRequest getDeleteGitBranchRequest(String location) {
-		String requestURI;
-		if (location.startsWith("http://")) {
-			requestURI = location;
-		} else {
-			requestURI = SERVER_LOCATION + GIT_SERVLET_LOCATION + Branch.RESOURCE + location;
-		}
+		String requestURI = toAbsoluteURI(location);
 		WebRequest request = new DeleteMethodWebRequest(requestURI);
 		request.setHeaderField(ProtocolConstants.HEADER_ORION_VERSION, "1");
 		setAuthentication(request);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others.
+ * Copyright (c) 2010, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,23 +12,26 @@ package org.eclipse.orion.server.tests.prefs;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.List;
 
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.server.core.users.OrionScope;
-import org.eclipse.orion.server.tests.AbstractServerTest;
-import org.eclipse.orion.server.tests.ServerTestsActivator;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.tests.servlets.files.FileSystemTest;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
-import org.osgi.service.prefs.BackingStoreException;
 
 import com.meterware.httpunit.GetMethodWebRequest;
 import com.meterware.httpunit.PutMethodWebRequest;
@@ -39,17 +42,39 @@ import com.meterware.httpunit.WebResponse;
 /**
  * Tests for the preference servlet.
  */
-public class PreferenceTest extends AbstractServerTest {
-	WebConversation webConversation;
+public class PreferenceTest extends FileSystemTest {
 
 	@Before
-	public void setUp() throws BackingStoreException {
-		OrionScope prefs = new OrionScope();
-		prefs.getNode("Users").removeNode();
-		prefs.getNode("Workspaces").removeNode();
-		prefs.getNode("Projects").removeNode();
+	public void setUp() throws Exception {
 		webConversation = new WebConversation();
 		webConversation.setExceptionsThrownOnErrorStatus(false);
+		setUpAuthorization();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		createTestProject(testName.getMethodName());
+	}
+
+	/**
+	 * Tests corruption of preference keys containing URLS.
+	 */
+	@Test
+	public void testBug409792() throws JSONException, IOException {
+		String location = toAbsoluteURI("prefs/user/" + getTestUserId() + "/testBug409792");
+		//put a value containing a URL in the key
+		JSONObject prefs = new JSONObject();
+		final String key = "http://127.0.0.2:8080/plugins/samplePlugin.html";
+		prefs.put(key, true);
+		WebRequest request = new PutMethodWebRequest(location, IOUtilities.toInputStream(prefs.toString()), "application/json");
+		setAuthentication(request);
+		WebResponse response = webConversation.getResource(request);
+		assertEquals("1.1", HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+
+		//attempt to retrieve the preference
+		request = new GetMethodWebRequest(location);
+		setAuthentication(request);
+		response = webConversation.getResource(request);
+		assertEquals("1.2", HttpURLConnection.HTTP_OK, response.getResponseCode());
+		JSONObject result = new JSONObject(response.getText());
+		assertTrue("1.3", result.optBoolean(key));
 	}
 
 	@Test
@@ -60,27 +85,27 @@ public class PreferenceTest extends AbstractServerTest {
 			WebRequest request = new GetMethodWebRequest(location + "?key=Name");
 			setAuthentication(request);
 			WebResponse response = webConversation.getResource(request);
-			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+			assertEquals("1." + location, HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
 			//put a value
 			request = createSetPreferenceRequest(location, "Name", "Frodo");
 			setAuthentication(request);
 			response = webConversation.getResource(request);
-			assertEquals("1." + location, HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+			assertEquals("2." + location, HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
 
 			//now doing a get should succeed
 			request = new GetMethodWebRequest(location + "?key=Name");
 			setAuthentication(request);
 			response = webConversation.getResource(request);
-			assertEquals("2." + location, HttpURLConnection.HTTP_OK, response.getResponseCode());
+			assertEquals("3." + location, HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject result = new JSONObject(response.getText());
-			assertEquals("3." + location, "Frodo", result.optString("Name"));
+			assertEquals("4." + location, "Frodo", result.optString("Name"));
 
 			//getting another key on the same resource should still 404
 			request = new GetMethodWebRequest(location + "?key=Address");
 			setAuthentication(request);
 			response = webConversation.getResource(request);
-			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+			assertEquals("5." + location, HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 		}
 	}
 
@@ -129,6 +154,51 @@ public class PreferenceTest extends AbstractServerTest {
 		}
 	}
 
+	/**
+	 * Tests setting JSON objects as preference values
+	 * 
+	 * @throws IOException
+	 * @throws JSONException
+	 */
+	@Test
+	public void testPutJSON() throws IOException, JSONException {
+		List<String> locations = getTestPreferenceNodes();
+		for (String location : locations) {
+			//PUT http://myserver:8080/prefs/user/cm/configurations/jslint.config
+			//{"properties":{"options":"foo:true, bar:false"}}
+			JSONObject value = new JSONObject();
+			String options = "foo:true, bar:false";
+			value.put("options", options);
+			JSONObject prefs = new JSONObject();
+			prefs.put("properties", value);
+			String inString = prefs.toString();
+			WebRequest request = new PutMethodWebRequest(location, IOUtilities.toInputStream(inString), "application/json");
+			setAuthentication(request);
+			WebResponse response = webConversation.getResource(request);
+			assertEquals("1." + location, HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+
+			//GET http://myserver:8080/prefs/user/cm/configurations/jslint.config
+			//should return: same value we put in
+			request = new GetMethodWebRequest(location);
+			setAuthentication(request);
+			response = webConversation.getResource(request);
+			assertEquals("2." + location, HttpURLConnection.HTTP_OK, response.getResponseCode());
+			JSONObject resultObject = new JSONObject(response.getText());
+			assertTrue("3." + location, resultObject.has("properties"));
+			JSONObject resultValue = resultObject.getJSONObject("properties");
+			Object resultOptions = resultValue.get("options");
+			assertEquals("4." + location, options, resultOptions);
+
+		}
+		//
+		//but...
+		//
+		//GET http://myserver:8080/prefs/user/cm/configurations/jslint.config
+		//{
+		//  "properties" : "{\"options\":\"foo:true, bar:false\"}"
+		//}
+	}
+
 	@Test
 	public void testPutNode() throws IOException, JSONException {
 		List<String> locations = getTestPreferenceNodes();
@@ -169,14 +239,14 @@ public class PreferenceTest extends AbstractServerTest {
 		}
 	}
 
-	@Test
+	@Ignore
 	public void testDeleteSingle() {
 		//TODO not implemented
 	}
 
-	@Test
+	@Ignore
 	public void testDeleteNode() {
-
+		//TODO not implemented
 	}
 
 	@Test
@@ -227,37 +297,47 @@ public class PreferenceTest extends AbstractServerTest {
 			WebRequest request = new GetMethodWebRequest(location);
 			setAuthentication(request);
 			WebResponse response = webConversation.getResource(request);
-			assertEquals(HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
+			assertEquals("1." + location, HttpURLConnection.HTTP_NOT_FOUND, response.getResponseCode());
 
 			//put a value
 			request = createSetPreferenceRequest(location, "Name", "Frodo");
 			setAuthentication(request);
 			response = webConversation.getResource(request);
-			assertEquals("1." + location, HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
+			assertEquals("2." + location, HttpURLConnection.HTTP_NO_CONTENT, response.getResponseCode());
 
 			//now doing a get should succeed
 			request = new GetMethodWebRequest(location);
 			setAuthentication(request);
 			response = webConversation.getResource(request);
-			assertEquals("2." + location, HttpURLConnection.HTTP_OK, response.getResponseCode());
+			assertEquals("3." + location, HttpURLConnection.HTTP_OK, response.getResponseCode());
 			JSONObject result = new JSONObject(response.getText());
-			assertEquals("3." + location, "Frodo", result.optString("Name"));
+			assertEquals("4." + location, "Frodo", result.optString("Name"));
 		}
 	}
 
-	private WebRequest createSetPreferenceRequest(String location, String key, String value) {
-		String body = "key=" + URLEncoder.encode(key) + "&value=" + URLEncoder.encode(value);
+	private WebRequest createSetPreferenceRequest(String location, String key, String value) throws UnsupportedEncodingException {
+		String body = "key=" + URLEncoder.encode(key, "UTF-8") + "&value=" + URLEncoder.encode(value, "UTF-8");
 		return new PutMethodWebRequest(location, new ByteArrayInputStream(body.getBytes()), "application/x-www-form-urlencoded");
 	}
 
+	/**
+	 * Create locations of preference HTTP resources corresponding to our test user, workspace, and project.
+	 */
 	private List<String> getTestPreferenceNodes() {
-		return Arrays.asList(ServerTestsActivator.getServerLocation() + "/prefs/user/testprefs", ServerTestsActivator.getServerLocation() + "/prefs/workspace/myworkspace/testprefs", ServerTestsActivator.getServerLocation() + "/prefs/project/myproject/testprefs");
+		IPath projectPath = new Path(testProjectBaseLocation);
+		String userId = getTestUserId();
+		String workspaceId = projectPath.segment(0);
+		String projectName = projectPath.segment(1);
+		String userPref = toAbsoluteURI("prefs/user/" + userId + "/testprefs");
+		String workspacePref = toAbsoluteURI("prefs/workspace/" + workspaceId + "/testprefs");
+		String projectPref = toAbsoluteURI("prefs/project/" + workspaceId + '/' + projectName + "/testprefs");
+		return Arrays.asList(userPref, workspacePref, projectPref);
 	}
 
 	/**
 	 * Returns preference nodes the client should not have access to.
 	 */
 	private List<String> getIllegalPreferenceNodes() {
-		return Arrays.asList(ServerTestsActivator.getServerLocation() + "/prefs/Users", ServerTestsActivator.getServerLocation() + "/prefs/Workspaces", ServerTestsActivator.getServerLocation() + "/prefs/Projects");
+		return Arrays.asList(toAbsoluteURI("prefs/Users"), toAbsoluteURI("prefs/user"), toAbsoluteURI("prefs/Workspaces"), toAbsoluteURI("prefs/workspace"), toAbsoluteURI("prefs/Projects"), toAbsoluteURI("prefs/project"));
 	}
 }

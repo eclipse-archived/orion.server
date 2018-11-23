@@ -1,0 +1,5 @@
+---
+inherit: intermediate-manifest.yml
+
+applications:
+ - name: B

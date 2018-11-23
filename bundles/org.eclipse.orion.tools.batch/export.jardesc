@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="WINDOWS-1252" standalone="no"?>
 <jardesc>
-    <jar path="c:/tmp/cleanup.jar"/>
+    <jar path="c:/tmp/locktest.jar"/>
     <options buildIfNeeded="true" compress="true" descriptionLocation="/org.eclipse.orion.tools.batch/export.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="false" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
-    <manifest generateManifest="true" mainClassHandleIdentifier="=org.eclipse.orion.tools.batch/src&lt;org.eclipse.orion.tools{ProjectCleanup.java[ProjectCleanup" manifestLocation="" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
+    <manifest generateManifest="true" mainClassHandleIdentifier="=org.eclipse.orion.tools.batch/src&lt;org.eclipse.orion.locktest{FileLockTest.java[FileLockTest" manifestLocation="/aa.locktest/MANIFEST.MF" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
         <sealing sealJar="false">
             <packagesToSeal/>
             <packagesToUnSeal/>
         </sealing>
     </manifest>
-    <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
-        <file path="/org.eclipse.orion.tools.batch/.classpath"/>
-        <javaElement handleIdentifier="=org.eclipse.orion.tools.batch/src"/>
-        <file path="/org.eclipse.orion.tools.batch/.gitignore"/>
-        <file path="/org.eclipse.orion.tools.batch/.project"/>
+    <selectedElements exportClassFiles="true" exportJavaFiles="true" exportOutputFolder="false">
+        <javaElement handleIdentifier="=org.eclipse.orion.tools.batch/src&lt;org.eclipse.orion.locktest"/>
     </selectedElements>
 </jardesc>

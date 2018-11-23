@@ -18,9 +18,9 @@ export PATH
 writableBuildRoot=/shared/eclipse/e4/orion
 supportDir=$writableBuildRoot/support
 builderDir=$supportDir/org.eclipse.orion.releng
-basebuilderBranch=R3_7
+basebuilderBranch=R3_8
 publish=""
-user=aniefer
+user=johna
 resultsEmail=orion-releng@eclipse.org
 
 buildType=I
@@ -40,6 +40,9 @@ do
 			tagMaps="";
 			compareMaps="";
 			fetchTag="-DfetchTag=CVS=HEAD,GIT=origin/master";;
+
+        "-fetchTag")
+                fetchTag="$2"; shift;;
 
 		"-baseBuilder")
 			baseBuilderBranch="$2"; shift;;
@@ -80,13 +83,14 @@ done
 setProperties () {
 	buildDirectory=$writableBuildRoot/$buildType$timestamp
 	buildLabel=$buildType$date-$time
-	javaHome=/shared/common/sun-jdk1.6.0_21_x64
-	
+	javaHome=/opt/public/common/jdk1.7.0-latest
+
 	pushd $supportDir
 	launcherJar=$supportDir/$( find org.eclipse.releng.basebuilder/ -name "org.eclipse.equinox.launcher_*.jar" | sort | head -1 )
 	popd
 		
 	#Properties for compilation boot classpaths
+	JAVA70_HOME=/shared/common/jdk1.7.0-latest
 	JAVA60_HOME=/shared/common/jdk-1.6.0_10
 	JAVA50_HOME=/shared/common/jdk-1.5.0_16
 	JAVA14_HOME=/shared/common/j2sdk1.4.2_19
@@ -94,6 +98,7 @@ setProperties () {
 	j2se142="$JAVA14_HOME/jre/lib/rt.jar:$JAVA14_HOME/jre/lib/jsse.jar:$JAVA14_HOME/jre/lib/jce.jar:$JAVA14_HOME/jre/lib/charsets.jar"
 	j2se150="$JAVA50_HOME/jre/lib/rt.jar:$JAVA50_HOME/jre/lib/jsse.jar:$JAVA50_HOME/jre/lib/jce.jar:$JAVA50_HOME/jre/lib/charsets.jar"
 	javase160="$JAVA60_HOME/jre/lib/resources.jar:$JAVA60_HOME/jre/lib/rt.jar:$JAVA60_HOME/jre/lib/jsse.jar:$JAVA60_HOME/jre/lib/jce.jar:$JAVA60_HOME/jre/lib/charsets.jar"
+	javase170="$JAVA70_HOME/jre/lib/resources.jar:$JAVA70_HOME/jre/lib/rt.jar:$JAVA70_HOME/jre/lib/jsse.jar:$JAVA70_HOME/jre/lib/jce.jar:$JAVA70_HOME/jre/lib/charsets.jar"
 }
 
 updateRelengProject () {
@@ -107,12 +112,21 @@ updateRelengProject () {
 		pushd $writableBuildRoot/gitClones/org.eclipse.orion.server
 		git pull
 		popd
+
+		# Pull from client repo as well
+		pushd $writableBuildRoot/gitClones/org.eclipse.orion.client
+		git pull
+		popd
 	fi
 	
 	echo "[`date +%H\:%M\:%S`] Get org.eclipse.orion.releng"
 	cp -r $writableBuildRoot/gitClones/org.eclipse.orion.server/releng/org.eclipse.orion.releng .
-	
 	echo "[`date +%H\:%M\:%S`] Done getting org.eclipse.orion.releng"
+
+	echo "[`date +%H\:%M\:%S`] Get org.eclipse.orion.client.releng"
+	cp -r $writableBuildRoot/gitClones/org.eclipse.orion.client/releng/org.eclipse.orion.client.releng/* org.eclipse.orion.releng
+	echo "[`date +%H\:%M\:%S`] Done getting org.eclipse.client.releng"
+
 	popd
 }
 
@@ -188,7 +202,8 @@ runBuild () {
 			$tagMaps $compareMaps $fetchTag $publish \
 			-DJ2SE-1.4=$j2se142 \
 			-DJ2SE-1.5=$j2se150 \
-			-DJavaSE-1.6=$javase160"
+			-DJavaSE-1.6=$javase160 \
+			-DJavaSE-1.7=$javase170"
 			
 	echo "[`date +%H\:%M\:%S`] Launching Build"
 	$cmd
@@ -235,7 +250,8 @@ runTests () {
 			$fetchTag \
 			-DJ2SE-1.4=$j2se142 \
 			-DJ2SE-1.5=$j2se150 \
-			-DJavaSE-1.6=$javase160"
+			-DJavaSE-1.6=$javase160 \
+			-DJavaSE-1.7=$javase170"
 	
 	echo "[`date +%H\:%M\:%S`] Starting Tests"
 	$cmd
@@ -295,7 +311,7 @@ publish () {
 		scp -r $buildDirectory/plugins/org.eclipse.orion.doc.isv/jsdoc $user@build.eclipse.org:/home/data/httpd/download.eclipse.org/orion
 	fi
 	
-	rsync --recursive --delete $writableBuildRoot/target/0.3-$buildType-builds $user@build.eclipse.org:/home/data/httpd/download.eclipse.org/orion/updates
+	rsync --recursive --delete $writableBuildRoot/target/integration $user@build.eclipse.org:/home/data/httpd/download.eclipse.org/orion/updates
 }
 
 cd $writableBuildRoot

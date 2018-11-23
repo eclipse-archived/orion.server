@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others
+ * Copyright (c) 2011, 2014 IBM Corporation and others
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -17,15 +17,14 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.net.HttpURLConnection;
-import java.net.URI;
 import java.util.List;
 
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.util.FileUtils;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.core.metastore.SimpleMetaStore;
 import org.eclipse.orion.internal.server.servlets.workspace.ServletTestingSupport;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONObject;
 import org.junit.Test;
@@ -36,9 +35,8 @@ import com.meterware.httpunit.WebResponse;
 public class GitUriTest extends GitTest {
 	@Test
 	public void testGitUrisAfterLinkingToExistingClone() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-
-		String projectName = getMethodName();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		assertGitSectionExists(project);
 		// TODO: it's a linked repo, see bug 346114
@@ -47,16 +45,15 @@ public class GitUriTest extends GitTest {
 
 	@Test
 	public void testGitUrisInContentLocation() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-
-		String projectName = getMethodName();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		String projectName = getMethodName().concat("Project");
 		// http://<host>/workspace/<workspaceId>/
 		JSONObject newProject = createProjectOrLink(workspaceLocation, projectName, gitDir.toString());
 		String contentLocation = newProject.optString(ProtocolConstants.KEY_CONTENT_LOCATION, null);
 		assertNotNull(contentLocation);
 
 		// http://<host>/file/<projectId>/
-		WebRequest request = getGetFilesRequest(contentLocation);
+		WebRequest request = getGetRequest(contentLocation);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject project = new JSONObject(response.getText());
@@ -68,7 +65,7 @@ public class GitUriTest extends GitTest {
 		assertNotNull(childrenLocation);
 
 		// http://<host>/file/<projectId>/?depth=1
-		request = getGetFilesRequest(childrenLocation);
+		request = getGetRequest(childrenLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		List<JSONObject> children = getDirectoryChildren(new JSONObject(response.getText()));
@@ -82,7 +79,7 @@ public class GitUriTest extends GitTest {
 		childrenLocation = getChildByName(children, "folder").getString(ProtocolConstants.KEY_CHILDREN_LOCATION);
 
 		// http://<host>/file/<projectId>/folder/?depth=1
-		request = getGetFilesRequest(childrenLocation);
+		request = getGetRequest(childrenLocation);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		children = getDirectoryChildren(new JSONObject(response.getText()));
@@ -97,17 +94,16 @@ public class GitUriTest extends GitTest {
 
 	@Test
 	public void testGitUrisForEmptyDir() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-
-		File emptyDir = AllGitTests.getRandomLocation().toFile();
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+		File emptyDir = createTempDir().toFile();
 		emptyDir.mkdir();
 		ServletTestingSupport.allowedPrefixes = emptyDir.toString();
 
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), emptyDir.toString());
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), emptyDir.toString());
 		project.getString(ProtocolConstants.KEY_ID);
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		WebRequest request = getGetFilesRequest(location);
+		WebRequest request = getGetRequest(location);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject files = new JSONObject(response.getText());
@@ -126,20 +122,20 @@ public class GitUriTest extends GitTest {
 
 	@Test
 	public void testGitUrisForFile() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
 
-		File dir = AllGitTests.getRandomLocation().toFile();
+		File dir = createTempDir().toFile();
 		dir.mkdir();
 		File file = new File(dir, "test.txt");
 		file.createNewFile();
 
 		ServletTestingSupport.allowedPrefixes = dir.toString();
 
-		String projectName = getMethodName();
+		String projectName = getMethodName().concat("Project");
 		JSONObject project = createProjectOrLink(workspaceLocation, projectName, dir.toString());
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
 
-		WebRequest request = getGetFilesRequest(location);
+		WebRequest request = getGetRequest(location);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject files = new JSONObject(response.getText());
@@ -157,18 +153,19 @@ public class GitUriTest extends GitTest {
 
 	@Test
 	public void testGitUrisForRepositoryClonedIntoSubfolder() throws Exception {
-		URI workspaceLocation = createWorkspace(getMethodName());
-		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName(), null);
-		String projectId = project.getString(ProtocolConstants.KEY_ID);
+		createWorkspace(SimpleMetaStore.DEFAULT_WORKSPACE_NAME);
+
+		String workspaceId = workspaceIdFromLocation(workspaceLocation);
+		JSONObject project = createProjectOrLink(workspaceLocation, getMethodName().concat("Project"), null);
 		String folderName = "subfolder";
-		WebRequest request = getPostFilesRequest(projectId + "/", getNewDirJSON(folderName).toString(), folderName);
+		WebRequest request = getPostFilesRequest("", getNewDirJSON(folderName).toString(), folderName);
 		WebResponse response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_CREATED, response.getResponseCode());
-		IPath clonePath = new Path("file").append(project.getString(ProtocolConstants.KEY_ID)).append(folderName).makeAbsolute();
+		IPath clonePath = getClonePath(workspaceId, project).append(folderName).makeAbsolute();
 		clone(clonePath);
 
 		String location = project.getString(ProtocolConstants.KEY_CONTENT_LOCATION);
-		request = getGetFilesRequest(location);
+		request = getGetRequest(location);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		JSONObject responseJSON = new JSONObject(response.getText());
@@ -182,7 +179,7 @@ public class GitUriTest extends GitTest {
 		assertNull(responseJSON.optString(GitConstants.KEY_TAG, null));
 		assertNull(responseJSON.optString(GitConstants.KEY_CLONE, null));
 
-		request = getGetFilesRequest(responseJSON.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
+		request = getGetRequest(responseJSON.getString(ProtocolConstants.KEY_CHILDREN_LOCATION));
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
@@ -195,7 +192,7 @@ public class GitUriTest extends GitTest {
 		assertCloneUri(gitSection.optString(GitConstants.KEY_CLONE, null));
 
 		location = children.get(0).getString(ProtocolConstants.KEY_LOCATION);
-		request = getGetFilesRequest(location);
+		request = getGetRequest(location);
 		response = webConversation.getResponse(request);
 		assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 		responseJSON = new JSONObject(response.getText());

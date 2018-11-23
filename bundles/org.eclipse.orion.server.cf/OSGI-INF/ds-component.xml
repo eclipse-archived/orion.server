@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="org.eclipse.orion.server.cf.ds.DeploymentService">
+   <implementation class="org.eclipse.orion.server.cf.ds.DeploymentService"/>
+   <reference bind="bindPlanner" cardinality="1..n" interface="org.eclipse.orion.server.cf.ds.IDeploymentPlanner" name="IDeploymentPlanner" policy="dynamic" unbind="unbindPlanner"/>
+   <service>
+      <provide interface="org.eclipse.orion.server.cf.ds.DeploymentService"/>
+   </service>
+   <reference bind="bindPackager" cardinality="1..n" interface="org.eclipse.orion.server.cf.ds.IDeploymentPackager" name="IDeploymentPackager" policy="dynamic" unbind="unbindPackager"/>
+</scr:component>

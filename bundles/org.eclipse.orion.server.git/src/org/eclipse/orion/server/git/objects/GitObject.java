@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,11 +13,15 @@ package org.eclipse.orion.server.git.objects;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.lib.StoredConfig;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
-import org.eclipse.orion.server.core.resources.*;
+import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.resources.JSONSerializer;
+import org.eclipse.orion.server.core.resources.Property;
+import org.eclipse.orion.server.core.resources.ResourceShape;
+import org.eclipse.orion.server.core.resources.Serializer;
 import org.eclipse.orion.server.core.resources.annotations.PropertyDescription;
 import org.eclipse.orion.server.git.GitConstants;
 import org.json.JSONException;
@@ -26,7 +30,7 @@ import org.json.JSONObject;
 public abstract class GitObject {
 	private static final ResourceShape DEFAULT_RESOURCE_SHAPE = new ResourceShape();
 	{
-		Property[] defaultProperties = new Property[] {new Property(ProtocolConstants.KEY_LOCATION), new Property(GitConstants.KEY_CLONE)};
+		Property[] defaultProperties = new Property[] { new Property(ProtocolConstants.KEY_LOCATION), new Property(GitConstants.KEY_CLONE) };
 		DEFAULT_RESOURCE_SHAPE.setProperties(defaultProperties);
 	}
 

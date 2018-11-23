@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,19 +13,32 @@ package org.eclipse.orion.internal.server.servlets.task;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.eclipse.core.runtime.*;
-import org.eclipse.core.runtime.jobs.*;
+
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
+import org.eclipse.orion.server.core.EncodingUtils;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
-import org.eclipse.orion.server.core.resources.UniversalUniqueIdentifier;
-import org.eclipse.orion.server.core.tasks.*;
+import org.eclipse.orion.server.core.tasks.ITaskService;
+import org.eclipse.orion.server.core.tasks.IURIUnqualificationStrategy;
+import org.eclipse.orion.server.core.tasks.TaskDoesNotExistException;
+import org.eclipse.orion.server.core.tasks.TaskInfo;
+import org.eclipse.orion.server.core.tasks.TaskInfo.TaskStatus;
+import org.eclipse.orion.server.core.tasks.TaskOperationException;
 import org.eclipse.orion.server.servlets.OrionServlet;
-import org.json.*;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.osgi.util.tracker.ServiceTracker;
 
 /**
@@ -39,7 +52,6 @@ public class TaskServlet extends OrionServlet {
 	public static final String KEY_RUNNING_ONLY = "RunningOnly";//$NON-NLS-1$
 
 	ServiceTracker<ITaskService, ITaskService> taskTracker;
-	TaskNonotificationRegistry notificationRegistry;
 
 	public TaskServlet() {
 		initTaskService();
@@ -48,7 +60,6 @@ public class TaskServlet extends OrionServlet {
 	private void initTaskService() {
 		taskTracker = new ServiceTracker<ITaskService, ITaskService>(Activator.bundleContext, ITaskService.class, null);
 		taskTracker.open();
-		notificationRegistry = new TaskNonotificationRegistry(this, taskTracker.getService());
 	}
 
 	@Override
@@ -57,23 +68,69 @@ public class TaskServlet extends OrionServlet {
 	}
 
 	@Override
+	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		traceRequest(req);
+		String pathInfo = req.getPathInfo();
+		IPath path = pathInfo == null ? Path.EMPTY : new Path(pathInfo);
+		if (path.segmentCount() != 2) {
+			handleException(resp, "Invalid request path: " + EncodingUtils.encodeForHTML(path.toString()), null, HttpServletResponse.SC_BAD_REQUEST);
+			return;
+		}
+
+		try {
+			JSONObject data = OrionServlet.readJSONRequest(req);
+			if (!"true".equals(data.getString(TaskStatus.ABORT.toString()))) {
+				handleException(resp, "Invalid request paramethers, try {" + TaskStatus.ABORT.toString() + ":true}", null, HttpServletResponse.SC_BAD_REQUEST);
+			}
+		} catch (JSONException e1) {
+			handleException(resp, "Invalid request paramethers, try {" + TaskStatus.ABORT.toString() + ":true}", e1, HttpServletResponse.SC_BAD_REQUEST);
+		}
+
+		boolean isKeep = "id".equals(path.segment(0));
+		String taskId = path.segment(1);
+		ITaskService taskService = taskTracker.getService();
+		try {
+			taskService.cancelTask(TaskJobHandler.getUserId(req), taskId, isKeep);
+		} catch (TaskDoesNotExistException e) {
+			handleException(resp, "Could not cancel task that does not exist: " + e.getTaskId(), e, HttpServletResponse.SC_NOT_FOUND);
+			return;
+		} catch (TaskOperationException e) {
+			handleException(resp, e.getMessage(), e);
+			return;
+		}
+	}
+
+	@Override
 	protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		traceRequest(req);
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.EMPTY : new Path(pathInfo);
 		ITaskService taskService = taskTracker.getService();
 		if (path.segmentCount() == 0) {
 			taskService.removeCompletedTasks(TaskJobHandler.getUserId(req));
+			List<TaskInfo> tasks = taskService.getTasks(TaskJobHandler.getUserId(req));
+			List<String> locations = new ArrayList<String>();
+			try {
+				for (TaskInfo task : tasks) {
+					locations.add(getJsonWithLocation(req, task).optString(ProtocolConstants.KEY_LOCATION));
+				}
+			} catch (Exception e) {
+				handleException(resp, e.getMessage(), e);
+			}
+			writeJSONResponse(req, resp, new JSONArray(locations));
 			return;
 		}
 
-		if (path.segmentCount() != 2 || !"id".equals(path.segment(0))) {//$NON-NLS-1$
-			handleException(resp, "Invalid request path: " + path, null, HttpServletResponse.SC_BAD_REQUEST);
+		if (path.segmentCount() != 2 || (!"id".equals(path.segment(0)) && !"temp".equals(path.segment(0)))) {//$NON-NLS-1$
+			handleException(resp, "Invalid request path: " + EncodingUtils.encodeForHTML(path.toString()), null, HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
+
+		boolean isKeep = "id".equals(path.segment(0));
 
 		String taskId = path.segment(1);
 		try {
-			taskService.removeTask(TaskJobHandler.getUserId(req), taskId);
+			taskService.removeTask(TaskJobHandler.getUserId(req), taskId, isKeep);
 		} catch (TaskDoesNotExistException e) {
 			handleException(resp, "Could not remove task that does not exist: " + e.getTaskId(), e, HttpServletResponse.SC_NOT_FOUND);
 			return;
@@ -83,140 +140,50 @@ public class TaskServlet extends OrionServlet {
 		}
 	}
 
-	@Override
-	protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		String pathInfo = req.getPathInfo();
-		IPath path = pathInfo == null ? Path.EMPTY : new Path(pathInfo);
-		if (path.segmentCount() != 2 || !"id".equals(path.segment(0))) {//$NON-NLS-1$
-			handleException(resp, "Invalid request path: " + path, null, HttpServletResponse.SC_BAD_REQUEST);
-			return;
-		}
-		ITaskService taskService = taskTracker.getService();
+	public JSONObject getTasksList(Collection<TaskInfo> tasks, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, URISyntaxException {
+		return getTasksList(tasks, new ArrayList<String>(), req, resp);
+	}
 
-		try {
-			JSONObject putData = OrionServlet.readJSONRequest(req);
-			if (putData.getBoolean("Cancel")) {
-				String taskId = path.segment(1);
-				TaskInfo task = taskService.getTask(TaskJobHandler.getUserId(req), taskId);
-				if (task == null) {
-					handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Task " + taskId + " does not exist", null));
-					return;
-				}
-				taskService.cancelTask(task);
+	private static JSONObject getJsonWithLocation(HttpServletRequest req, TaskInfo task) throws JSONException, URISyntaxException {
+		return getJsonWithLocation(req, task, true);
+	}
+
+	private static JSONObject getJsonWithLocation(HttpServletRequest req, TaskInfo task, boolean includeResult) throws JSONException, URISyntaxException {
+		JSONObject taskJson = includeResult ? task.toJSON() : task.toLightJSON();
+		if (taskJson.optString(ProtocolConstants.KEY_LOCATION, "").equals("")) {
+			URI uri = ServletResourceHandler.getURI(req);
+			if (task.isKeep()) {
+				taskJson.put(ProtocolConstants.KEY_LOCATION, new URI(uri.getScheme(), null, "/task/id/" + task.getId(), null, null));
+			} else {
+				taskJson.put(ProtocolConstants.KEY_LOCATION, new URI(uri.getScheme(), null, "/task/temp/" + task.getId(), null, null));
 			}
-		} catch (JSONException e) {
-			handleException(resp, "Could not read request", e);
-		} catch (TaskOperationException e) {
-			handleException(resp, "Task does not support canceling", e, HttpServletResponse.SC_BAD_REQUEST);
 		}
-
+		return taskJson;
 	}
 
-	public JSONObject getTasksList(Collection<TaskInfo> tasks, Date timestamp, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, URISyntaxException {
-		return getTasksList(tasks, new ArrayList<String>(), timestamp, req, resp);
-	}
-
-	public JSONObject getTasksList(Collection<TaskInfo> tasks, Collection<String> deletedTasks, Date timestamp, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, URISyntaxException {
+	public JSONObject getTasksList(Collection<TaskInfo> tasks, Collection<String> deletedTasks, HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException, JSONException, URISyntaxException {
 		JSONObject result = new JSONObject();
 		JSONArray tasksList = new JSONArray();
 		for (TaskInfo task : tasks) {
-			if ("true".equals(req.getParameter("results"))) {
-				JSONObject taskJson = task.toJSON();
-				if (taskJson.optString(ProtocolConstants.KEY_LOCATION, "").equals(""))
-					taskJson.put(ProtocolConstants.KEY_LOCATION, new URI(getURI(req).toString() + "/").resolve("id/" + task.getTaskId()).toString());
-				tasksList.put(taskJson);
-			} else {
-				JSONObject taskJson = task.toLightJSON();
-				if (taskJson.optString(ProtocolConstants.KEY_LOCATION, "").equals(""))
-					taskJson.put(ProtocolConstants.KEY_LOCATION, new URI(getURI(req).toString() + "/").resolve("id/" + task.getTaskId()).toString());
-				tasksList.put(taskJson);
-			}
+			tasksList.put(getJsonWithLocation(req, task, "true".equals(req.getParameter("results"))));
 		}
 		result.put(ProtocolConstants.KEY_DELETED_CHILDREN, deletedTasks);
 		result.put(ProtocolConstants.KEY_CHILDREN, tasksList);
-		result.put(ProtocolConstants.KEY_LOCAL_TIMESTAMP, timestamp.getTime());
 		return result;
 	}
 
 	@Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		traceRequest(req);
 		String pathInfo = req.getPathInfo();
 		IPath path = pathInfo == null ? Path.EMPTY : new Path(pathInfo);
 		ITaskService taskService = taskTracker.getService();
 
 		if (path.segmentCount() == 0) {
-			boolean runningOnly = "true".equals(req.getParameter(KEY_RUNNING_ONLY));
-			if ("true".equals(req.getParameter(ProtocolConstants.KEY_LONGPOLLING))) {
-				if (req.getParameter(ProtocolConstants.KEY_LONGPOLLING_ID) == null) {
 
-					Date modifiedFrom = null;
-					Date timestamp = new Date();
-					try {
-						modifiedFrom = new Date(Long.parseLong(req.getParameter(ProtocolConstants.KEY_LOCAL_TIMESTAMP)));
-					} catch (Exception e) {
-						//if we can't get timestamp from request than we return all changes
-					}
-
-					List<TaskInfo> tasks = taskService.getTasks(TaskJobHandler.getUserId(req), modifiedFrom, runningOnly);
-					try {
-						JSONObject result = getTasksList(tasks, timestamp, req, resp);
-						result.put(ProtocolConstants.KEY_LONGPOLLING_ID, new UniversalUniqueIdentifier().toBase64String());
-						resp.setStatus(HttpServletResponse.SC_ACCEPTED);
-						writeJSONResponse(req, resp, result);
-						notificationRegistry.setLastNotification(result.getString(ProtocolConstants.KEY_LONGPOLLING_ID), timestamp, TaskJobHandler.getUserId(req));
-						return;
-					} catch (JSONException e) {
-						handleException(resp, e.getMessage(), e);
-						return;
-					} catch (URISyntaxException e) {
-						handleException(resp, e.getMessage(), e);
-						return;
-					}
-				}
-				String longpollingId = req.getParameter(ProtocolConstants.KEY_LONGPOLLING_ID);
-				Job job = notificationRegistry.addListener(longpollingId, req, resp, TaskJobHandler.getUserId(req));
-
-				final Object jobIsDone = new Object();
-				final JobChangeAdapter jobListener = new JobChangeAdapter() {
-					public void done(IJobChangeEvent event) {
-						synchronized (jobIsDone) {
-							jobIsDone.notify();
-						}
-					}
-				};
-				job.addJobChangeListener(jobListener);
-
-				try {
-					synchronized (jobIsDone) {
-						if (job.getState() != Job.NONE) {
-							jobIsDone.wait(LONGPOLLING_WAIT_TIME);
-						}
-					}
-				} catch (InterruptedException e) {
-				}
-				job.removeJobChangeListener(jobListener);
-				if (job.getResult() == null) {
-					job.cancel();
-				} else {
-					if (!job.getResult().isOK()) {
-						handleException(resp, job.getResult());
-					}
-				}
-				return;
-
-			}
-
-			Date timestamp = new Date();
-			Date modifiedFrom = null;
+			List<TaskInfo> tasks = taskService.getTasks(TaskJobHandler.getUserId(req));
 			try {
-				modifiedFrom = new Date(Long.parseLong(req.getParameter(ProtocolConstants.KEY_LOCAL_TIMESTAMP)));
-			} catch (Exception e) {
-				//if we can't get timestamp from request than we return all changes
-			}
-
-			List<TaskInfo> tasks = taskService.getTasks(TaskJobHandler.getUserId(req), modifiedFrom, runningOnly);
-			try {
-				writeJSONResponse(req, resp, getTasksList(tasks, timestamp, req, resp));
+				writeJSONResponse(req, resp, getTasksList(tasks, req, resp));
 			} catch (JSONException e) {
 				handleException(resp, e.getMessage(), e);
 				return;
@@ -228,8 +195,8 @@ public class TaskServlet extends OrionServlet {
 			return;
 		}
 
-		if (path.segmentCount() != 2 || !"id".equals(path.segment(0))) {//$NON-NLS-1$
-			handleException(resp, "Invalid request path: " + path, null, HttpServletResponse.SC_BAD_REQUEST);
+		if (path.segmentCount() != 2 || (!"id".equals(path.segment(0)) && !"temp".equals(path.segment(0)))) {//$NON-NLS-1$
+			handleException(resp, "Invalid request path: " + EncodingUtils.encodeForHTML(path.toString()), null, HttpServletResponse.SC_BAD_REQUEST);
 			return;
 		}
 		if (taskService == null) {
@@ -237,19 +204,30 @@ public class TaskServlet extends OrionServlet {
 			return;
 		}
 		String taskId = path.segment(1);
-		TaskInfo task = taskService.getTask(TaskJobHandler.getUserId(req), taskId);
+		boolean keep = "id".equals(path.segment(0));
+		TaskInfo task = taskService.getTask(TaskJobHandler.getUserId(req), taskId, keep);
 
 		if (task == null) {
-			handleException(resp, "Task not found: " + taskId, null, HttpServletResponse.SC_NOT_FOUND);
+			JSONObject errorDescription = new JSONObject();
+			try {
+				errorDescription.put("taskNotFound", taskId);
+				handleException(resp, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_NOT_FOUND, "Task not found: " + taskId, errorDescription, null));
+				//				handleException(resp, "Task not found: " + taskId, null, HttpServletResponse.SC_NOT_FOUND);
+			} catch (JSONException e) {
+				handleException(resp, e.getMessage(), e);
+			}
 			return;
 		}
 		JSONObject result = task.toJSON();
-		try {
-			if (result.optString(ProtocolConstants.KEY_LOCATION, "").equals(""))
-				result.put(ProtocolConstants.KEY_LOCATION, getURI(req).toString());
-		} catch (JSONException e) {
-			handleException(resp, e.getMessage(), e);
+		if (task.isKeep()) {
+			try {
+				if (result.optString(ProtocolConstants.KEY_LOCATION, "").equals(""))
+					result.put(ProtocolConstants.KEY_LOCATION, ServletResourceHandler.getURI(req));
+			} catch (JSONException e) {
+				handleException(resp, e.getMessage(), e);
+			}
 		}
-		writeJSONResponse(req, resp, result);
+		IURIUnqualificationStrategy strategy = task.getUnqualificationStrategy();
+		writeJSONResponse(req, resp, result, strategy);
 	}
 }

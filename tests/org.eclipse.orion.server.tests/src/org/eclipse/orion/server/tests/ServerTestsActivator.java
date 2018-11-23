@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2011 IBM Corporation and others 
+ * Copyright (c) 2010, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,15 +11,22 @@
 package org.eclipse.orion.server.tests;
 
 import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.server.configurator.ConfiguratorActivator;
-import org.osgi.framework.*;
+import org.eclipse.orion.server.jetty.WebApplication;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleException;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.util.tracker.ServiceTracker;
 
+@SuppressWarnings("deprecation")
+// PackageAdmin is deprecated but is not being removed during Luna
 public class ServerTestsActivator implements BundleActivator {
 	private static final String EQUINOX_HTTP_JETTY = "org.eclipse.equinox.http.jetty"; //$NON-NLS-1$
 	private static final String EQUINOX_HTTP_REGISTRY = "org.eclipse.equinox.http.registry"; //$NON-NLS-1$
+	public static final String PI_TESTS = "org.eclipse.orion.server.tests";
 
 	public static BundleContext bundleContext;
 	private static ServiceTracker<HttpService, HttpService> httpServiceTracker;
@@ -28,6 +35,7 @@ public class ServerTestsActivator implements BundleActivator {
 	private static boolean initialized = false;
 	private static String serverHost = null;
 	private static int serverPort = 0;
+	private static WebApplication webapp;
 
 	public static BundleContext getContext() {
 		return bundleContext;
@@ -36,20 +44,21 @@ public class ServerTestsActivator implements BundleActivator {
 	public static String getServerLocation() {
 		if (!initialized) {
 			try {
-				initialize();
 				//make sure the http registry is started
 				ensureBundleStarted(EQUINOX_HTTP_JETTY);
 				ensureBundleStarted(EQUINOX_HTTP_REGISTRY);
 				//get the webide bundle started via lazy activation.
-				org.eclipse.orion.server.authentication.basic.Activator.getDefault();
+				org.eclipse.orion.server.authentication.Activator.getDefault();
 				Activator.getDefault();
-				ConfiguratorActivator.getDefault();
+				webapp = new WebApplication();
+				webapp.start(null);
+				initialize();
 			} catch (Exception e) {
 				e.printStackTrace();
 				return null;
 			}
 		}
-		return "http://" + serverHost + ':' + String.valueOf(serverPort);
+		return "http://" + serverHost + ':' + String.valueOf(serverPort) + "/";// + "cc/";
 	}
 
 	private static void initialize() throws Exception {
@@ -70,6 +79,9 @@ public class ServerTestsActivator implements BundleActivator {
 	}
 
 	public void stop(BundleContext context) throws Exception {
+		if (webapp != null)
+			webapp.stop();
+
 		if (httpServiceTracker != null)
 			httpServiceTracker.close();
 		if (packageAdminTracker != null)

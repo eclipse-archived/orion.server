@@ -10,7 +10,7 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.tasks;
 
-import java.net.URI;
+import java.util.Date;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -19,58 +19,36 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.orion.internal.server.core.Activator;
 import org.eclipse.orion.server.core.LogHelper;
 import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.server.core.ServerStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 
-public abstract class TaskJob extends Job implements ITaskCanceler {
+public abstract class TaskJob extends Job implements ITaskCanceller {
 
 	private String userRunningTask;
-	private boolean isIdempotent;
-	private boolean canCancel;
-	private String message;
+	private boolean keep;
 	private String finalMessage = "Done";
-	private URI finalLocation = null;
 	private TaskInfo task;
-	private ITaskService taskService;
-	private ServiceReference<ITaskService> taskServiceRef;
 	private IStatus realResult;
+	private Long taskExpirationTime = null;
 
-	public TaskJob(String taskName, String userRunningTask, String initialMessage, boolean isIdempotent, boolean canCancel) {
-		super(taskName);
+	public TaskJob(String userRunningTask, boolean keep) {
+		super("Long running task job");
 		this.userRunningTask = userRunningTask;
-		this.isIdempotent = isIdempotent;
-		this.canCancel = canCancel;
-		this.message = initialMessage;
-	}
-
-	public TaskJob(String userRunningTask, String taskName, String initialMessage) {
-		this(userRunningTask, taskName, initialMessage, false, false);
-	}
-
-	public TaskJob(String userRunningTask, String taskName) {
-		this(userRunningTask, taskName, "", false, false);
+		this.keep = keep;
 	}
 
 	protected void setFinalMessage(String message) {
 		this.finalMessage = message;
 	}
-
-	public URI getFinalLocation() {
-		return finalLocation;
-	}
-
-	protected void setFinalLocation(URI location) {
-		this.finalLocation = location;
+	
+	protected void setTaskExpirationTime(Long taskExpirationTime){
+		this.taskExpirationTime = taskExpirationTime;
 	}
 
 	public JSONObject getFinalResult() throws JSONException {
 		JSONObject finalResult = new JSONObject();
-		if (finalLocation != null) {
-			finalResult.put(TaskInfo.KEY_LOCATION, finalLocation);
-		}
-		finalResult.put(TaskInfo.KEY_MESSAGE, finalMessage == null ? message : finalMessage);
+		finalResult.put(ServerStatus.PROP_MESSAGE, finalMessage);
 		return finalResult;
 	}
 
@@ -78,50 +56,18 @@ public abstract class TaskJob extends Job implements ITaskCanceler {
 		return realResult;
 	}
 
-	ITaskService getTaskService() {
-		if (taskService == null) {
-			BundleContext context = Activator.getDefault().getContext();
-			if (taskServiceRef == null) {
-				taskServiceRef = context.getServiceReference(ITaskService.class);
-				if (taskServiceRef == null)
-					throw new IllegalStateException("Task service not available");
-			}
-			taskService = context.getService(taskServiceRef);
-			if (taskService == null)
-				throw new IllegalStateException("Task service not available");
-		}
-		return taskService;
+	private ITaskService getTaskService() {
+		return Activator.getDefault().getTaskService();
 	}
 
 	private synchronized void cleanUp() {
 		if (task != null && task.isRunning() == true) {
 			setTaskResult(getRealResult() == null ? new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Task finished with unknown status.") : getRealResult());
 		}
-		taskService = null;
-		if (taskServiceRef != null) {
-			Activator.getDefault().getContext().ungetService(taskServiceRef);
-			taskServiceRef = null;
-		}
-	}
-
-	protected void setMessage(String message) {
-		this.message = message;
-		if (task != null) {
-			task.setMessage(message);
-			getTaskService().updateTask(task);
-		}
 	}
 
 	public synchronized TaskInfo startTask() {
-		if (canCancel) {
-			task = getTaskService().createTask(getName(), userRunningTask, this, isIdempotent);
-		} else {
-			task = getTaskService().createTask(getName(), userRunningTask, isIdempotent);
-		}
-		if (message != null && message.length() > 0) {
-			task.setMessage(message);
-			getTaskService().updateTask(task);
-		}
+		task = getTaskService().createTask(userRunningTask, keep, this);
 		if (getRealResult() != null) {
 			setTaskResult(getRealResult());
 		}
@@ -131,24 +77,37 @@ public abstract class TaskJob extends Job implements ITaskCanceler {
 	public synchronized void removeTask(){
 		if(task!=null){
 			try {
-				getTaskService().removeTask(task.getUserId(), task.getTaskId());
+				getTaskService().removeTask(task.getUserId(), task.getId(), task.isKeep());
 			} catch (TaskOperationException e) {
 				LogHelper.log(e);
 			}
 		}
 	}
 
-	protected abstract IStatus performJob();
+	@Deprecated
+	protected IStatus performJob() {
+		return Status.CANCEL_STATUS;
+	}
+	
+	/**
+	 * Perform a task with a progress monitor.  This method should be
+	 * overridden, not extended.
+	 * 
+	 * @param monitor The main progress monitor for the job.
+	 * @return the appropriate IStatus.
+	 */
+	protected IStatus performJob(IProgressMonitor monitor) {
+		return performJob();
+	}
 
 	private synchronized void setTaskResult(IStatus result) {
-		if (result.isOK()) {
-			if (finalLocation != null)
-				task.setResultLocation(finalLocation);
-			task.done(result);
-			// set the message after updating the task with the result
-			task.setMessage(finalMessage);
-		} else {
-			task.done(result);
+		if(!task.isRunning()){
+			return;
+		}
+		this.realResult = result;
+		task.done(getRealResult());
+		if(taskExpirationTime!=null){
+			task.setExpires(new Date().getTime() + taskExpirationTime);
 		}
 		getTaskService().updateTask(task);
 	}
@@ -156,7 +115,7 @@ public abstract class TaskJob extends Job implements ITaskCanceler {
 	@Override
 	protected IStatus run(IProgressMonitor progressMonitor) {
 		try {
-			realResult = performJob();
+			realResult = performJob(progressMonitor);
 			if (task == null) {
 				return Status.OK_STATUS; // see bug 353190;;
 			}
@@ -168,8 +127,9 @@ public abstract class TaskJob extends Job implements ITaskCanceler {
 		}
 	}
 
-	public void cancelTask() {
+	public boolean cancelTask() {
 		this.cancel();
+		return true;
 	}
 
 	@Override
@@ -177,6 +137,9 @@ public abstract class TaskJob extends Job implements ITaskCanceler {
 		super.canceling();
 		if (task != null && task.isRunning()) {
 			task.done(new Status(IStatus.CANCEL, ServerConstants.PI_SERVER_CORE, "Task was canceled."));
+			if(taskExpirationTime!=null){
+				task.setExpires(new Date().getTime() + taskExpirationTime);
+			}
 			getTaskService().updateTask(task);
 		}
 		cleanUp();

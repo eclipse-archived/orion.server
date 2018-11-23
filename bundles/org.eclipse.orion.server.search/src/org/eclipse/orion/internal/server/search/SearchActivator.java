@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2012 IBM Corporation and others 
+ * Copyright (c) 2010, 2014 IBM Corporation and others 
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,23 +10,44 @@
  *******************************************************************************/
 package org.eclipse.orion.internal.server.search;
 
-import java.io.*;
-import java.net.*;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+
 import javax.servlet.http.HttpServletRequest;
+
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
-import org.apache.solr.core.*;
+import org.apache.solr.core.CoreContainer;
+import org.apache.solr.core.CoreDescriptor;
+import org.apache.solr.core.SolrCore;
 import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.runtime.*;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.orion.internal.server.core.IOUtilities;
-import org.eclipse.orion.internal.server.core.IWebResourceDecorator;
-import org.eclipse.orion.internal.server.servlets.Activator;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
+import org.eclipse.orion.server.core.IOUtilities;
+import org.eclipse.orion.server.core.IWebResourceDecorator;
 import org.eclipse.orion.server.core.LogHelper;
+import org.eclipse.orion.server.core.OrionConfiguration;
+import org.eclipse.orion.server.core.PreferenceHelper;
+import org.eclipse.orion.server.core.ProtocolConstants;
+import org.eclipse.orion.server.core.ServerConstants;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.osgi.framework.*;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 
 public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	private static BundleContext context;
@@ -35,7 +56,7 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	 * version should be incremented whenever there are breaking changes to the
 	 * indexing schema or format.
 	 */
-	private static final int CURRENT_INDEX_GENERATION = 12;
+	private static final int CURRENT_INDEX_GENERATION = 16;
 
 	private static final String INDEX_GENERATION_FILE = "index.generation";//$NON-NLS-1$
 	private static SearchActivator instance;
@@ -50,12 +71,13 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	private SolrServer server;
 	private SolrCore solrCore;
 	private CoreContainer solrContainer;
+	private File baseDir;
 
 	static BundleContext getContext() {
 		return context;
 	}
 
-	static SearchActivator getInstance() {
+	public static SearchActivator getInstance() {
 		return instance;
 	}
 
@@ -70,7 +92,7 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 			return;
 		try {
 			// we can also augment with a query argument that includes the resource path
-			URI result = new URI(resource.getScheme(), resource.getUserInfo(), resource.getHost(), resource.getPort(), request.getContextPath() + "/filesearch", "q=", null); //$NON-NLS-1$//$NON-NLS-2$
+			URI result = new URI(resource.getScheme(), resource.getAuthority(), "/filesearch", "q=", null); //$NON-NLS-1$//$NON-NLS-2$
 			representation.put(ProtocolConstants.KEY_SEARCH_LOCATION, result);
 		} catch (URISyntaxException e) {
 			LogHelper.log(e);
@@ -86,8 +108,17 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 	 */
 	private void createServer() {
 		try {
-			File rootFile = Activator.getDefault().getPlatformLocation().toFile();
-			File baseDir = new File(rootFile, ".metadata/.plugins/" + PI_SEARCH); //$NON-NLS-1$
+			String prop = PreferenceHelper.getString(ServerConstants.CONFIG_SEARCH_INDEX_LOCATION);
+			if (prop != null) {
+				IPath rootPath = new Path(prop);
+				File rootFile = rootPath.toFile();
+				baseDir = new File(rootFile, PI_SEARCH + "/v" + CURRENT_INDEX_GENERATION); //$NON-NLS-1$
+			} else {
+				IPath rootPath = OrionConfiguration.getPlatformLocation();
+				File rootFile = rootPath.toFile();
+				baseDir = new File(rootFile, ".metadata/.plugins/" + PI_SEARCH + "/v" + CURRENT_INDEX_GENERATION); //$NON-NLS-1$
+			}
+
 			// discard all server data if the index generation has changed
 			if (readIndexGeneration(baseDir) != CURRENT_INDEX_GENERATION) {
 				delete(baseDir);
@@ -188,10 +219,10 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 		SearchActivator.context = bundleContext;
 		createServer();
 		if (server != null) {
-			indexer = new Indexer(server);
+			indexer = new Indexer(server, baseDir);
 			indexer.schedule();
 
-			purgeJob = new IndexPurgeJob(server);
+			purgeJob = new IndexPurgeJob(server, baseDir);
 			purgeJob.schedule();
 		}
 		searchDecoratorRegistration = context.registerService(IWebResourceDecorator.class, this, null);
@@ -234,6 +265,24 @@ public class SearchActivator implements BundleActivator, IWebResourceDecorator {
 			LogHelper.log(new Status(IStatus.ERROR, SearchActivator.PI_SEARCH, msg, e));
 		} finally {
 			IOUtilities.safeClose(out);
+		}
+	}
+
+	/**
+	 * Helper method for test suites. This method will block until the next indexer run completes.
+	 */
+	public void testWaitForIndex() {
+		try {
+			if (indexer.getState() == Job.RUNNING) {
+				indexer.join();
+			} else {
+				//cancel to wake up a sleeping indexer
+				indexer.cancel();
+				indexer.schedule();
+				indexer.join();
+			}
+		} catch (InterruptedException e) {
+			//just return
 		}
 	}
 

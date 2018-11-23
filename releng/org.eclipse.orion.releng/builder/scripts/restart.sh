@@ -1,5 +1,5 @@
 #******************************************************************************
-# Copyright (c) 2012 IBM Corporation and others.
+# Copyright (c) 2012, 2013 IBM Corporation and others.
 # All rights reserved. This program and the accompanying materials
 # are made available under the terms of the Eclipse Public License v1.0
 # which accompanies this distribution, and is available at
@@ -13,6 +13,7 @@
 # A simple script to restart an Orion server
 
 serverHome=/home/admin/current
+workspaceHome=/opt/mnt/serverworkspace
 
 #take down the running eclipse
 echo Checking for running orion server
@@ -29,9 +30,9 @@ fi
 
 #delete old search index to save space
 echo Deleting old search index
-rm -fr $serverHome/eclipse/serverworkspace/.metadata/.plugins/org.eclipse.orion.server.core.search/
+rm -fr $workspaceHome/.metadata/.plugins/org.eclipse.orion.server.core.search/
 echo Deleting old tasks
-rm -fr $serverHome/eclipse/serverworkspace/.metadata/.plugins/org.eclipse.orion.server.core/tasks/
+rm -fr $workspaceHome/.metadata/.plugins/org.eclipse.orion.server.core/tasks/
 
 #start new server
 echo Starting server

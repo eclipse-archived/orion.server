@@ -10,13 +10,12 @@
  *******************************************************************************/
 package org.eclipse.orion.server.core.tasks;
 
-import java.net.URI;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.orion.server.core.LogHelper;
-import org.eclipse.orion.server.core.ServerConstants;
+import org.eclipse.orion.internal.server.core.tasks.TaskDescription;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -25,140 +24,197 @@ import org.json.JSONObject;
  * Represents a snapshot of the state of a long running task.
  */
 public class TaskInfo {
-	public static final String KEY_PERCENT_COMPLETE = "PercentComplete"; //$NON-NLS-1$
-	public static final String KEY_ID = "Id"; //$NON-NLS-1$
-	public static final String KEY_USER = "User"; //$NON-NLS-1$
-	public static final String KEY_MESSAGE = "Message"; //$NON-NLS-1$
-	public static final String KEY_RUNNING = "Running"; //$NON-NLS-1$
-	public static final String KEY_LOCATION = "Location"; //$NON-NLS-1$
-	public static final String KEY_RESULT = "Result"; //$NON-NLS-1$
-	public static final String KEY_CAN_BE_CANCELED = "CanBeCanceled"; //$NON-NLS-1$
-	public static final String KEY_TIMESTAMP_MODIFIED = "Modified"; //$NON-NLS-1$
-	public static final String KEY_TIMESTAMP_CREATED = "Created"; //$NON-NLS-1$
-	public static final String KEY_NAME = "Name"; //$NON-NLS-1$
-	public static final String KEY_FAILED = "Failed"; //$NON-NLS-1$
-	public static final String KEY_CANCELED = "Canceled"; //$NON-NLS-1$
-	public static final String KEY_IDEMPOTENT = "Idempotent"; //$NON-NLS-1$
+	public static final String KEY_TYPE = "type";
+	public static final String KEY_TIMESTAMP = "timestamp";
+	public static final String KEY_LENGTH_COMPUTABLE = "lengthComputable";
+	public static final String KEY_LOADED = "loaded";
+	public static final String KEY_TOTAL = "total";
+	public static final String KEY_EXPIRES = "expires";
+	public static final String KEY_RESULT = "Result";
+	public static final String KEY_CANCELABLE = "cancelable";
+	public static final String KEY_URI_UNQUALIFICATION = "uriUnqualStrategy";
+
+	private static final String STATUS_LOADSTART = "loadstart";
+	private static final String STATUS_PROGRESS = "progress";
+	private static final String STATUS_ERROR = "error";
+	private static final String STATUS_ABORT = "abort";
+	private static final String STATUS_LOAD = "load";
+	private static final String STATUS_LOADEND = "loadend";
+	
+	public enum TaskStatus {
+
+		LOADSTART(STATUS_LOADSTART), PROGRESS(STATUS_PROGRESS), ERROR(STATUS_ERROR), ABORT(STATUS_ABORT), LOAD(STATUS_LOAD), LOADEND(STATUS_LOADEND);
+
+		private final String statusString;
+
+		TaskStatus(String statusString) {
+			this.statusString = statusString;
+		}
+
+		public String toString() {
+			return this.statusString;
+		}
+
+		public static TaskStatus fromString(String taskString) {
+			if (STATUS_LOADSTART.equals(taskString)) {
+				return LOADSTART;
+			}
+			if (STATUS_PROGRESS.equals(taskString)) {
+				return PROGRESS;
+			}
+			if (STATUS_ERROR.equals(taskString)) {
+				return ERROR;
+			}
+			if (STATUS_LOAD.equals(taskString)) {
+				return LOAD;
+			}
+			if (STATUS_LOADEND.equals(taskString)) {
+				return LOADEND;
+			}
+			return ABORT;
+		}
+	};
+
 	private final String id;
 	private final String userId;
-	private boolean idempotent = false;
-	private String message = ""; //$NON-NLS-1$
-	private int percentComplete = 0;
-	private boolean running = true;
-	private URI resultLocation = null;
+	private boolean keep = true;
+	private boolean lengthComputable = false;
+	private Date timestamp;
+	private Date expires;
+	private TaskStatus status = TaskStatus.LOADSTART;
+	private int loaded = 0;
+	private int total = 0;
 	private IStatus result;
-	private boolean canBeCanceled = false;
-	private Date modified;
-	private Date created;
-	private String name;
-
-
+	private boolean cancelable = false;
+	private IURIUnqualificationStrategy strategy;
+	
+	static HashMap<String, IURIUnqualificationStrategy> registry = new HashMap<String, IURIUnqualificationStrategy>();
+	static void addStrategy(IURIUnqualificationStrategy strategy) {
+		String name = strategy.getName();
+		if (!registry.containsKey(name)) {
+			registry.put(name, strategy);
+		}
+	}
+	static IURIUnqualificationStrategy getStrategy(String name) {
+		return registry.get(name);
+	}
+	
 	/**
 	 * Returns a task object based on its JSON representation. Returns
 	 * null if the given string is not a valid JSON task representation.
 	 * This function does not set <code>canBeCanceled</code>. The caller
 	 * must find out himself if the task can be canceled and set this flag.
+	 * @throws CorruptedTaskException 
 	 */
-	public static TaskInfo fromJSON(String taskString) {
+	public static TaskInfo fromJSON(TaskDescription description, String taskString) throws CorruptedTaskException {
 		TaskInfo info;
 		try {
 			JSONObject json = new JSONObject(taskString);
-			info = new TaskInfo(json.getString(KEY_USER), json.getString(KEY_ID), json.optBoolean(KEY_IDEMPOTENT, false));
-			info.setMessage(json.optString(KEY_MESSAGE, "")); //$NON-NLS-1$
-			info.setName(json.optString(KEY_NAME, "")); //$NON-NLS-1$
-			if(json.has(KEY_TIMESTAMP_MODIFIED))
-				info.modified = new Date(json.getLong(KEY_TIMESTAMP_MODIFIED));
-			else
-				info.modified = new Date(0);
+			info = new TaskInfo(description.getUserId(), description.getTaskId(), description.isKeep());
+			if (json.has(KEY_EXPIRES))
+				info.expires = new Date(json.getLong(KEY_EXPIRES));
+
+			if (json.has(KEY_TIMESTAMP))
+				info.timestamp = new Date(json.getLong(KEY_TIMESTAMP));
+
+			info.lengthComputable = json.optBoolean(KEY_LENGTH_COMPUTABLE);
+			if (json.has(KEY_LOADED))
+				info.loaded = json.optInt(KEY_LOADED);
+			if (json.has(KEY_TOTAL))
+				info.total = json.getInt(KEY_TOTAL);
+
+			if (json.has(KEY_TYPE))
+				info.status = TaskStatus.fromString(json.optString(KEY_TYPE));
+
+			if (json.has(KEY_RESULT))
+				info.result = ServerStatus.fromJSON(json.optString(KEY_RESULT));
 			
-			if(json.has(KEY_TIMESTAMP_CREATED))
-				info.created = new Date(json.getLong(KEY_TIMESTAMP_CREATED));
-			else
-				info.created = new Date(0);
-			
-			info.running = json.optBoolean(KEY_RUNNING, true);
-			info.setPercentComplete(json.optInt(KEY_PERCENT_COMPLETE, 0));
-			String location = json.optString(KEY_LOCATION, null);
-			if (location != null)
-				info.resultLocation = URI.create(location);
-			String resultString = json.optString(KEY_RESULT, null);
-			if (resultString != null)
-				info.result = ServerStatus.fromJSON(resultString);
+			if (json.has(KEY_URI_UNQUALIFICATION)) 
+				info.strategy = getStrategy(json.optString(KEY_URI_UNQUALIFICATION));
+
 			return info;
 		} catch (JSONException e) {
-			LogHelper.log(new Status(IStatus.ERROR, ServerConstants.PI_SERVER_CORE, "Invalid task: " + taskString, e)); //$NON-NLS-1$
-			return null;
+			throw new CorruptedTaskException(taskString, e);
 		}
 	}
 
-	public TaskInfo(String userId, String id, boolean idempotent) {
-		this.idempotent = idempotent;
+	public TaskInfo(String userId, String id, boolean keep) {
+		this.keep = keep;
 		this.userId = userId;
 		this.id = id;
-		this.modified = new Date();
-		this.created = new Date();
+		this.timestamp = new Date();
 	}
 
-	public String getName() {
-		return name;
+	public boolean isRunning() {
+		return !(status == TaskStatus.LOAD || status == TaskStatus.ERROR || status == TaskStatus.ABORT || status == TaskStatus.LOADEND);
+	}
+
+	public boolean isKeep() {
+		return keep;
+	}
+
+	public void setKeep(boolean keep) {
+		this.keep = keep;
+	}
+
+	public boolean isLengthComputable() {
+		return lengthComputable;
+	}
+
+	public void setLengthComputable(boolean lengthComputable) {
+		this.lengthComputable = lengthComputable;
+	}
+
+	public Long getTimestamp() {
+		return timestamp==null ? null : timestamp.getTime();
+	}
+
+	public void setTimestamp(long timestamp) {
+		this.timestamp = new Date(timestamp);
+	}
+
+	public Long getExpires() {
+		return expires==null ? null : expires.getTime();
+	}
+
+	public void setExpires(long expires) {
+		this.expires = new Date(expires);
+	}
+
+	public TaskStatus getStatus() {
+		return status;
+	}
+
+	public void setStatus(TaskStatus status) {
+		this.status = status;
 	}
 	
-	public void setName(String name) {
-		this.name = name;
+	public IURIUnqualificationStrategy getUnqualificationStrategy() {
+		return this.strategy;
 	}
 	
-	/**
-	 * Returns information if task canceling is supported.
-	 * @return <code>true</code> if task can be canceled
-	 */
-	public boolean canBeCanceled() {
-		return canBeCanceled;
-	}
-	
-	public void setCanBeCanceled(boolean canBeCanceled){
-		this.canBeCanceled = canBeCanceled;
-	}
-	
-	
-	public boolean isIdempotent() {
-		return idempotent;
+	public void setUnqualificationStrategy (IURIUnqualificationStrategy strategy) {
+		addStrategy(strategy);
+		this.strategy = strategy;
 	}
 
-	/**
-	 * Returns a message describing the current progress state of the task, or the
-	 * result if the task is completed.
-	 * @return the message
-	 */
-	public String getMessage() {
-		return message;
+	public int getLoaded() {
+		return loaded;
 	}
 
-	/**
-	 * @return an integer between 0 and 100 representing the current progress state
-	 */
-	public int getPercentComplete() {
-		return percentComplete;
+	public void setLoaded(int loaded) {
+		this.loaded = loaded;
 	}
 
-	/**
-	 * Returns the location of the resource representing the result of the computation. 
-	 * Returns <code>null</code> if the task has not completed, or if it did not complete successfully
-	 * @return The task result location, or <code>null</code>
-	 */
-	public URI getResultLocation() {
-		return resultLocation;
+	public int getTotal() {
+		return total;
 	}
 
-	/**
-	 * Returns the status describing the result of the operation, or <code>null</code>
-	 * if the operation has not yet completed.
-	 * @return The result status
-	 */
-	public IStatus getResult() {
-		return result;
+	public void setTotal(int total) {
+		this.total = total;
 	}
 
-	public String getTaskId() {
+	public String getId() {
 		return id;
 	}
 
@@ -166,91 +222,46 @@ public class TaskInfo {
 		return userId;
 	}
 
-	/**
-	 * Returns last modification date.
-	 * @return last modification date.
-	 */
-	public Date getModified() {
-		return modified;
+	public IStatus getResult() {
+		return result;
 	}
 	
-	public void setModified(Date modified){
-		this.modified = modified;
-	}
-	
-	public Date getCreated(){
-		return created;
+	public boolean isCancelable() {
+		return cancelable;
 	}
 
-	/**
-	 * Returns whether the task is currently running.
-	 * @return <code>true</code> if the task is currently running, and
-	 * <code>false</code> otherwise.
-	 */
-	public boolean isRunning() {
-		return running;
+	public void setCancelable(boolean cancelable) {
+		this.cancelable = cancelable;
 	}
 
-	/**
-	 * Sets a message describing the current task state. 
-	 * @param message the message to set
-	 * @return Returns this task
-	 */
-	public TaskInfo setMessage(String message) {
-		this.message = message == null ? "" : message; //$NON-NLS-1$
-		return this;
-	}
-
-	/**
-	 * Sets the percent complete of this task. Values below 0 will be rounded up to zero,
-	 * and values above 100 will be rounded down to 100;
-	 * @param percentComplete an integer between 0 and 100 representing the
-	 * current progress state
-	 * @return Returns this task
-	 */
-	public TaskInfo setPercentComplete(int percentComplete) {
-		if (percentComplete < 0)
-			percentComplete = 0;
-		if (percentComplete > 100)
-			percentComplete = 100;
-		this.percentComplete = percentComplete;
-		return this;
-	}
-
-	/**
-	 * Indicates that this task is completed.
-	 * @param status The result status
-	 * @return Returns this task
-	 */
-	public TaskInfo done(IStatus status) {
-		this.running = false;
-		this.percentComplete = 100;
-		this.result = status;
-		this.message = status.getMessage();
-		this.modified = new Date();
-		return this;
-	}
-
-	/**
-	 * Sets the location of the task result object.
-	 * @param location The location of the result resource for the task, or
-	 * <code>null</code> if not applicable.
-	 * @return Returns this task
-	 */
-	public TaskInfo setResultLocation(String location) {
-		this.resultLocation = URI.create(location);
-		return this;
-	}
-
-	/**
-	 * Sets the location of the task result object.
-	 * @param location The location of the result resource for the task, or
-	 * <code>null</code> if not applicable.
-	 * @return Returns this task
-	 */
-	public TaskInfo setResultLocation(URI location) {
-		this.resultLocation = location;
-		return this;
+	public void done(IStatus result) {
+		this.result = result;
+		switch(result.getSeverity()){
+			case IStatus.OK:
+			case IStatus.INFO:
+				this.status = TaskStatus.LOADEND;
+				break;
+			case IStatus.ERROR:
+			case IStatus.WARNING:
+				this.status = TaskStatus.ERROR;
+				break;
+			default:
+				this.status = TaskStatus.ABORT;
+		}
+		if(expires!=null){
+			return;
+		}
+		if(!keep){
+			//if task info should not be kept it will expire in 15 minutes
+			Calendar cal = Calendar.getInstance();
+			cal.add(Calendar.MINUTE, 15);
+			expires = cal.getTime();
+		} else {
+			//if task info should be kept it will be default expire in 7 days
+			Calendar cal = Calendar.getInstance();
+			cal.add(Calendar.DATE, 7);
+			expires = cal.getTime();
+		}
 	}
 
 	/**
@@ -259,24 +270,20 @@ public class TaskInfo {
 	public JSONObject toLightJSON() {
 		JSONObject resultObject = new JSONObject();
 		try {
-			resultObject.put(KEY_RUNNING, isRunning());
-			resultObject.put(KEY_MESSAGE, getMessage());
-			resultObject.put(KEY_ID, getTaskId());
-			resultObject.put(KEY_USER, getUserId());
-			resultObject.put(KEY_PERCENT_COMPLETE, getPercentComplete());
-			resultObject.put(KEY_TIMESTAMP_MODIFIED, modified.getTime());
-			resultObject.put(KEY_CAN_BE_CANCELED, canBeCanceled);
-			resultObject.put(KEY_TIMESTAMP_CREATED, created.getTime());
-			resultObject.put(KEY_IDEMPOTENT, idempotent);
-			resultObject.put(KEY_NAME, name==null ? "" : name);
-			if(result!=null){
-				if(!result.isOK()){
-					resultObject.put(KEY_FAILED, true);
-					resultObject.put(KEY_RESULT, ServerStatus.convert(result).toJSON());
-				}
-				if(result.getSeverity()==IStatus.CANCEL)
-					resultObject.put(KEY_CANCELED, true);
+			resultObject.put(KEY_LENGTH_COMPUTABLE, isLengthComputable());
+			if (isLengthComputable()) {
+				resultObject.put(KEY_LOADED, getLoaded());
+				resultObject.put(KEY_TOTAL, getTotal());
 			}
+			if(getTimestamp()!=null)
+				resultObject.put(KEY_TIMESTAMP, getTimestamp());
+			if(getExpires()!=null)
+				resultObject.put(KEY_EXPIRES, getExpires());
+			IURIUnqualificationStrategy strategy = getUnqualificationStrategy();
+			if(strategy != null) {
+				resultObject.put(KEY_URI_UNQUALIFICATION, strategy.getName());
+			}
+			resultObject.put(KEY_TYPE, getStatus().toString());
 		} catch (JSONException e) {
 			//can only happen if key is null
 		}
@@ -289,35 +296,32 @@ public class TaskInfo {
 	public JSONObject toJSON() {
 		JSONObject resultObject = new JSONObject();
 		try {
-			resultObject.put(KEY_RUNNING, isRunning());
-			resultObject.put(KEY_MESSAGE, getMessage());
-			resultObject.put(KEY_ID, getTaskId());
-			resultObject.put(KEY_USER, getUserId());
-			resultObject.put(KEY_PERCENT_COMPLETE, getPercentComplete());
-			resultObject.put(KEY_TIMESTAMP_MODIFIED, modified.getTime());
-			resultObject.put(KEY_TIMESTAMP_CREATED, created.getTime());
-			resultObject.put(KEY_CAN_BE_CANCELED, canBeCanceled);
-			resultObject.put(KEY_IDEMPOTENT, idempotent);
-			resultObject.put(KEY_NAME, name==null ? "" : name);
-			if (resultLocation != null)
-				resultObject.put(KEY_LOCATION, resultLocation);
-			if (result != null) {
-				resultObject.put(KEY_RESULT, ServerStatus.convert(result).toJSON());
-				if(!result.isOK()){
-					resultObject.put(KEY_FAILED, true);
-				}
-				if(result.getSeverity()==IStatus.CANCEL){
-					resultObject.put(KEY_CANCELED, true);
-				}
+			resultObject.put(KEY_LENGTH_COMPUTABLE, isLengthComputable());
+			if (isLengthComputable()) {
+				resultObject.put(KEY_LOADED, getLoaded());
+				resultObject.put(KEY_TOTAL, getTotal());
 			}
+			if (result != null)
+				resultObject.put(KEY_RESULT, ServerStatus.convert(result).toJSON());
+			if(getTimestamp()!=null)
+				resultObject.put(KEY_TIMESTAMP, getTimestamp());
+			if(getExpires()!=null)
+				resultObject.put(KEY_EXPIRES, getExpires());
+			if(isCancelable())
+				resultObject.put(KEY_CANCELABLE, isCancelable());
+			IURIUnqualificationStrategy strategy = getUnqualificationStrategy();
+			if(strategy != null) {
+				resultObject.put(KEY_URI_UNQUALIFICATION, strategy.getName());
+			}
+			resultObject.put(KEY_TYPE, getStatus().toString());
 		} catch (JSONException e) {
 			//can only happen if key is null
 		}
 		return resultObject;
 	}
-
+	
 	@Override
 	public String toString() {
-		return "TaskInfo" + toJSON(); //$NON-NLS-1$
+		return "TaskInfo: " + toJSON(); //$NON-NLS-1$
 	}
 }

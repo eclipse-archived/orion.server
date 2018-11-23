@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2011, 2012 IBM Corporation and others.
+ * Copyright (c) 2011, 2014 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,25 +11,31 @@
 package org.eclipse.orion.server.git.servlets;
 
 import java.net.URI;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.TagCommand;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.*;
+import org.eclipse.jgit.lib.Constants;
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Ref;
+import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
-import org.eclipse.orion.internal.server.servlets.ProtocolConstants;
 import org.eclipse.orion.internal.server.servlets.ServletResourceHandler;
 import org.eclipse.orion.internal.server.servlets.task.TaskJobHandler;
+import org.eclipse.orion.server.core.ProtocolConstants;
 import org.eclipse.orion.server.core.ServerStatus;
 import org.eclipse.orion.server.git.BaseToCloneConverter;
 import org.eclipse.orion.server.git.GitConstants;
 import org.eclipse.orion.server.git.jobs.ListTagsJob;
 import org.eclipse.orion.server.git.objects.Tag;
+import org.eclipse.orion.server.servlets.JsonURIUnqualificationStrategy;
 import org.eclipse.orion.server.servlets.OrionServlet;
 import org.eclipse.osgi.util.NLS;
 import org.json.JSONObject;
@@ -60,7 +66,7 @@ public class GitTagHandlerV1 extends AbstractGitHandler {
 				Ref ref = db.getRefDatabase().getRef(Constants.R_TAGS + tagName);
 				if (ref != null) {
 					Tag tag = new Tag(cloneLocation, db, ref);
-					OrionServlet.writeJSONResponse(request, response, tag.toJSON());
+					OrionServlet.writeJSONResponse(request, response, tag.toJSON(), JsonURIUnqualificationStrategy.ALL_NO_GIT);
 					return true;
 				} else {
 					String msg = NLS.bind("Tag not found: {0}", tagName);
@@ -70,18 +76,22 @@ public class GitTagHandlerV1 extends AbstractGitHandler {
 				ListTagsJob job;
 				String commits = request.getParameter(GitConstants.KEY_TAG_COMMITS);
 				int commitsNumber = commits == null ? 0 : Integer.parseInt(commits);
+				String nameFilter = request.getParameter("filter"); //$NON-NLS-1$
 				String page = request.getParameter("page"); //$NON-NLS-1$
 				if (page != null) {
 					int pageNo = Integer.parseInt(page);
 					int pageSize = request.getParameter("pageSize") == null ? PAGE_SIZE : Integer.parseInt(request.getParameter("pageSize")); //$NON-NLS-1$ //$NON-NLS-2$
-					job = new ListTagsJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST), commitsNumber, pageNo, pageSize, request.getRequestURI());
+					job = new ListTagsJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request),
+							BaseToCloneConverter.TAG_LIST), commitsNumber, pageNo, pageSize, request.getRequestURI(), nameFilter);
 				} else {
-					job = new ListTagsJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST), commitsNumber);
+					job = new ListTagsJob(TaskJobHandler.getUserId(request), filePath, BaseToCloneConverter.getCloneLocation(getURI(request),
+							BaseToCloneConverter.TAG_LIST), commitsNumber, nameFilter);
 				}
-				return TaskJobHandler.handleTaskJob(request, response, job, statusHandler);
+				return TaskJobHandler.handleTaskJob(request, response, job, statusHandler, JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			}
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when looking for a tag.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when looking for a tag.", e));
 		}
 	}
 
@@ -102,10 +112,11 @@ public class GitTagHandlerV1 extends AbstractGitHandler {
 			Ref ref = tag(git, revCommit, tagName);
 			URI cloneLocation = BaseToCloneConverter.getCloneLocation(getURI(request), BaseToCloneConverter.TAG_LIST);
 			Tag tag = new Tag(cloneLocation, db, ref);
-			OrionServlet.writeJSONResponse(request, response, tag.toJSON());
+			OrionServlet.writeJSONResponse(request, response, tag.toJSON(), JsonURIUnqualificationStrategy.ALL_NO_GIT);
 			return true;
 		} catch (Exception e) {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when tagging.", e));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+					"An error occured when tagging.", e));
 		} finally {
 			walk.dispose();
 		}
@@ -127,10 +138,12 @@ public class GitTagHandlerV1 extends AbstractGitHandler {
 				git.tagDelete().setTags(gitSegment).call();
 				return true;
 			} catch (GitAPIException e) {
-				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "An error occured when removing a tag.", e));
+				return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+						"An error occured when removing a tag.", e));
 			}
 		} else {
-			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST, "Tag deletion aborted: no tag name provided.", null));
+			return statusHandler.handleRequest(request, response, new ServerStatus(IStatus.ERROR, HttpServletResponse.SC_BAD_REQUEST,
+					"Tag deletion aborted: no tag name provided.", null));
 		}
 	}
 }

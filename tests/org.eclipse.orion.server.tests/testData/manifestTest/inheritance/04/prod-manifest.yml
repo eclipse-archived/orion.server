@@ -1,0 +1,5 @@
+---
+inherit: ./inner/base-manifest.yml
+applications:
+ - name: A
+ - name: B

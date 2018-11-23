@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<psf version="2.0">
+<provider id="org.eclipse.egit.core.GitProvider">
+<project reference="1.0,http://git.eclipse.org/gitroot/equinox/rt.equinox.bundles.git,master,bundles/org.eclipse.equinox.servletbridge"/>
+<project reference="1.0,http://git.eclipse.org/gitroot/equinox/rt.equinox.bundles.git,master,bundles/org.eclipse.equinox.http.servletbridge"/>
+<project reference="1.0,http://git.eclipse.org/gitroot/equinox/rt.equinox.bundles.git,master,bundles/org.eclipse.equinox.servletbridge.extensionbundle"/>
+</provider>
+</psf>
