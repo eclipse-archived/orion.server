@@ -229,13 +229,4 @@ public class Blame extends GitObject {
 		return null;
 	}
 
-	/**
-	 *
-	 * JSON STRUCTURE { "Location": Blame URI "Clone Location" : Clone URI "Type": "Blame" "Children": { {
-	 * "CommitLocation":"/gitapi/commit/2b3a36c1b2f0064216a871740bd6906b6af7434a/file/C/", "Name":"2b3a36c1b2f0064216a871740bd6906b6af7434a", "Time":1234567890,
-	 * "AuthorName": Author Name, "AuthorEmail": Author Email, "AuthorImage": Gravatar URL, "Message": Commit Message, "Children":{ { "Start":0, "End":5 }, {
-	 * "Start":6, "End":8 }, ... ... } }, ... ... }
-	 * 
-	 */
-
 }
