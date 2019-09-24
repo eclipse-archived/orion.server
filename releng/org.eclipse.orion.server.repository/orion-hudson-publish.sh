@@ -16,6 +16,8 @@
 # 
 set -e
 
+env
+
 if [ $# -eq 1 -o $# -eq 2 ]; then
 	buildType=$1
 else
