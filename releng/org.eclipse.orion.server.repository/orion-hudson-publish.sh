@@ -159,6 +159,7 @@ for file in built-editor.zip built-compare.zip built-codeEdit.zip ; do \
 	curl https://ci.eclipse.org/orion/job/${CLIENT_JOB}/lastSuccessfulBuild/artifact/built-js/$file > ${localDropDir}/$file
 	echo "Copied client built file : ${file}"
 done
+ls -la ${localDropDir}
 
 #generating build.cfg file to be referenced from downloads web page
 echo "hudson.job.name=${JOB_NAME}" > $localDropDir/build.cfg
